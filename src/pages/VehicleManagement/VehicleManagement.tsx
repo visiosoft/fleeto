@@ -70,11 +70,12 @@ const emptyVehicle: Vehicle = {
   year: new Date().getFullYear(),
   vin: '',
   licensePlate: '',
-  registrationExpiry: moment().format('YYYY-MM-DD'),
+  registrationExpiry: '',
   status: 'active',
-  fuelType: 'gasoline',
+  fuelType: '',
   currentMileage: 0,
-  lastServiceDate: moment().format('YYYY-MM-DD'),
+  lastServiceDate: '',
+  mileage: 0,
 };
 
 const VehicleManagement: React.FC = () => {

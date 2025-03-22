@@ -143,6 +143,7 @@ const VehicleManagement: React.FC = () => {
     try {
       const vehicleData = {
         ...formValues,
+        mileage: formValues.mileage || 0,
         lastMaintenance: formValues.lastMaintenance?.format('YYYY-MM-DD'),
         nextMaintenance: formValues.nextMaintenance?.format('YYYY-MM-DD'),
         insuranceInfo: formValues.insuranceProvider ? {
@@ -208,7 +209,7 @@ const VehicleManagement: React.FC = () => {
                 <TableCell>{vehicle.year}</TableCell>
                 <TableCell>{vehicle.licensePlate}</TableCell>
                 <TableCell>{vehicle.status}</TableCell>
-                <TableCell>{vehicle.mileage.toLocaleString()}</TableCell>
+                <TableCell>{vehicle.mileage ? vehicle.mileage.toLocaleString() : '0'}</TableCell>
                 <TableCell>
                   {vehicle.nextMaintenance ? moment(vehicle.nextMaintenance).format('MM/DD/YYYY') : 'Not scheduled'}
                 </TableCell>
