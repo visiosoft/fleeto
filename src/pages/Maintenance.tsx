@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -41,133 +41,54 @@ import {
   Delete,
   Close,
 } from '@mui/icons-material';
+import axios, { AxiosError } from 'axios';
+import { API_CONFIG, getApiUrl } from '../config/api';
+import { Vehicle } from '../types';
 
-// Define MaintenanceTask interface
-interface MaintenanceTask {
-  id: number;
-  vehicle: string;
-  task: string;
-  dueDate: string;
-  status: 'pending' | 'in-progress' | 'completed';
-  priority: 'high' | 'medium' | 'low';
-  lastServiceDate: string;
-  mileage: number;
-  nextServiceMileage: number;
-}
-
-// Define ServiceRecord interface
-interface ServiceRecord {
-  id: number;
-  vehicle: string;
-  service: string;
+// Define MaintenanceRecord interface
+interface MaintenanceRecord {
+  _id?: string;
+  vehicleId: string;
+  serviceType: string;
   date: string;
   mileage: number;
   cost: number;
   technician: string;
   notes: string;
+  status: 'pending' | 'in-progress' | 'completed';
+  priority: 'high' | 'medium' | 'low';
 }
 
-// Mock data for maintenance tasks
-const initialMaintenanceTasks: MaintenanceTask[] = [
-  {
-    id: 1,
-    vehicle: 'Truck 101',
-    task: 'Oil Change',
-    dueDate: '2024-03-20',
-    status: 'pending',
-    priority: 'high',
-    lastServiceDate: '2024-02-20',
-    mileage: 15000,
-    nextServiceMileage: 20000,
-  },
-  {
-    id: 2,
-    vehicle: 'Truck 102',
-    task: 'Brake Inspection',
-    dueDate: '2024-03-25',
-    status: 'in-progress',
-    priority: 'medium',
-    lastServiceDate: '2024-02-15',
-    mileage: 18000,
-    nextServiceMileage: 25000,
-  },
-  {
-    id: 3,
-    vehicle: 'Truck 103',
-    task: 'Tire Rotation',
-    dueDate: '2024-03-30',
-    status: 'completed',
-    priority: 'low',
-    lastServiceDate: '2024-03-10',
-    mileage: 12000,
-    nextServiceMileage: 18000,
-  },
-];
+interface CostStatistics {
+  totalCost: number;
+  averageCost: number;
+  costByServiceType: Record<string, number>;
+}
 
-// Mock data for service history
-const initialServiceHistory: ServiceRecord[] = [
-  {
-    id: 1,
-    vehicle: 'Truck 101',
-    service: 'Oil Change',
-    date: '2024-02-20',
-    mileage: 15000,
-    cost: 150,
-    technician: 'John Smith',
-    notes: 'Regular maintenance completed',
-  },
-  {
-    id: 2,
-    vehicle: 'Truck 102',
-    service: 'Brake Inspection',
-    date: '2024-02-15',
-    mileage: 18000,
-    cost: 200,
-    technician: 'Sarah Johnson',
-    notes: 'Brake pads replaced',
-  },
-  {
-    id: 3,
-    vehicle: 'Truck 103',
-    service: 'Tire Rotation',
-    date: '2024-03-10',
-    mileage: 12000,
-    cost: 100,
-    technician: 'Mike Brown',
-    notes: 'Tires rotated and balanced',
-  },
-];
-
-// Empty maintenance task template
-const emptyMaintenanceTask: MaintenanceTask = {
-  id: 0,
-  vehicle: '',
-  task: '',
-  dueDate: new Date().toISOString().split('T')[0],
-  status: 'pending',
-  priority: 'medium',
-  lastServiceDate: new Date().toISOString().split('T')[0],
-  mileage: 0,
-  nextServiceMileage: 0,
-};
-
-// Empty service record template
-const emptyServiceRecord: ServiceRecord = {
-  id: 0,
-  vehicle: '',
-  service: '',
+// Empty maintenance record template
+const emptyMaintenanceRecord: MaintenanceRecord = {
+  vehicleId: '',
+  serviceType: '',
   date: new Date().toISOString().split('T')[0],
   mileage: 0,
   cost: 0,
   technician: '',
   notes: '',
+  status: 'pending',
+  priority: 'medium'
 };
 
 const MaintenanceCard: React.FC<{
-  task: MaintenanceTask;
-  onEdit: (task: MaintenanceTask) => void;
-  onDelete: (id: number) => void;
-}> = ({ task, onEdit, onDelete }) => {
+  record: MaintenanceRecord;
+  vehicles: Vehicle[];
+  onEdit: (record: MaintenanceRecord) => void;
+  onDelete: (id: string) => void;
+}> = ({ record, vehicles, onEdit, onDelete }) => {
+  const getVehicleInfo = (vehicleId: string) => {
+    const vehicle = vehicles.find(v => (v._id || v.id) === vehicleId);
+    return vehicle ? `${vehicle.licensePlate} - ${vehicle.make} ${vehicle.model}` : 'N/A';
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
@@ -194,48 +115,45 @@ const MaintenanceCard: React.FC<{
     }
   };
 
-  const progress = (task.mileage / task.nextServiceMileage) * 100;
+  const progress = (record.mileage / record.mileage) * 100;
 
   return (
     <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <CardContent sx={{ flexGrow: 1 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <Typography variant="h6" component="div">
-            {task.vehicle}
+            {getVehicleInfo(record.vehicleId)}
           </Typography>
           <Box>
-            <IconButton size="small" onClick={() => onEdit(task)}>
+            <IconButton size="small" onClick={() => onEdit(record)}>
               <Edit />
             </IconButton>
-            <IconButton size="small" onClick={() => onDelete(task.id)}>
+            <IconButton size="small" onClick={() => onDelete(record._id || '')}>
               <Delete />
             </IconButton>
           </Box>
         </Box>
         <Box>
           <Chip
-            label={task.status}
-            color={getStatusColor(task.status)}
+            label={record.status}
+            color={getStatusColor(record.status)}
             size="small"
             sx={{ mr: 1 }}
           />
           <Chip
-            label={task.priority}
-            color={getPriorityColor(task.priority)}
+            label={record.priority}
+            color={getPriorityColor(record.priority)}
             size="small"
           />
         </Box>
 
         <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-          {task.task}
+          {record.serviceType}
         </Typography>
 
         <Box sx={{ mt: 2 }}>
           <Typography variant="body2" color="text.secondary">
-            Due Date: {task.dueDate}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Last Service: {task.lastServiceDate}
+            Date: {record.date}
           </Typography>
         </Box>
 
@@ -254,7 +172,7 @@ const MaintenanceCard: React.FC<{
             </Typography>
           </Box>
           <Typography variant="body2" color="text.secondary">
-            Current: {task.mileage} / Next Service: {task.nextServiceMileage}
+            Current: {record.mileage}
           </Typography>
         </Box>
       </CardContent>
@@ -262,7 +180,7 @@ const MaintenanceCard: React.FC<{
         <Button
           size="small"
           startIcon={<Visibility />}
-          onClick={() => console.log('View details:', task.id)}
+          onClick={() => console.log('View details:', record._id)}
         >
           View Details
         </Button>
@@ -272,106 +190,175 @@ const MaintenanceCard: React.FC<{
 };
 
 const Maintenance: React.FC = () => {
-  const [maintenanceTasks, setMaintenanceTasks] = useState<MaintenanceTask[]>(initialMaintenanceTasks);
-  const [serviceHistory, setServiceHistory] = useState<ServiceRecord[]>(initialServiceHistory);
-  const [currentTask, setCurrentTask] = useState<MaintenanceTask>(emptyMaintenanceTask);
-  const [currentService, setCurrentService] = useState<ServiceRecord>(emptyServiceRecord);
-  const [openAddTaskDialog, setOpenAddTaskDialog] = useState(false);
-  const [openEditTaskDialog, setOpenEditTaskDialog] = useState(false);
-  const [openAddServiceDialog, setOpenAddServiceDialog] = useState(false);
-  const [deleteTaskConfirmOpen, setDeleteTaskConfirmOpen] = useState(false);
-  const [deleteServiceConfirmOpen, setDeleteServiceConfirmOpen] = useState(false);
-  const [taskToDelete, setTaskToDelete] = useState<number>(0);
-  const [serviceToDelete, setServiceToDelete] = useState<number>(0);
+  const [maintenanceRecords, setMaintenanceRecords] = useState<MaintenanceRecord[]>([]);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [currentRecord, setCurrentRecord] = useState<MaintenanceRecord>(emptyMaintenanceRecord);
+  const [costStats, setCostStats] = useState<CostStatistics | null>(null);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [recordToDelete, setRecordToDelete] = useState<string>('');
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [isLoading, setIsLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
     severity: 'success' as 'success' | 'error' | 'info' | 'warning',
   });
   
-  // Task Management Functions
-  const handleAddTask = () => {
-    setCurrentTask({ ...emptyMaintenanceTask });
+  useEffect(() => {
+    fetchMaintenanceRecords();
+    fetchCostStatistics();
+    fetchVehicles();
+  }, []);
+
+  const fetchVehicles = async () => {
+    try {
+      const response = await axios.get<Vehicle[]>(getApiUrl(API_CONFIG.ENDPOINTS.VEHICLES));
+      console.log('Fetched vehicles:', response.data);
+      setVehicles(response.data);
+    } catch (error) {
+      console.error('Error fetching vehicles:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to fetch vehicles',
+        severity: 'error'
+      });
+    }
+  };
+
+  const fetchMaintenanceRecords = async () => {
+    setIsLoading(true);
+    try {
+      const response = await axios.get(getApiUrl(API_CONFIG.ENDPOINTS.MAINTENANCE));
+      console.log('Fetched maintenance records:', response.data);
+      setMaintenanceRecords(response.data);
+    } catch (error) {
+      const axiosError = error as AxiosError;
+      console.error('Error fetching maintenance records:', axiosError);
+      setSnackbar({
+        open: true,
+        message: 'Failed to fetch maintenance records',
+        severity: 'error'
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchCostStatistics = async () => {
+    try {
+      const response = await axios.get(getApiUrl(`${API_CONFIG.ENDPOINTS.MAINTENANCE}/stats/cost`));
+      console.log('Fetched cost statistics:', response.data);
+      setCostStats(response.data);
+    } catch (error) {
+      console.error('Error fetching cost statistics:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to fetch cost statistics',
+        severity: 'error'
+      });
+    }
+  };
+
+  const handleAddRecord = () => {
+    setCurrentRecord(emptyMaintenanceRecord);
     setFormErrors({});
-    setOpenAddTaskDialog(true);
+    setOpenDialog(true);
   };
 
-  const handleEditTask = (task: MaintenanceTask) => {
-    setCurrentTask({ ...task });
-    setFormErrors({});
-    setOpenEditTaskDialog(true);
+  const handleEditRecord = async (record: MaintenanceRecord) => {
+    try {
+      const response = await axios.get(getApiUrl(`${API_CONFIG.ENDPOINTS.MAINTENANCE}/${record._id}`));
+      setCurrentRecord(response.data);
+      setFormErrors({});
+      setOpenDialog(true);
+    } catch (error) {
+      console.error('Error fetching record details:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to fetch record details',
+        severity: 'error'
+      });
+    }
   };
 
-  const handleDeleteTaskConfirm = (id: number) => {
-    setTaskToDelete(id);
-    setDeleteTaskConfirmOpen(true);
+  const handleDeleteConfirm = (id: string) => {
+    setRecordToDelete(id);
+    setDeleteConfirmOpen(true);
   };
 
-  const handleDeleteTask = () => {
-    setMaintenanceTasks(maintenanceTasks.filter(task => task.id !== taskToDelete));
-    setDeleteTaskConfirmOpen(false);
-    setSnackbar({
-      open: true,
-      message: 'Maintenance task deleted successfully',
-      severity: 'success',
-    });
+  const handleDeleteRecord = async () => {
+    try {
+      await axios.delete(getApiUrl(`${API_CONFIG.ENDPOINTS.MAINTENANCE}/${recordToDelete}`));
+      await fetchMaintenanceRecords();
+      await fetchCostStatistics();
+      setSnackbar({
+        open: true,
+        message: 'Maintenance record deleted successfully',
+        severity: 'success'
+      });
+    } catch (error) {
+      console.error('Error deleting record:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to delete maintenance record',
+        severity: 'error'
+      });
+    } finally {
+      setDeleteConfirmOpen(false);
+    }
   };
 
-  const handleCloseTaskDialog = () => {
-    setOpenAddTaskDialog(false);
-    setOpenEditTaskDialog(false);
+  const handleSaveRecord = async () => {
+    if (!validateForm()) {
+      return;
+    }
+
+    try {
+      if (currentRecord._id) {
+        // Update existing record
+        const { _id, ...recordToUpdate } = currentRecord;
+        await axios.put(
+          getApiUrl(`${API_CONFIG.ENDPOINTS.MAINTENANCE}/${_id}`),
+          recordToUpdate
+        );
+      } else {
+        // Create new record
+        const { _id, ...recordToCreate } = currentRecord;
+        await axios.post(getApiUrl(API_CONFIG.ENDPOINTS.MAINTENANCE), recordToCreate);
+      }
+
+      await fetchMaintenanceRecords();
+      await fetchCostStatistics();
+      setSnackbar({
+        open: true,
+        message: `Maintenance record ${currentRecord._id ? 'updated' : 'added'} successfully`,
+        severity: 'success'
+      });
+      handleCloseDialog();
+    } catch (error) {
+      console.error('Error saving record:', error);
+      setSnackbar({
+        open: true,
+        message: `Failed to ${currentRecord._id ? 'update' : 'add'} maintenance record`,
+        severity: 'error'
+      });
+    }
   };
 
-  // Service Management Functions
-  const handleAddService = () => {
-    setCurrentService({ ...emptyServiceRecord });
-    setFormErrors({});
-    setOpenAddServiceDialog(true);
-  };
-
-  const handleDeleteServiceConfirm = (id: number) => {
-    setServiceToDelete(id);
-    setDeleteServiceConfirmOpen(true);
-  };
-
-  const handleDeleteService = () => {
-    setServiceHistory(serviceHistory.filter(service => service.id !== serviceToDelete));
-    setDeleteServiceConfirmOpen(false);
-    setSnackbar({
-      open: true,
-      message: 'Service record deleted successfully',
-      severity: 'success',
-    });
-  };
-
-  const handleCloseServiceDialog = () => {
-    setOpenAddServiceDialog(false);
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
   };
 
   // Form Validation & Handling
-  const validateTaskForm = (): boolean => {
+  const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
     
-    if (!currentTask.vehicle.trim()) errors.vehicle = 'Vehicle is required';
-    if (!currentTask.task.trim()) errors.task = 'Task is required';
-    if (currentTask.mileage < 0) errors.mileage = 'Mileage cannot be negative';
-    if (currentTask.nextServiceMileage <= currentTask.mileage) {
-      errors.nextServiceMileage = 'Next service mileage must be greater than current mileage';
-    }
-    
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  const validateServiceForm = (): boolean => {
-    const errors: Record<string, string> = {};
-    
-    if (!currentService.vehicle.trim()) errors.vehicle = 'Vehicle is required';
-    if (!currentService.service.trim()) errors.service = 'Service is required';
-    if (!currentService.technician.trim()) errors.technician = 'Technician is required';
-    if (currentService.mileage < 0) errors.mileage = 'Mileage cannot be negative';
-    if (currentService.cost < 0) errors.cost = 'Cost cannot be negative';
+    if (!currentRecord.vehicleId.trim()) errors.vehicleId = 'Vehicle is required';
+    if (!currentRecord.serviceType.trim()) errors.serviceType = 'Service is required';
+    if (!currentRecord.technician.trim()) errors.technician = 'Technician is required';
+    if (currentRecord.mileage < 0) errors.mileage = 'Mileage cannot be negative';
+    if (currentRecord.cost < 0) errors.cost = 'Cost cannot be negative';
     
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -380,132 +367,61 @@ const Maintenance: React.FC = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
     const { name, value } = e.target;
     if (name) {
-      if (openAddTaskDialog || openEditTaskDialog) {
-        setCurrentTask({
-          ...currentTask,
-          [name]: value,
-        });
-      } else {
-        setCurrentService({
-          ...currentService,
-          [name]: value,
-        });
-      }
+      setCurrentRecord({
+        ...currentRecord,
+        [name]: value,
+      });
     }
   };
 
   const handleSelectChange = (e: SelectChangeEvent) => {
     const { name, value } = e.target;
-    if (openAddTaskDialog || openEditTaskDialog) {
-      setCurrentTask({
-        ...currentTask,
-        [name]: value,
-      });
-    } else {
-      setCurrentService({
-        ...currentService,
-        [name]: value,
-      });
-    }
-  };
-
-  const handleSaveTask = () => {
-    if (!validateTaskForm()) return;
-    
-    if (openAddTaskDialog) {
-      // Add new task
-      const newTask = {
-        ...currentTask,
-        id: Math.max(...maintenanceTasks.map(task => task.id), 0) + 1,
-      };
-      setMaintenanceTasks([...maintenanceTasks, newTask]);
-      setSnackbar({
-        open: true,
-        message: 'Maintenance task added successfully',
-        severity: 'success',
-      });
-    } else {
-      // Update existing task
-      setMaintenanceTasks(maintenanceTasks.map(task => 
-        task.id === currentTask.id ? currentTask : task
-      ));
-      setSnackbar({
-        open: true,
-        message: 'Maintenance task updated successfully',
-        severity: 'success',
-      });
-    }
-    
-    handleCloseTaskDialog();
-  };
-
-  const handleSaveService = () => {
-    if (!validateServiceForm()) return;
-    
-    // Add new service record
-    const newService = {
-      ...currentService,
-      id: Math.max(...serviceHistory.map(service => service.id), 0) + 1,
-    };
-    setServiceHistory([...serviceHistory, newService]);
-    setSnackbar({
-      open: true,
-      message: 'Service record added successfully',
-      severity: 'success',
+    setCurrentRecord({
+      ...currentRecord,
+      [name]: value,
     });
-    
-    handleCloseServiceDialog();
   };
 
   const closeSnackbar = () => {
     setSnackbar({ ...snackbar, open: false });
   };
 
-  const renderTaskForm = () => (
+  const renderRecordForm = () => (
     <>
       <Grid container spacing={2}>
         <Grid item xs={12} sm={6}>
-          <TextField
-            fullWidth
-            label="Vehicle"
-            name="vehicle"
-            value={currentTask.vehicle}
-            onChange={handleInputChange}
-            error={!!formErrors.vehicle}
-            helperText={formErrors.vehicle}
-            required
-          />
-        </Grid>
-        <Grid item xs={12} sm={6}>
-          <TextField
-            fullWidth
-            label="Task"
-            name="task"
-            value={currentTask.task}
-            onChange={handleInputChange}
-            error={!!formErrors.task}
-            helperText={formErrors.task}
-            required
-          />
-        </Grid>
-        <Grid item xs={12} sm={6}>
-          <TextField
-            fullWidth
-            label="Due Date"
-            name="dueDate"
-            type="date"
-            value={currentTask.dueDate}
-            onChange={handleInputChange}
-            InputLabelProps={{ shrink: true }}
-            required
-          />
+          <FormControl fullWidth error={!!formErrors.vehicleId}>
+            <InputLabel>Vehicle</InputLabel>
+            <Select
+              name="vehicleId"
+              value={currentRecord.vehicleId}
+              onChange={handleSelectChange}
+              label="Vehicle"
+              required
+            >
+              {vehicles.length === 0 ? (
+                <MenuItem disabled>No vehicles available</MenuItem>
+              ) : (
+                vehicles.map((vehicle) => (
+                  <MenuItem key={vehicle._id || vehicle.id} value={vehicle._id || vehicle.id}>
+                    {vehicle.licensePlate} - {vehicle.make} {vehicle.model}
+                  </MenuItem>
+                ))
+              )}
+            </Select>
+            {formErrors.vehicleId && (
+              <Typography variant="caption" color="error">
+                {formErrors.vehicleId}
+              </Typography>
+            )}
+          </FormControl>
         </Grid>
         <Grid item xs={12} sm={6}>
           <FormControl fullWidth required>
             <InputLabel>Status</InputLabel>
             <Select
               name="status"
-              value={currentTask.status}
+              value={currentRecord.status}
               onChange={handleSelectChange}
               label="Status"
             >
@@ -520,7 +436,7 @@ const Maintenance: React.FC = () => {
             <InputLabel>Priority</InputLabel>
             <Select
               name="priority"
-              value={currentTask.priority}
+              value={currentRecord.priority}
               onChange={handleSelectChange}
               label="Priority"
             >
@@ -533,71 +449,12 @@ const Maintenance: React.FC = () => {
         <Grid item xs={12} sm={6}>
           <TextField
             fullWidth
-            label="Last Service Date"
-            name="lastServiceDate"
-            type="date"
-            value={currentTask.lastServiceDate}
+            label="Service Type"
+            name="serviceType"
+            value={currentRecord.serviceType}
             onChange={handleInputChange}
-            InputLabelProps={{ shrink: true }}
-            required
-          />
-        </Grid>
-        <Grid item xs={12} sm={6}>
-          <TextField
-            fullWidth
-            label="Current Mileage"
-            name="mileage"
-            type="number"
-            value={currentTask.mileage}
-            onChange={handleInputChange}
-            error={!!formErrors.mileage}
-            helperText={formErrors.mileage}
-            required
-            InputProps={{ inputProps: { min: 0 } }}
-          />
-        </Grid>
-        <Grid item xs={12} sm={6}>
-          <TextField
-            fullWidth
-            label="Next Service Mileage"
-            name="nextServiceMileage"
-            type="number"
-            value={currentTask.nextServiceMileage}
-            onChange={handleInputChange}
-            error={!!formErrors.nextServiceMileage}
-            helperText={formErrors.nextServiceMileage}
-            required
-            InputProps={{ inputProps: { min: 0 } }}
-          />
-        </Grid>
-      </Grid>
-    </>
-  );
-
-  const renderServiceForm = () => (
-    <>
-      <Grid container spacing={2}>
-        <Grid item xs={12} sm={6}>
-          <TextField
-            fullWidth
-            label="Vehicle"
-            name="vehicle"
-            value={currentService.vehicle}
-            onChange={handleInputChange}
-            error={!!formErrors.vehicle}
-            helperText={formErrors.vehicle}
-            required
-          />
-        </Grid>
-        <Grid item xs={12} sm={6}>
-          <TextField
-            fullWidth
-            label="Service"
-            name="service"
-            value={currentService.service}
-            onChange={handleInputChange}
-            error={!!formErrors.service}
-            helperText={formErrors.service}
+            error={!!formErrors.serviceType}
+            helperText={formErrors.serviceType}
             required
           />
         </Grid>
@@ -607,7 +464,7 @@ const Maintenance: React.FC = () => {
             label="Date"
             name="date"
             type="date"
-            value={currentService.date}
+            value={currentRecord.date}
             onChange={handleInputChange}
             InputLabelProps={{ shrink: true }}
             required
@@ -619,7 +476,7 @@ const Maintenance: React.FC = () => {
             label="Mileage"
             name="mileage"
             type="number"
-            value={currentService.mileage}
+            value={currentRecord.mileage}
             onChange={handleInputChange}
             error={!!formErrors.mileage}
             helperText={formErrors.mileage}
@@ -633,7 +490,7 @@ const Maintenance: React.FC = () => {
             label="Cost ($)"
             name="cost"
             type="number"
-            value={currentService.cost}
+            value={currentRecord.cost}
             onChange={handleInputChange}
             error={!!formErrors.cost}
             helperText={formErrors.cost}
@@ -646,7 +503,7 @@ const Maintenance: React.FC = () => {
             fullWidth
             label="Technician"
             name="technician"
-            value={currentService.technician}
+            value={currentRecord.technician}
             onChange={handleInputChange}
             error={!!formErrors.technician}
             helperText={formErrors.technician}
@@ -658,7 +515,7 @@ const Maintenance: React.FC = () => {
             fullWidth
             label="Notes"
             name="notes"
-            value={currentService.notes}
+            value={currentRecord.notes}
             onChange={handleInputChange}
             multiline
             rows={3}
@@ -667,6 +524,29 @@ const Maintenance: React.FC = () => {
       </Grid>
     </>
   );
+
+  const fetchRecordsByServiceType = async (serviceType: string) => {
+    setIsLoading(true);
+    try {
+      const response = await axios.get(getApiUrl(`${API_CONFIG.ENDPOINTS.MAINTENANCE}/service/${serviceType}`));
+      console.log('Fetched records by service type:', response.data);
+      setMaintenanceRecords(response.data);
+    } catch (error) {
+      console.error('Error fetching records by service type:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to fetch records by service type',
+        severity: 'error'
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getVehicleInfo = (vehicleId: string) => {
+    const vehicle = vehicles.find(v => (v._id || v.id) === vehicleId);
+    return vehicle ? `${vehicle.licensePlate} - ${vehicle.make} ${vehicle.model}` : 'N/A';
+  };
 
   return (
     <Box>
@@ -684,22 +564,36 @@ const Maintenance: React.FC = () => {
               variant="contained"
               color="primary"
               startIcon={<Add />}
-              onClick={handleAddTask}
+              onClick={handleAddRecord}
             >
-              Add Task
+              Add Record
             </Button>
           </Box>
-          <Grid container spacing={3}>
-            {maintenanceTasks.map((task) => (
-              <Grid item key={task.id} xs={12} sm={6} md={4}>
-                <MaintenanceCard
-                  task={task}
-                  onEdit={handleEditTask}
-                  onDelete={handleDeleteTaskConfirm}
-                />
-              </Grid>
-            ))}
-          </Grid>
+          {isLoading ? (
+            <Box sx={{ width: '100%', mt: 2 }}>
+              <LinearProgress />
+            </Box>
+          ) : (
+            <Grid container spacing={3}>
+              {maintenanceRecords.map((record) => (
+                <Grid item key={record._id} xs={12} sm={6} md={4}>
+                  <MaintenanceCard
+                    record={record}
+                    vehicles={vehicles}
+                    onEdit={handleEditRecord}
+                    onDelete={handleDeleteConfirm}
+                  />
+                </Grid>
+              ))}
+              {maintenanceRecords.length === 0 && (
+                <Grid item xs={12}>
+                  <Typography variant="body1" color="textSecondary" align="center">
+                    No maintenance records found
+                  </Typography>
+                </Grid>
+              )}
+            </Grid>
+          )}
         </Grid>
 
         <Grid item xs={12}>
@@ -707,14 +601,12 @@ const Maintenance: React.FC = () => {
             <Typography variant="h5" gutterBottom>
               Service History
             </Typography>
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<Add />}
-              onClick={handleAddService}
-            >
-              Add Service Record
-            </Button>
+            {costStats && (
+              <Typography variant="body1">
+                Total Cost: ${typeof costStats.totalCost === 'number' ? costStats.totalCost.toFixed(2) : Number(costStats.totalCost).toFixed(2)} | 
+                Average Cost: ${typeof costStats.averageCost === 'number' ? costStats.averageCost.toFixed(2) : Number(costStats.averageCost).toFixed(2)}
+              </Typography>
+            )}
           </Box>
           <TableContainer component={Paper}>
             <Table>
@@ -731,114 +623,70 @@ const Maintenance: React.FC = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {serviceHistory.map((service) => (
-                  <TableRow key={service.id}>
-                    <TableCell>{service.vehicle}</TableCell>
-                    <TableCell>{service.service}</TableCell>
-                    <TableCell>{service.date}</TableCell>
-                    <TableCell>{service.mileage}</TableCell>
-                    <TableCell>${service.cost}</TableCell>
-                    <TableCell>{service.technician}</TableCell>
-                    <TableCell>{service.notes}</TableCell>
+                {maintenanceRecords.map((record) => (
+                  <TableRow key={record._id}>
+                    <TableCell>{getVehicleInfo(record.vehicleId)}</TableCell>
+                    <TableCell>{record.serviceType}</TableCell>
+                    <TableCell>{record.date}</TableCell>
+                    <TableCell>{record.mileage}</TableCell>
                     <TableCell>
-                      <IconButton size="small" onClick={() => handleDeleteServiceConfirm(service.id)}>
+                      ${typeof record.cost === 'number' ? record.cost.toFixed(2) : Number(record.cost).toFixed(2)}
+                    </TableCell>
+                    <TableCell>{record.technician}</TableCell>
+                    <TableCell>{record.notes}</TableCell>
+                    <TableCell>
+                      <IconButton size="small" onClick={() => handleEditRecord(record)}>
+                        <Edit />
+                      </IconButton>
+                      <IconButton size="small" onClick={() => handleDeleteConfirm(record._id || '')}>
                         <Delete />
                       </IconButton>
                     </TableCell>
                   </TableRow>
                 ))}
+                {maintenanceRecords.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={8} align="center">
+                      No maintenance records found
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </TableContainer>
         </Grid>
       </Grid>
 
-      {/* Add Task Dialog */}
-      <Dialog open={openAddTaskDialog} onClose={handleCloseTaskDialog} maxWidth="md" fullWidth>
+      {/* Add Record Dialog */}
+      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
         <DialogTitle>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="h6">Add Maintenance Task</Typography>
-            <IconButton edge="end" color="inherit" onClick={handleCloseTaskDialog} aria-label="close">
+            <Typography variant="h6">Add Maintenance Record</Typography>
+            <IconButton edge="end" color="inherit" onClick={handleCloseDialog} aria-label="close">
               <Close />
             </IconButton>
           </Box>
         </DialogTitle>
         <DialogContent dividers>
-          {renderTaskForm()}
+          {renderRecordForm()}
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseTaskDialog}>Cancel</Button>
-          <Button onClick={handleSaveTask} variant="contained" color="primary">
-            Add Task
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Edit Task Dialog */}
-      <Dialog open={openEditTaskDialog} onClose={handleCloseTaskDialog} maxWidth="md" fullWidth>
-        <DialogTitle>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="h6">Edit Maintenance Task</Typography>
-            <IconButton edge="end" color="inherit" onClick={handleCloseTaskDialog} aria-label="close">
-              <Close />
-            </IconButton>
-          </Box>
-        </DialogTitle>
-        <DialogContent dividers>
-          {renderTaskForm()}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseTaskDialog}>Cancel</Button>
-          <Button onClick={handleSaveTask} variant="contained" color="primary">
-            Save Changes
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Add Service Record Dialog */}
-      <Dialog open={openAddServiceDialog} onClose={handleCloseServiceDialog} maxWidth="md" fullWidth>
-        <DialogTitle>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="h6">Add Service Record</Typography>
-            <IconButton edge="end" color="inherit" onClick={handleCloseServiceDialog} aria-label="close">
-              <Close />
-            </IconButton>
-          </Box>
-        </DialogTitle>
-        <DialogContent dividers>
-          {renderServiceForm()}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseServiceDialog}>Cancel</Button>
-          <Button onClick={handleSaveService} variant="contained" color="primary">
+          <Button onClick={handleCloseDialog}>Cancel</Button>
+          <Button onClick={handleSaveRecord} variant="contained" color="primary">
             Add Record
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Delete Task Confirmation Dialog */}
-      <Dialog open={deleteTaskConfirmOpen} onClose={() => setDeleteTaskConfirmOpen(false)}>
+      {/* Delete Record Confirmation Dialog */}
+      <Dialog open={deleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)}>
         <DialogTitle>Confirm Delete</DialogTitle>
         <DialogContent>
-          <Typography>Are you sure you want to delete this maintenance task? This action cannot be undone.</Typography>
+          <Typography>Are you sure you want to delete this maintenance record? This action cannot be undone.</Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteTaskConfirmOpen(false)}>Cancel</Button>
-          <Button onClick={handleDeleteTask} color="error" variant="contained">
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Delete Service Confirmation Dialog */}
-      <Dialog open={deleteServiceConfirmOpen} onClose={() => setDeleteServiceConfirmOpen(false)}>
-        <DialogTitle>Confirm Delete</DialogTitle>
-        <DialogContent>
-          <Typography>Are you sure you want to delete this service record? This action cannot be undone.</Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteServiceConfirmOpen(false)}>Cancel</Button>
-          <Button onClick={handleDeleteService} color="error" variant="contained">
+          <Button onClick={() => setDeleteConfirmOpen(false)}>Cancel</Button>
+          <Button onClick={handleDeleteRecord} color="error" variant="contained">
             Delete
           </Button>
         </DialogActions>

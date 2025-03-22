@@ -1,17 +1,12 @@
 export const API_CONFIG = {
   BASE_URL: 'http://localhost:5000/api',
   ENDPOINTS: {
-    DRIVERS: '/drivers',
-    VEHICLES: '/vehicles',
     MAINTENANCE: '/maintenance',
+    VEHICLES: '/vehicles',
     FUEL: '/fuel',
-    COSTS: '/costs',
     CONTRACTS: '/contracts',
-    REPORTS: '/reports',
-    COMPLIANCE: '/compliance'
+    DRIVERS: '/drivers'
   }
 };
 
-export const getApiUrl = (endpoint: string): string => {
-  return `${API_CONFIG.BASE_URL}${endpoint}`;
-}; 
+export const getApiUrl = (endpoint: string) => `${API_CONFIG.BASE_URL}${endpoint}`; 
