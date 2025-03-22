@@ -1,6 +1,7 @@
 // Vehicle related interfaces
 export interface Vehicle {
-  id: string;
+  _id?: string;
+  id?: string;
   make: string;
   model: string;
   year: number;

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Box, 
   Typography, 
@@ -35,20 +35,26 @@ import {
   Edit,
   Delete,
   Close,
- } from '@mui/icons-material';
+} from '@mui/icons-material';
 import { ResponsiveLine } from '@nivo/line';
+import { DatePicker } from '@mui/x-date-pickers';
+import moment from 'moment';
+import axios, { AxiosError } from 'axios';
+import { API_CONFIG, getApiUrl } from '../../config/api';
+import { Vehicle } from '../../types';
 
 // Define FuelRecord interface
 interface FuelRecord {
-  id: number;
-  vehicle: string;
+  _id: string;
+  vehicleId: string;
   date: string;
   amount: number;
   cost: number;
+  odometer: number;
+  fuelType: string;
+  fuelEfficiency: number;
+  notes: string;
   location: string;
-  efficiency: number;
-  status: 'Normal' | 'Warning';
-  odometer?: number;
 }
 
 // Mock data for fuel consumption
@@ -69,74 +75,124 @@ const fuelData = [
 // Mock data for fuel records
 const initialFuelRecords: FuelRecord[] = [
   {
-    id: 1,
-    vehicle: 'Truck 001',
+    _id: '1',
+    vehicleId: 'Truck 001',
     date: '2024-03-19',
     amount: 50,
     cost: 150,
-    location: 'Gas Station A',
-    efficiency: 8.5,
-    status: 'Normal',
-    odometer: 15000
+    odometer: 15000,
+    fuelType: 'gasoline',
+    fuelEfficiency: 8.5,
+    notes: '',
+    location: 'Gas Station A'
   },
   {
-    id: 2,
-    vehicle: 'Van 002',
+    _id: '2',
+    vehicleId: 'Van 002',
     date: '2024-03-19',
     amount: 30,
     cost: 90,
-    location: 'Gas Station B',
-    efficiency: 7.8,
-    status: 'Warning',
-    odometer: 22000
+    odometer: 22000,
+    fuelType: 'gasoline',
+    fuelEfficiency: 7.8,
+    notes: '',
+    location: 'Gas Station B'
   },
   {
-    id: 3,
-    vehicle: 'Truck 003',
+    _id: '3',
+    vehicleId: 'Truck 003',
     date: '2024-03-18',
     amount: 45,
     cost: 135,
-    location: 'Gas Station A',
-    efficiency: 8.2,
-    status: 'Normal',
-    odometer: 18500
+    odometer: 18500,
+    fuelType: 'gasoline',
+    fuelEfficiency: 8.2,
+    notes: '',
+    location: 'Gas Station A'
   }
 ];
 
-// Empty fuel record template
+// Empty fuel record template with default _id
 const emptyFuelRecord: FuelRecord = {
-  id: 0,
-  vehicle: '',
-  date: new Date().toISOString().split('T')[0],
+  _id: '',  // Add empty string as default
+  vehicleId: '',
+  date: moment().format('YYYY-MM-DD'),
   amount: 0,
   cost: 0,
-  location: '',
-  efficiency: 0,
-  status: 'Normal',
-  odometer: 0
+  odometer: 0,
+  fuelType: 'gasoline',
+  fuelEfficiency: 0,
+  notes: '',
+  location: ''
 };
+
+interface ErrorResponse {
+  message: string;
+}
 
 const FuelManagement: React.FC = () => {
   const [fuelRecords, setFuelRecords] = useState<FuelRecord[]>(initialFuelRecords);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [currentRecord, setCurrentRecord] = useState<FuelRecord>(emptyFuelRecord);
   const [openAddDialog, setOpenAddDialog] = useState(false);
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [recordToDelete, setRecordToDelete] = useState<number>(0);
+  const [recordToDelete, setRecordToDelete] = useState<string>('');
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
     severity: 'success' as 'success' | 'error' | 'info' | 'warning',
   });
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    fetchFuelRecords();
+    fetchVehicles();
+  }, []);
+
+  const fetchFuelRecords = async () => {
+    try {
+      const response = await axios.get(getApiUrl(API_CONFIG.ENDPOINTS.FUEL));
+
+      debugger;
+      setFuelRecords(response.data);
+    } catch (error) {
+      console.error('Error fetching fuel records:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to fetch fuel records',
+        severity: 'error'
+      });
+    }
+  };
+
+  const fetchVehicles = async () => {
+    setIsLoading(true);
+    try {
+      const response = await axios.get<Vehicle[]>(getApiUrl(API_CONFIG.ENDPOINTS.VEHICLES));
+      console.log('Fetched vehicles:', response.data); // Debug log
+      setVehicles(response.data);
+    } catch (error) {
+      const axiosError = error as AxiosError;
+      console.error('Error fetching vehicles:', axiosError);
+      setSnackbar({
+        open: true,
+        message: 'Failed to fetch vehicles. Please try again later.',
+        severity: 'error'
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Calculate stats from fuel records
   const totalFuelCost = fuelRecords.reduce((sum, record) => sum + record.cost, 0);
-  const avgEfficiency = fuelRecords.reduce((sum, record) => sum + record.efficiency, 0) / fuelRecords.length;
-  const totalEfficiencyAlerts = fuelRecords.filter(record => record.status === 'Warning').length;
+  const avgEfficiency = fuelRecords.reduce((sum, record) => sum + record.fuelEfficiency, 0) / fuelRecords.length;
+  const totalEfficiencyAlerts = fuelRecords.filter(record => record.fuelEfficiency < 8).length;
   
   const handleAddRecord = () => {
-    setCurrentRecord({ ...emptyFuelRecord });
+    setCurrentRecord(emptyFuelRecord);
     setFormErrors({});
     setOpenAddDialog(true);
   };
@@ -147,19 +203,33 @@ const FuelManagement: React.FC = () => {
     setOpenEditDialog(true);
   };
 
-  const handleDeleteConfirm = (id: number) => {
+  const handleDeleteConfirm = (id: string) => {
     setRecordToDelete(id);
     setDeleteConfirmOpen(true);
   };
 
-  const handleDeleteRecord = () => {
-    setFuelRecords(fuelRecords.filter(record => record.id !== recordToDelete));
-    setDeleteConfirmOpen(false);
-    setSnackbar({
-      open: true,
-      message: 'Fuel record deleted successfully',
-      severity: 'success',
-    });
+  const handleDeleteRecord = async () => {
+    try {
+      console.log('Deleting record:', recordToDelete);
+      await axios.delete(getApiUrl(`${API_CONFIG.ENDPOINTS.FUEL}/${recordToDelete}`));
+      setSnackbar({
+        open: true,
+        message: 'Fuel record deleted successfully',
+        severity: 'success'
+      });
+      await fetchFuelRecords(); // Refresh the records
+    } catch (error) {
+      const axiosError = error as AxiosError<ErrorResponse>;
+      console.error('Error deleting fuel record:', axiosError);
+      console.error('Error details:', axiosError.response?.data);
+      setSnackbar({
+        open: true,
+        message: axiosError.response?.data?.message || 'Failed to delete fuel record',
+        severity: 'error'
+      });
+    } finally {
+      setDeleteConfirmOpen(false);
+    }
   };
 
   const handleCloseDialog = () => {
@@ -170,12 +240,25 @@ const FuelManagement: React.FC = () => {
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
     
-    if (!currentRecord.vehicle.trim()) errors.vehicle = 'Vehicle is required';
+    // Required field validations
+    if (!currentRecord.vehicleId.trim()) errors.vehicleId = 'Vehicle is required';
     if (!currentRecord.location.trim()) errors.location = 'Location is required';
+    if (!currentRecord.date) errors.date = 'Date is required';
+    
+    // Numeric validations
     if (currentRecord.amount <= 0) errors.amount = 'Amount must be greater than 0';
     if (currentRecord.cost <= 0) errors.cost = 'Cost must be greater than 0';
-    if (currentRecord.efficiency <= 0) errors.efficiency = 'Efficiency must be greater than 0';
-    if (currentRecord.odometer && currentRecord.odometer < 0) errors.odometer = 'Odometer cannot be negative';
+    if (currentRecord.odometer < 0) errors.odometer = 'Odometer cannot be negative';
+    
+    // Fuel type validation
+    if (!['gasoline', 'diesel', 'electric', 'hybrid'].includes(currentRecord.fuelType)) {
+      errors.fuelType = 'Invalid fuel type';
+    }
+    
+    // Date validation
+    if (moment(currentRecord.date).isAfter(moment())) {
+      errors.date = 'Date cannot be in the future';
+    }
     
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -193,40 +276,76 @@ const FuelManagement: React.FC = () => {
 
   const handleSelectChange = (e: SelectChangeEvent) => {
     const { name, value } = e.target;
-    setCurrentRecord({
-      ...currentRecord,
-      [name]: value,
-    });
+    console.log('Select change:', name, value); // Debug log
+    setCurrentRecord(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
-  const handleSaveRecord = () => {
-    if (!validateForm()) return;
-    
-    if (openAddDialog) {
-      // Add new record
-      const newRecord = {
-        ...currentRecord,
-        id: Math.max(...fuelRecords.map(record => record.id), 0) + 1,
-      };
-      setFuelRecords([...fuelRecords, newRecord]);
-      setSnackbar({
-        open: true,
-        message: 'Fuel record added successfully',
-        severity: 'success',
-      });
-    } else {
-      // Update existing record
-      setFuelRecords(fuelRecords.map(record => 
-        record.id === currentRecord.id ? currentRecord : record
-      ));
-      setSnackbar({
-        open: true,
-        message: 'Fuel record updated successfully',
-        severity: 'success',
-      });
+  const handleDateChange = (date: moment.Moment | null) => {
+    setCurrentRecord(prev => ({
+      ...prev,
+      date: date ? date.format('YYYY-MM-DD') : moment().format('YYYY-MM-DD')
+    }));
+  };
+
+  const handleSaveRecord = async () => {
+    if (!validateForm()) {
+      console.log('Form validation failed:', formErrors);
+      return;
     }
     
-    handleCloseDialog();
+    // Calculate fuel efficiency (miles per gallon)
+    const fuelEfficiency = currentRecord.odometer > 0 && currentRecord.amount > 0 
+      ? currentRecord.odometer / currentRecord.amount 
+      : 0;
+
+    try {
+      if (openAddDialog) {
+        // Add new record - remove _id field for new records
+        const { _id, ...recordToSave } = {
+          ...currentRecord,
+          fuelEfficiency,
+        };
+        
+        console.log('Adding new record to:', getApiUrl(API_CONFIG.ENDPOINTS.FUEL));
+        const response = await axios.post(getApiUrl(API_CONFIG.ENDPOINTS.FUEL), recordToSave);
+        console.log('Add response:', response.data);
+        setSnackbar({
+          open: true,
+          message: 'Fuel record added successfully',
+          severity: 'success'
+        });
+      } else {
+        // Update existing record - keep _id field for updates
+        const recordToSave = {
+          ...currentRecord,
+          fuelEfficiency,
+        };
+        
+        console.log('Updating record at:', getApiUrl(`${API_CONFIG.ENDPOINTS.FUEL}/${currentRecord._id}`));
+        const response = await axios.put(getApiUrl(`${API_CONFIG.ENDPOINTS.FUEL}/${currentRecord._id}`), recordToSave);
+        console.log('Update response:', response.data);
+        setSnackbar({
+          open: true,
+          message: 'Fuel record updated successfully',
+          severity: 'success'
+        });
+      }
+      
+      await fetchFuelRecords(); // Refresh the records
+      handleCloseDialog();
+    } catch (error) {
+      const axiosError = error as AxiosError<ErrorResponse>;
+      console.error('Error saving fuel record:', axiosError);
+      console.error('Error details:', axiosError.response?.data);
+      setSnackbar({
+        open: true,
+        message: axiosError.response?.data?.message || 'Failed to save fuel record',
+        severity: 'error'
+      });
+    }
   };
 
   const closeSnackbar = () => {
@@ -237,33 +356,48 @@ const FuelManagement: React.FC = () => {
     <>
       <Grid container spacing={2}>
         <Grid item xs={12} sm={6}>
-          <TextField
-            fullWidth
-            label="Vehicle"
-            name="vehicle"
-            value={currentRecord.vehicle}
-            onChange={handleInputChange}
-            error={!!formErrors.vehicle}
-            helperText={formErrors.vehicle}
-            required
-          />
+          <FormControl fullWidth error={!!formErrors.vehicleId}>
+            <InputLabel id="vehicle-select-label">Vehicle</InputLabel>
+            <Select
+              labelId="vehicle-select-label"
+              label="Vehicle"
+              name="vehicleId"
+              value={currentRecord.vehicleId}
+              onChange={handleSelectChange}
+              required
+              disabled={isLoading}
+            >
+              {vehicles.length === 0 && isLoading ? (
+                <MenuItem disabled>Loading vehicles...</MenuItem>
+              ) : vehicles.length === 0 ? (
+                <MenuItem disabled>No vehicles available</MenuItem>
+              ) : (
+                vehicles.map((vehicle) => (
+                  <MenuItem key={vehicle._id || vehicle.id} value={vehicle._id || vehicle.id}>
+                    {vehicle.licensePlate} - {vehicle.make} {vehicle.model}
+                  </MenuItem>
+                ))
+              )}
+            </Select>
+            {formErrors.vehicleId && (
+              <Typography variant="caption" color="error">
+                {formErrors.vehicleId}
+              </Typography>
+            )}
+          </FormControl>
         </Grid>
         <Grid item xs={12} sm={6}>
-          <TextField
-            fullWidth
+          <DatePicker
             label="Date"
-            name="date"
-            type="date"
-            value={currentRecord.date}
-            onChange={handleInputChange}
-            InputLabelProps={{ shrink: true }}
-            required
+            value={moment(currentRecord.date)}
+            onChange={handleDateChange}
+            slotProps={{ textField: { fullWidth: true } }}
           />
         </Grid>
         <Grid item xs={12} sm={6}>
           <TextField
             fullWidth
-            label="Amount (gal)"
+            label="Amount (L)"
             name="amount"
             type="number"
             value={currentRecord.amount}
@@ -291,6 +425,36 @@ const FuelManagement: React.FC = () => {
         <Grid item xs={12} sm={6}>
           <TextField
             fullWidth
+            label="Odometer"
+            name="odometer"
+            type="number"
+            value={currentRecord.odometer}
+            onChange={handleInputChange}
+            error={!!formErrors.odometer}
+            helperText={formErrors.odometer}
+            InputProps={{ inputProps: { min: 0 } }}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            label="Fuel Type"
+            name="fuelType"
+            value={currentRecord.fuelType}
+            onChange={handleInputChange}
+            error={!!formErrors.fuelType}
+            helperText={formErrors.fuelType}
+            required
+          >
+            <MenuItem value="gasoline">Gasoline</MenuItem>
+            <MenuItem value="diesel">Diesel</MenuItem>
+            <MenuItem value="electric">Electric</MenuItem>
+            <MenuItem value="hybrid">Hybrid</MenuItem>
+          </TextField>
+        </Grid>
+        <Grid item xs={12}>
+          <TextField
+            fullWidth
             label="Location"
             name="location"
             value={currentRecord.location}
@@ -300,45 +464,15 @@ const FuelManagement: React.FC = () => {
             required
           />
         </Grid>
-        <Grid item xs={12} sm={6}>
+        <Grid item xs={12}>
           <TextField
             fullWidth
-            label="Efficiency (mpg)"
-            name="efficiency"
-            type="number"
-            value={currentRecord.efficiency}
+            label="Notes"
+            name="notes"
+            multiline
+            rows={3}
+            value={currentRecord.notes}
             onChange={handleInputChange}
-            error={!!formErrors.efficiency}
-            helperText={formErrors.efficiency}
-            required
-            InputProps={{ inputProps: { min: 0, step: 0.1 } }}
-          />
-        </Grid>
-        <Grid item xs={12} sm={6}>
-          <FormControl fullWidth required>
-            <InputLabel>Status</InputLabel>
-            <Select
-              name="status"
-              value={currentRecord.status}
-              onChange={handleSelectChange}
-              label="Status"
-            >
-              <MenuItem value="Normal">Normal</MenuItem>
-              <MenuItem value="Warning">Warning</MenuItem>
-            </Select>
-          </FormControl>
-        </Grid>
-        <Grid item xs={12} sm={6}>
-          <TextField
-            fullWidth
-            label="Odometer Reading"
-            name="odometer"
-            type="number"
-            value={currentRecord.odometer}
-            onChange={handleInputChange}
-            error={!!formErrors.odometer}
-            helperText={formErrors.odometer}
-            InputProps={{ inputProps: { min: 0 } }}
           />
         </Grid>
       </Grid>
@@ -465,45 +599,31 @@ const FuelManagement: React.FC = () => {
                   <TableRow>
                     <TableCell>Vehicle</TableCell>
                     <TableCell>Date</TableCell>
-                    <TableCell>Amount (gal)</TableCell>
+                    <TableCell>Amount (L)</TableCell>
                     <TableCell>Cost ($)</TableCell>
+                    <TableCell>Odometer</TableCell>
+                    <TableCell>Fuel Type</TableCell>
                     <TableCell>Location</TableCell>
-                    <TableCell>Efficiency (mpg)</TableCell>
-                    <TableCell>Status</TableCell>
                     <TableCell>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {fuelRecords.map((record) => (
-                    <TableRow key={record.id}>
-                      <TableCell>{record.vehicle}</TableCell>
-                      <TableCell>{record.date}</TableCell>
+                    <TableRow key={record._id}>
+                      <TableCell>
+                        {vehicles.find(v => (v._id || v.id) === record.vehicleId)?.licensePlate || 'N/A'}
+                      </TableCell>
+                      <TableCell>{moment(record.date).format('YYYY-MM-DD')}</TableCell>
                       <TableCell>{record.amount}</TableCell>
                       <TableCell>{record.cost}</TableCell>
+                      <TableCell>{record.odometer}</TableCell>
+                      <TableCell>{record.fuelType}</TableCell>
                       <TableCell>{record.location}</TableCell>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          {record.efficiency}
-                          <LinearProgress
-                            variant="determinate"
-                            value={(record.efficiency / 10) * 100}
-                            sx={{ width: 50, height: 6, borderRadius: 3 }}
-                            color={record.status === 'Warning' ? 'warning' : 'success'}
-                          />
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Typography
-                          color={record.status === 'Warning' ? 'warning.main' : 'success.main'}
-                        >
-                          {record.status}
-                        </Typography>
-                      </TableCell>
                       <TableCell>
                         <IconButton size="small" onClick={() => handleEditRecord(record)}>
                           <Edit />
                         </IconButton>
-                        <IconButton size="small" onClick={() => handleDeleteConfirm(record.id)}>
+                        <IconButton size="small" onClick={() => handleDeleteConfirm(record._id)}>
                           <Delete />
                         </IconButton>
                       </TableCell>

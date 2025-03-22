@@ -1,170 +1,48 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import {
-  AppBar,
-  Box,
-  CssBaseline,
-  Drawer,
-  IconButton,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  Toolbar,
-  Typography,
-  useTheme,
-  useMediaQuery,
-} from '@mui/material';
-import {
-  Menu as MenuIcon,
-  DirectionsCar,
-  Person,
-  LocationOn,
-  Build,
-  LocalGasStation,
-  AttachMoney,
-  Assessment,
-  Security,
-  Settings,
-} from '@mui/icons-material';
+import { Routes, Route } from 'react-router-dom';
+import { useTheme, useMediaQuery } from '@mui/material';
+import Navigation from '../Navigation/Navigation';
+import VehicleManagement from '../../pages/VehicleManagement/VehicleManagement';
+import DriverManagement from '../../pages/DriverManagement';
+import Maintenance from '../../pages/Maintenance';
+import Reports from '../../pages/Reports';
+import Settings from '../../pages/Settings';
+import Tracking from '../../pages/Tracking/Tracking';
+import FuelManagement from '../../pages/FuelManagement/FuelManagement';
+import CostManagement from '../../pages/CostManagement/CostManagement';
+import Compliance from '../../pages/Compliance/Compliance';
+import ContractManagement from '../../pages/ContractManagement/ContractManagement';
+import DatabaseTest from '../../pages/DatabaseTest';
 
-const drawerWidth = 240;
-
-interface LayoutProps {
-  children: React.ReactNode;
-}
-
-interface MenuItem {
-  text: string;
-  icon: React.ReactElement;
-  path: string;
-}
-
-const menuItems: MenuItem[] = [
-  { text: 'Vehicle Management', icon: <DirectionsCar />, path: '/' },
-  { text: 'Driver Management', icon: <Person />, path: '/drivers' },
-  { text: 'Real-Time Tracking', icon: <LocationOn />, path: '/tracking' },
-  { text: 'Maintenance', icon: <Build />, path: '/maintenance' },
-  { text: 'Fuel Management', icon: <LocalGasStation />, path: '/fuel' },
-  { text: 'Cost Management', icon: <AttachMoney />, path: '/costs' },
-  { text: 'Reports', icon: <Assessment />, path: '/reports' },
-  { text: 'Compliance', icon: <Security />, path: '/compliance' },
-  { text: 'Settings', icon: <Settings />, path: '/settings' },
-];
-
-const Layout: React.FC<LayoutProps> = ({ children }) => {
+const Layout: React.FC = () => {
   const theme = useTheme();
-  const navigate = useNavigate();
-  const location = useLocation();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const handleDrawerToggle = () => {
-    setMobileOpen(!mobileOpen);
+    setIsDrawerOpen(!isDrawerOpen);
   };
 
-  const drawer = (
-    <div>
-      <Toolbar>
-        <Typography variant="h6" noWrap component="div">
-          Fleet Manager
-        </Typography>
-      </Toolbar>
-      <List>
-        {menuItems.map((item) => (
-          <ListItem
-            button
-            key={item.text}
-            onClick={() => {
-              navigate(item.path);
-              if (isMobile) {
-                handleDrawerToggle();
-              }
-            }}
-            selected={location.pathname === item.path}
-          >
-            <ListItemIcon>{item.icon}</ListItemIcon>
-            <ListItemText primary={item.text} />
-          </ListItem>
-        ))}
-      </List>
-    </div>
-  );
-
   return (
-    <Box sx={{ display: 'flex' }}>
-      <CssBaseline />
-      <AppBar
-        position="fixed"
-        sx={{
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
-          ml: { sm: `${drawerWidth}px` },
-        }}
-      >
-        <Toolbar>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { sm: 'none' } }}
-          >
-            <MenuIcon />
-          </IconButton>
-          <Typography variant="h6" noWrap component="div">
-            {menuItems.find((item) => item.path === location.pathname)?.text || 'Fleet Manager'}
-          </Typography>
-        </Toolbar>
-      </AppBar>
-      <Box
-        component="nav"
-        sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
-      >
-        {/* Mobile drawer */}
-        <Drawer
-          variant="temporary"
-          open={mobileOpen}
-          onClose={handleDrawerToggle}
-          ModalProps={{
-            keepMounted: true, // Better open performance on mobile.
-          }}
-          sx={{
-            display: { xs: 'block', sm: 'none' },
-            '& .MuiDrawer-paper': {
-              boxSizing: 'border-box',
-              width: drawerWidth,
-            },
-          }}
-        >
-          {drawer}
-        </Drawer>
-        {/* Desktop drawer */}
-        <Drawer
-          variant="permanent"
-          sx={{
-            display: { xs: 'none', sm: 'block' },
-            '& .MuiDrawer-paper': {
-              boxSizing: 'border-box',
-              width: drawerWidth,
-            },
-          }}
-          open
-        >
-          {drawer}
-        </Drawer>
-      </Box>
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          p: 3,
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
-        }}
-      >
-        <Toolbar /> {/* This toolbar is for spacing below the AppBar */}
-        {children}
-      </Box>
-    </Box>
+    <Navigation
+      isMobile={isMobile}
+      isDrawerOpen={isDrawerOpen}
+      handleDrawerToggle={handleDrawerToggle}
+    >
+      <Routes>
+        <Route path="/" element={<VehicleManagement />} />
+        <Route path="/drivers" element={<DriverManagement />} />
+        <Route path="/tracking" element={<Tracking />} />
+        <Route path="/maintenance" element={<Maintenance />} />
+        <Route path="/fuel" element={<FuelManagement />} />
+        <Route path="/costs" element={<CostManagement />} />
+        <Route path="/contracts" element={<ContractManagement />} />
+        <Route path="/reports" element={<Reports />} />
+        <Route path="/compliance" element={<Compliance />} />
+        <Route path="/settings" element={<Settings />} />
+        <Route path="/database-test" element={<DatabaseTest />} />
+      </Routes>
+    </Navigation>
   );
 };
 

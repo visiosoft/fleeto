@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Grid, Paper, List, ListItem, ListItemText, ListItemIcon, Chip } from '@mui/material';
+import { Box, Typography, Grid, Paper, List, ListItemButton, ListItemText, ListItemIcon, Chip } from '@mui/material';
 import { DirectionsCar, Speed, LocationOn, AccessTime } from '@mui/icons-material';
 
 // Mock data for tracked vehicles
@@ -64,7 +64,14 @@ const Tracking: React.FC = () => {
             </Typography>
             <List>
               {trackedVehicles.map((vehicle) => (
-                <ListItem key={vehicle.id} divider>
+                <ListItemButton
+                  key={vehicle.id}
+                  divider
+                  onClick={() => {
+                    // Handle click event
+                    console.log('Vehicle clicked:', vehicle.name);
+                  }}
+                >
                   <ListItemIcon>
                     <DirectionsCar color="primary" />
                   </ListItemIcon>
@@ -98,7 +105,7 @@ const Tracking: React.FC = () => {
                       </Box>
                     }
                   />
-                </ListItem>
+                </ListItemButton>
               ))}
             </List>
           </Paper>
