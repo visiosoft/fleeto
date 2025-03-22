@@ -37,13 +37,12 @@ import {
   Schedule,
 } from '@mui/icons-material';
 import axios, { AxiosError } from 'axios';
-import { API_CONFIG, getApiUrl } from '../../config/api';
+import { API_CONFIG, getApiUrl } from '../config/api';
 import moment from 'moment';
 
 interface Contract {
   _id?: string;
   companyName: string;
-  vehicleId: string;
   tradeLicenseNo: string;
   contractType: string;
   startDate: string;
@@ -56,24 +55,17 @@ interface Contract {
   notes: string;
 }
 
-interface Vehicle {
-  _id: string;
-  licensePlate: string;
-  make: string;
-  model: string;
-}
-
 interface ContractStats {
   totalContracts: number;
   activeContracts: number;
   expiringContracts: number;
   totalValue: number;
   averageValue: number;
+  contractsByStatus: Record<string, number>;
 }
 
 const emptyContract: Contract = {
   companyName: '',
-  vehicleId: '',
   tradeLicenseNo: '',
   contractType: '',
   startDate: moment().format('YYYY-MM-DD'),
@@ -84,38 +76,6 @@ const emptyContract: Contract = {
   contactEmail: '',
   contactPhone: '',
   notes: ''
-};
-
-const CONTRACT_STATUSES = [
-  'active',
-  'terminated',
-  'expired',
-  'draft',
-  'pending',
-  'suspended'
-];
-
-const calculateStats = (contracts: Contract[]): ContractStats => {
-  const now = moment();
-  const thirtyDaysFromNow = moment().add(30, 'days');
-
-  const stats: ContractStats = {
-    totalContracts: contracts.length,
-    activeContracts: contracts.filter(contract => 
-      contract.status === 'active' && 
-      moment(contract.endDate).isAfter(now)
-    ).length,
-    expiringContracts: contracts.filter(contract => 
-      contract.status === 'active' && 
-      moment(contract.endDate).isBetween(now, thirtyDaysFromNow)
-    ).length,
-    totalValue: contracts.reduce((sum, contract) => sum + Number(contract.value), 0),
-    averageValue: 0
-  };
-
-  stats.averageValue = stats.totalContracts > 0 ? stats.totalValue / stats.totalContracts : 0;
-
-  return stats;
 };
 
 const ContractManagement: React.FC = () => {
@@ -135,13 +95,12 @@ const ContractManagement: React.FC = () => {
     message: '',
     severity: 'success' as 'success' | 'error' | 'info' | 'warning',
   });
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
 
   useEffect(() => {
     fetchContracts();
     fetchCompanies();
-    fetchVehicles();
     fetchStatuses();
+    fetchStats();
     fetchExpiringContracts();
   }, []);
 
@@ -149,11 +108,7 @@ const ContractManagement: React.FC = () => {
     setIsLoading(true);
     try {
       const response = await axios.get(getApiUrl(API_CONFIG.ENDPOINTS.CONTRACTS));
-      console.log('Fetched contracts:', response.data);
       setContracts(response.data);
-      // Calculate and update stats when contracts are fetched
-      const calculatedStats = calculateStats(response.data);
-      setStats(calculatedStats);
     } catch (error) {
       console.error('Error fetching contracts:', error);
       setSnackbar({
@@ -169,7 +124,6 @@ const ContractManagement: React.FC = () => {
   const fetchCompanies = async () => {
     try {
       const response = await axios.get(getApiUrl(`${API_CONFIG.ENDPOINTS.CONTRACTS}/companies`));
-      console.log('Fetched companies:', response.data);
       setCompanies(response.data);
     } catch (error) {
       console.error('Error fetching companies:', error);
@@ -179,30 +133,27 @@ const ContractManagement: React.FC = () => {
   const fetchStatuses = async () => {
     try {
       const response = await axios.get(getApiUrl(`${API_CONFIG.ENDPOINTS.CONTRACTS}/statuses`));
-      console.log('Fetched statuses:', response.data);
       setStatuses(response.data);
     } catch (error) {
       console.error('Error fetching statuses:', error);
     }
   };
 
-  const fetchExpiringContracts = async () => {
+  const fetchStats = async () => {
     try {
-      const response = await axios.get(getApiUrl(`${API_CONFIG.ENDPOINTS.CONTRACTS}/expiring`));
-      console.log('Fetched expiring contracts:', response.data);
-      setExpiringContracts(response.data);
+      const response = await axios.get(getApiUrl(`${API_CONFIG.ENDPOINTS.CONTRACTS}/stats`));
+      setStats(response.data);
     } catch (error) {
-      console.error('Error fetching expiring contracts:', error);
+      console.error('Error fetching stats:', error);
     }
   };
 
-  const fetchVehicles = async () => {
+  const fetchExpiringContracts = async () => {
     try {
-      const response = await axios.get<Vehicle[]>(getApiUrl(API_CONFIG.ENDPOINTS.VEHICLES));
-      console.log('Fetched vehicles:', response.data);
-      setVehicles(response.data);
+      const response = await axios.get(getApiUrl(`${API_CONFIG.ENDPOINTS.CONTRACTS}/expiring`));
+      setExpiringContracts(response.data);
     } catch (error) {
-      console.error('Error fetching vehicles:', error);
+      console.error('Error fetching expiring contracts:', error);
     }
   };
 
@@ -214,9 +165,7 @@ const ContractManagement: React.FC = () => {
 
   const handleEditContract = async (contract: Contract) => {
     try {
-      console.log('Fetching contract details:', contract._id);
       const response = await axios.get(getApiUrl(`${API_CONFIG.ENDPOINTS.CONTRACTS}/${contract._id}`));
-      console.log('Contract details:', response.data);
       setCurrentContract(response.data);
       setFormErrors({});
       setOpenDialog(true);
@@ -237,9 +186,9 @@ const ContractManagement: React.FC = () => {
 
   const handleDeleteContract = async () => {
     try {
-      console.log('Deleting contract:', contractToDelete);
       await axios.delete(getApiUrl(`${API_CONFIG.ENDPOINTS.CONTRACTS}/${contractToDelete}`));
       await fetchContracts();
+      await fetchStats();
       setSnackbar({
         open: true,
         message: 'Contract deleted successfully',
@@ -264,12 +213,11 @@ const ContractManagement: React.FC = () => {
 
     setIsLoading(true);
     try {
-      let response;
       if (currentContract._id) {
         // Update existing contract
         const { _id, ...contractToUpdate } = currentContract;
         console.log('Updating contract:', contractToUpdate);
-        response = await axios.put(
+        const response = await axios.put(
           getApiUrl(`${API_CONFIG.ENDPOINTS.CONTRACTS}/${_id}`),
           contractToUpdate
         );
@@ -278,7 +226,7 @@ const ContractManagement: React.FC = () => {
         // Create new contract
         const { _id, ...contractToCreate } = currentContract;
         console.log('Creating contract:', contractToCreate);
-        response = await axios.post(
+        const response = await axios.post(
           getApiUrl(API_CONFIG.ENDPOINTS.CONTRACTS),
           contractToCreate
         );
@@ -286,6 +234,7 @@ const ContractManagement: React.FC = () => {
       }
 
       await fetchContracts();
+      await fetchStats();
       setSnackbar({
         open: true,
         message: `Contract ${currentContract._id ? 'updated' : 'created'} successfully`,
@@ -308,12 +257,12 @@ const ContractManagement: React.FC = () => {
 
   const handleUpdateStatus = async (contractId: string, newStatus: string) => {
     try {
-      console.log('Updating contract status:', { contractId, newStatus });
       await axios.patch(
         getApiUrl(`${API_CONFIG.ENDPOINTS.CONTRACTS}/${contractId}/status`),
         { status: newStatus }
       );
       await fetchContracts();
+      await fetchStats();
       setSnackbar({
         open: true,
         message: 'Contract status updated successfully',
@@ -337,21 +286,19 @@ const ContractManagement: React.FC = () => {
     const errors: Record<string, string> = {};
     
     if (!currentContract.companyName) errors.companyName = 'Company name is required';
-    if (!currentContract.vehicleId) errors.vehicleId = 'Vehicle is required';
     if (!currentContract.tradeLicenseNo) errors.tradeLicenseNo = 'Trade license number is required';
     if (!currentContract.contractType) errors.contractType = 'Contract type is required';
     if (!currentContract.startDate) errors.startDate = 'Start date is required';
     if (!currentContract.endDate) errors.endDate = 'End date is required';
     if (currentContract.value <= 0) errors.value = 'Value must be greater than 0';
     if (!currentContract.contactPerson) errors.contactPerson = 'Contact person is required';
+    if (!currentContract.contactEmail) errors.contactEmail = 'Contact email is required';
     if (!currentContract.contactPhone) errors.contactPhone = 'Contact phone is required';
     
-    // Validate email format only if email is provided
-    if (currentContract.contactEmail) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(currentContract.contactEmail)) {
-        errors.contactEmail = 'Invalid email format';
-      }
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (currentContract.contactEmail && !emailRegex.test(currentContract.contactEmail)) {
+      errors.contactEmail = 'Invalid email format';
     }
     
     // Validate dates
@@ -375,10 +322,10 @@ const ContractManagement: React.FC = () => {
 
   const handleSelectChange = (e: SelectChangeEvent) => {
     const { name, value } = e.target;
-    setCurrentContract(prev => ({
-      ...prev,
+    setCurrentContract({
+      ...currentContract,
       [name]: value,
-    }));
+    });
   };
 
   const closeSnackbar = () => {
@@ -403,35 +350,24 @@ const ContractManagement: React.FC = () => {
   const renderContractForm = () => (
     <Grid container spacing={2}>
       <Grid item xs={12} sm={6}>
-        <TextField
-          fullWidth
-          label="Company Name"
-          name="companyName"
-          value={currentContract.companyName}
-          onChange={handleInputChange}
-          error={!!formErrors.companyName}
-          helperText={formErrors.companyName}
-          required
-        />
-      </Grid>
-      <Grid item xs={12} sm={6}>
-        <FormControl fullWidth error={!!formErrors.vehicleId} required>
-          <InputLabel>Vehicle</InputLabel>
+        <FormControl fullWidth error={!!formErrors.companyName}>
+          <InputLabel>Company</InputLabel>
           <Select
-            name="vehicleId"
-            value={currentContract.vehicleId}
+            name="companyName"
+            value={currentContract.companyName}
             onChange={handleSelectChange}
-            label="Vehicle"
+            label="Company"
+            required
           >
-            {vehicles.map((vehicle) => (
-              <MenuItem key={vehicle._id} value={vehicle._id}>
-                {vehicle.licensePlate} - {vehicle.make} {vehicle.model}
+            {companies.map((company) => (
+              <MenuItem key={company} value={company}>
+                {company}
               </MenuItem>
             ))}
           </Select>
-          {formErrors.vehicleId && (
+          {formErrors.companyName && (
             <Typography variant="caption" color="error">
-              {formErrors.vehicleId}
+              {formErrors.companyName}
             </Typography>
           )}
         </FormControl>
@@ -469,9 +405,9 @@ const ContractManagement: React.FC = () => {
             onChange={handleSelectChange}
             label="Status"
           >
-            {CONTRACT_STATUSES.map((status) => (
+            {statuses.map((status) => (
               <MenuItem key={status} value={status}>
-                {status.charAt(0).toUpperCase() + status.slice(1)}
+                {status}
               </MenuItem>
             ))}
           </Select>
@@ -541,6 +477,7 @@ const ContractManagement: React.FC = () => {
           onChange={handleInputChange}
           error={!!formErrors.contactEmail}
           helperText={formErrors.contactEmail}
+          required
         />
       </Grid>
       <Grid item xs={12} sm={6}>
@@ -579,46 +516,26 @@ const ContractManagement: React.FC = () => {
       <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid item xs={12} md={3}>
           <Paper sx={{ p: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-              <Typography variant="h6" gutterBottom>Total Contracts</Typography>
-            </Box>
+            <Typography variant="h6" gutterBottom>Total Contracts</Typography>
             <Typography variant="h4">{stats?.totalContracts || 0}</Typography>
-            <Typography variant="body2" color="textSecondary">
-              All Time
-            </Typography>
           </Paper>
         </Grid>
         <Grid item xs={12} md={3}>
           <Paper sx={{ p: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-              <Typography variant="h6" gutterBottom>Active Contracts</Typography>
-            </Box>
+            <Typography variant="h6" gutterBottom>Active Contracts</Typography>
             <Typography variant="h4">{stats?.activeContracts || 0}</Typography>
-            <Typography variant="body2" color="textSecondary">
-              Currently Active
-            </Typography>
           </Paper>
         </Grid>
         <Grid item xs={12} md={3}>
           <Paper sx={{ p: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-              <Typography variant="h6" gutterBottom>Expiring Soon</Typography>
-            </Box>
+            <Typography variant="h6" gutterBottom>Expiring Soon</Typography>
             <Typography variant="h4">{stats?.expiringContracts || 0}</Typography>
-            <Typography variant="body2" color="textSecondary">
-              Next 30 Days
-            </Typography>
           </Paper>
         </Grid>
         <Grid item xs={12} md={3}>
           <Paper sx={{ p: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-              <Typography variant="h6" gutterBottom>Total Value</Typography>
-            </Box>
+            <Typography variant="h6" gutterBottom>Total Value</Typography>
             <Typography variant="h4">${(stats?.totalValue || 0).toFixed(2)}</Typography>
-            <Typography variant="body2" color="textSecondary">
-              Average: ${(stats?.averageValue || 0).toFixed(2)}
-            </Typography>
           </Paper>
         </Grid>
       </Grid>
@@ -675,7 +592,6 @@ const ContractManagement: React.FC = () => {
               <TableHead>
                 <TableRow>
                   <TableCell>Company</TableCell>
-                  <TableCell>Vehicle</TableCell>
                   <TableCell>Contract Type</TableCell>
                   <TableCell>Start Date</TableCell>
                   <TableCell>End Date</TableCell>
@@ -688,9 +604,6 @@ const ContractManagement: React.FC = () => {
                 {contracts.map((contract) => (
                   <TableRow key={contract._id}>
                     <TableCell>{contract.companyName}</TableCell>
-                    <TableCell>
-                      {vehicles.find(v => v._id === contract.vehicleId)?.licensePlate || 'N/A'}
-                    </TableCell>
                     <TableCell>{contract.contractType}</TableCell>
                     <TableCell>{moment(contract.startDate).format('YYYY-MM-DD')}</TableCell>
                     <TableCell>{moment(contract.endDate).format('YYYY-MM-DD')}</TableCell>
