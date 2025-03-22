@@ -130,6 +130,27 @@ interface ErrorResponse {
   message: string;
 }
 
+// Calculate stats from fuel records
+const calculateStats = (records: FuelRecord[]) => {
+  const currentMonth = moment().format('YYYY-MM');
+  
+  // Filter records for current month
+  const currentMonthRecords = records.filter(record => 
+    moment(record.date).format('YYYY-MM') === currentMonth
+  );
+
+  // Ensure we're working with numbers and handle potential NaN
+  const totalFuelCost = Number(currentMonthRecords.reduce((sum, record) => sum + Number(record.cost), 0));
+  const avgEfficiency = records.length > 0 ? records.reduce((sum, record) => sum + Number(record.fuelEfficiency), 0) / records.length : 0;
+  const totalEfficiencyAlerts = records.filter(record => Number(record.fuelEfficiency) < 8).length;
+
+  return {
+    totalFuelCost,
+    avgEfficiency,
+    totalEfficiencyAlerts
+  };
+};
+
 const FuelManagement: React.FC = () => {
   const [fuelRecords, setFuelRecords] = useState<FuelRecord[]>(initialFuelRecords);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -186,11 +207,9 @@ const FuelManagement: React.FC = () => {
     }
   };
 
-  // Calculate stats from fuel records
-  const totalFuelCost = fuelRecords.reduce((sum, record) => sum + record.cost, 0);
-  const avgEfficiency = fuelRecords.reduce((sum, record) => sum + record.fuelEfficiency, 0) / fuelRecords.length;
-  const totalEfficiencyAlerts = fuelRecords.filter(record => record.fuelEfficiency < 8).length;
-  
+  // Calculate stats
+  const { totalFuelCost, avgEfficiency, totalEfficiencyAlerts } = calculateStats(fuelRecords);
+
   const handleAddRecord = () => {
     setCurrentRecord(emptyFuelRecord);
     setFormErrors({});
@@ -198,7 +217,19 @@ const FuelManagement: React.FC = () => {
   };
 
   const handleEditRecord = (record: FuelRecord) => {
-    setCurrentRecord({ ...record });
+    console.log('Editing record:', record); // Debug log
+    setCurrentRecord({
+      ...record,
+      vehicleId: record.vehicleId || '', // Ensure vehicleId is not undefined
+      date: record.date || moment().format('YYYY-MM-DD'),
+      amount: record.amount || 0,
+      cost: record.cost || 0,
+      odometer: record.odometer || 0,
+      fuelType: record.fuelType || 'gasoline',
+      fuelEfficiency: record.fuelEfficiency || 0,
+      notes: record.notes || '',
+      location: record.location || ''
+    });
     setFormErrors({});
     setOpenEditDialog(true);
   };
@@ -318,14 +349,19 @@ const FuelManagement: React.FC = () => {
           severity: 'success'
         });
       } else {
-        // Update existing record - keep _id field for updates
-        const recordToSave = {
+        // Update existing record - remove _id field from update payload
+        const { _id, ...recordToUpdate } = {
           ...currentRecord,
           fuelEfficiency,
         };
         
-        console.log('Updating record at:', getApiUrl(`${API_CONFIG.ENDPOINTS.FUEL}/${currentRecord._id}`));
-        const response = await axios.put(getApiUrl(`${API_CONFIG.ENDPOINTS.FUEL}/${currentRecord._id}`), recordToSave);
+        console.log('Updating record:', recordToUpdate);
+        console.log('Update URL:', getApiUrl(`${API_CONFIG.ENDPOINTS.FUEL}/${currentRecord._id}`));
+        
+        const response = await axios.put(
+          getApiUrl(`${API_CONFIG.ENDPOINTS.FUEL}/${currentRecord._id}`),
+          recordToUpdate
+        );
         console.log('Update response:', response.data);
         setSnackbar({
           open: true,
@@ -493,9 +529,11 @@ const FuelManagement: React.FC = () => {
               <LocalGasStation color="primary" sx={{ mr: 1 }} />
               <Typography variant="h6">Total Fuel Cost</Typography>
             </Box>
-            <Typography variant="h4">${totalFuelCost}</Typography>
+            <Typography variant="h4">
+              ${(totalFuelCost || 0).toFixed(2)}
+            </Typography>
             <Typography variant="body2" color="textSecondary">
-              This Month
+              {moment().format('MMMM YYYY')}
             </Typography>
           </Paper>
         </Grid>
