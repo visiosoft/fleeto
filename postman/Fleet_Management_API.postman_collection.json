@@ -1,0 +1,167 @@
+{
+	"info": {
+		"_postman_id": "f8b23e5d-4b2a-4e3c-b5e3-9f8d7c2e1a4b",
+		"name": "Fleet Management API",
+		"description": "Collection for testing Fleet Management API endpoints",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Drivers",
+			"item": [
+				{
+					"name": "Get All Drivers",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/drivers",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "drivers"]
+						},
+						"description": "Retrieve all drivers"
+					}
+				},
+				{
+					"name": "Get Driver by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/drivers/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "drivers", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "",
+									"description": "Driver ID"
+								}
+							]
+						},
+						"description": "Retrieve a specific driver by ID"
+					}
+				},
+				{
+					"name": "Create Driver",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"John Smith\",\n    \"licenseNumber\": \"DL123456\",\n    \"status\": \"active\",\n    \"assignedVehicle\": \"Truck 101\",\n    \"performanceScore\": 85,\n    \"safetyRating\": 4.5,\n    \"totalTrips\": 156,\n    \"violations\": 2,\n    \"lastTripDate\": \"2024-03-15\",\n    \"nextLicenseRenewal\": \"2024-06-30\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/drivers",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "drivers"]
+						},
+						"description": "Create a new driver"
+					}
+				},
+				{
+					"name": "Update Driver",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"John Smith\",\n    \"licenseNumber\": \"DL123456\",\n    \"status\": \"inactive\",\n    \"assignedVehicle\": \"Truck 102\",\n    \"performanceScore\": 90,\n    \"safetyRating\": 4.8,\n    \"totalTrips\": 160,\n    \"violations\": 2,\n    \"lastTripDate\": \"2024-03-20\",\n    \"nextLicenseRenewal\": \"2024-06-30\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/drivers/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "drivers", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "",
+									"description": "Driver ID"
+								}
+							]
+						},
+						"description": "Update an existing driver"
+					}
+				},
+				{
+					"name": "Delete Driver",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/drivers/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "drivers", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "",
+									"description": "Driver ID"
+								}
+							]
+						},
+						"description": "Delete a driver"
+					}
+				},
+				{
+					"name": "Search Drivers",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/drivers/search?query=john&status=active",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "drivers", "search"],
+							"query": [
+								{
+									"key": "query",
+									"value": "john",
+									"description": "Search query for driver name or license number"
+								},
+								{
+									"key": "status",
+									"value": "active",
+									"description": "Filter by driver status"
+								}
+							]
+						},
+						"description": "Search for drivers with filters"
+					}
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [""]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [""]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:3001",
+			"type": "string"
+		}
+	]
+} 
