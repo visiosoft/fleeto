@@ -25,35 +25,40 @@ import {
   Snackbar,
   Alert,
   Chip,
-  LinearProgress,
+  LinearProgress
 } from '@mui/material';
 import {
-  Add,
-  Edit,
-  Delete,
-  Close,
-  Warning,
-  CheckCircle,
-  Schedule,
+  Add as AddIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  Close as CloseIcon,
+  Warning as WarningIcon,
+  CheckCircle as CheckCircleIcon,
+  Schedule as ScheduleIcon,
+  Description as DescriptionIcon,
+  FileCopy as FileCopyIcon,
 } from '@mui/icons-material';
 import axios, { AxiosError } from 'axios';
 import { API_CONFIG, getApiUrl } from '../../config/api';
 import moment from 'moment';
+import ContractTemplateEditor from '../../components/ContractTemplate/ContractTemplateEditor';
+import { Contract } from '../../types';
 
-interface Contract {
+const CONTRACT_STATUSES = [
+  'Active',
+  'Expired',
+  'Terminated',
+  'Draft',
+  'Pending',
+  'Suspended'
+] as const;
+
+type ContractStatus = (typeof CONTRACT_STATUSES)[number];
+
+interface ContractFormData extends Omit<Contract, '_id'> {
   _id?: string;
-  companyName: string;
-  vehicleId: string;
-  tradeLicenseNo: string;
-  contractType: string;
-  startDate: string;
-  endDate: string;
-  value: number;
-  status: string;
-  contactPerson: string;
-  contactEmail: string;
-  contactPhone: string;
-  notes: string;
+  content?: string;
+  templateId?: string;
 }
 
 interface Vehicle {
@@ -71,7 +76,15 @@ interface ContractStats {
   averageValue: number;
 }
 
-const emptyContract: Contract = {
+interface Template {
+  _id: string;
+  name: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+const emptyContract: ContractFormData = {
   companyName: '',
   vehicleId: '',
   tradeLicenseNo: '',
@@ -79,34 +92,27 @@ const emptyContract: Contract = {
   startDate: moment().format('YYYY-MM-DD'),
   endDate: moment().add(1, 'year').format('YYYY-MM-DD'),
   value: 0,
-  status: 'draft',
+  status: 'Draft',
   contactPerson: '',
   contactEmail: '',
   contactPhone: '',
-  notes: ''
+  notes: '',
+  content: '',
+  templateId: ''
 };
 
-const CONTRACT_STATUSES = [
-  'active',
-  'terminated',
-  'expired',
-  'draft',
-  'pending',
-  'suspended'
-];
-
-const calculateStats = (contracts: Contract[]): ContractStats => {
+const calculateStats = (contracts: ContractFormData[]): ContractStats => {
   const now = moment();
   const thirtyDaysFromNow = moment().add(30, 'days');
 
   const stats: ContractStats = {
     totalContracts: contracts.length,
     activeContracts: contracts.filter(contract => 
-      contract.status === 'active' && 
+      contract.status === 'Active' && 
       moment(contract.endDate).isAfter(now)
     ).length,
     expiringContracts: contracts.filter(contract => 
-      contract.status === 'active' && 
+      contract.status === 'Active' && 
       moment(contract.endDate).isBetween(now, thirtyDaysFromNow)
     ).length,
     totalValue: contracts.reduce((sum, contract) => sum + Number(contract.value), 0),
@@ -114,17 +120,16 @@ const calculateStats = (contracts: Contract[]): ContractStats => {
   };
 
   stats.averageValue = stats.totalContracts > 0 ? stats.totalValue / stats.totalContracts : 0;
-
   return stats;
 };
 
 const ContractManagement: React.FC = () => {
-  const [contracts, setContracts] = useState<Contract[]>([]);
-  const [currentContract, setCurrentContract] = useState<Contract>(emptyContract);
+  const [contracts, setContracts] = useState<ContractFormData[]>([]);
+  const [currentContract, setCurrentContract] = useState<ContractFormData>(emptyContract);
   const [companies, setCompanies] = useState<string[]>([]);
-  const [statuses, setStatuses] = useState<string[]>([]);
+  const [statuses] = useState<ContractStatus[]>([...CONTRACT_STATUSES]);
   const [stats, setStats] = useState<ContractStats | null>(null);
-  const [expiringContracts, setExpiringContracts] = useState<Contract[]>([]);
+  const [expiringContracts, setExpiringContracts] = useState<ContractFormData[]>([]);
   const [openDialog, setOpenDialog] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [contractToDelete, setContractToDelete] = useState<string>('');
@@ -133,25 +138,36 @@ const ContractManagement: React.FC = () => {
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
-    severity: 'success' as 'success' | 'error' | 'info' | 'warning',
+    severity: 'success' as 'success' | 'error' | 'info' | 'warning'
   });
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [templateEditorOpen, setTemplateEditorOpen] = useState(false);
+  const [selectedContract, setSelectedContract] = useState<ContractFormData | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<Template>({
+    _id: '1',
+    name: 'Default Contract Template',
+    content: defaultTemplateContent,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+  const [isTemplateListOpen, setIsTemplateListOpen] = useState(false);
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [isNewTemplateDialogOpen, setIsNewTemplateDialogOpen] = useState(false);
+  const [newTemplateName, setNewTemplateName] = useState('');
 
   useEffect(() => {
     fetchContracts();
     fetchCompanies();
     fetchVehicles();
-    fetchStatuses();
     fetchExpiringContracts();
+    fetchTemplates();
   }, []);
 
   const fetchContracts = async () => {
     setIsLoading(true);
     try {
       const response = await axios.get(getApiUrl(API_CONFIG.ENDPOINTS.CONTRACTS));
-      console.log('Fetched contracts:', response.data);
       setContracts(response.data);
-      // Calculate and update stats when contracts are fetched
       const calculatedStats = calculateStats(response.data);
       setStats(calculatedStats);
     } catch (error) {
@@ -169,27 +185,15 @@ const ContractManagement: React.FC = () => {
   const fetchCompanies = async () => {
     try {
       const response = await axios.get(getApiUrl(`${API_CONFIG.ENDPOINTS.CONTRACTS}/companies`));
-      console.log('Fetched companies:', response.data);
       setCompanies(response.data);
     } catch (error) {
       console.error('Error fetching companies:', error);
     }
   };
 
-  const fetchStatuses = async () => {
-    try {
-      const response = await axios.get(getApiUrl(`${API_CONFIG.ENDPOINTS.CONTRACTS}/statuses`));
-      console.log('Fetched statuses:', response.data);
-      setStatuses(response.data);
-    } catch (error) {
-      console.error('Error fetching statuses:', error);
-    }
-  };
-
   const fetchExpiringContracts = async () => {
     try {
       const response = await axios.get(getApiUrl(`${API_CONFIG.ENDPOINTS.CONTRACTS}/expiring`));
-      console.log('Fetched expiring contracts:', response.data);
       setExpiringContracts(response.data);
     } catch (error) {
       console.error('Error fetching expiring contracts:', error);
@@ -199,10 +203,23 @@ const ContractManagement: React.FC = () => {
   const fetchVehicles = async () => {
     try {
       const response = await axios.get<Vehicle[]>(getApiUrl(API_CONFIG.ENDPOINTS.VEHICLES));
-      console.log('Fetched vehicles:', response.data);
       setVehicles(response.data);
     } catch (error) {
       console.error('Error fetching vehicles:', error);
+    }
+  };
+
+  const fetchTemplates = async () => {
+    try {
+      const response = await axios.get(getApiUrl(API_CONFIG.ENDPOINTS.CONTRACT_TEMPLATES));
+      setTemplates(response.data);
+    } catch (error) {
+      console.error('Failed to fetch templates:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to fetch templates',
+        severity: 'error'
+      });
     }
   };
 
@@ -212,11 +229,9 @@ const ContractManagement: React.FC = () => {
     setOpenDialog(true);
   };
 
-  const handleEditContract = async (contract: Contract) => {
+  const handleEditContract = async (contract: ContractFormData) => {
     try {
-      console.log('Fetching contract details:', contract._id);
       const response = await axios.get(getApiUrl(`${API_CONFIG.ENDPOINTS.CONTRACTS}/${contract._id}`));
-      console.log('Contract details:', response.data);
       setCurrentContract(response.data);
       setFormErrors({});
       setOpenDialog(true);
@@ -237,7 +252,6 @@ const ContractManagement: React.FC = () => {
 
   const handleDeleteContract = async () => {
     try {
-      console.log('Deleting contract:', contractToDelete);
       await axios.delete(getApiUrl(`${API_CONFIG.ENDPOINTS.CONTRACTS}/${contractToDelete}`));
       await fetchContracts();
       setSnackbar({
@@ -254,78 +268,6 @@ const ContractManagement: React.FC = () => {
       });
     } finally {
       setDeleteConfirmOpen(false);
-    }
-  };
-
-  const handleSaveContract = async () => {
-    if (!validateForm()) {
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      let response;
-      if (currentContract._id) {
-        // Update existing contract
-        const { _id, ...contractToUpdate } = currentContract;
-        console.log('Updating contract:', contractToUpdate);
-        response = await axios.put(
-          getApiUrl(`${API_CONFIG.ENDPOINTS.CONTRACTS}/${_id}`),
-          contractToUpdate
-        );
-        console.log('Update response:', response.data);
-      } else {
-        // Create new contract
-        const { _id, ...contractToCreate } = currentContract;
-        console.log('Creating contract:', contractToCreate);
-        response = await axios.post(
-          getApiUrl(API_CONFIG.ENDPOINTS.CONTRACTS),
-          contractToCreate
-        );
-        console.log('Create response:', response.data);
-      }
-
-      await fetchContracts();
-      setSnackbar({
-        open: true,
-        message: `Contract ${currentContract._id ? 'updated' : 'created'} successfully`,
-        severity: 'success'
-      });
-      handleCloseDialog();
-    } catch (error) {
-      const axiosError = error as AxiosError<{ message: string }>;
-      console.error('Error saving contract:', axiosError);
-      console.error('Error details:', axiosError.response?.data);
-      setSnackbar({
-        open: true,
-        message: axiosError.response?.data?.message || `Failed to ${currentContract._id ? 'update' : 'create'} contract`,
-        severity: 'error'
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleUpdateStatus = async (contractId: string, newStatus: string) => {
-    try {
-      console.log('Updating contract status:', { contractId, newStatus });
-      await axios.patch(
-        getApiUrl(`${API_CONFIG.ENDPOINTS.CONTRACTS}/${contractId}/status`),
-        { status: newStatus }
-      );
-      await fetchContracts();
-      setSnackbar({
-        open: true,
-        message: 'Contract status updated successfully',
-        severity: 'success'
-      });
-    } catch (error) {
-      console.error('Error updating contract status:', error);
-      setSnackbar({
-        open: true,
-        message: 'Failed to update contract status',
-        severity: 'error'
-      });
     }
   };
 
@@ -346,7 +288,6 @@ const ContractManagement: React.FC = () => {
     if (!currentContract.contactPerson) errors.contactPerson = 'Contact person is required';
     if (!currentContract.contactPhone) errors.contactPhone = 'Contact phone is required';
     
-    // Validate email format only if email is provided
     if (currentContract.contactEmail) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(currentContract.contactEmail)) {
@@ -354,13 +295,51 @@ const ContractManagement: React.FC = () => {
       }
     }
     
-    // Validate dates
     if (moment(currentContract.endDate).isBefore(currentContract.startDate)) {
       errors.endDate = 'End date must be after start date';
     }
     
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
+  };
+
+  const handleSaveContract = async () => {
+    if (!validateForm()) return;
+
+    setIsLoading(true);
+    try {
+      if (currentContract._id) {
+        const { _id, ...contractToUpdate } = currentContract;
+        await axios.put(
+          getApiUrl(`${API_CONFIG.ENDPOINTS.CONTRACTS}/${_id}`),
+          contractToUpdate
+        );
+      } else {
+        const { _id, ...contractToCreate } = currentContract;
+        await axios.post(
+          getApiUrl(API_CONFIG.ENDPOINTS.CONTRACTS),
+          contractToCreate
+        );
+      }
+
+      await fetchContracts();
+      setSnackbar({
+        open: true,
+        message: `Contract ${currentContract._id ? 'updated' : 'created'} successfully`,
+        severity: 'success'
+      });
+      handleCloseDialog();
+    } catch (error) {
+      const axiosError = error as AxiosError<{ message: string }>;
+      console.error('Error saving contract:', axiosError);
+      setSnackbar({
+        open: true,
+        message: axiosError.response?.data?.message || `Failed to ${currentContract._id ? 'update' : 'create'} contract`,
+        severity: 'error'
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
@@ -385,7 +364,7 @@ const ContractManagement: React.FC = () => {
     setSnackbar({ ...snackbar, open: false });
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string): 'success' | 'error' | 'warning' | 'default' => {
     switch (status.toLowerCase()) {
       case 'active':
         return 'success';
@@ -393,180 +372,101 @@ const ContractManagement: React.FC = () => {
         return 'error';
       case 'pending':
         return 'warning';
-      case 'draft':
-        return 'default';
       default:
         return 'default';
     }
   };
 
-  const renderContractForm = () => (
-    <Grid container spacing={2}>
-      <Grid item xs={12} sm={6}>
-        <TextField
-          fullWidth
-          label="Company Name"
-          name="companyName"
-          value={currentContract.companyName}
-          onChange={handleInputChange}
-          error={!!formErrors.companyName}
-          helperText={formErrors.companyName}
-          required
-        />
-      </Grid>
-      <Grid item xs={12} sm={6}>
-        <FormControl fullWidth error={!!formErrors.vehicleId} required>
-          <InputLabel>Vehicle</InputLabel>
-          <Select
-            name="vehicleId"
-            value={currentContract.vehicleId}
-            onChange={handleSelectChange}
-            label="Vehicle"
-          >
-            {vehicles.map((vehicle) => (
-              <MenuItem key={vehicle._id} value={vehicle._id}>
-                {vehicle.licensePlate} - {vehicle.make} {vehicle.model}
-              </MenuItem>
-            ))}
-          </Select>
-          {formErrors.vehicleId && (
-            <Typography variant="caption" color="error">
-              {formErrors.vehicleId}
-            </Typography>
-          )}
-        </FormControl>
-      </Grid>
-      <Grid item xs={12} sm={6}>
-        <TextField
-          fullWidth
-          label="Trade License No"
-          name="tradeLicenseNo"
-          value={currentContract.tradeLicenseNo}
-          onChange={handleInputChange}
-          error={!!formErrors.tradeLicenseNo}
-          helperText={formErrors.tradeLicenseNo}
-          required
-        />
-      </Grid>
-      <Grid item xs={12} sm={6}>
-        <TextField
-          fullWidth
-          label="Contract Type"
-          name="contractType"
-          value={currentContract.contractType}
-          onChange={handleInputChange}
-          error={!!formErrors.contractType}
-          helperText={formErrors.contractType}
-          required
-        />
-      </Grid>
-      <Grid item xs={12} sm={6}>
-        <FormControl fullWidth required>
-          <InputLabel>Status</InputLabel>
-          <Select
-            name="status"
-            value={currentContract.status}
-            onChange={handleSelectChange}
-            label="Status"
-          >
-            {CONTRACT_STATUSES.map((status) => (
-              <MenuItem key={status} value={status}>
-                {status.charAt(0).toUpperCase() + status.slice(1)}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </Grid>
-      <Grid item xs={12} sm={6}>
-        <TextField
-          fullWidth
-          label="Start Date"
-          name="startDate"
-          type="date"
-          value={currentContract.startDate}
-          onChange={handleInputChange}
-          InputLabelProps={{ shrink: true }}
-          error={!!formErrors.startDate}
-          helperText={formErrors.startDate}
-          required
-        />
-      </Grid>
-      <Grid item xs={12} sm={6}>
-        <TextField
-          fullWidth
-          label="End Date"
-          name="endDate"
-          type="date"
-          value={currentContract.endDate}
-          onChange={handleInputChange}
-          InputLabelProps={{ shrink: true }}
-          error={!!formErrors.endDate}
-          helperText={formErrors.endDate}
-          required
-        />
-      </Grid>
-      <Grid item xs={12} sm={6}>
-        <TextField
-          fullWidth
-          label="Value"
-          name="value"
-          type="number"
-          value={currentContract.value}
-          onChange={handleInputChange}
-          error={!!formErrors.value}
-          helperText={formErrors.value}
-          required
-          InputProps={{ inputProps: { min: 0, step: 0.01 } }}
-        />
-      </Grid>
-      <Grid item xs={12} sm={6}>
-        <TextField
-          fullWidth
-          label="Contact Person"
-          name="contactPerson"
-          value={currentContract.contactPerson}
-          onChange={handleInputChange}
-          error={!!formErrors.contactPerson}
-          helperText={formErrors.contactPerson}
-          required
-        />
-      </Grid>
-      <Grid item xs={12} sm={6}>
-        <TextField
-          fullWidth
-          label="Contact Email"
-          name="contactEmail"
-          type="email"
-          value={currentContract.contactEmail}
-          onChange={handleInputChange}
-          error={!!formErrors.contactEmail}
-          helperText={formErrors.contactEmail}
-        />
-      </Grid>
-      <Grid item xs={12} sm={6}>
-        <TextField
-          fullWidth
-          label="Contact Phone"
-          name="contactPhone"
-          value={currentContract.contactPhone}
-          onChange={handleInputChange}
-          error={!!formErrors.contactPhone}
-          helperText={formErrors.contactPhone}
-          required
-        />
-      </Grid>
-      <Grid item xs={12}>
-        <TextField
-          fullWidth
-          label="Notes"
-          name="notes"
-          multiline
-          rows={3}
-          value={currentContract.notes}
-          onChange={handleInputChange}
-        />
-      </Grid>
-    </Grid>
+  const handleGenerateDocument = (contract: ContractFormData) => {
+    setSelectedContract(contract);
+    setTemplateEditorOpen(true);
+  };
+
+  const handleCreateTemplate = async () => {
+    try {
+      const response = await axios.post(getApiUrl(API_CONFIG.ENDPOINTS.CONTRACT_TEMPLATES), {
+        name: newTemplateName,
+        content: defaultTemplateContent,
+      });
+      setTemplates([...templates, response.data]);
+      setNewTemplateName('');
+      setIsNewTemplateDialogOpen(false);
+      setSnackbar({
+        open: true,
+        message: 'Template created successfully',
+        severity: 'success'
+      });
+    } catch (error) {
+      console.error('Failed to create template:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to create template',
+        severity: 'error'
+      });
+    }
+  };
+
+  const handleDeleteTemplate = async (templateId: string) => {
+    try {
+      await axios.delete(getApiUrl(`${API_CONFIG.ENDPOINTS.CONTRACT_TEMPLATES}/${templateId}`));
+      setTemplates(templates.filter(t => t._id !== templateId));
+      setSnackbar({
+        open: true,
+        message: 'Template deleted successfully',
+        severity: 'success'
+      });
+    } catch (error) {
+      console.error('Failed to delete template:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to delete template',
+        severity: 'error'
+      });
+    }
+  };
+
+  const handleCreateContractFromTemplate = (template: Template) => {
+    const newContract: ContractFormData = {
+      ...emptyContract,
+      content: template.content,
+      templateId: template._id,
+      status: 'Draft'
+    };
+    setCurrentContract(newContract);
+    setOpenDialog(true);
+    setIsTemplateListOpen(false);
+  };
+
+  const renderActionsCell = (contract: ContractFormData) => (
+    <TableCell>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <IconButton 
+          size="small" 
+          onClick={() => handleEditContract(contract)}
+          title="Edit Contract"
+        >
+          <EditIcon />
+        </IconButton>
+        <IconButton 
+          size="small" 
+          onClick={() => handleDeleteConfirm(contract._id || '')}
+          title="Delete Contract"
+        >
+          <DeleteIcon />
+        </IconButton>
+        <Button
+          size="small"
+          variant="outlined"
+          startIcon={<DescriptionIcon />}
+          onClick={() => {
+            setSelectedContract(contract);
+            setTemplateEditorOpen(true);
+          }}
+        >
+          Generate PDF
+        </Button>
+      </Box>
+    </TableCell>
   );
 
   return (
@@ -640,7 +540,7 @@ const ContractManagement: React.FC = () => {
                   <Box sx={{ mt: 1 }}>
                     <Chip
                       label={contract.status}
-                      color={getStatusColor(contract.status) as any}
+                      color={getStatusColor(contract.status)}
                       size="small"
                     />
                   </Box>
@@ -657,14 +557,24 @@ const ContractManagement: React.FC = () => {
           <Typography variant="h6">
             Contract List
           </Typography>
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<Add />}
-            onClick={handleAddContract}
-          >
-            Add Contract
-          </Button>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button
+              variant="outlined"
+              color="primary"
+              onClick={() => setIsTemplateListOpen(true)}
+              startIcon={<DescriptionIcon />}
+            >
+              Contract Templates
+            </Button>
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<AddIcon />}
+              onClick={handleAddContract}
+            >
+              Add Contract
+            </Button>
+          </Box>
         </Box>
 
         {isLoading ? (
@@ -698,18 +608,11 @@ const ContractManagement: React.FC = () => {
                     <TableCell>
                       <Chip
                         label={contract.status}
-                        color={getStatusColor(contract.status) as any}
+                        color={getStatusColor(contract.status)}
                         size="small"
                       />
                     </TableCell>
-                    <TableCell>
-                      <IconButton size="small" onClick={() => handleEditContract(contract)}>
-                        <Edit />
-                      </IconButton>
-                      <IconButton size="small" onClick={() => handleDeleteConfirm(contract._id || '')}>
-                        <Delete />
-                      </IconButton>
-                    </TableCell>
+                    {renderActionsCell(contract)}
                   </TableRow>
                 ))}
               </TableBody>
@@ -718,25 +621,187 @@ const ContractManagement: React.FC = () => {
         )}
       </Paper>
 
-      {/* Add/Edit Dialog */}
+      {/* Contract Form Dialog */}
       <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
         <DialogTitle>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="h6">
-              {currentContract._id ? 'Edit Contract' : 'Add New Contract'}
-            </Typography>
-            <IconButton edge="end" color="inherit" onClick={handleCloseDialog} aria-label="close">
-              <Close />
-            </IconButton>
-          </Box>
+          {currentContract._id ? 'Edit Contract' : 'Add Contract'}
+          <IconButton
+            aria-label="close"
+            onClick={handleCloseDialog}
+            sx={{ position: 'absolute', right: 8, top: 8 }}
+          >
+            <CloseIcon />
+          </IconButton>
         </DialogTitle>
         <DialogContent dividers>
-          {renderContractForm()}
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Company Name"
+                name="companyName"
+                value={currentContract.companyName}
+                onChange={handleInputChange}
+                error={!!formErrors.companyName}
+                helperText={formErrors.companyName}
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth required error={!!formErrors.vehicleId}>
+                <InputLabel>Vehicle</InputLabel>
+                <Select
+                  name="vehicleId"
+                  value={currentContract.vehicleId}
+                  onChange={handleSelectChange}
+                  label="Vehicle"
+                >
+                  {vehicles.map((vehicle) => (
+                    <MenuItem key={vehicle._id} value={vehicle._id}>
+                      {`${vehicle.licensePlate} - ${vehicle.make} ${vehicle.model}`}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Trade License No"
+                name="tradeLicenseNo"
+                value={currentContract.tradeLicenseNo}
+                onChange={handleInputChange}
+                error={!!formErrors.tradeLicenseNo}
+                helperText={formErrors.tradeLicenseNo}
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Contract Type"
+                name="contractType"
+                value={currentContract.contractType}
+                onChange={handleInputChange}
+                error={!!formErrors.contractType}
+                helperText={formErrors.contractType}
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                type="date"
+                label="Start Date"
+                name="startDate"
+                value={currentContract.startDate}
+                onChange={handleInputChange}
+                error={!!formErrors.startDate}
+                helperText={formErrors.startDate}
+                required
+                InputLabelProps={{ shrink: true }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                type="date"
+                label="End Date"
+                name="endDate"
+                value={currentContract.endDate}
+                onChange={handleInputChange}
+                error={!!formErrors.endDate}
+                helperText={formErrors.endDate}
+                required
+                InputLabelProps={{ shrink: true }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                type="number"
+                label="Value"
+                name="value"
+                value={currentContract.value}
+                onChange={handleInputChange}
+                error={!!formErrors.value}
+                helperText={formErrors.value}
+                required
+                InputProps={{
+                  startAdornment: '$'
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth required>
+                <InputLabel id="status-label">Status</InputLabel>
+                <Select
+                  labelId="status-label"
+                  name="status"
+                  value={currentContract.status}
+                  onChange={handleSelectChange}
+                  label="Status"
+                >
+                  {CONTRACT_STATUSES.map((status) => (
+                    <MenuItem key={status} value={status}>
+                      {status}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Contact Person"
+                name="contactPerson"
+                value={currentContract.contactPerson}
+                onChange={handleInputChange}
+                error={!!formErrors.contactPerson}
+                helperText={formErrors.contactPerson}
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Contact Email"
+                name="contactEmail"
+                value={currentContract.contactEmail}
+                onChange={handleInputChange}
+                error={!!formErrors.contactEmail}
+                helperText={formErrors.contactEmail}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Contact Phone"
+                name="contactPhone"
+                value={currentContract.contactPhone}
+                onChange={handleInputChange}
+                error={!!formErrors.contactPhone}
+                helperText={formErrors.contactPhone}
+                required
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                multiline
+                rows={4}
+                label="Notes"
+                name="notes"
+                value={currentContract.notes}
+                onChange={handleInputChange}
+              />
+            </Grid>
+          </Grid>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog}>Cancel</Button>
           <Button onClick={handleSaveContract} variant="contained" color="primary">
-            {currentContract._id ? 'Save Changes' : 'Add Contract'}
+            {currentContract._id ? 'Update' : 'Create'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -757,6 +822,162 @@ const ContractManagement: React.FC = () => {
         </DialogActions>
       </Dialog>
 
+      {/* Template List Dialog */}
+      <Dialog
+        open={isTemplateListOpen}
+        onClose={() => setIsTemplateListOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          Contract Templates
+          <IconButton
+            onClick={() => setIsTemplateListOpen(false)}
+            sx={{ position: 'absolute', right: 8, top: 8 }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers>
+          <Box sx={{ mb: 2 }}>
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<AddIcon />}
+              onClick={() => setIsNewTemplateDialogOpen(true)}
+            >
+              New Template
+            </Button>
+          </Box>
+          <Grid container spacing={2}>
+            {templates.map((template) => (
+              <Grid item xs={12} key={template._id}>
+                <Paper sx={{ p: 2 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Box>
+                      <Typography variant="h6">{template.name}</Typography>
+                      <Typography variant="body2" color="textSecondary">
+                        Last updated: {moment(template.updatedAt).format('MMMM D, YYYY')}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <IconButton
+                        onClick={() => {
+                          setSelectedTemplate(template);
+                          setTemplateEditorOpen(true);
+                          setIsTemplateListOpen(false);
+                        }}
+                        title="Edit Template"
+                      >
+                        <EditIcon />
+                      </IconButton>
+                      <IconButton
+                        onClick={() => handleCreateContractFromTemplate(template)}
+                        title="Create Contract from Template"
+                        color="primary"
+                        sx={{ mx: 1 }}
+                      >
+                        <FileCopyIcon />
+                      </IconButton>
+                      <IconButton
+                        color="error"
+                        onClick={() => handleDeleteTemplate(template._id)}
+                        title="Delete Template"
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </Box>
+                  </Box>
+                </Paper>
+              </Grid>
+            ))}
+          </Grid>
+        </DialogContent>
+      </Dialog>
+
+      {/* New Template Dialog */}
+      <Dialog
+        open={isNewTemplateDialogOpen}
+        onClose={() => setIsNewTemplateDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Create New Template</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Template Name"
+            fullWidth
+            value={newTemplateName}
+            onChange={(e) => setNewTemplateName(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setIsNewTemplateDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleCreateTemplate} variant="contained" color="primary">
+            Create
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Template Editor Dialog */}
+      <Dialog
+        open={templateEditorOpen}
+        onClose={() => {
+          setTemplateEditorOpen(false);
+          setSelectedContract(null);
+        }}
+        maxWidth="lg"
+        fullWidth
+      >
+        <DialogTitle>
+          Generate Contract PDF
+          <IconButton
+            onClick={() => {
+              setTemplateEditorOpen(false);
+              setSelectedContract(null);
+            }}
+            sx={{ position: 'absolute', right: 8, top: 8 }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent>
+          {selectedContract && (
+            <ContractTemplateEditor
+              template={selectedTemplate}
+              contract={{
+                ...selectedContract,
+                _id: selectedContract._id || '',
+                companyName: selectedContract.companyName || '',
+                contractType: selectedContract.contractType || '',
+                startDate: selectedContract.startDate || '',
+                endDate: selectedContract.endDate || '',
+                value: selectedContract.value || 0,
+                contactPerson: selectedContract.contactPerson || '',
+                contactEmail: selectedContract.contactEmail || '',
+                contactPhone: selectedContract.contactPhone || '',
+                notes: selectedContract.notes || '',
+                status: selectedContract.status || 'Draft',
+                vehicleId: selectedContract.vehicleId || '',
+                tradeLicenseNo: selectedContract.tradeLicenseNo || ''
+              }}
+              onSave={() => {
+                setTemplateEditorOpen(false);
+                setSelectedContract(null);
+              }}
+              onClose={() => {
+                setTemplateEditorOpen(false);
+                setSelectedContract(null);
+              }}
+              allowEdit={false}
+              showPreview={true}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Snackbar for notifications */}
       <Snackbar
         open={snackbar.open}
@@ -771,5 +992,29 @@ const ContractManagement: React.FC = () => {
     </Box>
   );
 };
+
+const defaultTemplateContent = `# Contract Agreement
+
+This agreement is made between {{companyName}} and [Your Company Name]
+
+## Contract Details
+- Contract Type: {{contractType}}
+- Start Date: {{startDate}}
+- End Date: {{endDate}}
+- Contract Value: {{value}}
+
+## Contact Information
+- Contact Person: {{contactPerson}}
+- Email: {{contactEmail}}
+- Phone: {{contactPhone}}
+
+## Additional Notes
+{{notes}}
+
+## Signatures
+
+________________________                    ________________________
+[Your Company Name]                         {{companyName}}
+`;
 
 export default ContractManagement; 

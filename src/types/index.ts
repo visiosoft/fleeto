@@ -13,6 +13,16 @@ export interface Vehicle {
   fuelType: string;
   currentMileage: number;
   lastServiceDate: string;
+  mileage: number;
+  lastMaintenance?: string;
+  nextMaintenance?: string;
+  assignedDriver?: string;
+  insuranceInfo?: {
+    provider: string;
+    policyNumber: string;
+    expiryDate: string;
+  };
+  notes?: string;
 }
 
 export interface FuelRecord {
@@ -122,4 +132,60 @@ export interface User {
   role: 'admin' | 'fleet_manager' | 'driver' | 'maintenance';
   permissions: string[];
   lastLogin?: string;
+}
+
+export interface Contract {
+  _id: string;
+  companyName: string;
+  vehicleId: string;
+  tradeLicenseNo: string;
+  contractType: string;
+  startDate: string;
+  endDate: string;
+  value: number;
+  status: 'Active' | 'Expired' | 'Terminated' | 'Draft' | 'Pending' | 'Suspended';
+  contactPerson: string;
+  contactEmail: string;
+  contactPhone: string;
+  notes?: string;
+}
+
+export interface ContractStats {
+  totalContracts: number;
+  activeContracts: number;
+  expiringContracts: number;
+  totalValue: number;
+  averageValue: number;
+}
+
+export interface CompanySettings {
+  _id?: string;
+  companyName: string;
+  logo: string;
+  address: string;
+  phone: string;
+  email: string;
+  website: string;
+  trn: string;
+  vatNumber: string;
+  registrationNumber: string;
+  legalName: string;
+  currency: string;
+  timezone: string;
+  country: string;
+  city: string;
+  postalCode: string;
+  socialMedia?: {
+    facebook?: string;
+    twitter?: string;
+    linkedin?: string;
+    instagram?: string;
+  };
+  bankDetails?: {
+    bankName: string;
+    accountName: string;
+    accountNumber: string;
+    iban: string;
+    swiftCode: string;
+  };
 } 
