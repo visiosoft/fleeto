@@ -29,6 +29,7 @@ import {
   Description as DescriptionIcon,
   Business as BusinessIcon,
 } from '@mui/icons-material';
+import { Link as RouterLink } from 'react-router-dom';
 
 const drawerWidth = 240;
 
@@ -47,7 +48,8 @@ interface MenuItem {
 
 // Define menu items outside the component
 const MENU_ITEMS: MenuItem[] = [
-  { text: 'Vehicle Management', path: '/', icon: <DirectionsCarIcon /> },
+  { text: 'Dashboard', path: '/', icon: <AssessmentIcon /> },
+  { text: 'Vehicle Management', path: '/vehicles', icon: <DirectionsCarIcon /> },
   { text: 'Driver Management', path: '/drivers', icon: <PeopleIcon /> },
   { text: 'Tracking', path: '/tracking', icon: <LocationOnIcon /> },
   { text: 'Maintenance', path: '/maintenance', icon: <BuildIcon /> },
@@ -79,7 +81,12 @@ const MenuItem = React.memo(({
   </ListItemButton>
 ));
 
-const Navigation = React.memo(function Navigation({ isMobile, isDrawerOpen, handleDrawerToggle, children }: NavigationProps) {
+const Navigation: React.FC<NavigationProps> = ({
+  children,
+  isMobile,
+  isDrawerOpen,
+  handleDrawerToggle,
+}) => {
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -87,66 +94,109 @@ const Navigation = React.memo(function Navigation({ isMobile, isDrawerOpen, hand
   const menuList = useMemo(() => (
     <List>
       {MENU_ITEMS.map((item) => (
-        <MenuItem
+        <ListItemButton
           key={item.path}
-          item={item}
-          isSelected={location.pathname === item.path}
-          onClick={() => {
-            navigate(item.path);
-            if (isMobile) {
-              handleDrawerToggle();
-            }
+          component={RouterLink}
+          to={item.path}
+          sx={{
+            minHeight: 48,
+            px: 2.5,
           }}
-        />
+        >
+          <ListItemIcon sx={{ minWidth: 0, mr: 2 }}>
+            {item.icon}
+          </ListItemIcon>
+          <ListItemText primary={item.text} />
+        </ListItemButton>
       ))}
     </List>
-  ), [location.pathname, navigate, isMobile, handleDrawerToggle]);
+  ), []);
 
   return (
-    <Box sx={{ display: 'flex' }}>
-      <AppBar position="fixed">
+    <Box sx={{ 
+      display: 'flex',
+      width: '100%',
+      height: '100vh',
+      overflow: 'hidden'
+    }}>
+      <AppBar
+        position="fixed"
+        sx={{
+          width: '100%',
+          zIndex: (theme) => theme.zIndex.drawer + 1,
+        }}
+      >
         <Toolbar>
           <IconButton
             color="inherit"
             aria-label="open drawer"
             edge="start"
             onClick={handleDrawerToggle}
-            sx={{ mr: 2, ...(isDrawerOpen && { display: 'none' }) }}
+            sx={{ mr: 2, display: { sm: 'none' } }}
           >
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" noWrap component="div">
-            Fleet Management System
+            Fleet Management
           </Typography>
         </Toolbar>
       </AppBar>
+
       <Drawer
         variant={isMobile ? 'temporary' : 'permanent'}
-        open={isDrawerOpen}
+        open={isMobile ? isDrawerOpen : true}
         onClose={handleDrawerToggle}
-        ModalProps={{
-          keepMounted: true,
-        }}
         sx={{
           width: drawerWidth,
           flexShrink: 0,
           '& .MuiDrawer-paper': {
             width: drawerWidth,
             boxSizing: 'border-box',
+            marginTop: '64px',
+            height: 'calc(100% - 64px)',
+            border: 'none'
           },
         }}
       >
-        <Toolbar />
-        <Box sx={{ overflow: 'auto' }}>
-          {menuList}
-        </Box>
+        <List>
+          {MENU_ITEMS.map((item) => (
+            <ListItemButton
+              key={item.text}
+              component={RouterLink}
+              to={item.path}
+              sx={{
+                minHeight: 48,
+                px: 2.5,
+              }}
+            >
+              <ListItemIcon sx={{ minWidth: 0, mr: 2 }}>
+                {item.icon}
+              </ListItemIcon>
+              <ListItemText primary={item.text} />
+            </ListItemButton>
+          ))}
+        </List>
       </Drawer>
-      <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
-        <Toolbar />
+
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          p: 2,
+          width: { xs: '100%', sm: `calc(100% - ${drawerWidth}px)` },
+          marginTop: '64px',
+          backgroundColor: (theme) => theme.palette.background.default,
+          height: 'calc(100vh - 64px)',
+          overflow: 'auto',
+          '& > *': {
+            width: '100%',
+          }
+        }}
+      >
         {children}
       </Box>
     </Box>
   );
-});
+};
 
 export default Navigation;

@@ -469,6 +469,153 @@ const ContractManagement: React.FC = () => {
     </TableCell>
   );
 
+  const renderContractForm = () => (
+    <Grid container spacing={2}>
+      <Grid item xs={12} sm={6}>
+        <TextField
+          fullWidth
+          label="Company Name"
+          name="companyName"
+          value={currentContract.companyName}
+          onChange={handleInputChange}
+          error={!!formErrors.companyName}
+          helperText={formErrors.companyName}
+          required
+        />
+      </Grid>
+      <Grid item xs={12} sm={6}>
+        <TextField
+          fullWidth
+          label="Contract Type"
+          name="contractType"
+          value={currentContract.contractType}
+          onChange={handleInputChange}
+          error={!!formErrors.contractType}
+          helperText={formErrors.contractType}
+          required
+        />
+      </Grid>
+      <Grid item xs={12} sm={6}>
+        <TextField
+          fullWidth
+          label="Trade License No"
+          name="tradeLicenseNo"
+          value={currentContract.tradeLicenseNo}
+          onChange={handleInputChange}
+          error={!!formErrors.tradeLicenseNo}
+          helperText={formErrors.tradeLicenseNo}
+          required
+        />
+      </Grid>
+      <Grid item xs={12} sm={6}>
+        <TextField
+          fullWidth
+          label="Start Date"
+          name="startDate"
+          value={currentContract.startDate}
+          onChange={handleInputChange}
+          error={!!formErrors.startDate}
+          helperText={formErrors.startDate}
+          required
+          InputLabelProps={{ shrink: true }}
+        />
+      </Grid>
+      <Grid item xs={12} sm={6}>
+        <TextField
+          fullWidth
+          label="End Date"
+          name="endDate"
+          value={currentContract.endDate}
+          onChange={handleInputChange}
+          error={!!formErrors.endDate}
+          helperText={formErrors.endDate}
+          required
+          InputLabelProps={{ shrink: true }}
+        />
+      </Grid>
+      <Grid item xs={12} sm={6}>
+        <TextField
+          fullWidth
+          type="number"
+          label="Value"
+          name="value"
+          value={currentContract.value}
+          onChange={handleInputChange}
+          error={!!formErrors.value}
+          helperText={formErrors.value}
+          required
+          InputProps={{
+            startAdornment: '$'
+          }}
+        />
+      </Grid>
+      <Grid item xs={12} sm={6}>
+        <FormControl fullWidth required>
+          <InputLabel id="status-label">Status</InputLabel>
+          <Select
+            labelId="status-label"
+            name="status"
+            value={currentContract.status}
+            onChange={handleSelectChange}
+            label="Status"
+          >
+            {CONTRACT_STATUSES.map((status) => (
+              <MenuItem key={status} value={status}>
+                {status}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Grid>
+      <Grid item xs={12} sm={6}>
+        <TextField
+          fullWidth
+          label="Contact Person"
+          name="contactPerson"
+          value={currentContract.contactPerson}
+          onChange={handleInputChange}
+          error={!!formErrors.contactPerson}
+          helperText={formErrors.contactPerson}
+          required
+        />
+      </Grid>
+      <Grid item xs={12} sm={6}>
+        <TextField
+          fullWidth
+          label="Contact Email"
+          name="contactEmail"
+          value={currentContract.contactEmail}
+          onChange={handleInputChange}
+          error={!!formErrors.contactEmail}
+          helperText={formErrors.contactEmail}
+        />
+      </Grid>
+      <Grid item xs={12} sm={6}>
+        <TextField
+          fullWidth
+          label="Contact Phone"
+          name="contactPhone"
+          value={currentContract.contactPhone}
+          onChange={handleInputChange}
+          error={!!formErrors.contactPhone}
+          helperText={formErrors.contactPhone}
+          required
+        />
+      </Grid>
+      <Grid item xs={12}>
+        <TextField
+          fullWidth
+          multiline
+          rows={4}
+          label="Notes"
+          name="notes"
+          value={currentContract.notes}
+          onChange={handleInputChange}
+        />
+      </Grid>
+    </Grid>
+  );
+
   return (
     <Box>
       <Typography variant="h4" gutterBottom>
@@ -634,169 +781,7 @@ const ContractManagement: React.FC = () => {
           </IconButton>
         </DialogTitle>
         <DialogContent dividers>
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Company Name"
-                name="companyName"
-                value={currentContract.companyName}
-                onChange={handleInputChange}
-                error={!!formErrors.companyName}
-                helperText={formErrors.companyName}
-                required
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth required error={!!formErrors.vehicleId}>
-                <InputLabel>Vehicle</InputLabel>
-                <Select
-                  name="vehicleId"
-                  value={currentContract.vehicleId}
-                  onChange={handleSelectChange}
-                  label="Vehicle"
-                >
-                  {vehicles.map((vehicle) => (
-                    <MenuItem key={vehicle._id} value={vehicle._id}>
-                      {`${vehicle.licensePlate} - ${vehicle.make} ${vehicle.model}`}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Trade License No"
-                name="tradeLicenseNo"
-                value={currentContract.tradeLicenseNo}
-                onChange={handleInputChange}
-                error={!!formErrors.tradeLicenseNo}
-                helperText={formErrors.tradeLicenseNo}
-                required
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Contract Type"
-                name="contractType"
-                value={currentContract.contractType}
-                onChange={handleInputChange}
-                error={!!formErrors.contractType}
-                helperText={formErrors.contractType}
-                required
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                type="date"
-                label="Start Date"
-                name="startDate"
-                value={currentContract.startDate}
-                onChange={handleInputChange}
-                error={!!formErrors.startDate}
-                helperText={formErrors.startDate}
-                required
-                InputLabelProps={{ shrink: true }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                type="date"
-                label="End Date"
-                name="endDate"
-                value={currentContract.endDate}
-                onChange={handleInputChange}
-                error={!!formErrors.endDate}
-                helperText={formErrors.endDate}
-                required
-                InputLabelProps={{ shrink: true }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                type="number"
-                label="Value"
-                name="value"
-                value={currentContract.value}
-                onChange={handleInputChange}
-                error={!!formErrors.value}
-                helperText={formErrors.value}
-                required
-                InputProps={{
-                  startAdornment: '$'
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth required>
-                <InputLabel id="status-label">Status</InputLabel>
-                <Select
-                  labelId="status-label"
-                  name="status"
-                  value={currentContract.status}
-                  onChange={handleSelectChange}
-                  label="Status"
-                >
-                  {CONTRACT_STATUSES.map((status) => (
-                    <MenuItem key={status} value={status}>
-                      {status}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Contact Person"
-                name="contactPerson"
-                value={currentContract.contactPerson}
-                onChange={handleInputChange}
-                error={!!formErrors.contactPerson}
-                helperText={formErrors.contactPerson}
-                required
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Contact Email"
-                name="contactEmail"
-                value={currentContract.contactEmail}
-                onChange={handleInputChange}
-                error={!!formErrors.contactEmail}
-                helperText={formErrors.contactEmail}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Contact Phone"
-                name="contactPhone"
-                value={currentContract.contactPhone}
-                onChange={handleInputChange}
-                error={!!formErrors.contactPhone}
-                helperText={formErrors.contactPhone}
-                required
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                multiline
-                rows={4}
-                label="Notes"
-                name="notes"
-                value={currentContract.notes}
-                onChange={handleInputChange}
-              />
-            </Grid>
-          </Grid>
+          {renderContractForm()}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog}>Cancel</Button>

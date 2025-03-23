@@ -1,17 +1,17 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
 
-const Tracking: React.FC = () => {
+const Reports: React.FC = () => {
   return (
     <Box>
       <Typography variant="h4" gutterBottom>
-        Vehicle Tracking
+        Reports
       </Typography>
       <Typography variant="body1">
-        Vehicle tracking functionality will be implemented here.
+        Reports functionality will be implemented here.
       </Typography>
     </Box>
   );
 };
 
-export default Tracking; 
+export default Reports; 
