@@ -35,10 +35,23 @@ import {
   Warning,
   CheckCircle,
   Schedule,
+  Description,
 } from '@mui/icons-material';
 import axios, { AxiosError } from 'axios';
 import { API_CONFIG, getApiUrl } from '../config/api';
 import moment from 'moment';
+
+const CONTRACT_STATUSES = [
+  'Active',
+  'Pending',
+  'Expired',
+  'Terminated',
+  'Draft',
+  'Suspended',
+  'Renewed'
+] as const;
+
+type ContractStatus = typeof CONTRACT_STATUSES[number];
 
 interface Contract {
   _id?: string;
@@ -48,7 +61,7 @@ interface Contract {
   startDate: string;
   endDate: string;
   value: number;
-  status: string;
+  status: ContractStatus;
   contactPerson: string;
   contactEmail: string;
   contactPhone: string;
@@ -71,7 +84,7 @@ const emptyContract: Contract = {
   startDate: moment().format('YYYY-MM-DD'),
   endDate: moment().add(1, 'year').format('YYYY-MM-DD'),
   value: 0,
-  status: 'draft',
+  status: 'Draft',
   contactPerson: '',
   contactEmail: '',
   contactPhone: '',
@@ -81,8 +94,6 @@ const emptyContract: Contract = {
 const ContractManagement: React.FC = () => {
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [currentContract, setCurrentContract] = useState<Contract>(emptyContract);
-  const [companies, setCompanies] = useState<string[]>([]);
-  const [statuses, setStatuses] = useState<string[]>([]);
   const [stats, setStats] = useState<ContractStats | null>(null);
   const [expiringContracts, setExpiringContracts] = useState<Contract[]>([]);
   const [openDialog, setOpenDialog] = useState(false);
@@ -98,8 +109,6 @@ const ContractManagement: React.FC = () => {
 
   useEffect(() => {
     fetchContracts();
-    fetchCompanies();
-    fetchStatuses();
     fetchStats();
     fetchExpiringContracts();
   }, []);
@@ -118,24 +127,6 @@ const ContractManagement: React.FC = () => {
       });
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const fetchCompanies = async () => {
-    try {
-      const response = await axios.get(getApiUrl(`${API_CONFIG.ENDPOINTS.CONTRACTS}/companies`));
-      setCompanies(response.data);
-    } catch (error) {
-      console.error('Error fetching companies:', error);
-    }
-  };
-
-  const fetchStatuses = async () => {
-    try {
-      const response = await axios.get(getApiUrl(`${API_CONFIG.ENDPOINTS.CONTRACTS}/statuses`));
-      setStatuses(response.data);
-    } catch (error) {
-      console.error('Error fetching statuses:', error);
     }
   };
 
@@ -332,45 +323,42 @@ const ContractManagement: React.FC = () => {
     setSnackbar({ ...snackbar, open: false });
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'active':
+  const getStatusColor = (status: ContractStatus) => {
+    switch (status) {
+      case 'Active':
         return 'success';
-      case 'expired':
+      case 'Expired':
+      case 'Terminated':
         return 'error';
-      case 'pending':
+      case 'Pending':
+      case 'Suspended':
         return 'warning';
-      case 'draft':
+      case 'Draft':
+      case 'Renewed':
         return 'default';
       default:
         return 'default';
     }
   };
 
+  const handleTemplateClick = (contract: Contract) => {
+    // Navigate to template editor with contract data
+    window.location.href = `/contracts/template/${contract._id}`;
+  };
+
   const renderContractForm = () => (
     <Grid container spacing={2}>
       <Grid item xs={12} sm={6}>
-        <FormControl fullWidth error={!!formErrors.companyName}>
-          <InputLabel>Company</InputLabel>
-          <Select
-            name="companyName"
-            value={currentContract.companyName}
-            onChange={handleSelectChange}
-            label="Company"
-            required
-          >
-            {companies.map((company) => (
-              <MenuItem key={company} value={company}>
-                {company}
-              </MenuItem>
-            ))}
-          </Select>
-          {formErrors.companyName && (
-            <Typography variant="caption" color="error">
-              {formErrors.companyName}
-            </Typography>
-          )}
-        </FormControl>
+        <TextField
+          fullWidth
+          label="Company Name"
+          name="companyName"
+          value={currentContract.companyName}
+          onChange={handleInputChange}
+          error={!!formErrors.companyName}
+          helperText={formErrors.companyName}
+          required
+        />
       </Grid>
       <Grid item xs={12} sm={6}>
         <TextField
@@ -398,14 +386,15 @@ const ContractManagement: React.FC = () => {
       </Grid>
       <Grid item xs={12} sm={6}>
         <FormControl fullWidth required>
-          <InputLabel>Status</InputLabel>
+          <InputLabel id="status-label">Status</InputLabel>
           <Select
+            labelId="status-label"
             name="status"
             value={currentContract.status}
             onChange={handleSelectChange}
             label="Status"
           >
-            {statuses.map((status) => (
+            {CONTRACT_STATUSES.map((status) => (
               <MenuItem key={status} value={status}>
                 {status}
               </MenuItem>
@@ -495,10 +484,10 @@ const ContractManagement: React.FC = () => {
       <Grid item xs={12}>
         <TextField
           fullWidth
+          multiline
+          rows={4}
           label="Notes"
           name="notes"
-          multiline
-          rows={3}
           value={currentContract.notes}
           onChange={handleInputChange}
         />
@@ -618,6 +607,13 @@ const ContractManagement: React.FC = () => {
                     <TableCell>
                       <IconButton size="small" onClick={() => handleEditContract(contract)}>
                         <Edit />
+                      </IconButton>
+                      <IconButton 
+                        size="small" 
+                        onClick={() => handleTemplateClick(contract)}
+                        sx={{ mx: 1 }}
+                      >
+                        <Description />
                       </IconButton>
                       <IconButton size="small" onClick={() => handleDeleteConfirm(contract._id || '')}>
                         <Delete />
