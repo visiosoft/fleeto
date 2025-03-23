@@ -12,15 +12,82 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  DialogContentText,
+  FormControl,
+  InputLabel,
+  OutlinedInput,
+  InputAdornment,
+  Snackbar,
+  Alert,
+  CircularProgress,
+  IconButton,
 } from '@mui/material';
 import {
   Print as PrintIcon,
   Download as DownloadIcon,
   Save as SaveIcon,
+  Refresh as RefreshIcon,
+  PictureAsPdf as PdfIcon,
+  Close as CloseIcon,
 } from '@mui/icons-material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import { Contract } from '../../types';
+import axios from 'axios';
+import { useParams, useNavigate } from 'react-router-dom';
+import { API_CONFIG, getApiUrl } from '../../config/api';
+
+const CONTRACT_STATUSES = [
+  'Active',
+  'Pending',
+  'Expired',
+  'Terminated',
+  'Draft',
+  'Suspended',
+  'Renewed'
+] as const;
+
+type ContractStatus = typeof CONTRACT_STATUSES[number];
+
+interface Contract {
+  _id?: string;
+  companyName: string;
+  tradeLicenseNo: string;
+  contractType: string;
+  startDate: string;
+  endDate: string;
+  value: number;
+  status: ContractStatus;
+  contactPerson: string;
+  contactEmail: string;
+  contactPhone: string;
+  notes: string;
+  vehicleId?: string;
+  template?: {
+    content: string;
+    letterhead?: {
+      logo?: string;
+      companyInfo?: string;
+    };
+  };
+}
+
+interface RenewalData {
+  startDate: Date;
+  endDate: Date;
+  value: number;
+  previousContractId?: string;
+}
+
+export interface Vehicle {
+  _id: string;
+  licensePlate: string;
+  make: string;
+  model: string;
+  year: string;
+}
 
 interface Props {
   template: {
@@ -29,11 +96,51 @@ interface Props {
     content: string;
   };
   contract: Partial<Contract>;
+  vehicles: Vehicle[];
   onSave: (content: string) => void;
   onClose: () => void;
+  onRenewContract?: (renewalData: RenewalData) => Promise<void>;
   allowEdit?: boolean;
   showPreview?: boolean;
 }
+
+const defaultTemplateContent = `[Company Name]
+[Trade License No]
+
+CONTRACT AGREEMENT
+
+This agreement is made on [Start Date] between [Company Name], having Trade License No. [Trade License No] (hereinafter referred to as "the Client") and our company.
+
+Vehicle Details:
+Make: [Vehicle Make]
+Model: [Vehicle Model]
+License Plate: [Vehicle License Plate]
+
+Contract Duration: From [Start Date] to [End Date]
+Contract Value: $[Contract Value]
+
+Contact Information:
+Contact Person: [Contact Person]
+Email: [Contact Email]
+Phone: [Contact Phone]
+
+Notes:
+[Notes]
+
+Terms and Conditions:
+1. The contract duration is specified above and may be renewed upon mutual agreement.
+2. The contract value is to be paid according to the agreed payment schedule.
+3. Any modifications to this contract must be made in writing and agreed upon by both parties.
+
+For [Company Name]:
+_______________________
+Authorized Signatory
+Date: [Current Date]
+
+For Our Company:
+_______________________
+Authorized Signatory
+Date: [Current Date]`;
 
 // Export the default template
 export const defaultTemplate = `@import url('https://fonts.googleapis.com/css2?family=KoHo:wght@400;600;700&display=swap');
@@ -51,13 +158,21 @@ PARTIES:
 2. [Client Company Name], a company registered under the laws of UAE with Trade License No. 
    [Client Trade License No], represented by [Contact Person] (hereinafter referred to as the "Client")
 
+VEHICLE INFORMATION:
+
+The following vehicle is assigned under this contract:
+• License Plate: [Vehicle License Plate]
+• Make: [Vehicle Make]
+• Model: [Vehicle Model]
+• Year: [Vehicle Year]
+
 WHEREAS:
 The Company and Client wish to enter into an agreement for [Contract Type], and both parties agree to be bound by the terms and conditions set forth in this agreement.
 
 TERMS AND CONDITIONS:
 
 1. CONTRACT DURATION AND VALUE
-   • Duration: [Start Date] to [End Date]
+   • Duration: From [Start Date] to [End Date]
    • Renewal: Upon mutual written consent
    • Total Value: AED [Value]
 
@@ -69,7 +184,6 @@ TERMS AND CONDITIONS:
 3. PARTY OBLIGATIONS
    • Company: Provide services, maintain quality, comply with UAE laws
    • Client: Timely payments, provide information/access, comply with UAE laws
-
 
 4. VEHICLE AND TERMINATION
    • Return: Vehicles/equipment returned to Company premises or agreed location
@@ -98,34 +212,65 @@ Date: ____________________`;
 const ContractTemplateEditor: React.FC<Props> = ({
   template,
   contract,
+  vehicles,
   onSave,
   onClose,
+  onRenewContract,
   allowEdit = false,
   showPreview = false,
 }) => {
-  const [content, setContent] = useState(template.content);
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const [content, setContent] = useState(template?.content || defaultTemplateContent);
   const [previewContent, setPreviewContent] = useState('');
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [renewDialogOpen, setRenewDialogOpen] = useState(false);
+  const [renewalData, setRenewalData] = useState<RenewalData>({
+    startDate: new Date(),
+    endDate: new Date(),
+    value: contract?.value || 0,
+    previousContractId: contract?._id
+  });
+  const [isRenewing, setIsRenewing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success' as 'success' | 'error' | 'info' | 'warning',
+  });
 
   useEffect(() => {
     updatePreview();
   }, [content, contract]);
 
   useEffect(() => {
+    const vehicle = vehicles.find((v: Vehicle) => v._id === contract.vehicleId);
     // Replace placeholders with actual contract data
     let filledTemplate = content
       .replace(/\[Company Name\]/g, contract.companyName || '')
       .replace(/\[Client Company Name\]/g, contract.companyName || '')
       .replace(/\[Trade License No\]/g, contract.tradeLicenseNo || '')
       .replace(/\[Contract Type\]/g, contract.contractType || '')
-      .replace(/\[Start Date\]/g, contract.startDate ? new Date(contract.startDate).toLocaleDateString('en-AE') : '')
-      .replace(/\[End Date\]/g, contract.endDate ? new Date(contract.endDate).toLocaleDateString('en-AE') : '')
+      .replace(/\[Start Date\]/g, contract.startDate ? new Date(contract.startDate).toLocaleDateString('en-AE', { 
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      }) : '')
+      .replace(/\[End Date\]/g, contract.endDate ? new Date(contract.endDate).toLocaleDateString('en-AE', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      }) : '')
       .replace(/\[Value\]/g, contract.value?.toLocaleString('en-AE') || '0')
       .replace(/\[Contact Person\]/g, contract.contactPerson || '')
-      .replace(/\[Client Trade License No\]/g, contract.tradeLicenseNo || '');
+      .replace(/\[Client Trade License No\]/g, contract.tradeLicenseNo || '')
+      .replace(/\[Vehicle License Plate\]/g, vehicle?.licensePlate || '')
+      .replace(/\[Vehicle Make\]/g, vehicle?.make || '')
+      .replace(/\[Vehicle Model\]/g, vehicle?.model || '')
+      .replace(/\[Vehicle Year\]/g, vehicle?.year || '');
 
     setContent(filledTemplate);
-  }, [contract]);
+  }, [contract, vehicles, content]);
 
   const updatePreview = () => {
     let processedContent = content;
@@ -150,7 +295,7 @@ const ContractTemplateEditor: React.FC<Props> = ({
     const lines = processedContent.split('\n');
     let inList = false;
     processedContent = lines
-      .map(line => {
+      .map((line: string) => {
         // Headers
         if (line.startsWith('# ')) {
           return `<h1 class="document-title">${line.slice(2)}</h1>`;
@@ -190,8 +335,36 @@ const ContractTemplateEditor: React.FC<Props> = ({
     setContent(e.target.value);
   };
 
-  const handleSave = () => {
-    onSave(content);
+  const handleSave = async () => {
+    if (!contract._id) return;
+
+    setIsLoading(true);
+    try {
+      await axios.patch(
+        getApiUrl(`${API_CONFIG.ENDPOINTS.TEMPLATE}/${contract._id}`),
+        {
+          template: {
+            content,
+            letterhead: contract.template?.letterhead
+          }
+        }
+      );
+
+      setSnackbar({
+        open: true,
+        message: 'Template saved successfully',
+        severity: 'success'
+      });
+    } catch (error) {
+      console.error('Error saving template:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to save template',
+        severity: 'error'
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const generatePDFFromContent = async () => {
@@ -224,7 +397,7 @@ const ContractTemplateEditor: React.FC<Props> = ({
 
         // Add footer banner at the bottom of the page
         const footerImg = new Image();
-        footerImg.src = '/bannerfooter.png';
+        footerImg.src = '/bannerfooter2.png';
         await new Promise((resolve, reject) => {
           footerImg.onload = resolve;
           footerImg.onerror = reject;
@@ -401,16 +574,82 @@ const ContractTemplateEditor: React.FC<Props> = ({
   };
 
   const handleGeneratePDF = async () => {
+    if (!contract._id) return;
+
+    setIsLoading(true);
     try {
-      const pdf = await generatePDFFromContent();
-      if (pdf) {
-        const fileName = `${contract.companyName || 'contract'}_${new Date().toISOString().split('T')[0]}.pdf`;
-        pdf.save(fileName);
-      }
+      const response = await axios.get(
+        getApiUrl(`${API_CONFIG.ENDPOINTS.TEMPLATE}/${contract._id}/pdf`),
+        { responseType: 'blob' }
+      );
+
+      // Create a blob from the PDF Stream
+      const file = new Blob([response.data], { type: 'application/pdf' });
+      
+      // Create a link and click it to trigger download
+      const fileURL = URL.createObjectURL(file);
+      const link = document.createElement('a');
+      link.href = fileURL;
+      link.download = `${contract.companyName}_contract.pdf`;
+      link.click();
+      
+      setSnackbar({
+        open: true,
+        message: 'PDF generated successfully',
+        severity: 'success'
+      });
     } catch (error) {
-      console.error('Error downloading PDF:', error);
+      console.error('Error generating PDF:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to generate PDF',
+        severity: 'error'
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  const handleRenewalOpen = () => {
+    // Set default renewal dates
+    const today = new Date();
+    const nextYear = new Date();
+    nextYear.setFullYear(today.getFullYear() + 1);
+    
+    setRenewalData({
+      startDate: today,
+      endDate: nextYear,
+      value: contract.value || 0,
+      previousContractId: contract._id
+    });
+    setRenewDialogOpen(true);
+  };
+
+  const handleRenewalClose = () => {
+    setRenewDialogOpen(false);
+  };
+
+  const handleRenewalSubmit = async () => {
+    if (onRenewContract) {
+      setIsRenewing(true);
+      try {
+        await onRenewContract(renewalData);
+        handleRenewalClose();
+      } catch (error) {
+        console.error('Error renewing contract:', error);
+      } finally {
+        setIsRenewing(false);
+      }
+    }
+  };
+
+  const closeSnackbar = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
+
+  if (!contract) {
+    return <CircularProgress />;
+  }
 
   return (
     <Box sx={{ p: 2 }}>
@@ -435,6 +674,7 @@ const ContractTemplateEditor: React.FC<Props> = ({
                   color="primary"
                   onClick={handleSave}
                   startIcon={<SaveIcon />}
+                  disabled={isLoading}
                 >
                   Save Changes
                 </Button>
@@ -454,17 +694,29 @@ const ContractTemplateEditor: React.FC<Props> = ({
                 onClick={handleGeneratePDF}
                 startIcon={<DownloadIcon />}
                 sx={{ mr: 1 }}
+                disabled={isLoading}
               >
-                Download PDF
+                Generate PDF
               </Button>
               <Button
                 variant="contained"
                 color="primary"
                 onClick={handlePrint}
                 startIcon={<PrintIcon />}
+                sx={{ mr: 1 }}
               >
                 Print
               </Button>
+              {onRenewContract && (
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  onClick={handleRenewalOpen}
+                  startIcon={<RefreshIcon />}
+                >
+                  Renew Contract
+                </Button>
+              )}
             </Box>
             <Divider sx={{ my: 2 }} />
             <Paper 
@@ -558,6 +810,70 @@ const ContractTemplateEditor: React.FC<Props> = ({
         </Grid>
       </Grid>
 
+      {/* Renewal Dialog */}
+      <Dialog open={renewDialogOpen} onClose={handleRenewalClose} maxWidth="sm" fullWidth>
+        <DialogTitle>Renew Contract</DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ mb: 2 }}>
+            Please enter the details for the contract renewal. The previous contract will be archived.
+          </DialogContentText>
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={6}>
+                <DatePicker
+                  label="Start Date"
+                  value={renewalData.startDate}
+                  onChange={(newValue) => {
+                    if (newValue) {
+                      setRenewalData(prev => ({ ...prev, startDate: newValue }));
+                    }
+                  }}
+                  sx={{ width: '100%' }}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <DatePicker
+                  label="End Date"
+                  value={renewalData.endDate}
+                  onChange={(newValue) => {
+                    if (newValue) {
+                      setRenewalData(prev => ({ ...prev, endDate: newValue }));
+                    }
+                  }}
+                  sx={{ width: '100%' }}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <FormControl fullWidth>
+                  <InputLabel htmlFor="contract-value">Contract Value</InputLabel>
+                  <OutlinedInput
+                    id="contract-value"
+                    type="number"
+                    value={renewalData.value}
+                    onChange={(e) => setRenewalData(prev => ({ 
+                      ...prev, 
+                      value: Number(e.target.value) 
+                    }))}
+                    startAdornment={<InputAdornment position="start">AED</InputAdornment>}
+                    label="Contract Value"
+                  />
+                </FormControl>
+              </Grid>
+            </Grid>
+          </LocalizationProvider>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleRenewalClose}>Cancel</Button>
+          <Button 
+            onClick={handleRenewalSubmit} 
+            variant="contained" 
+            disabled={isRenewing}
+          >
+            {isRenewing ? 'Renewing...' : 'Renew Contract'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       <Dialog
         open={previewOpen}
         onClose={() => setPreviewOpen(false)}
@@ -580,6 +896,17 @@ const ContractTemplateEditor: React.FC<Props> = ({
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={closeSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert onClose={closeSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

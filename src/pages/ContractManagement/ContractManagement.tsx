@@ -37,11 +37,12 @@ import {
   Schedule as ScheduleIcon,
   Description as DescriptionIcon,
   FileCopy as FileCopyIcon,
+  Autorenew as AutorenewIcon
 } from '@mui/icons-material';
 import axios, { AxiosError } from 'axios';
 import { API_CONFIG, getApiUrl } from '../../config/api';
 import moment from 'moment';
-import ContractTemplateEditor from '../../components/ContractTemplate/ContractTemplateEditor';
+import ContractTemplateEditor, { Vehicle as EditorVehicle } from '../../components/ContractTemplate/ContractTemplateEditor';
 import { Contract } from '../../types';
 
 const CONTRACT_STATUSES = [
@@ -82,6 +83,13 @@ interface Template {
   content: string;
   createdAt: string;
   updatedAt: string;
+}
+
+interface RenewalData {
+  startDate: Date;
+  endDate: Date;
+  value: number;
+  previousContractId?: string;
 }
 
 const emptyContract: ContractFormData = {
@@ -140,7 +148,7 @@ const ContractManagement: React.FC = () => {
     message: '',
     severity: 'success' as 'success' | 'error' | 'info' | 'warning'
   });
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [vehicles, setVehicles] = useState<EditorVehicle[]>([]);
   const [templateEditorOpen, setTemplateEditorOpen] = useState(false);
   const [selectedContract, setSelectedContract] = useState<ContractFormData | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<Template>({
@@ -202,10 +210,22 @@ const ContractManagement: React.FC = () => {
 
   const fetchVehicles = async () => {
     try {
-      const response = await axios.get<Vehicle[]>(getApiUrl(API_CONFIG.ENDPOINTS.VEHICLES));
-      setVehicles(response.data);
+      const response = await axios.get(getApiUrl(API_CONFIG.ENDPOINTS.VEHICLES));
+      const vehiclesData: EditorVehicle[] = response.data.map((v: any) => ({
+        _id: v._id,
+        licensePlate: v.licensePlate,
+        make: v.make,
+        model: v.model,
+        year: v.year
+      }));
+      setVehicles(vehiclesData);
     } catch (error) {
       console.error('Error fetching vehicles:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to fetch vehicles',
+        severity: 'error'
+      });
     }
   };
 
@@ -303,7 +323,7 @@ const ContractManagement: React.FC = () => {
     return Object.keys(errors).length === 0;
   };
 
-  const handleSaveContract = async () => {
+  const handleSaveContract = async (content?: string) => {
     if (!validateForm()) return;
 
     setIsLoading(true);
@@ -312,13 +332,19 @@ const ContractManagement: React.FC = () => {
         const { _id, ...contractToUpdate } = currentContract;
         await axios.put(
           getApiUrl(`${API_CONFIG.ENDPOINTS.CONTRACTS}/${_id}`),
-          contractToUpdate
+          {
+            ...contractToUpdate,
+            content: content || contractToUpdate.content
+          }
         );
       } else {
         const { _id, ...contractToCreate } = currentContract;
         await axios.post(
           getApiUrl(API_CONFIG.ENDPOINTS.CONTRACTS),
-          contractToCreate
+          {
+            ...contractToCreate,
+            content: content || contractToCreate.content
+          }
         );
       }
 
@@ -437,6 +463,30 @@ const ContractManagement: React.FC = () => {
     setIsTemplateListOpen(false);
   };
 
+  const handleContractRenewal = async (contract: ContractFormData) => {
+    try {
+      const renewalData: RenewalData = {
+        startDate: new Date(contract.startDate),
+        endDate: new Date(contract.endDate),
+        value: contract.value,
+        previousContractId: contract._id
+      };
+      await handleSaveContract();
+      setSnackbar({
+        open: true,
+        message: 'Contract renewed successfully',
+        severity: 'success'
+      });
+    } catch (error) {
+      console.error('Error renewing contract:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to renew contract',
+        severity: 'error'
+      });
+    }
+  };
+
   const renderActionsCell = (contract: ContractFormData) => (
     <TableCell>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -447,6 +497,20 @@ const ContractManagement: React.FC = () => {
         >
           <EditIcon />
         </IconButton>
+        {contract.status === 'Active' && (
+          <IconButton
+            size="small"
+            color="secondary"
+            onClick={() => {
+              setCurrentContract(contract);
+              setSelectedContract(contract);
+              setTemplateEditorOpen(true);
+            }}
+            title="Renew Contract"
+          >
+            <AutorenewIcon />
+          </IconButton>
+        )}
         <IconButton 
           size="small" 
           onClick={() => handleDeleteConfirm(contract._id || '')}
@@ -785,7 +849,7 @@ const ContractManagement: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button onClick={handleSaveContract} variant="contained" color="primary">
+          <Button onClick={() => handleSaveContract(undefined)} variant="contained" color="primary">
             {currentContract._id ? 'Update' : 'Create'}
           </Button>
         </DialogActions>
@@ -907,70 +971,48 @@ const ContractManagement: React.FC = () => {
       </Dialog>
 
       {/* Template Editor Dialog */}
-      <Dialog
-        open={templateEditorOpen}
-        onClose={() => {
-          setTemplateEditorOpen(false);
-          setSelectedContract(null);
-        }}
-        maxWidth="lg"
-        fullWidth
-      >
-        <DialogTitle>
-          Generate Contract PDF
-          <IconButton
-            onClick={() => {
-              setTemplateEditorOpen(false);
-              setSelectedContract(null);
-            }}
-            sx={{ position: 'absolute', right: 8, top: 8 }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent>
-          {selectedContract && (
+      {selectedContract && (
+        <Dialog open={templateEditorOpen} onClose={() => setTemplateEditorOpen(false)} maxWidth="lg" fullWidth>
+          <DialogContent>
             <ContractTemplateEditor
-              template={selectedTemplate}
+              template={{
+                _id: selectedTemplate._id,
+                name: selectedTemplate.name,
+                content: selectedTemplate.content || defaultTemplateContent
+              }}
               contract={{
-                ...selectedContract,
-                _id: selectedContract._id || '',
-                companyName: selectedContract.companyName || '',
-                contractType: selectedContract.contractType || '',
-                startDate: selectedContract.startDate || '',
-                endDate: selectedContract.endDate || '',
-                value: selectedContract.value || 0,
-                contactPerson: selectedContract.contactPerson || '',
-                contactEmail: selectedContract.contactEmail || '',
-                contactPhone: selectedContract.contactPhone || '',
-                notes: selectedContract.notes || '',
-                status: selectedContract.status || 'Draft',
-                vehicleId: selectedContract.vehicleId || '',
-                tradeLicenseNo: selectedContract.tradeLicenseNo || ''
+                ...currentContract,
+                _id: currentContract._id || undefined
               }}
-              onSave={() => {
-                setTemplateEditorOpen(false);
-                setSelectedContract(null);
-              }}
-              onClose={() => {
-                setTemplateEditorOpen(false);
-                setSelectedContract(null);
+              vehicles={vehicles}
+              onSave={(content: string) => handleSaveContract(content)}
+              onClose={() => setTemplateEditorOpen(false)}
+              onRenewContract={async (renewalData: RenewalData) => {
+                if (selectedContract) {
+                  const contractToRenew = {
+                    ...selectedContract,
+                    startDate: renewalData.startDate.toISOString().split('T')[0],
+                    endDate: renewalData.endDate.toISOString().split('T')[0],
+                    value: renewalData.value
+                  };
+                  await handleContractRenewal(contractToRenew);
+                }
               }}
               allowEdit={false}
               showPreview={true}
             />
-          )}
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
+      )}
 
-      {/* Snackbar for notifications */}
+      {/* Snackbar */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}
         onClose={closeSnackbar}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
-        <Alert onClose={closeSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+        <Alert onClose={closeSnackbar} severity={snackbar.severity}>
           {snackbar.message}
         </Alert>
       </Snackbar>
@@ -978,28 +1020,42 @@ const ContractManagement: React.FC = () => {
   );
 };
 
-const defaultTemplateContent = `# Contract Agreement
+const defaultTemplateContent = `[Company Name]
+[Trade License No]
 
-This agreement is made between {{companyName}} and [Your Company Name]
+CONTRACT AGREEMENT
 
-## Contract Details
-- Contract Type: {{contractType}}
-- Start Date: {{startDate}}
-- End Date: {{endDate}}
-- Contract Value: {{value}}
+This agreement is made on [Start Date] between [Company Name], having Trade License No. [Trade License No] (hereinafter referred to as "the Client") and our company.
 
-## Contact Information
-- Contact Person: {{contactPerson}}
-- Email: {{contactEmail}}
-- Phone: {{contactPhone}}
+Vehicle Details:
+Make: [Vehicle Make]
+Model: [Vehicle Model]
+License Plate: [Vehicle License Plate]
 
-## Additional Notes
-{{notes}}
+Contract Duration: From [Start Date] to [End Date]
+Contract Value: $[Contract Value]
 
-## Signatures
+Contact Information:
+Contact Person: [Contact Person]
+Email: [Contact Email]
+Phone: [Contact Phone]
 
-________________________                    ________________________
-[Your Company Name]                         {{companyName}}
-`;
+Notes:
+[Notes]
+
+Terms and Conditions:
+1. The contract duration is specified above and may be renewed upon mutual agreement.
+2. The contract value is to be paid according to the agreed payment schedule.
+3. Any modifications to this contract must be made in writing and agreed upon by both parties.
+
+For [Company Name]:
+_______________________
+Authorized Signatory
+Date: [Current Date]
+
+For Our Company:
+_______________________
+Authorized Signatory
+Date: [Current Date]`;
 
 export default ContractManagement; 

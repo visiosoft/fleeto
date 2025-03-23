@@ -3,18 +3,15 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Box, CircularProgress } from '@mui/material';
 import axios from 'axios';
 import { API_CONFIG, getApiUrl } from '../../config/api';
-import ContractTemplateEditor, { defaultTemplate } from '../../components/ContractTemplate/ContractTemplateEditor';
+import ContractTemplateEditor, { Vehicle, defaultTemplate } from '../../components/ContractTemplate/ContractTemplateEditor';
 
 const ContractTemplate: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [contract, setContract] = useState<any>(null);
+  const [template, setTemplate] = useState<any>(null);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
-  const [template, setTemplate] = useState({
-    _id: 'default',
-    name: 'Default Template',
-    content: defaultTemplate
-  });
 
   useEffect(() => {
     const fetchContract = async () => {
@@ -33,6 +30,16 @@ const ContractTemplate: React.FC = () => {
       fetchContract();
     }
   }, [id, navigate]);
+
+  useEffect(() => {
+    // Load contract data from localStorage
+    const savedData = localStorage.getItem('currentContractData');
+    if (savedData) {
+      const { contract: savedContract, vehicles: savedVehicles } = JSON.parse(savedData);
+      setContract(savedContract);
+      setVehicles(savedVehicles);
+    }
+  }, []);
 
   const handleSave = async (content: string) => {
     try {
@@ -64,6 +71,7 @@ const ContractTemplate: React.FC = () => {
     <ContractTemplateEditor
       template={template}
       contract={contract}
+      vehicles={vehicles}
       onSave={handleSave}
       onClose={handleClose}
       allowEdit={true}
