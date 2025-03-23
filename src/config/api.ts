@@ -5,6 +5,7 @@ export const API_CONFIG = {
     VEHICLES: '/vehicles',
     FUEL: '/fuel',
     CONTRACTS: '/contracts',
+    TEMPLATE: '/contracts/template',
     DRIVERS: '/drivers',
     COMPANY_SETTINGS: '/company-settings',
     UPLOAD_LOGO: '/company-settings/upload-logo',

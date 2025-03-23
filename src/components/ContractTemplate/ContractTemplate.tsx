@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -17,6 +18,7 @@ import {
   TextField,
   Snackbar,
   Alert,
+  CircularProgress,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -26,8 +28,57 @@ import {
 } from '@mui/icons-material';
 import axios from 'axios';
 import { API_CONFIG, getApiUrl } from '../../config/api';
-import ContractTemplateEditor from './ContractTemplateEditor';
-import { Contract } from '../../types';
+import ContractTemplateEditor, { Vehicle as EditorVehicle } from '../../components/ContractTemplate/ContractTemplateEditor';
+
+const defaultTemplateContent = `[Company Name]
+[Trade License No]
+
+CONTRACT AGREEMENT
+
+This agreement is made on [Start Date] between [Company Name], having Trade License No. [Trade License No] (hereinafter referred to as "the Client") and our company.
+
+Vehicle Details:
+Make: [Vehicle Make]
+Model: [Vehicle Model]
+License Plate: [Vehicle License Plate]
+
+Contract Duration: From [Start Date] to [End Date]
+Contract Value: $[Contract Value]
+
+Contact Information:
+Contact Person: [Contact Person]
+Email: [Contact Email]
+Phone: [Contact Phone]
+
+Notes:
+[Notes]
+
+Terms and Conditions:
+1. The contract duration is specified above and may be renewed upon mutual agreement.
+2. The contract value is to be paid according to the agreed payment schedule.
+3. Any modifications to this contract must be made in writing and agreed upon by both parties.
+
+For [Company Name]:
+_______________________
+Authorized Signatory
+Date: [Current Date]
+
+For Our Company:
+_______________________
+Authorized Signatory
+Date: [Current Date]`;
+
+const CONTRACT_STATUSES = [
+  'Active',
+  'Pending',
+  'Expired',
+  'Terminated',
+  'Draft',
+  'Suspended',
+  'Renewed'
+] as const;
+
+type ContractStatus = typeof CONTRACT_STATUSES[number];
 
 interface Template {
   _id: string;
@@ -37,11 +88,69 @@ interface Template {
   updatedAt: string;
 }
 
-interface Props {
-  contract: Partial<Contract>;
+interface Contract {
+  _id?: string;
+  companyName: string;
+  tradeLicenseNo: string;
+  contractType: string;
+  startDate: string;
+  endDate: string;
+  value: number;
+  status: ContractStatus;
+  contactPerson: string;
+  contactEmail: string;
+  contactPhone: string;
+  notes: string;
+  vehicleId?: string;
+  template?: {
+    content: string;
+    letterhead?: {
+      logo?: string;
+      companyInfo?: string;
+    };
+  };
 }
 
-const ContractTemplate: React.FC<Props> = ({ contract }) => {
+interface Vehicle {
+  _id: string;
+  name: string;
+  // Add any other necessary properties for the vehicle
+}
+
+interface Props {
+  template: {
+    _id: string;
+    name: string;
+    content: string;
+  };
+  contract: Contract;
+  vehicles: Vehicle[];
+  onSave: (content: string) => Promise<void>;
+  onClose: () => void;
+}
+
+const ContractTemplate: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const [contract, setContract] = useState<Contract>({
+    companyName: '',
+    tradeLicenseNo: '',
+    contractType: '',
+    startDate: new Date().toISOString().split('T')[0],
+    endDate: new Date().toISOString().split('T')[0],
+    value: 0,
+    status: 'Draft',
+    contactPerson: '',
+    contactEmail: '',
+    contactPhone: '',
+    notes: '',
+    template: {
+      content: defaultTemplateContent
+    }
+  });
+  const [template, setTemplate] = useState<Template | null>(null);
+  const [vehicles, setVehicles] = useState<EditorVehicle[]>([]);
+  const [loading, setLoading] = useState(true);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
@@ -151,7 +260,11 @@ const ContractTemplate: React.FC<Props> = ({ contract }) => {
                 <ListItem key={template._id}>
                   <ListItemText
                     primary={template.name}
-                    secondary={`Last updated: ${new Date(template.updatedAt).toLocaleDateString()}`}
+                    secondary={`Last updated: ${new Date(template.updatedAt).toLocaleDateString('en-AE', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric'
+                    })}`}
                   />
                   <ListItemSecondaryAction>
                     <IconButton edge="end" onClick={() => handleEditTemplate(template)}>
@@ -211,22 +324,16 @@ const ContractTemplate: React.FC<Props> = ({ contract }) => {
           </DialogTitle>
           <DialogContent>
             <ContractTemplateEditor
-              template={selectedTemplate}
-              contract={{
-                companyName: contract?.companyName || '',
-                contractType: contract?.contractType || '',
-                startDate: contract?.startDate || '',
-                endDate: contract?.endDate || '',
-                value: contract?.value || 0,
-                contactPerson: contract?.contactPerson || '',
-                contactEmail: contract?.contactEmail || '',
-                contactPhone: contract?.contactPhone || '',
-                notes: contract?.notes || '',
-                _id: contract?._id || '',
-                status: contract?.status || 'Draft',
-                vehicleId: contract?.vehicleId || '',
-                tradeLicenseNo: contract?.tradeLicenseNo || ''
+              template={{
+                _id: selectedTemplate._id || 'new',
+                name: selectedTemplate.name || 'New Template',
+                content: selectedTemplate.content || defaultTemplateContent
               }}
+              contract={{
+                ...contract,
+                _id: contract._id || undefined
+              }}
+              vehicles={vehicles}
               onSave={(content: string) => {
                 handleSaveTemplate(selectedTemplate._id, content);
                 setIsEditorOpen(false);
