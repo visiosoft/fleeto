@@ -47,7 +47,20 @@ import { ResponsivePie } from '@nivo/pie';
 import { ResponsiveBar } from '@nivo/bar';
 import costService from '../../services/costService';
 import { Cost } from '../../types';
+import axios from 'axios';
+import { getApiUrl } from '../../utils/apiUtils';
+import { API_CONFIG } from '../../config/apiConfig';
 
+// Define Vehicle interface
+interface Vehicle {
+  _id: string;
+  licensePlate: string;
+  make: string;
+  model: string;
+  year: string;
+}
+
+// Define types for our chart data
 type ExpenseType = 'fuel' | 'maintenance' | 'insurance' | 'registration' | 'lease' | 'toll' | 'tax' | 'other';
 type PaymentStatus = 'paid' | 'pending' | 'overdue';
 type PaymentMethod = 'cash' | 'credit' | 'debit' | 'bank transfer' | 'other';
@@ -69,6 +82,7 @@ const CostManagement: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCost, setEditingCost] = useState<Cost | null>(null);
   const [tabValue, setTabValue] = useState(0);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [formValues, setFormValues] = useState<CostFormValues>({
     vehicleId: '',
     driverId: '',
@@ -79,10 +93,16 @@ const CostManagement: React.FC = () => {
     paymentStatus: 'pending',
   });
   const [formErrors, setFormErrors] = useState<Partial<Record<keyof CostFormValues, string>>>({});
-  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: 'success' | 'error' | 'warning';
+    duration?: number;
+  }>({
     open: false,
     message: '',
     severity: 'success',
+    duration: 5000
   });
   const [filters, setFilters] = useState({
     expenseType: '',
@@ -93,6 +113,24 @@ const CostManagement: React.FC = () => {
   const [costSummary, setCostSummary] = useState<CostSummary[]>([]);
   const [showFilters, setShowFilters] = useState(false);
 
+  // Fetch vehicles data
+  const fetchVehicles = useCallback(async () => {
+    try {
+      const response = await axios.get(getApiUrl(API_CONFIG.ENDPOINTS.VEHICLES));
+      const vehiclesData: Vehicle[] = response.data.map((v: any) => ({
+        _id: v._id,
+        licensePlate: v.licensePlate,
+        make: v.make,
+        model: v.model,
+        year: v.year
+      }));
+      setVehicles(vehiclesData);
+    } catch (error) {
+      console.error('Failed to fetch vehicles:', error);
+      showSnackbar('Failed to fetch vehicles. Please try again later.', 'error', 6000);
+    }
+  }, []);
+
   // Fetch costs data
   const fetchCosts = useCallback(async () => {
     setIsLoading(true);
@@ -101,7 +139,7 @@ const CostManagement: React.FC = () => {
       setCosts(response);
     } catch (error) {
       console.error('Failed to fetch costs:', error);
-      showSnackbar('Failed to fetch costs', 'error');
+      showSnackbar('Failed to fetch costs. Please try again later.', 'error', 6000);
     } finally {
       setIsLoading(false);
     }
@@ -111,11 +149,9 @@ const CostManagement: React.FC = () => {
   const fetchCostSummary = useCallback(async () => {
     try {
       const response = await costService.getCostsSummary();
-      // Make sure the response is an array
       if (Array.isArray(response)) {
         setCostSummary(response);
       } else if (response && typeof response === 'object') {
-        // If it's an object with expense type totals, convert to array format
         const summaryArray = Object.entries(response).map(([expenseType, total]) => ({
           expenseType,
           total: typeof total === 'number' ? total : Number(total) || 0
@@ -123,10 +159,12 @@ const CostManagement: React.FC = () => {
         setCostSummary(summaryArray);
       } else {
         console.error('Invalid cost summary response format:', response);
+        showSnackbar('Invalid cost summary data received.', 'warning', 4000);
         setCostSummary([]);
       }
     } catch (error) {
       console.error('Failed to fetch cost summary:', error);
+      showSnackbar('Failed to fetch cost summary. Please try again later.', 'error', 6000);
       setCostSummary([]);
     }
   }, []);
@@ -135,11 +173,17 @@ const CostManagement: React.FC = () => {
   useEffect(() => {
     fetchCosts();
     fetchCostSummary();
-  }, [fetchCosts, fetchCostSummary]);
+    fetchVehicles();
+  }, [fetchCosts, fetchCostSummary, fetchVehicles]);
 
-  // Show snackbar message
-  const showSnackbar = (message: string, severity: 'success' | 'error') => {
-    setSnackbar({ open: true, message, severity });
+  // Show snackbar message with different severities
+  const showSnackbar = (message: string, severity: 'success' | 'error' | 'warning', duration?: number) => {
+    setSnackbar({
+      open: true,
+      message,
+      severity,
+      duration: duration || 5000
+    });
   };
 
   // Close snackbar
@@ -190,11 +234,11 @@ const CostManagement: React.FC = () => {
     try {
       await costService.deleteCost(id);
       setCosts(costs.filter(cost => cost._id !== id));
-      showSnackbar('Cost deleted successfully', 'success');
+      showSnackbar('Cost deleted successfully', 'success', 3000);
       fetchCostSummary();
     } catch (error) {
       console.error('Failed to delete cost:', error);
-      showSnackbar('Failed to delete cost', 'error');
+      showSnackbar('Failed to delete cost. Please try again later.', 'error', 6000);
     }
   };
 
@@ -236,11 +280,10 @@ const CostManagement: React.FC = () => {
   };
 
   const handleVehicleChange = (event: SelectChangeEvent<string>) => {
-    const name = event.target.name as string;
     const value = event.target.value;
-    setFormValues({ ...formValues, [name]: value });
-    if (formErrors[name as keyof CostFormValues]) {
-      setFormErrors({ ...formErrors, [name]: '' });
+    setFormValues({ ...formValues, vehicleId: value });
+    if (formErrors.vehicleId) {
+      setFormErrors({ ...formErrors, vehicleId: '' });
     }
   };
 
@@ -267,7 +310,10 @@ const CostManagement: React.FC = () => {
 
   // Submit form
   const handleSubmit = async () => {
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      showSnackbar('Please fill in all required fields correctly.', 'warning', 4000);
+      return;
+    }
 
     try {
       const costData = {
@@ -276,22 +322,20 @@ const CostManagement: React.FC = () => {
       };
 
       if (editingCost) {
-        // Update existing cost
         await costService.updateCost(editingCost._id, costData);
         setCosts(costs.map(cost => (cost._id === editingCost._id ? { ...cost, ...costData } : cost)));
-        showSnackbar('Cost updated successfully', 'success');
+        showSnackbar('Cost updated successfully', 'success', 3000);
       } else {
-        // Create new cost
         const newCost = await costService.createCost(costData);
         setCosts([...costs, newCost]);
-        showSnackbar('Cost added successfully', 'success');
+        showSnackbar('Cost added successfully', 'success', 3000);
       }
 
       setIsModalOpen(false);
       fetchCostSummary();
     } catch (error) {
       console.error('Failed to save cost:', error);
-      showSnackbar('Failed to save cost', 'error');
+      showSnackbar('Failed to save cost. Please try again later.', 'error', 6000);
     }
   };
 
@@ -329,9 +373,12 @@ const CostManagement: React.FC = () => {
       }
       
       setCosts(filteredCosts);
+      if (filteredCosts.length === 0) {
+        showSnackbar('No costs found for the selected filters.', 'warning', 4000);
+      }
     } catch (error) {
       console.error('Failed to apply filters:', error);
-      showSnackbar('Failed to apply filters', 'error');
+      showSnackbar('Failed to apply filters. Please try again later.', 'error', 6000);
     } finally {
       setIsLoading(false);
     }
@@ -749,19 +796,23 @@ const CostManagement: React.FC = () => {
               />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <FormControl fullWidth margin="normal">
-                <InputLabel>Vehicle (Optional)</InputLabel>
+              <FormControl fullWidth error={!!formErrors.vehicleId}>
+                <InputLabel>Vehicle</InputLabel>
                 <Select
                   name="vehicleId"
                   value={formValues.vehicleId}
-                  label="Vehicle (Optional)"
                   onChange={handleVehicleChange}
+                  label="Vehicle"
                 >
-                  <MenuItem value="">None</MenuItem>
-                  {/* This should be populated with actual vehicle data */}
-                  <MenuItem value="vehicle1">Vehicle 1</MenuItem>
-                  <MenuItem value="vehicle2">Vehicle 2</MenuItem>
+                  {vehicles.map((vehicle) => (
+                    <MenuItem key={vehicle._id} value={vehicle._id}>
+                      {`${vehicle.make} ${vehicle.model} (${vehicle.licensePlate})`}
+                    </MenuItem>
+                  ))}
                 </Select>
+                {formErrors.vehicleId && (
+                  <FormHelperText>{formErrors.vehicleId}</FormHelperText>
+                )}
               </FormControl>
             </Grid>
             <Grid item xs={12}>
@@ -852,8 +903,18 @@ const CostManagement: React.FC = () => {
       </Dialog>
 
       {/* Snackbar for notifications */}
-      <Snackbar open={snackbar.open} autoHideDuration={5000} onClose={handleCloseSnackbar}>
-        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+      <Snackbar 
+        open={snackbar.open} 
+        autoHideDuration={snackbar.duration} 
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert 
+          onClose={handleCloseSnackbar} 
+          severity={snackbar.severity} 
+          sx={{ width: '100%' }}
+          variant="filled"
+        >
           {snackbar.message}
         </Alert>
       </Snackbar>
