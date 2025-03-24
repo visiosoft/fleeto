@@ -10,6 +10,7 @@ export const API_CONFIG = {
     COMPANY_SETTINGS: '/company-settings',
     UPLOAD_LOGO: '/company-settings/upload-logo',
     CONTRACT_TEMPLATES: '/contract-templates',
+    COSTS: '/expenses',
   }
 };
 

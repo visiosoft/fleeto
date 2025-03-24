@@ -1,15 +1,862 @@
-import React from 'react';
-import { Box, Typography } from '@mui/material';
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  Box,
+  Typography,
+  Button,
+  Grid,
+  Paper,
+  TextField,
+  MenuItem,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton,
+  Snackbar,
+  Alert,
+  TableContainer,
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+  Tabs,
+  Tab,
+  FormControl,
+  InputLabel,
+  Select,
+  SelectChangeEvent,
+  Chip,
+  FormHelperText,
+  Divider,
+  CircularProgress,
+} from '@mui/material';
+import {
+  Add as AddIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  FilterList as FilterIcon,
+  AttachMoney as MoneyIcon,
+  LocalGasStation as GasIcon,
+  Build as MaintenanceIcon,
+  DirectionsCar as VehicleIcon,
+} from '@mui/icons-material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import moment from 'moment';
+import { ResponsivePie } from '@nivo/pie';
+import { ResponsiveBar } from '@nivo/bar';
+import costService from '../../services/costService';
+import { Cost } from '../../types';
+
+type ExpenseType = 'fuel' | 'maintenance' | 'insurance' | 'registration' | 'lease' | 'toll' | 'tax' | 'other';
+type PaymentStatus = 'paid' | 'pending' | 'overdue';
+type PaymentMethod = 'cash' | 'credit' | 'debit' | 'bank transfer' | 'other';
+
+// Omit date from Cost type and create our own version with Moment
+interface CostFormValues extends Omit<Cost, '_id' | 'createdAt' | 'updatedAt' | 'date'> {
+  date: moment.Moment | null;
+}
+
+interface CostSummary {
+  expenseType: string;
+  total: number;
+}
 
 const CostManagement: React.FC = () => {
+  // State variables
+  const [costs, setCosts] = useState<Cost[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingCost, setEditingCost] = useState<Cost | null>(null);
+  const [tabValue, setTabValue] = useState(0);
+  const [formValues, setFormValues] = useState<CostFormValues>({
+    vehicleId: '',
+    driverId: '',
+    expenseType: 'fuel',
+    amount: 0,
+    date: moment(),
+    description: '',
+    paymentStatus: 'pending',
+  });
+  const [formErrors, setFormErrors] = useState<Partial<Record<keyof CostFormValues, string>>>({});
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
+    open: false,
+    message: '',
+    severity: 'success',
+  });
+  const [filters, setFilters] = useState({
+    expenseType: '',
+    startDate: moment().subtract(30, 'days'),
+    endDate: moment(),
+    paymentStatus: '',
+  });
+  const [costSummary, setCostSummary] = useState<CostSummary[]>([]);
+  const [showFilters, setShowFilters] = useState(false);
+
+  // Fetch costs data
+  const fetchCosts = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const response = await costService.getAllCosts();
+      setCosts(response);
+    } catch (error) {
+      console.error('Failed to fetch costs:', error);
+      showSnackbar('Failed to fetch costs', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Fetch cost summary
+  const fetchCostSummary = useCallback(async () => {
+    try {
+      const response = await costService.getCostsSummary();
+      // Make sure the response is an array
+      if (Array.isArray(response)) {
+        setCostSummary(response);
+      } else if (response && typeof response === 'object') {
+        // If it's an object with expense type totals, convert to array format
+        const summaryArray = Object.entries(response).map(([expenseType, total]) => ({
+          expenseType,
+          total: typeof total === 'number' ? total : Number(total) || 0
+        }));
+        setCostSummary(summaryArray);
+      } else {
+        console.error('Invalid cost summary response format:', response);
+        setCostSummary([]);
+      }
+    } catch (error) {
+      console.error('Failed to fetch cost summary:', error);
+      setCostSummary([]);
+    }
+  }, []);
+
+  // Initial data load
+  useEffect(() => {
+    fetchCosts();
+    fetchCostSummary();
+  }, [fetchCosts, fetchCostSummary]);
+
+  // Show snackbar message
+  const showSnackbar = (message: string, severity: 'success' | 'error') => {
+    setSnackbar({ open: true, message, severity });
+  };
+
+  // Close snackbar
+  const handleCloseSnackbar = () => {
+    setSnackbar(prev => ({ ...prev, open: false }));
+  };
+
+  // Open modal for adding new cost
+  const handleAdd = () => {
+    setEditingCost(null);
+    setFormValues({
+      vehicleId: '',
+      driverId: '',
+      expenseType: 'fuel',
+      amount: 0,
+      date: moment(),
+      description: '',
+      paymentStatus: 'pending',
+      paymentMethod: 'cash',
+    });
+    setFormErrors({});
+    setIsModalOpen(true);
+  };
+
+  // Open modal for editing cost
+  const handleEdit = (cost: Cost) => {
+    setEditingCost(cost);
+    setFormValues({
+      vehicleId: cost.vehicleId || '',
+      driverId: cost.driverId || '',
+      expenseType: cost.expenseType,
+      amount: cost.amount,
+      date: moment(cost.date),
+      description: cost.description,
+      invoiceNumber: cost.invoiceNumber || '',
+      vendor: cost.vendor || '',
+      paymentStatus: cost.paymentStatus,
+      paymentMethod: cost.paymentMethod || 'cash',
+      notes: cost.notes || '',
+      attachments: cost.attachments || [],
+    });
+    setFormErrors({});
+    setIsModalOpen(true);
+  };
+
+  // Delete cost
+  const handleDelete = async (id: string) => {
+    try {
+      await costService.deleteCost(id);
+      setCosts(costs.filter(cost => cost._id !== id));
+      showSnackbar('Cost deleted successfully', 'success');
+      fetchCostSummary();
+    } catch (error) {
+      console.error('Failed to delete cost:', error);
+      showSnackbar('Failed to delete cost', 'error');
+    }
+  };
+
+  // Handle form input changes
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = event.target;
+    setFormValues({ ...formValues, [name]: value });
+    if (formErrors[name as keyof CostFormValues]) {
+      setFormErrors({ ...formErrors, [name]: '' });
+    }
+  };
+
+  // Handle select input changes - updated to use SelectChangeEvent with generic type
+  const handleExpenseTypeChange = (event: SelectChangeEvent<ExpenseType>) => {
+    const name = event.target.name as string;
+    const value = event.target.value as ExpenseType;
+    setFormValues({ ...formValues, [name]: value });
+    if (formErrors[name as keyof CostFormValues]) {
+      setFormErrors({ ...formErrors, [name]: '' });
+    }
+  };
+
+  const handlePaymentStatusChange = (event: SelectChangeEvent<PaymentStatus>) => {
+    const name = event.target.name as string;
+    const value = event.target.value as PaymentStatus;
+    setFormValues({ ...formValues, [name]: value });
+    if (formErrors[name as keyof CostFormValues]) {
+      setFormErrors({ ...formErrors, [name]: '' });
+    }
+  };
+
+  const handlePaymentMethodChange = (event: SelectChangeEvent<PaymentMethod>) => {
+    const name = event.target.name as string;
+    const value = event.target.value as PaymentMethod;
+    setFormValues({ ...formValues, [name]: value });
+    if (formErrors[name as keyof CostFormValues]) {
+      setFormErrors({ ...formErrors, [name]: '' });
+    }
+  };
+
+  const handleVehicleChange = (event: SelectChangeEvent<string>) => {
+    const name = event.target.name as string;
+    const value = event.target.value;
+    setFormValues({ ...formValues, [name]: value });
+    if (formErrors[name as keyof CostFormValues]) {
+      setFormErrors({ ...formErrors, [name]: '' });
+    }
+  };
+
+  // Handle date change
+  const handleDateChange = (date: moment.Moment | null) => {
+    setFormValues({ ...formValues, date });
+    if (formErrors.date) {
+      setFormErrors({ ...formErrors, date: '' });
+    }
+  };
+
+  // Validate form
+  const validateForm = () => {
+    const errors: Partial<Record<keyof CostFormValues, string>> = {};
+    if (!formValues.expenseType) errors.expenseType = 'Expense type is required';
+    if (!formValues.amount || formValues.amount <= 0) errors.amount = 'Amount must be greater than 0';
+    if (!formValues.date) errors.date = 'Date is required';
+    if (!formValues.description) errors.description = 'Description is required';
+    if (!formValues.paymentStatus) errors.paymentStatus = 'Payment status is required';
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  // Submit form
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
+
+    try {
+      const costData = {
+        ...formValues,
+        date: formValues.date ? formValues.date.format('YYYY-MM-DD') : '',
+      };
+
+      if (editingCost) {
+        // Update existing cost
+        await costService.updateCost(editingCost._id, costData);
+        setCosts(costs.map(cost => (cost._id === editingCost._id ? { ...cost, ...costData } : cost)));
+        showSnackbar('Cost updated successfully', 'success');
+      } else {
+        // Create new cost
+        const newCost = await costService.createCost(costData);
+        setCosts([...costs, newCost]);
+        showSnackbar('Cost added successfully', 'success');
+      }
+
+      setIsModalOpen(false);
+      fetchCostSummary();
+    } catch (error) {
+      console.error('Failed to save cost:', error);
+      showSnackbar('Failed to save cost', 'error');
+    }
+  };
+
+  // Close modal
+  const handleClose = () => {
+    setIsModalOpen(false);
+  };
+
+  // Handle tab change
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
+    setTabValue(newValue);
+  };
+
+  // Toggle filters
+  const toggleFilters = () => {
+    setShowFilters(!showFilters);
+  };
+
+  // Apply filters
+  const applyFilters = async () => {
+    setIsLoading(true);
+    try {
+      const startDate = filters.startDate.format('YYYY-MM-DD');
+      const endDate = filters.endDate.format('YYYY-MM-DD');
+      const response = await costService.getCostsByDateRange(startDate, endDate);
+      
+      let filteredCosts = response;
+      
+      if (filters.expenseType) {
+        filteredCosts = filteredCosts.filter((cost: Cost) => cost.expenseType === filters.expenseType);
+      }
+      
+      if (filters.paymentStatus) {
+        filteredCosts = filteredCosts.filter((cost: Cost) => cost.paymentStatus === filters.paymentStatus);
+      }
+      
+      setCosts(filteredCosts);
+    } catch (error) {
+      console.error('Failed to apply filters:', error);
+      showSnackbar('Failed to apply filters', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Reset filters
+  const resetFilters = () => {
+    setFilters({
+      expenseType: '',
+      startDate: moment().subtract(30, 'days'),
+      endDate: moment(),
+      paymentStatus: '',
+    });
+    fetchCosts();
+  };
+
+  // Prepare data for pie chart
+  const getPieChartData = () => {
+    // Check if costSummary is an array and not empty
+    if (!Array.isArray(costSummary)) {
+      console.error('Cost summary is not an array:', costSummary);
+      return [];
+    }
+    
+    return costSummary.map(item => ({
+      id: item.expenseType || 'unknown',
+      label: item.expenseType 
+        ? item.expenseType.charAt(0).toUpperCase() + item.expenseType.slice(1) 
+        : 'Unknown',
+      value: item.total,
+    }));
+  };
+
+  // Get total costs
+  const getTotalCosts = () => {
+    return formatAmount(costs.reduce((total, cost) => total + Number(cost.amount), 0));
+  };
+
+  // Filter costs by expense type
+  const getCostsByType = (type: string) => {
+    return formatAmount(costs.filter(cost => cost.expenseType === type)
+      .reduce((total, cost) => total + Number(cost.amount), 0));
+  };
+
+  // Get expense type icon
+  const getExpenseTypeIcon = (type: string) => {
+    switch (type) {
+      case 'fuel':
+        return <GasIcon />;
+      case 'maintenance':
+        return <MaintenanceIcon />;
+      case 'insurance':
+      case 'registration':
+      case 'tax':
+        return <VehicleIcon />;
+      default:
+        return <MoneyIcon />;
+    }
+  };
+
+  // Capitalize first letter helper function
+  const capitalizeFirstLetter = (text: string | undefined): string => {
+    if (!text) return 'Unknown';
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  };
+
+  // Format currency amount helper function
+  const formatAmount = (amount: any): string => {
+    if (typeof amount === 'number') {
+      return amount.toFixed(2);
+    }
+    // Try to convert to a number
+    const num = Number(amount);
+    return isNaN(num) ? '0.00' : num.toFixed(2);
+  };
+
+  // Render different tabs
+  const renderTabContent = () => {
+    switch (tabValue) {
+      case 0: // List View
+        return (
+          <TableContainer component={Paper} sx={{ mt: 2 }}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Expense Type</TableCell>
+                  <TableCell>Amount</TableCell>
+                  <TableCell>Date</TableCell>
+                  <TableCell>Description</TableCell>
+                  <TableCell>Vendor</TableCell>
+                  <TableCell>Payment Status</TableCell>
+                  <TableCell>Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={7} align="center">
+                      <CircularProgress />
+                    </TableCell>
+                  </TableRow>
+                ) : costs.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} align="center">
+                      No costs found
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  costs.map(cost => (
+                    <TableRow key={cost._id}>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          {getExpenseTypeIcon(cost.expenseType)}
+                          {capitalizeFirstLetter(cost.expenseType)}
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Typography fontWeight="bold">${formatAmount(cost.amount)}</Typography>
+                      </TableCell>
+                      <TableCell>{moment(cost.date).format('MMM DD, YYYY')}</TableCell>
+                      <TableCell>{cost.description}</TableCell>
+                      <TableCell>{cost.vendor || '-'}</TableCell>
+                      <TableCell>
+                        <Chip 
+                          label={capitalizeFirstLetter(cost.paymentStatus)} 
+                          color={
+                            cost.paymentStatus === 'paid' ? 'success' : 
+                            cost.paymentStatus === 'pending' ? 'warning' : 'error'
+                          }
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <IconButton size="small" onClick={() => handleEdit(cost)}>
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                        <IconButton size="small" onClick={() => handleDelete(cost._id)}>
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        );
+      case 1: // Charts
+        return (
+          <Grid container spacing={3} sx={{ mt: 1 }}>
+            <Grid item xs={12} md={6}>
+              <Paper sx={{ p: 2, height: 400 }}>
+                <Typography variant="h6" gutterBottom>
+                  Expense Distribution
+                </Typography>
+                {costSummary.length === 0 ? (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80%' }}>
+                    <CircularProgress />
+                    <Typography variant="body2" sx={{ ml: 2 }}>No expense data available</Typography>
+                  </Box>
+                ) : (
+                  <Box sx={{ height: '90%' }}>
+                    <ResponsivePie
+                      data={getPieChartData()}
+                      margin={{ top: 40, right: 80, bottom: 80, left: 80 }}
+                      innerRadius={0.5}
+                      padAngle={0.7}
+                      cornerRadius={3}
+                      activeOuterRadiusOffset={8}
+                      borderWidth={1}
+                      borderColor={{ from: 'color', modifiers: [['darker', 0.2]] }}
+                      arcLinkLabelsSkipAngle={10}
+                      arcLinkLabelsTextColor="#333333"
+                      arcLinkLabelsThickness={2}
+                      arcLinkLabelsColor={{ from: 'color' }}
+                      arcLabelsSkipAngle={10}
+                      arcLabelsTextColor={{ from: 'color', modifiers: [['darker', 2]] }}
+                      legends={[
+                        {
+                          anchor: 'bottom',
+                          direction: 'row',
+                          justify: false,
+                          translateX: 0,
+                          translateY: 56,
+                          itemsSpacing: 0,
+                          itemWidth: 100,
+                          itemHeight: 18,
+                          itemTextColor: '#999',
+                          itemDirection: 'left-to-right',
+                          itemOpacity: 1,
+                          symbolSize: 18,
+                          symbolShape: 'circle',
+                        }
+                      ]}
+                    />
+                  </Box>
+                )}
+              </Paper>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Paper sx={{ p: 2, height: 400 }}>
+                <Typography variant="h6" gutterBottom>
+                  Cost Summary
+                </Typography>
+                <Box sx={{ mt: 2 }}>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} md={4}>
+                      <Paper elevation={3} sx={{ p: 2, bgcolor: '#f5f5f5', height: '100%' }}>
+                        <Typography variant="subtitle2" color="textSecondary">
+                          Total Costs
+                        </Typography>
+                        <Typography variant="h4" sx={{ mt: 1 }}>
+                          ${getTotalCosts()}
+                        </Typography>
+                      </Paper>
+                    </Grid>
+                    <Grid item xs={12} md={4}>
+                      <Paper elevation={3} sx={{ p: 2, bgcolor: '#fff8e1', height: '100%' }}>
+                        <Typography variant="subtitle2" color="textSecondary">
+                          Fuel Costs
+                        </Typography>
+                        <Typography variant="h4" sx={{ mt: 1 }}>
+                          ${getCostsByType('fuel')}
+                        </Typography>
+                      </Paper>
+                    </Grid>
+                    <Grid item xs={12} md={4}>
+                      <Paper elevation={3} sx={{ p: 2, bgcolor: '#e8f5e9', height: '100%' }}>
+                        <Typography variant="subtitle2" color="textSecondary">
+                          Maintenance Costs
+                        </Typography>
+                        <Typography variant="h4" sx={{ mt: 1 }}>
+                          ${getCostsByType('maintenance')}
+                        </Typography>
+                      </Paper>
+                    </Grid>
+                  </Grid>
+                </Box>
+              </Paper>
+            </Grid>
+          </Grid>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <Box>
-      <Typography variant="h4" gutterBottom>
-        Cost Management
-      </Typography>
-      <Typography variant="body1">
-        Cost management functionality will be implemented here.
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h4" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <MoneyIcon fontSize="large" />
+          Cost Management
+        </Typography>
+        <Box>
+          <Button
+            variant="outlined"
+            startIcon={<FilterIcon />}
+            onClick={toggleFilters}
+            sx={{ mr: 1 }}
+          >
+            Filters
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<AddIcon />}
+            onClick={handleAdd}
+          >
+            Add Cost
+          </Button>
+        </Box>
+      </Box>
+
+      {/* Filters Section */}
+      {showFilters && (
+        <Paper sx={{ p: 2, mb: 2 }}>
+          <Typography variant="h6" gutterBottom>
+            Filters
+          </Typography>
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={12} sm={3}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Expense Type</InputLabel>
+                <Select
+                  value={filters.expenseType}
+                  label="Expense Type"
+                  name="expenseType"
+                  onChange={(e) => setFilters({ ...filters, expenseType: e.target.value as string })}
+                >
+                  <MenuItem value="">All Types</MenuItem>
+                  <MenuItem value="fuel">Fuel</MenuItem>
+                  <MenuItem value="maintenance">Maintenance</MenuItem>
+                  <MenuItem value="insurance">Insurance</MenuItem>
+                  <MenuItem value="registration">Registration</MenuItem>
+                  <MenuItem value="lease">Lease</MenuItem>
+                  <MenuItem value="toll">Toll</MenuItem>
+                  <MenuItem value="tax">Tax</MenuItem>
+                  <MenuItem value="other">Other</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={3}>
+              <DatePicker
+                label="Start Date"
+                value={filters.startDate}
+                onChange={(date) => setFilters({ ...filters, startDate: date || moment() })}
+                slotProps={{ textField: { fullWidth: true, size: 'small' } }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={3}>
+              <DatePicker
+                label="End Date"
+                value={filters.endDate}
+                onChange={(date) => setFilters({ ...filters, endDate: date || moment() })}
+                slotProps={{ textField: { fullWidth: true, size: 'small' } }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={3}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Payment Status</InputLabel>
+                <Select
+                  value={filters.paymentStatus}
+                  label="Payment Status"
+                  name="paymentStatus"
+                  onChange={(e) => setFilters({ ...filters, paymentStatus: e.target.value as string })}
+                >
+                  <MenuItem value="">All Statuses</MenuItem>
+                  <MenuItem value="paid">Paid</MenuItem>
+                  <MenuItem value="pending">Pending</MenuItem>
+                  <MenuItem value="overdue">Overdue</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12}>
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                <Button variant="outlined" onClick={resetFilters}>
+                  Reset
+                </Button>
+                <Button variant="contained" onClick={applyFilters}>
+                  Apply Filters
+                </Button>
+              </Box>
+            </Grid>
+          </Grid>
+        </Paper>
+      )}
+
+      {/* Tabs */}
+      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+        <Tabs value={tabValue} onChange={handleTabChange} aria-label="cost management tabs">
+          <Tab label="List View" />
+          <Tab label="Analytics" />
+        </Tabs>
+      </Box>
+
+      {/* Tab Content */}
+      {renderTabContent()}
+
+      {/* Cost Form Dialog */}
+      <Dialog open={isModalOpen} onClose={handleClose} maxWidth="md" fullWidth>
+        <DialogTitle>
+          {editingCost ? 'Edit Cost' : 'Add New Cost'}
+        </DialogTitle>
+        <DialogContent dividers>
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth error={!!formErrors.expenseType} margin="normal">
+                <InputLabel>Expense Type *</InputLabel>
+                <Select
+                  name="expenseType"
+                  value={formValues.expenseType}
+                  label="Expense Type *"
+                  onChange={handleExpenseTypeChange}
+                >
+                  <MenuItem value="fuel">Fuel</MenuItem>
+                  <MenuItem value="maintenance">Maintenance</MenuItem>
+                  <MenuItem value="insurance">Insurance</MenuItem>
+                  <MenuItem value="registration">Registration</MenuItem>
+                  <MenuItem value="lease">Lease</MenuItem>
+                  <MenuItem value="toll">Toll</MenuItem>
+                  <MenuItem value="tax">Tax</MenuItem>
+                  <MenuItem value="other">Other</MenuItem>
+                </Select>
+                {formErrors.expenseType && <FormHelperText>{formErrors.expenseType}</FormHelperText>}
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                name="amount"
+                label="Amount *"
+                type="number"
+                value={formValues.amount}
+                onChange={handleInputChange}
+                fullWidth
+                margin="normal"
+                error={!!formErrors.amount}
+                helperText={formErrors.amount}
+                inputProps={{ min: 0, step: 0.01 }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <DatePicker
+                label="Date *"
+                value={formValues.date}
+                onChange={handleDateChange}
+                slotProps={{
+                  textField: {
+                    fullWidth: true,
+                    margin: 'normal',
+                    error: !!formErrors.date,
+                    helperText: formErrors.date
+                  }
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth margin="normal">
+                <InputLabel>Vehicle (Optional)</InputLabel>
+                <Select
+                  name="vehicleId"
+                  value={formValues.vehicleId}
+                  label="Vehicle (Optional)"
+                  onChange={handleVehicleChange}
+                >
+                  <MenuItem value="">None</MenuItem>
+                  {/* This should be populated with actual vehicle data */}
+                  <MenuItem value="vehicle1">Vehicle 1</MenuItem>
+                  <MenuItem value="vehicle2">Vehicle 2</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                name="description"
+                label="Description *"
+                value={formValues.description}
+                onChange={handleInputChange}
+                fullWidth
+                margin="normal"
+                error={!!formErrors.description}
+                helperText={formErrors.description}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                name="vendor"
+                label="Vendor"
+                value={formValues.vendor || ''}
+                onChange={handleInputChange}
+                fullWidth
+                margin="normal"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                name="invoiceNumber"
+                label="Invoice Number"
+                value={formValues.invoiceNumber || ''}
+                onChange={handleInputChange}
+                fullWidth
+                margin="normal"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth error={!!formErrors.paymentStatus} margin="normal">
+                <InputLabel>Payment Status *</InputLabel>
+                <Select
+                  name="paymentStatus"
+                  value={formValues.paymentStatus}
+                  label="Payment Status *"
+                  onChange={handlePaymentStatusChange}
+                >
+                  <MenuItem value="paid">Paid</MenuItem>
+                  <MenuItem value="pending">Pending</MenuItem>
+                  <MenuItem value="overdue">Overdue</MenuItem>
+                </Select>
+                {formErrors.paymentStatus && <FormHelperText>{formErrors.paymentStatus}</FormHelperText>}
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth margin="normal">
+                <InputLabel>Payment Method</InputLabel>
+                <Select
+                  name="paymentMethod"
+                  value={formValues.paymentMethod || 'cash'}
+                  label="Payment Method"
+                  onChange={handlePaymentMethodChange}
+                >
+                  <MenuItem value="cash">Cash</MenuItem>
+                  <MenuItem value="credit">Credit Card</MenuItem>
+                  <MenuItem value="debit">Debit Card</MenuItem>
+                  <MenuItem value="bank transfer">Bank Transfer</MenuItem>
+                  <MenuItem value="other">Other</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                name="notes"
+                label="Notes"
+                value={formValues.notes || ''}
+                onChange={handleInputChange}
+                fullWidth
+                margin="normal"
+                multiline
+                rows={3}
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClose}>Cancel</Button>
+          <Button onClick={handleSubmit} variant="contained" color="primary">
+            {editingCost ? 'Update' : 'Save'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Snackbar for notifications */}
+      <Snackbar open={snackbar.open} autoHideDuration={5000} onClose={handleCloseSnackbar}>
+        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
