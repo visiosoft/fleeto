@@ -28,45 +28,7 @@ import {
 } from '@mui/icons-material';
 import axios from 'axios';
 import { API_CONFIG, getApiUrl } from '../../config/api';
-import ContractTemplateEditor, { Vehicle as EditorVehicle } from '../../components/ContractTemplate/ContractTemplateEditor';
-
-const defaultTemplateContent = `[Company Name]
-[Trade License No]
-
-CONTRACT AGREEMENT
-
-This agreement is made on [Start Date] between [Company Name], having Trade License No. [Trade License No] (hereinafter referred to as "the Client") and our company.
-
-Vehicle Details:
-Make: [Vehicle Make]
-Model: [Vehicle Model]
-License Plate: [Vehicle License Plate]
-
-Contract Duration: From [Start Date] to [End Date]
-Contract Value: $[Contract Value]
-
-Contact Information:
-Contact Person: [Contact Person]
-Email: [Contact Email]
-Phone: [Contact Phone]
-
-Notes:
-[Notes]
-
-Terms and Conditions:
-1. The contract duration is specified above and may be renewed upon mutual agreement.
-2. The contract value is to be paid according to the agreed payment schedule.
-3. Any modifications to this contract must be made in writing and agreed upon by both parties.
-
-For [Company Name]:
-_______________________
-Authorized Signatory
-Date: [Current Date]
-
-For Our Company:
-_______________________
-Authorized Signatory
-Date: [Current Date]`;
+import ContractTemplateEditor, { Vehicle as EditorVehicle, defaultTemplate } from '../../components/ContractTemplate/ContractTemplateEditor';
 
 const CONTRACT_STATUSES = [
   'Active',
@@ -132,23 +94,8 @@ interface Props {
 const ContractTemplate: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [contract, setContract] = useState<Contract>({
-    companyName: '',
-    tradeLicenseNo: '',
-    contractType: '',
-    startDate: new Date().toISOString().split('T')[0],
-    endDate: new Date().toISOString().split('T')[0],
-    value: 0,
-    status: 'Draft',
-    contactPerson: '',
-    contactEmail: '',
-    contactPhone: '',
-    notes: '',
-    template: {
-      content: defaultTemplateContent
-    }
-  });
-  const [template, setTemplate] = useState<Template | null>(null);
+  const [contract, setContract] = useState<any>(null);
+  const [template, setTemplate] = useState<any>(null);
   const [vehicles, setVehicles] = useState<EditorVehicle[]>([]);
   const [loading, setLoading] = useState(true);
   const [templates, setTemplates] = useState<Template[]>([]);
@@ -324,15 +271,8 @@ const ContractTemplate: React.FC = () => {
           </DialogTitle>
           <DialogContent>
             <ContractTemplateEditor
-              template={{
-                _id: selectedTemplate._id || 'new',
-                name: selectedTemplate.name || 'New Template',
-                content: selectedTemplate.content || defaultTemplateContent
-              }}
-              contract={{
-                ...contract,
-                _id: contract._id || undefined
-              }}
+              template={selectedTemplate}
+              contract={contract}
               vehicles={vehicles}
               onSave={(content: string) => {
                 handleSaveTemplate(selectedTemplate._id, content);

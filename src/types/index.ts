@@ -112,6 +112,24 @@ export interface Expense {
   receipt?: string;
 }
 
+export interface Cost {
+  _id: string;
+  vehicleId?: string;
+  driverId?: string;
+  expenseType: 'fuel' | 'maintenance' | 'insurance' | 'registration' | 'lease' | 'toll' | 'tax' | 'other';
+  amount: number;
+  date: string;
+  description: string;
+  invoiceNumber?: string;
+  vendor?: string;
+  paymentStatus: 'paid' | 'pending' | 'overdue';
+  paymentMethod?: 'cash' | 'credit' | 'debit' | 'bank transfer' | 'other';
+  notes?: string;
+  attachments?: string[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 // Alert and notification interfaces
 export interface Alert {
   id: string;

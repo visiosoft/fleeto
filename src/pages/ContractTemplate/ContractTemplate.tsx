@@ -9,7 +9,11 @@ const ContractTemplate: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [contract, setContract] = useState<any>(null);
-  const [template, setTemplate] = useState<any>(null);
+  const [template, setTemplate] = useState<any>({
+    _id: 'default',
+    name: 'Default Template',
+    content: defaultTemplate
+  });
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -18,6 +22,15 @@ const ContractTemplate: React.FC = () => {
       try {
         const response = await axios.get(getApiUrl(`${API_CONFIG.ENDPOINTS.CONTRACTS}/${id}`));
         setContract(response.data);
+        
+        // If contract has a template, use that instead of default
+        if (response.data.template) {
+          setTemplate({
+            _id: response.data.template._id || 'default',
+            name: 'Contract Template',
+            content: response.data.template.content || defaultTemplate
+          });
+        }
       } catch (error) {
         console.error('Error fetching contract:', error);
         navigate('/contracts');
@@ -26,8 +39,19 @@ const ContractTemplate: React.FC = () => {
       }
     };
 
+    const fetchVehicles = async () => {
+      try {
+        const response = await axios.get(getApiUrl(API_CONFIG.ENDPOINTS.VEHICLES));
+        setVehicles(response.data || []);
+      } catch (error) {
+        console.error('Error fetching vehicles:', error);
+        setVehicles([]);
+      }
+    };
+
     if (id) {
       fetchContract();
+      fetchVehicles();
     }
   }, [id, navigate]);
 
@@ -38,6 +62,15 @@ const ContractTemplate: React.FC = () => {
       const { contract: savedContract, vehicles: savedVehicles } = JSON.parse(savedData);
       setContract(savedContract);
       setVehicles(savedVehicles);
+      
+      // If saved contract has a template, use that
+      if (savedContract.template) {
+        setTemplate({
+          _id: savedContract.template._id || 'default',
+          name: 'Contract Template',
+          content: savedContract.template.content || defaultTemplate
+        });
+      }
     }
   }, []);
 

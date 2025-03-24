@@ -978,7 +978,7 @@ const ContractManagement: React.FC = () => {
               template={{
                 _id: selectedTemplate._id,
                 name: selectedTemplate.name,
-                content: selectedTemplate.content || defaultTemplateContent
+                content: selectedTemplate.content
               }}
               contract={{
                 ...currentContract,

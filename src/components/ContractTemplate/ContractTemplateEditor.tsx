@@ -104,44 +104,6 @@ interface Props {
   showPreview?: boolean;
 }
 
-const defaultTemplateContent = `[Company Name]
-[Trade License No]
-
-CONTRACT AGREEMENT
-
-This agreement is made on [Start Date] between [Company Name], having Trade License No. [Trade License No] (hereinafter referred to as "the Client") and our company.
-
-Vehicle Details:
-Make: [Vehicle Make]
-Model: [Vehicle Model]
-License Plate: [Vehicle License Plate]
-
-Contract Duration: From [Start Date] to [End Date]
-Contract Value: $[Contract Value]
-
-Contact Information:
-Contact Person: [Contact Person]
-Email: [Contact Email]
-Phone: [Contact Phone]
-
-Notes:
-[Notes]
-
-Terms and Conditions:
-1. The contract duration is specified above and may be renewed upon mutual agreement.
-2. The contract value is to be paid according to the agreed payment schedule.
-3. Any modifications to this contract must be made in writing and agreed upon by both parties.
-
-For [Company Name]:
-_______________________
-Authorized Signatory
-Date: [Current Date]
-
-For Our Company:
-_______________________
-Authorized Signatory
-Date: [Current Date]`;
-
 // Export the default template
 export const defaultTemplate = `@import url('https://fonts.googleapis.com/css2?family=KoHo:wght@400;600;700&display=swap');
 
@@ -221,15 +183,15 @@ const ContractTemplateEditor: React.FC<Props> = ({
 }) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [content, setContent] = useState(template?.content || defaultTemplateContent);
+  const [content, setContent] = useState(template.content);
   const [previewContent, setPreviewContent] = useState('');
   const [previewOpen, setPreviewOpen] = useState(false);
   const [renewDialogOpen, setRenewDialogOpen] = useState(false);
   const [renewalData, setRenewalData] = useState<RenewalData>({
     startDate: new Date(),
     endDate: new Date(),
-    value: contract?.value || 0,
-    previousContractId: contract?._id
+    value: contract.value || 0,
+    previousContractId: contract._id
   });
   const [isRenewing, setIsRenewing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -295,7 +257,7 @@ const ContractTemplateEditor: React.FC<Props> = ({
     const lines = processedContent.split('\n');
     let inList = false;
     processedContent = lines
-      .map((line: string) => {
+      .map(line => {
         // Headers
         if (line.startsWith('# ')) {
           return `<h1 class="document-title">${line.slice(2)}</h1>`;
