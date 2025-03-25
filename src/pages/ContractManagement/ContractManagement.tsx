@@ -29,7 +29,11 @@ import {
   Card,
   CardContent,
   useTheme,
-  CircularProgress
+  CircularProgress,
+  Tooltip,
+  Avatar,
+  Divider,
+  TablePagination
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -43,7 +47,12 @@ import {
   FileCopy as FileCopyIcon,
   Autorenew as AutorenewIcon,
   MoreVert as MoreVertIcon,
-  MonetizationOn as MonetizationOnIcon
+  MonetizationOn as MonetizationOnIcon,
+  Visibility as ViewIcon,
+  CalendarToday as CalendarIcon,
+  Business as BusinessIcon,
+  Person as PersonIcon,
+  DirectionsCar as DirectionsCarIcon
 } from '@mui/icons-material';
 import axios, { AxiosError } from 'axios';
 import { API_CONFIG, getApiUrl } from '../../config/api';
@@ -793,52 +802,200 @@ const ContractManagement: React.FC = () => {
 
         {/* Contracts Table */}
         <Grid item xs={12}>
-          <Paper>
-            <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Paper sx={{ overflow: 'hidden' }}>
+            <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: 1, borderColor: 'divider' }}>
               <Typography variant="h6">Recent Contracts</Typography>
-              <IconButton>
-                <MoreVertIcon />
-              </IconButton>
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <Button
+                  variant="outlined"
+                  startIcon={<FileCopyIcon />}
+                  onClick={() => setIsTemplateListOpen(true)}
+                >
+                  Templates
+                </Button>
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={() => handleAddContract()}
+                >
+                  New Contract
+                </Button>
+              </Box>
             </Box>
             <TableContainer>
-              <Table>
+              <Table sx={{
+                '& .MuiTableCell-root': {
+                  borderBottom: '1px solid rgba(224, 224, 224, 0.4)',
+                  py: 2,
+                },
+                '& .MuiTableHead-root': {
+                  backgroundColor: theme.palette.primary.light + '15',
+                },
+                '& .MuiTableRow-root': {
+                  '&:hover': {
+                    backgroundColor: theme.palette.action.hover + '40',
+                  },
+                },
+              }}>
                 <TableHead>
                   <TableRow>
-                    <TableCell>Contract ID</TableCell>
-                    <TableCell>Start Date</TableCell>
-                    <TableCell>End Date</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Value</TableCell>
-                    <TableCell>Actions</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', color: theme.palette.primary.main }}>
+                      Contract Details
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', color: theme.palette.primary.main }}>
+                      Company
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', color: theme.palette.primary.main }}>
+                      Vehicle
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', color: theme.palette.primary.main }}>
+                      Duration
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', color: theme.palette.primary.main }}>
+                      Value
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', color: theme.palette.primary.main }}>
+                      Status
+                    </TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 'bold', color: theme.palette.primary.main }}>
+                      Actions
+                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {contracts.map((contract) => (
-                    <TableRow key={contract._id}>
-                      <TableCell>{contract._id}</TableCell>
-                      <TableCell>{moment(contract.startDate).format('MMM DD, YYYY')}</TableCell>
-                      <TableCell>{moment(contract.endDate).format('MMM DD, YYYY')}</TableCell>
+                    <TableRow key={contract._id} hover>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Avatar sx={{ 
+                            bgcolor: theme.palette.primary.main,
+                            width: 40,
+                            height: 40,
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                          }}>
+                            <DescriptionIcon />
+                          </Avatar>
+                          <Box>
+                            <Typography variant="subtitle2" noWrap sx={{ fontWeight: 500 }}>
+                              {contract.contractType}
+                            </Typography>
+                            <Typography variant="caption" color="textSecondary">
+                              ID: {contract._id}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <BusinessIcon sx={{ color: theme.palette.secondary.main }} />
+                          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                            {contract.companyName}
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <DirectionsCarIcon sx={{ color: theme.palette.info.main }} />
+                          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                            {vehicles.find(v => v._id === contract.vehicleId)?.licensePlate || 'N/A'}
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <CalendarIcon sx={{ color: theme.palette.warning.main }} />
+                          <Box>
+                            <Typography variant="body2" noWrap sx={{ fontWeight: 500 }}>
+                              {moment(contract.startDate).format('MMM DD, YYYY')} - {moment(contract.endDate).format('MMM DD, YYYY')}
+                            </Typography>
+                            <Typography 
+                              variant="caption" 
+                              sx={{ 
+                                color: moment(contract.endDate).diff(moment(), 'days') < 30 
+                                  ? theme.palette.error.main 
+                                  : theme.palette.success.main,
+                                fontWeight: 500
+                              }}
+                            >
+                              {moment(contract.endDate).diff(moment(), 'days')} days remaining
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <MonetizationOnIcon sx={{ color: theme.palette.success.main }} />
+                          <Typography variant="body2" sx={{ fontWeight: 600, color: theme.palette.success.main }}>
+                            AED {contract.value.toLocaleString()}
+                          </Typography>
+                        </Box>
+                      </TableCell>
                       <TableCell>
                         <Chip
                           label={contract.status}
                           color={getStatusColor(contract.status)}
                           size="small"
+                          sx={{ 
+                            minWidth: 100,
+                            fontWeight: 500,
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                          }}
                         />
                       </TableCell>
-                      <TableCell>AED {contract.value.toLocaleString()}</TableCell>
-                      <TableCell>
-                        <IconButton size="small" onClick={() => handleEditContract(contract)}>
-                          <EditIcon />
-                        </IconButton>
-                        <IconButton size="small" color="error">
-                          <DeleteIcon />
-                        </IconButton>
+                      <TableCell align="right">
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                          <Tooltip title="View Details">
+                            <IconButton 
+                              size="small" 
+                              sx={{ 
+                                color: theme.palette.info.main,
+                                '&:hover': { backgroundColor: theme.palette.info.light + '20' }
+                              }}
+                            >
+                              <ViewIcon />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Edit Contract">
+                            <IconButton 
+                              size="small" 
+                              onClick={() => handleEditContract(contract)}
+                              sx={{ 
+                                color: theme.palette.primary.main,
+                                '&:hover': { backgroundColor: theme.palette.primary.light + '20' }
+                              }}
+                            >
+                              <EditIcon />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Delete Contract">
+                            <IconButton 
+                              size="small" 
+                              onClick={() => handleDeleteConfirm(contract._id || '')}
+                              sx={{ 
+                                color: theme.palette.error.main,
+                                '&:hover': { backgroundColor: theme.palette.error.light + '20' }
+                              }}
+                            >
+                              <DeleteIcon />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
                       </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
             </TableContainer>
+            <Divider />
+            <TablePagination
+              component="div"
+              count={contracts.length}
+              page={0}
+              onPageChange={() => {}}
+              rowsPerPage={10}
+              onRowsPerPageChange={() => {}}
+              rowsPerPageOptions={[5, 10, 25]}
+            />
           </Paper>
         </Grid>
       </Grid>

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   AppBar,
@@ -14,6 +14,11 @@ import {
   Typography,
   useTheme,
   useMediaQuery,
+  Menu,
+  MenuItem,
+  Avatar,
+  Tooltip,
+  Divider
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -28,6 +33,9 @@ import {
   Settings as SettingsIcon,
   Description as DescriptionIcon,
   Business as BusinessIcon,
+  Logout as LogoutIcon,
+  Person as PersonIcon,
+  AccountCircle as AccountCircleIcon
 } from '@mui/icons-material';
 import { Link as RouterLink } from 'react-router-dom';
 
@@ -51,17 +59,15 @@ const MENU_ITEMS: MenuItem[] = [
   { text: 'Dashboard', path: '/', icon: <AssessmentIcon /> },
   { text: 'Vehicle Management', path: '/vehicles', icon: <DirectionsCarIcon /> },
   { text: 'Driver Management', path: '/drivers', icon: <PeopleIcon /> },
+  { text: 'Contract', path: '/contracts', icon: <DescriptionIcon /> },
   { text: 'Tracking', path: '/tracking', icon: <LocationOnIcon /> },
-  { text: 'Cost Management', path: '/costs', icon: <MonetizationOnIcon /> },
-  { text: 'Contracts', path: '/contracts', icon: <DescriptionIcon /> },
   { text: 'Reports', path: '/reports', icon: <AssessmentIcon /> },
   { text: 'Compliance', path: '/compliance', icon: <GavelIcon /> },
   { text: 'Settings', path: '/settings', icon: <SettingsIcon /> },
-  { text: 'Company Profile', path: '/company-settings', icon: <BusinessIcon /> },
 ];
 
 // Memoized MenuItem component
-const MenuItem = React.memo(({ 
+const MenuItemComponent = React.memo(({ 
   item, 
   isSelected, 
   onClick 
@@ -85,30 +91,53 @@ const Navigation: React.FC<NavigationProps> = ({
   isDrawerOpen,
   handleDrawerToggle,
 }) => {
+  const theme = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
-  // Memoize the menu list to prevent unnecessary re-renders
-  const menuList = useMemo(() => (
-    <List>
-      {MENU_ITEMS.map((item) => (
-        <ListItemButton
-          key={item.path}
-          component={RouterLink}
-          to={item.path}
-          sx={{
-            minHeight: 48,
-            px: 2.5,
-          }}
-        >
-          <ListItemIcon sx={{ minWidth: 0, mr: 2 }}>
-            {item.icon}
-          </ListItemIcon>
-          <ListItemText primary={item.text} />
-        </ListItemButton>
-      ))}
-    </List>
-  ), []);
+  const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('isAuthenticated');
+    navigate('/login');
+  };
+
+  const drawer = (
+    <div>
+      <Toolbar>
+        <Typography variant="h6" noWrap component="div">
+          Fleet Management
+        </Typography>
+      </Toolbar>
+      <Divider />
+      <List>
+        {MENU_ITEMS.map((item) => (
+          <ListItemButton
+            key={item.text}
+            component={RouterLink}
+            to={item.path}
+            sx={{
+              minHeight: 48,
+              px: 2.5,
+            }}
+            selected={location.pathname === item.path}
+          >
+            <ListItemIcon sx={{ minWidth: 0, mr: 2 }}>
+              {item.icon}
+            </ListItemIcon>
+            <ListItemText primary={item.text} />
+          </ListItemButton>
+        ))}
+      </List>
+    </div>
+  );
 
   return (
     <Box sx={{ 
@@ -134,9 +163,62 @@ const Navigation: React.FC<NavigationProps> = ({
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" noWrap component="div">
-            Fleet Manager
+          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
+            {MENU_ITEMS.find(item => item.path === location.pathname)?.text || 'Dashboard'}
           </Typography>
+          
+          {/* Profile Menu */}
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Tooltip title="Account settings">
+              <IconButton
+                size="large"
+                edge="end"
+                aria-label="account of current user"
+                aria-controls="menu-appbar"
+                aria-haspopup="true"
+                onClick={handleProfileMenuOpen}
+                color="inherit"
+              >
+                <Avatar sx={{ width: 32, height: 32, bgcolor: theme.palette.primary.main }}>
+                  <AccountCircleIcon />
+                </Avatar>
+              </IconButton>
+            </Tooltip>
+            <Menu
+              anchorEl={anchorEl}
+              anchorOrigin={{
+                vertical: 'bottom',
+                horizontal: 'right',
+              }}
+              keepMounted
+              transformOrigin={{
+                vertical: 'top',
+                horizontal: 'right',
+              }}
+              open={Boolean(anchorEl)}
+              onClose={handleMenuClose}
+            >
+              <MenuItem onClick={() => { handleMenuClose(); navigate('/profile'); }}>
+                <ListItemIcon>
+                  <PersonIcon fontSize="small" />
+                </ListItemIcon>
+                Profile
+              </MenuItem>
+              <MenuItem onClick={() => { handleMenuClose(); navigate('/settings'); }}>
+                <ListItemIcon>
+                  <SettingsIcon fontSize="small" />
+                </ListItemIcon>
+                Settings
+              </MenuItem>
+              <Divider />
+              <MenuItem onClick={handleLogout}>
+                <ListItemIcon>
+                  <LogoutIcon fontSize="small" />
+                </ListItemIcon>
+                Logout
+              </MenuItem>
+            </Menu>
+          </Box>
         </Toolbar>
       </AppBar>
 
@@ -156,24 +238,7 @@ const Navigation: React.FC<NavigationProps> = ({
           },
         }}
       >
-        <List>
-          {MENU_ITEMS.map((item) => (
-            <ListItemButton
-              key={item.text}
-              component={RouterLink}
-              to={item.path}
-              sx={{
-                minHeight: 48,
-                px: 2.5,
-              }}
-            >
-              <ListItemIcon sx={{ minWidth: 0, mr: 2 }}>
-                {item.icon}
-              </ListItemIcon>
-              <ListItemText primary={item.text} />
-            </ListItemButton>
-          ))}
-        </List>
+        {drawer}
       </Drawer>
 
       <Box

@@ -1,11 +1,13 @@
 import React, { Suspense, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Navigation from './components/Navigation/Navigation';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment';
 import { useMediaQuery, useTheme, CircularProgress, Box, CssBaseline } from '@mui/material';
 import Dashboard from './pages/Dashboard/Dashboard';
 import ContractTemplate from './pages/ContractTemplate/ContractTemplate';
+import Login from './pages/Login/Login';
+import Profile from './pages/Profile/Profile';
 
 // Lazy load all pages
 const VehicleManagement = React.lazy(() => import('./pages/VehicleManagement'));
@@ -25,6 +27,17 @@ const LoadingFallback = () => (
   </Box>
 );
 
+// Protected Route wrapper
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  return <>{children}</>;
+};
+
 const App: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -39,27 +52,160 @@ const App: React.FC = () => {
       <Router>
         <Box sx={{ display: 'flex', minHeight: '100vh' }}>
           <CssBaseline />
-          <Navigation
-            isMobile={isMobile}
-            isDrawerOpen={mobileOpen}
-            handleDrawerToggle={handleDrawerToggle}
-          >
-            <Suspense fallback={<LoadingFallback />}>
-              <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/vehicles" element={<VehicleManagement />} />
-                <Route path="/drivers" element={<DriverManagement />} />
-                <Route path="/tracking" element={<Tracking />} />
-                <Route path="/costs" element={<CostManagement />} />
-                <Route path="/contracts" element={<ContractManagement />} />
-                <Route path="/contracts/template/:id" element={<ContractTemplate />} />
-                <Route path="/reports" element={<Reports />} />
-                <Route path="/compliance" element={<Compliance />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/company-settings" element={<CompanySettings />} />
-              </Routes>
-            </Suspense>
-          </Navigation>
+          <Suspense fallback={<LoadingFallback />}>
+            <Routes>
+              {/* Public route */}
+              <Route path="/login" element={<Login />} />
+              
+              {/* Protected routes */}
+              <Route path="/" element={
+                <ProtectedRoute>
+                  <Navigation
+                    isMobile={isMobile}
+                    isDrawerOpen={mobileOpen}
+                    handleDrawerToggle={handleDrawerToggle}
+                  >
+                    <Dashboard />
+                  </Navigation>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/vehicles" element={
+                <ProtectedRoute>
+                  <Navigation
+                    isMobile={isMobile}
+                    isDrawerOpen={mobileOpen}
+                    handleDrawerToggle={handleDrawerToggle}
+                  >
+                    <VehicleManagement />
+                  </Navigation>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/drivers" element={
+                <ProtectedRoute>
+                  <Navigation
+                    isMobile={isMobile}
+                    isDrawerOpen={mobileOpen}
+                    handleDrawerToggle={handleDrawerToggle}
+                  >
+                    <DriverManagement />
+                  </Navigation>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/tracking" element={
+                <ProtectedRoute>
+                  <Navigation
+                    isMobile={isMobile}
+                    isDrawerOpen={mobileOpen}
+                    handleDrawerToggle={handleDrawerToggle}
+                  >
+                    <Tracking />
+                  </Navigation>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/costs" element={
+                <ProtectedRoute>
+                  <Navigation
+                    isMobile={isMobile}
+                    isDrawerOpen={mobileOpen}
+                    handleDrawerToggle={handleDrawerToggle}
+                  >
+                    <CostManagement />
+                  </Navigation>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/contracts" element={
+                <ProtectedRoute>
+                  <Navigation
+                    isMobile={isMobile}
+                    isDrawerOpen={mobileOpen}
+                    handleDrawerToggle={handleDrawerToggle}
+                  >
+                    <ContractManagement />
+                  </Navigation>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/contracts/template/:id" element={
+                <ProtectedRoute>
+                  <Navigation
+                    isMobile={isMobile}
+                    isDrawerOpen={mobileOpen}
+                    handleDrawerToggle={handleDrawerToggle}
+                  >
+                    <ContractTemplate />
+                  </Navigation>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/reports" element={
+                <ProtectedRoute>
+                  <Navigation
+                    isMobile={isMobile}
+                    isDrawerOpen={mobileOpen}
+                    handleDrawerToggle={handleDrawerToggle}
+                  >
+                    <Reports />
+                  </Navigation>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/compliance" element={
+                <ProtectedRoute>
+                  <Navigation
+                    isMobile={isMobile}
+                    isDrawerOpen={mobileOpen}
+                    handleDrawerToggle={handleDrawerToggle}
+                  >
+                    <Compliance />
+                  </Navigation>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/settings" element={
+                <ProtectedRoute>
+                  <Navigation
+                    isMobile={isMobile}
+                    isDrawerOpen={mobileOpen}
+                    handleDrawerToggle={handleDrawerToggle}
+                  >
+                    <Settings />
+                  </Navigation>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/company-settings" element={
+                <ProtectedRoute>
+                  <Navigation
+                    isMobile={isMobile}
+                    isDrawerOpen={mobileOpen}
+                    handleDrawerToggle={handleDrawerToggle}
+                  >
+                    <CompanySettings />
+                  </Navigation>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/profile" element={
+                <ProtectedRoute>
+                  <Navigation
+                    isMobile={isMobile}
+                    isDrawerOpen={mobileOpen}
+                    handleDrawerToggle={handleDrawerToggle}
+                  >
+                    <Profile />
+                  </Navigation>
+                </ProtectedRoute>
+              } />
+              
+              {/* Redirect to login if no route matches */}
+              <Route path="*" element={<Navigate to="/login" replace />} />
+            </Routes>
+          </Suspense>
         </Box>
       </Router>
     </LocalizationProvider>
