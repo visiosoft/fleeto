@@ -644,8 +644,7 @@ const ContractManagement: React.FC = () => {
           onClick={() => handleTemplateClick(contract)}
           title="Edit and Generate Contract Template"
         >
-          Edit Template
-        </Button>
+Generate        </Button>
       </Box>
     </TableCell>
   );
