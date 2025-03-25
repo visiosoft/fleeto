@@ -11,8 +11,6 @@ import ContractTemplate from './pages/ContractTemplate/ContractTemplate';
 const VehicleManagement = React.lazy(() => import('./pages/VehicleManagement'));
 const DriverManagement = React.lazy(() => import('./pages/DriverManagement'));
 const Tracking = React.lazy(() => import('./pages/Tracking/Tracking'));
-const Maintenance = React.lazy(() => import('./pages/Maintenance'));
-const FuelManagement = React.lazy(() => import('./pages/FuelManagement/FuelManagement'));
 const CostManagement = React.lazy(() => import('./pages/CostManagement/CostManagement'));
 const ContractManagement = React.lazy(() => import('./pages/ContractManagement'));
 const Reports = React.lazy(() => import('./pages/Reports/Reports'));
@@ -52,8 +50,6 @@ const App: React.FC = () => {
                 <Route path="/vehicles" element={<VehicleManagement />} />
                 <Route path="/drivers" element={<DriverManagement />} />
                 <Route path="/tracking" element={<Tracking />} />
-                <Route path="/maintenance" element={<Maintenance />} />
-                <Route path="/fuel" element={<FuelManagement />} />
                 <Route path="/costs" element={<CostManagement />} />
                 <Route path="/contracts" element={<ContractManagement />} />
                 <Route path="/contracts/template/:id" element={<ContractTemplate />} />

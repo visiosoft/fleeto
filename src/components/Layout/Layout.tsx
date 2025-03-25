@@ -4,11 +4,9 @@ import { useTheme, useMediaQuery } from '@mui/material';
 import Navigation from '../Navigation/Navigation';
 import VehicleManagement from '../../pages/VehicleManagement/VehicleManagement';
 import DriverManagement from '../../pages/DriverManagement';
-import Maintenance from '../../pages/Maintenance';
 import Reports from '../../pages/Reports';
 import Settings from '../../pages/Settings';
 import Tracking from '../../pages/Tracking/Tracking';
-import FuelManagement from '../../pages/FuelManagement/FuelManagement';
 import CostManagement from '../../pages/CostManagement/CostManagement';
 import Compliance from '../../pages/Compliance/Compliance';
 import ContractManagement from '../../pages/ContractManagement/ContractManagement';
@@ -33,8 +31,6 @@ const Layout: React.FC = () => {
         <Route path="/" element={<VehicleManagement />} />
         <Route path="/drivers" element={<DriverManagement />} />
         <Route path="/tracking" element={<Tracking />} />
-        <Route path="/maintenance" element={<Maintenance />} />
-        <Route path="/fuel" element={<FuelManagement />} />
         <Route path="/costs" element={<CostManagement />} />
         <Route path="/contracts" element={<ContractManagement />} />
         <Route path="/reports" element={<Reports />} />

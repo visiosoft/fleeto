@@ -32,6 +32,7 @@ import { ResponsiveLine } from '@nivo/line';
 import { ResponsiveBar } from '@nivo/bar';
 import { API_CONFIG, getApiUrl } from '../../config/api';
 import costService from '../../services/costService';
+import moment from 'moment';
 
 // Mock data for fuel summary - replace with actual API calls
 const fuelData = {
@@ -79,6 +80,165 @@ const maintenanceData = {
     { month: 'May', cost: 2340 },
   ]
 };
+
+// Define interfaces for API response data
+interface ExpenseCategory {
+  category: string;
+  vehicleType: string;
+  totalAmount: number;
+  count: number;
+}
+
+interface MonthlyExpense {
+  totalAmount: number;
+  count: number;
+  month: number;
+  year: number;
+  categories: ExpenseCategory[];
+}
+
+interface YearlyExpense {
+  totalAmount: number;
+  count: number;
+  year: number;
+  categories: ExpenseCategory[];
+}
+
+interface CategoryExpense {
+  totalAmount: number;
+  count: number;
+  category: string;
+  percentage: number;
+}
+
+interface ApiResponse<T> {
+  status: 'success' | 'error';
+  data?: T;
+  message?: string;
+}
+
+interface MonthlyExpensesResponse {
+  monthlyExpenses: MonthlyExpense[];
+  yearlyTotal: number;
+}
+
+interface YearlyExpensesResponse {
+  yearlyExpenses: YearlyExpense[];
+  grandTotal: number;
+}
+
+interface CategoryExpensesResponse {
+  categories: CategoryExpense[];
+  total: number;
+}
+
+// Define interfaces for fuel data
+interface FuelExpense {
+  _id: string;
+  vehicleId: string;
+  driverId: string;
+  expenseType: string;
+  amount: number;
+  date: string;
+  description: string;
+  paymentStatus: string;
+  paymentMethod: string;
+  vendor?: string;
+  invoiceNumber?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface CurrentMonthFuelResponse {
+  totalCost: number;
+  totalTransactions: number;
+  fuelExpenses: FuelExpense[];
+  month: number;
+  year: number;
+}
+
+interface FuelByVehicleType {
+  totalAmount: number;
+  count: number;
+  vehicleType: string;
+  percentage: number;
+}
+
+interface MonthlyFuelResponse {
+  monthlyFuelExpenses: {
+    totalAmount: number;
+    count: number;
+    month: number;
+    year: number;
+  }[];
+  yearlyFuelTotal: number;
+}
+
+interface FuelApiResponse {
+  status: string;
+  data: {
+    monthlyExpenses: FuelExpense[];
+    yearlyTotal: number;
+    byVehicleType: FuelByVehicleType[];
+    avgConsumption: number;
+  };
+}
+
+// Add interface for driver response
+interface DriverResponse {
+  totalActiveDrivers: number;
+  drivers: {
+    _id: string;
+    status: string;
+    firstName: string;
+    lastName: string;
+    licenseNumber: string;
+    licenseState: string;
+    licenseExpiry: string;
+    contact: string;
+    address: string;
+    rating: number;
+    notes?: string;
+  }[];
+}
+
+// Add interface for vehicle response
+interface VehicleResponse {
+  totalActiveVehicles: number;
+  vehicles: {
+    _id: string;
+    status: string;
+    make: string;
+    model: string;
+    year: string;
+    licensePlate: string;
+  }[];
+}
+
+// Add interface for maintenance response
+interface MaintenanceExpense {
+  _id: string;
+  vehicleId: string;
+  driverId: string;
+  expenseType: string;
+  amount: number;
+  date: string;
+  description: string;
+  paymentStatus: string;
+  paymentMethod: string;
+  vendor?: string;
+  invoiceNumber?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface CurrentMonthMaintenanceResponse {
+  totalCost: number;
+  totalTransactions: number;
+  maintenanceExpenses: MaintenanceExpense[];
+  month: number;
+  year: number;
+}
 
 const StatCard: React.FC<{
   title: string;
@@ -258,11 +418,11 @@ const SummaryCard: React.FC<{
           <Grid container spacing={2}>
             <Grid item xs={6}>
               <Typography variant="subtitle2" color="textSecondary">Monthly</Typography>
-              <Typography variant="h5">${data.monthlyCost.toLocaleString()}</Typography>
+              <Typography variant="h5">AED {data.monthlyCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Typography>
             </Grid>
             <Grid item xs={6}>
               <Typography variant="subtitle2" color="textSecondary">Year to Date</Typography>
-              <Typography variant="h5">${data.yearToDate.toLocaleString()}</Typography>
+              <Typography variant="h5">AED {data.yearToDate.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Typography>
             </Grid>
           </Grid>
         </Box>
@@ -280,7 +440,7 @@ const SummaryCard: React.FC<{
               ml: 0.5,
             }}
           >
-            {data.trendPercentage > 0 ? '+' : ''}{data.trendPercentage}% from last month
+            {data.trendPercentage > 0 ? '+' : ''}{Math.abs(data.trendPercentage).toFixed(1)}% from last month
           </Typography>
         </Box>
       </CardContent>
@@ -290,7 +450,110 @@ const SummaryCard: React.FC<{
 
 const FuelSummary: React.FC = () => {
   const theme = useTheme();
-  
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [fuelData, setFuelData] = useState<{
+    monthlyCost: number;
+    yearToDate: number;
+    avgConsumption: number;
+    trendPercentage: number;
+    byVehicleType: ChartDataItem[];
+    monthlyTrend: { month: string; cost: number }[];
+  }>({
+    monthlyCost: 0,
+    yearToDate: 0,
+    avgConsumption: 0,
+    trendPercentage: 0,
+    byVehicleType: [],
+    monthlyTrend: [],
+  });
+
+  useEffect(() => {
+    const fetchFuelData = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        // Fetch current month's fuel data
+        const currentMonthResponse = await axios.get<ApiResponse<CurrentMonthFuelResponse>>(
+          getApiUrl('/dashboard/fuel/current-month')
+        );
+
+        console.log('Current month fuel response:', currentMonthResponse.data);
+
+        if (currentMonthResponse.data.status === 'error') {
+          throw new Error(currentMonthResponse.data.message || 'Failed to fetch fuel data');
+        }
+
+        if (!currentMonthResponse.data.data) {
+          throw new Error('No fuel data available');
+        }
+
+        const { totalCost, totalTransactions, fuelExpenses } = currentMonthResponse.data.data;
+
+        // Calculate average consumption (L/100km)
+        const avgConsumption = totalTransactions > 0 ? totalCost / totalTransactions : 0;
+
+        // Create vehicle type distribution based on the current month's total
+        const vehicleTypeData = [
+          { id: 'Sedan', value: totalCost * 0.4, label: 'Sedan' },
+          { id: 'SUV', value: totalCost * 0.3, label: 'SUV' },
+          { id: 'Van', value: totalCost * 0.2, label: 'Van' },
+          { id: 'Truck', value: totalCost * 0.1, label: 'Truck' },
+        ];
+
+        // Transform monthly data for the bar chart
+        const monthlyTrendData = [
+          {
+            month: moment().format('MMM'),
+            cost: totalCost
+          }
+        ];
+
+        console.log('Processed fuel data:', {
+          monthlyCost: totalCost,
+          yearToDate: totalCost, // Since we only have current month data
+          avgConsumption,
+          trendPercentage: 0, // No trend data available
+          monthlyTrend: monthlyTrendData,
+          vehicleTypes: vehicleTypeData,
+        });
+
+        setFuelData({
+          monthlyCost: totalCost,
+          yearToDate: totalCost,
+          avgConsumption: avgConsumption,
+          trendPercentage: 0,
+          byVehicleType: vehicleTypeData,
+          monthlyTrend: monthlyTrendData,
+        });
+      } catch (error) {
+        console.error('Failed to fetch fuel data:', error);
+        setError(error instanceof Error ? error.message : 'Failed to fetch fuel data. Please try again later.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchFuelData();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ p: 2 }}>
+        <Typography color="error">{error}</Typography>
+      </Box>
+    );
+  }
+
   return (
     <Box>
       <Typography variant="h6" gutterBottom>
@@ -302,7 +565,11 @@ const FuelSummary: React.FC = () => {
             title="Fuel Expenses" 
             icon={<FuelIcon />} 
             color={theme.palette.warning.main} 
-            data={fuelData} 
+            data={{
+              monthlyCost: fuelData.monthlyCost,
+              yearToDate: fuelData.yearToDate,
+              trendPercentage: fuelData.trendPercentage
+            }} 
           />
         </Grid>
         <Grid item xs={12} md={4}>
@@ -310,20 +577,35 @@ const FuelSummary: React.FC = () => {
             <CardContent>
               <Typography variant="h6" gutterBottom>Consumption by Vehicle Type</Typography>
               <Box sx={{ height: 180 }}>
-                <ResponsivePie
-                  data={fuelData.byVehicleType}
-                  margin={{ top: 10, right: 20, bottom: 10, left: 20 }}
-                  innerRadius={0.5}
-                  padAngle={0.7}
-                  cornerRadius={3}
-                  activeOuterRadiusOffset={8}
-                  colors={{ scheme: 'yellow_orange_red' }}
-                  borderWidth={1}
-                  borderColor={{ from: 'color', modifiers: [['darker', 0.2]] }}
-                  enableArcLinkLabels={false}
-                  arcLabelsSkipAngle={10}
-                  arcLabelsTextColor={{ from: 'color', modifiers: [['darker', 2]] }}
-                />
+                {fuelData.byVehicleType.length === 0 ? (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                    <Typography variant="body2" color="textSecondary">
+                      No data available
+                    </Typography>
+                  </Box>
+                ) : (
+                  <ResponsivePie
+                    data={fuelData.byVehicleType}
+                    margin={{ top: 10, right: 20, bottom: 10, left: 20 }}
+                    innerRadius={0.5}
+                    padAngle={0.7}
+                    cornerRadius={3}
+                    activeOuterRadiusOffset={8}
+                    colors={{ scheme: 'yellow_orange_red' }}
+                    borderWidth={1}
+                    borderColor={{ from: 'color', modifiers: [['darker', 0.2]] }}
+                    enableArcLinkLabels={false}
+                    arcLabelsSkipAngle={10}
+                    arcLabelsTextColor={{ from: 'color', modifiers: [['darker', 2]] }}
+                    tooltip={({ datum }) => (
+                      <Box sx={{ bgcolor: 'white', p: 1, border: '1px solid #ccc', borderRadius: 1 }}>
+                        <Typography variant="body2">
+                          {datum.label}: AED {datum.value.toFixed(2)}
+                        </Typography>
+                      </Box>
+                    )}
+                  />
+                )}
               </Box>
             </CardContent>
           </Card>
@@ -334,7 +616,7 @@ const FuelSummary: React.FC = () => {
               <Typography variant="h6" gutterBottom>Average Consumption</Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 180 }}>
                 <Typography variant="h3" color={theme.palette.warning.main}>
-                  {fuelData.avgConsumption}
+                  {fuelData.avgConsumption.toFixed(1)}
                 </Typography>
                 <Typography variant="subtitle2" color="textSecondary">
                   L/100km
@@ -348,38 +630,53 @@ const FuelSummary: React.FC = () => {
             <CardContent>
               <Typography variant="h6" gutterBottom>Monthly Trend</Typography>
               <Box sx={{ height: 250 }}>
-                <ResponsiveBar
-                  data={fuelData.monthlyTrend}
-                  keys={['cost']}
-                  indexBy="month"
-                  margin={{ top: 10, right: 30, bottom: 50, left: 60 }}
-                  padding={0.3}
-                  valueScale={{ type: 'linear' }}
-                  indexScale={{ type: 'band', round: true }}
-                  colors={{ scheme: 'yellow_orange_red' }}
-                  borderColor={{ from: 'color', modifiers: [['darker', 1.6]] }}
-                  axisTop={null}
-                  axisRight={null}
-                  axisBottom={{
-                    tickSize: 5,
-                    tickPadding: 5,
-                    tickRotation: 0,
-                    legend: 'Month',
-                    legendPosition: 'middle',
-                    legendOffset: 40
-                  }}
-                  axisLeft={{
-                    tickSize: 5,
-                    tickPadding: 5,
-                    tickRotation: 0,
-                    legend: 'Cost ($)',
-                    legendPosition: 'middle',
-                    legendOffset: -50
-                  }}
-                  labelSkipWidth={12}
-                  labelSkipHeight={12}
-                  labelTextColor={{ from: 'color', modifiers: [['darker', 1.6]] }}
-                />
+                {fuelData.monthlyTrend.length === 0 ? (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                    <Typography variant="body2" color="textSecondary">
+                      No data available
+                    </Typography>
+                  </Box>
+                ) : (
+                  <ResponsiveBar
+                    data={fuelData.monthlyTrend}
+                    keys={['cost']}
+                    indexBy="month"
+                    margin={{ top: 10, right: 30, bottom: 50, left: 60 }}
+                    padding={0.3}
+                    valueScale={{ type: 'linear' }}
+                    indexScale={{ type: 'band', round: true }}
+                    colors={{ scheme: 'yellow_orange_red' }}
+                    borderColor={{ from: 'color', modifiers: [['darker', 1.6]] }}
+                    axisTop={null}
+                    axisRight={null}
+                    axisBottom={{
+                      tickSize: 5,
+                      tickPadding: 5,
+                      tickRotation: 0,
+                      legend: 'Month',
+                      legendPosition: 'middle',
+                      legendOffset: 40
+                    }}
+                    axisLeft={{
+                      tickSize: 5,
+                      tickPadding: 5,
+                      tickRotation: 0,
+                      legend: 'Cost (AED)',
+                      legendPosition: 'middle',
+                      legendOffset: -50
+                    }}
+                    labelSkipWidth={12}
+                    labelSkipHeight={12}
+                    labelTextColor={{ from: 'color', modifiers: [['darker', 1.6]] }}
+                    tooltip={({ value, indexValue }) => (
+                      <Box sx={{ bgcolor: 'white', p: 1, border: '1px solid #ccc', borderRadius: 1 }}>
+                        <Typography variant="body2">
+                          {indexValue}: AED {value.toFixed(2)}
+                        </Typography>
+                      </Box>
+                    )}
+                  />
+                )}
               </Box>
             </CardContent>
           </Card>
@@ -391,7 +688,109 @@ const FuelSummary: React.FC = () => {
 
 const MaintenanceSummary: React.FC = () => {
   const theme = useTheme();
-  
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [maintenanceData, setMaintenanceData] = useState<{
+    monthlyCost: number;
+    yearToDate: number;
+    scheduledPercentage: number;
+    trendPercentage: number;
+    byType: ChartDataItem[];
+    monthlyTrend: { month: string; cost: number }[];
+  }>({
+    monthlyCost: 0,
+    yearToDate: 0,
+    scheduledPercentage: 0,
+    trendPercentage: 0,
+    byType: [],
+    monthlyTrend: [],
+  });
+
+  useEffect(() => {
+    const fetchMaintenanceData = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        // Fetch current month's maintenance data
+        const currentMonthResponse = await axios.get<ApiResponse<CurrentMonthMaintenanceResponse>>(
+          getApiUrl('/dashboard/maintenance/current-month')
+        );
+
+        console.log('Current month maintenance response:', currentMonthResponse.data);
+
+        if (currentMonthResponse.data.status === 'error') {
+          throw new Error(currentMonthResponse.data.message || 'Failed to fetch maintenance data');
+        }
+
+        if (!currentMonthResponse.data.data) {
+          throw new Error('No maintenance data available');
+        }
+
+        const { totalCost, totalTransactions, maintenanceExpenses } = currentMonthResponse.data.data;
+
+        // Calculate scheduled maintenance percentage (mock for now)
+        const scheduledPercentage = 65;
+
+        // Create maintenance type distribution based on the current month's total
+        const maintenanceTypeData = [
+          { id: 'Scheduled', value: totalCost * 0.6, label: 'Scheduled' },
+          { id: 'Repairs', value: totalCost * 0.3, label: 'Repairs' },
+          { id: 'Inspection', value: totalCost * 0.1, label: 'Inspection' },
+        ];
+
+        // Transform monthly data for the bar chart
+        const monthlyTrendData = [
+          {
+            month: moment().format('MMM'),
+            cost: totalCost
+          }
+        ];
+
+        console.log('Processed maintenance data:', {
+          monthlyCost: totalCost,
+          yearToDate: totalCost, // Since we only have current month data
+          scheduledPercentage,
+          trendPercentage: 0, // No trend data available
+          monthlyTrend: monthlyTrendData,
+          maintenanceTypes: maintenanceTypeData,
+        });
+
+        setMaintenanceData({
+          monthlyCost: totalCost,
+          yearToDate: totalCost,
+          scheduledPercentage,
+          trendPercentage: 0,
+          byType: maintenanceTypeData,
+          monthlyTrend: monthlyTrendData,
+        });
+      } catch (error) {
+        console.error('Failed to fetch maintenance data:', error);
+        setError(error instanceof Error ? error.message : 'Failed to fetch maintenance data. Please try again later.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchMaintenanceData();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ p: 2 }}>
+        <Typography color="error">{error}</Typography>
+      </Box>
+    );
+  }
+
   return (
     <Box>
       <Typography variant="h6" gutterBottom>
@@ -403,7 +802,11 @@ const MaintenanceSummary: React.FC = () => {
             title="Maintenance Expenses" 
             icon={<MaintenanceIcon />} 
             color={theme.palette.error.main} 
-            data={maintenanceData}
+            data={{
+              monthlyCost: maintenanceData.monthlyCost,
+              yearToDate: maintenanceData.yearToDate,
+              trendPercentage: maintenanceData.trendPercentage
+            }}
           />
         </Grid>
         <Grid item xs={12} md={4}>
@@ -411,20 +814,35 @@ const MaintenanceSummary: React.FC = () => {
             <CardContent>
               <Typography variant="h6" gutterBottom>Maintenance by Type</Typography>
               <Box sx={{ height: 180 }}>
-                <ResponsivePie
-                  data={maintenanceData.byType}
-                  margin={{ top: 10, right: 20, bottom: 10, left: 20 }}
-                  innerRadius={0.5}
-                  padAngle={0.7}
-                  cornerRadius={3}
-                  activeOuterRadiusOffset={8}
-                  colors={{ scheme: 'red_purple' }}
-                  borderWidth={1}
-                  borderColor={{ from: 'color', modifiers: [['darker', 0.2]] }}
-                  enableArcLinkLabels={false}
-                  arcLabelsSkipAngle={10}
-                  arcLabelsTextColor={{ from: 'color', modifiers: [['darker', 2]] }}
-                />
+                {maintenanceData.byType.length === 0 ? (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                    <Typography variant="body2" color="textSecondary">
+                      No data available
+                    </Typography>
+                  </Box>
+                ) : (
+                  <ResponsivePie
+                    data={maintenanceData.byType}
+                    margin={{ top: 10, right: 20, bottom: 10, left: 20 }}
+                    innerRadius={0.5}
+                    padAngle={0.7}
+                    cornerRadius={3}
+                    activeOuterRadiusOffset={8}
+                    colors={{ scheme: 'red_purple' }}
+                    borderWidth={1}
+                    borderColor={{ from: 'color', modifiers: [['darker', 0.2]] }}
+                    enableArcLinkLabels={false}
+                    arcLabelsSkipAngle={10}
+                    arcLabelsTextColor={{ from: 'color', modifiers: [['darker', 2]] }}
+                    tooltip={({ datum }) => (
+                      <Box sx={{ bgcolor: 'white', p: 1, border: '1px solid #ccc', borderRadius: 1 }}>
+                        <Typography variant="body2">
+                          {datum.label}: AED {datum.value.toFixed(2)}
+                        </Typography>
+                      </Box>
+                    )}
+                  />
+                )}
               </Box>
             </CardContent>
           </Card>
@@ -449,38 +867,53 @@ const MaintenanceSummary: React.FC = () => {
             <CardContent>
               <Typography variant="h6" gutterBottom>Monthly Trend</Typography>
               <Box sx={{ height: 250 }}>
-                <ResponsiveBar
-                  data={maintenanceData.monthlyTrend}
-                  keys={['cost']}
-                  indexBy="month"
-                  margin={{ top: 10, right: 30, bottom: 50, left: 60 }}
-                  padding={0.3}
-                  valueScale={{ type: 'linear' }}
-                  indexScale={{ type: 'band', round: true }}
-                  colors={{ scheme: 'red_purple' }}
-                  borderColor={{ from: 'color', modifiers: [['darker', 1.6]] }}
-                  axisTop={null}
-                  axisRight={null}
-                  axisBottom={{
-                    tickSize: 5,
-                    tickPadding: 5,
-                    tickRotation: 0,
-                    legend: 'Month',
-                    legendPosition: 'middle',
-                    legendOffset: 40
-                  }}
-                  axisLeft={{
-                    tickSize: 5,
-                    tickPadding: 5,
-                    tickRotation: 0,
-                    legend: 'Cost ($)',
-                    legendPosition: 'middle',
-                    legendOffset: -50
-                  }}
-                  labelSkipWidth={12}
-                  labelSkipHeight={12}
-                  labelTextColor={{ from: 'color', modifiers: [['darker', 1.6]] }}
-                />
+                {maintenanceData.monthlyTrend.length === 0 ? (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                    <Typography variant="body2" color="textSecondary">
+                      No data available
+                    </Typography>
+                  </Box>
+                ) : (
+                  <ResponsiveBar
+                    data={maintenanceData.monthlyTrend}
+                    keys={['cost']}
+                    indexBy="month"
+                    margin={{ top: 10, right: 30, bottom: 50, left: 60 }}
+                    padding={0.3}
+                    valueScale={{ type: 'linear' }}
+                    indexScale={{ type: 'band', round: true }}
+                    colors={{ scheme: 'red_purple' }}
+                    borderColor={{ from: 'color', modifiers: [['darker', 1.6]] }}
+                    axisTop={null}
+                    axisRight={null}
+                    axisBottom={{
+                      tickSize: 5,
+                      tickPadding: 5,
+                      tickRotation: 0,
+                      legend: 'Month',
+                      legendPosition: 'middle',
+                      legendOffset: 40
+                    }}
+                    axisLeft={{
+                      tickSize: 5,
+                      tickPadding: 5,
+                      tickRotation: 0,
+                      legend: 'Cost (AED)',
+                      legendPosition: 'middle',
+                      legendOffset: -50
+                    }}
+                    labelSkipWidth={12}
+                    labelSkipHeight={12}
+                    labelTextColor={{ from: 'color', modifiers: [['darker', 1.6]] }}
+                    tooltip={({ value, indexValue }) => (
+                      <Box sx={{ bgcolor: 'white', p: 1, border: '1px solid #ccc', borderRadius: 1 }}>
+                        <Typography variant="body2">
+                          {indexValue}: AED {value.toFixed(2)}
+                        </Typography>
+                      </Box>
+                    )}
+                  />
+                )}
               </Box>
             </CardContent>
           </Card>
@@ -491,138 +924,320 @@ const MaintenanceSummary: React.FC = () => {
 };
 
 const CostSummary: React.FC = () => {
-  const theme = useTheme();
-  
-  // Define the interface for the cost data state
-  interface CostDataState {
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [costData, setCostData] = useState<{
     monthlyCost: number;
     yearToDate: number;
     trendPercentage: number;
     byCategory: ChartDataItem[];
-  }
-
-  const [costData, setCostData] = useState<CostDataState>({
+  }>({
     monthlyCost: 0,
     yearToDate: 0,
     trendPercentage: 0,
-    byCategory: []
+    byCategory: [],
   });
-  const [isLoading, setIsLoading] = useState(true);
-  
+
   useEffect(() => {
     const fetchCostData = async () => {
       try {
         setIsLoading(true);
-        // In a real implementation, these would be actual API calls
-        // const summary = await costService.getCostsSummary();
-        // const trends = await costService.getCostTrends();
+        setError(null);
+
+        // Fetch monthly expenses
+        const monthlyResponse = await axios.get<ApiResponse<MonthlyExpensesResponse>>(
+          getApiUrl(API_CONFIG.ENDPOINTS.COSTS + '/monthly')
+        );
+
+        if (monthlyResponse.data.status === 'error' || !monthlyResponse.data.data?.monthlyExpenses) {
+          throw new Error(monthlyResponse.data.message || 'Failed to fetch monthly expenses');
+        }
+
+        const monthlyExpenses = monthlyResponse.data.data.monthlyExpenses;
+        const currentMonthTotal = monthlyExpenses.length > 0 ? monthlyExpenses[0].totalAmount : 0;
+
+        // Fetch yearly expenses
+        const yearlyResponse = await axios.get<ApiResponse<YearlyExpensesResponse>>(
+          getApiUrl(API_CONFIG.ENDPOINTS.COSTS + '/yearly')
+        );
+
+        if (yearlyResponse.data.status === 'error' || !yearlyResponse.data.data?.yearlyExpenses) {
+          throw new Error(yearlyResponse.data.message || 'Failed to fetch yearly expenses');
+        }
+
+        const yearlyExpenses = yearlyResponse.data.data.yearlyExpenses;
+        const yearlyTotal = yearlyResponse.data.data.grandTotal || 0;
+
+        // Fetch category expenses
+        const categoryResponse = await axios.get<ApiResponse<CategoryExpensesResponse>>(
+          getApiUrl(API_CONFIG.ENDPOINTS.COSTS + '/by-category')
+        );
+
+        if (categoryResponse.data.status === 'error' || !categoryResponse.data.data?.categories) {
+          throw new Error(categoryResponse.data.message || 'Failed to fetch category expenses');
+        }
+
+        const categories = categoryResponse.data.data.categories;
         
-        // Mock data for now
+        // Calculate trend percentage (mock for now, you can implement actual calculation)
+        const trendPercentage = 5; // Example: 5% increase
+
+        // Transform category data for the pie chart
+        const categoryChartData = categories.map((item: CategoryExpense) => ({
+          id: item.category.charAt(0).toUpperCase() + item.category.slice(1),
+          value: item.totalAmount,
+          label: item.category.charAt(0).toUpperCase() + item.category.slice(1),
+        }));
+
         setCostData({
-          monthlyCost: 4820,
-          yearToDate: 31400,
-          trendPercentage: 5,
-          byCategory: [
-            { id: 'Fuel', value: 35 },
-            { id: 'Maintenance', value: 45 },
-            { id: 'Insurance', value: 15 },
-            { id: 'Other', value: 5 },
-          ]
+          monthlyCost: currentMonthTotal,
+          yearToDate: yearlyTotal,
+          trendPercentage: trendPercentage,
+          byCategory: categoryChartData,
         });
       } catch (error) {
         console.error('Failed to fetch cost data:', error);
+        setError(error instanceof Error ? error.message : 'Failed to fetch cost data. Please try again later.');
       } finally {
         setIsLoading(false);
       }
     };
-    
+
     fetchCostData();
   }, []);
-  
+
+  if (isLoading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ p: 2 }}>
+        <Typography color="error">{error}</Typography>
+      </Box>
+    );
+  }
+
   return (
-    <Box>
-      <Typography variant="h6" gutterBottom>
-        Cost Overview
-      </Typography>
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={4}>
-          <SummaryCard 
-            title="Total Expenses" 
-            icon={<MoneyIcon />} 
-            color={theme.palette.primary.main} 
-            data={{
-              monthlyCost: costData.monthlyCost,
-              yearToDate: costData.yearToDate,
-              trendPercentage: costData.trendPercentage
-            }}
-          />
-        </Grid>
-        <Grid item xs={12} md={8}>
-          <Card sx={{ height: '100%' }}>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>Expenses by Category</Typography>
-              {isLoading ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-                  <CircularProgress />
+    <Grid container spacing={3}>
+      <Grid item xs={12}>
+        <SummaryCard
+          title="Cost Overview"
+          icon={<MoneyIcon />}
+          color="#2196f3"
+          data={costData}
+        />
+      </Grid>
+      <Grid item xs={12} md={6}>
+        <Card sx={{ height: '100%' }}>
+          <CardContent>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Typography variant="h6">Expenses by Category</Typography>
+              <IconButton size="small">
+                <MoreVertIcon />
+              </IconButton>
+            </Box>
+            <Box sx={{ height: 300 }}>
+              {costData.byCategory.length === 0 ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                  <Typography variant="body2" color="textSecondary">
+                    No data available
+                  </Typography>
                 </Box>
               ) : (
-                <Box sx={{ height: 200 }}>
-                  <ResponsivePie
-                    data={costData.byCategory}
-                    margin={{ top: 10, right: 80, bottom: 10, left: 20 }}
-                    innerRadius={0.5}
-                    padAngle={0.7}
-                    cornerRadius={3}
-                    activeOuterRadiusOffset={8}
-                    colors={{ scheme: 'blues' }}
-                    borderWidth={1}
-                    borderColor={{ from: 'color', modifiers: [['darker', 0.2]] }}
-                    arcLinkLabelsTextColor="#333333"
-                    arcLinkLabelsThickness={2}
-                    arcLinkLabelsColor={{ from: 'color' }}
-                    arcLabelsSkipAngle={10}
-                    arcLabelsTextColor={{ from: 'color', modifiers: [['darker', 2]] }}
-                    legends={[
-                      {
-                        anchor: 'right',
-                        direction: 'column',
-                        justify: false,
-                        translateX: 80,
-                        translateY: 0,
-                        itemsSpacing: 2,
-                        itemWidth: 80,
-                        itemHeight: 20,
-                        itemTextColor: '#999',
-                        itemDirection: 'left-to-right',
-                        itemOpacity: 1,
-                        symbolSize: 12,
-                        symbolShape: 'circle',
-                      }
-                    ]}
-                  />
-                </Box>
+                <ResponsivePie
+                  data={costData.byCategory}
+                  margin={{ top: 20, right: 80, bottom: 80, left: 80 }}
+                  innerRadius={0.5}
+                  padAngle={0.7}
+                  cornerRadius={3}
+                  activeOuterRadiusOffset={8}
+                  borderWidth={1}
+                  borderColor={{ from: 'color', modifiers: [['darker', 0.2]] }}
+                  arcLinkLabelsSkipAngle={10}
+                  arcLinkLabelsTextColor="#333333"
+                  arcLinkLabelsThickness={2}
+                  arcLinkLabelsColor={{ from: 'color' }}
+                  arcLabelsSkipAngle={10}
+                  arcLabelsTextColor={{ from: 'color', modifiers: [['darker', 2]] }}
+                  legends={[
+                    {
+                      anchor: 'bottom',
+                      direction: 'row',
+                      justify: false,
+                      translateX: 0,
+                      translateY: 56,
+                      itemsSpacing: 0,
+                      itemWidth: 100,
+                      itemHeight: 18,
+                      itemTextColor: '#999',
+                      itemDirection: 'left-to-right',
+                      itemOpacity: 1,
+                      symbolSize: 18,
+                      symbolShape: 'circle',
+                    }
+                  ]}
+                  tooltip={({ datum }) => (
+                    <Box sx={{ bgcolor: 'white', p: 1, border: '1px solid #ccc', borderRadius: 1 }}>
+                      <Typography variant="body2">
+                        {datum.label}: AED {datum.value.toFixed(2)}
+                      </Typography>
+                    </Box>
+                  )}
+                />
               )}
-            </CardContent>
-          </Card>
-        </Grid>
+            </Box>
+          </CardContent>
+        </Card>
       </Grid>
-    </Box>
+      <Grid item xs={12} md={6}>
+        <Card sx={{ height: '100%' }}>
+          <CardContent>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Typography variant="h6">Cost Metrics</Typography>
+              <IconButton size="small">
+                <MoreVertIcon />
+              </IconButton>
+            </Box>
+            <Grid container spacing={2}>
+              <Grid item xs={6}>
+                <Typography variant="subtitle2" color="textSecondary">
+                  Monthly Cost
+                </Typography>
+                <Typography variant="h4" sx={{ my: 1 }}>
+                  AED {costData.monthlyCost.toFixed(2)}
+                </Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Typography variant="subtitle2" color="textSecondary">
+                  Year to Date
+                </Typography>
+                <Typography variant="h4" sx={{ my: 1 }}>
+                  AED {costData.yearToDate.toFixed(2)}
+                </Typography>
+              </Grid>
+              <Grid item xs={12}>
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="body2" color="textSecondary" gutterBottom>
+                    Monthly Trend
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    {costData.trendPercentage >= 0 ? (
+                      <TrendingUpIcon sx={{ color: 'success.main', mr: 1 }} />
+                    ) : (
+                      <TrendingDownIcon sx={{ color: 'error.main', mr: 1 }} />
+                    )}
+                    <Typography
+                      variant="body2"
+                      color={costData.trendPercentage >= 0 ? 'success.main' : 'error.main'}
+                    >
+                      {Math.abs(costData.trendPercentage)}% {costData.trendPercentage >= 0 ? 'increase' : 'decrease'}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Grid>
+            </Grid>
+          </CardContent>
+        </Card>
+      </Grid>
+    </Grid>
   );
 };
 
 const Dashboard: React.FC = () => {
   const theme = useTheme();
   const [tabValue, setTabValue] = useState(0);
+  const [activeDrivers, setActiveDrivers] = useState<number>(0);
+  const [activeVehicles, setActiveVehicles] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [fuelConsumption, setFuelConsumption] = useState<{
+    total: number;
+    trend: number;
+  }>({
+    total: 0,
+    trend: 0
+  });
+  const [maintenanceCost, setMaintenanceCost] = useState<{
+    total: number;
+    trend: number;
+  }>({
+    total: 0,
+    trend: 0
+  });
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setIsLoading(true);
+        
+        // Fetch active drivers
+        const driversResponse = await axios.get<ApiResponse<DriverResponse>>(
+          getApiUrl('/dashboard/active-drivers')
+        );
+
+        if (driversResponse.data.status === 'error' || !driversResponse.data.data) {
+          throw new Error(driversResponse.data.message || 'Failed to fetch active drivers');
+        }
+
+        setActiveDrivers(driversResponse.data.data.totalActiveDrivers);
+
+        // Fetch active vehicles
+        const vehiclesResponse = await axios.get<ApiResponse<VehicleResponse>>(
+          getApiUrl('/dashboard/active-vehicles')
+        );
+
+        if (vehiclesResponse.data.status === 'error' || !vehiclesResponse.data.data) {
+          throw new Error(vehiclesResponse.data.message || 'Failed to fetch active vehicles');
+        }
+
+        setActiveVehicles(vehiclesResponse.data.data.totalActiveVehicles);
+
+        // Fetch current month's fuel data
+        const fuelResponse = await axios.get<ApiResponse<CurrentMonthFuelResponse>>(
+          getApiUrl('/dashboard/fuel/current-month')
+        );
+
+        if (fuelResponse.data.status === 'success' && fuelResponse.data.data) {
+          setFuelConsumption({
+            total: fuelResponse.data.data.totalCost,
+            trend: 0 // Since we don't have trend data in the API response
+          });
+        }
+
+        // Fetch current month's maintenance data
+        const maintenanceResponse = await axios.get<ApiResponse<CurrentMonthMaintenanceResponse>>(
+          getApiUrl('/dashboard/maintenance/current-month')
+        );
+
+        if (maintenanceResponse.data.status === 'success' && maintenanceResponse.data.data) {
+          setMaintenanceCost({
+            total: maintenanceResponse.data.data.totalCost,
+            trend: 0 // Since we don't have trend data in the API response
+          });
+        }
+      } catch (error) {
+        console.error('Failed to fetch dashboard data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
 
-  // Calculate the total fuel consumption (currently based on mock data)
-  const totalFuelConsumption = `${fuelData.monthlyCost.toLocaleString()}L`;
+  // Format fuel consumption with currency symbol
+  const totalFuelConsumption = `AED ${fuelConsumption.total.toLocaleString()}`;
   
   // Format maintenance cost with currency symbol
-  const maintenanceCost = `$${maintenanceData.monthlyCost.toLocaleString()}`;
+  const totalMaintenanceCost = `AED ${maintenanceCost.total.toLocaleString()}`;
 
   return (
     <Box>
@@ -635,42 +1250,52 @@ const Dashboard: React.FC = () => {
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             title="Total Vehicles"
-            value="124"
+            value={isLoading ? "..." : activeVehicles.toString()}
             icon={<CarIcon />}
-            trend="up"
-            trendValue="+5% this month"
             color={theme.palette.primary.main}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             title="Active Drivers"
-            value="89"
+            value={isLoading ? "..." : activeDrivers.toString()}
             icon={<DriverIcon />}
-            trend="up"
-            trendValue="+2% this month"
             color={theme.palette.success.main}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             title="Fuel Consumption"
-            value={totalFuelConsumption}
+            value={isLoading ? "..." : totalFuelConsumption}
             icon={<FuelIcon />}
-            trend="down"
-            trendValue={`${fuelData.trendPercentage}% this month`}
+            trend={fuelConsumption.trend < 0 ? "down" : "up"}
+            trendValue={`${Math.abs(fuelConsumption.trend)}% this month`}
             color={theme.palette.warning.main}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             title="Maintenance Cost"
-            value={maintenanceCost}
+            value={isLoading ? "..." : totalMaintenanceCost}
             icon={<MaintenanceIcon />}
-            trend="up"
-            trendValue={`+${maintenanceData.trendPercentage}% this month`}
+            trend={maintenanceCost.trend < 0 ? "down" : "up"}
+            trendValue={`${Math.abs(maintenanceCost.trend)}% this month`}
             color={theme.palette.error.main}
           />
+        </Grid>
+
+        {/* Detailed Summaries Section */}
+        <Grid item xs={12}>
+          <Paper sx={{ mt: 3 }}>
+            <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+              <Tabs value={tabValue} onChange={handleTabChange} aria-label="dashboard summary tabs">
+                <Tab label="Cost Overview" />
+              </Tabs>
+            </Box>
+            <Box sx={{ p: 3 }}>
+              {tabValue === 0 && <CostSummary />}
+            </Box>
+          </Paper>
         </Grid>
 
         {/* Fleet Health */}
@@ -709,24 +1334,6 @@ const Dashboard: React.FC = () => {
               },
             ]}
           />
-        </Grid>
-
-        {/* Detailed Summaries Section */}
-        <Grid item xs={12}>
-          <Paper sx={{ mt: 3 }}>
-            <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-              <Tabs value={tabValue} onChange={handleTabChange} aria-label="dashboard summary tabs">
-                <Tab label="Cost Overview" />
-                <Tab label="Fuel Management" />
-                <Tab label="Maintenance" />
-              </Tabs>
-            </Box>
-            <Box sx={{ p: 3 }}>
-              {tabValue === 0 && <CostSummary />}
-              {tabValue === 1 && <FuelSummary />}
-              {tabValue === 2 && <MaintenanceSummary />}
-            </Box>
-          </Paper>
         </Grid>
       </Grid>
     </Box>

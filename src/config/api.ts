@@ -3,7 +3,7 @@ export const API_CONFIG = {
   ENDPOINTS: {
     MAINTENANCE: '/maintenance',
     VEHICLES: '/vehicles',
-    FUEL: '/fuel',
+    FUEL: '/fuel-records',
     CONTRACTS: '/contracts',
     TEMPLATE: '/contracts/template',
     DRIVERS: '/drivers',
