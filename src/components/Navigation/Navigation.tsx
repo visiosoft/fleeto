@@ -38,6 +38,7 @@ import {
   AccountCircle as AccountCircleIcon
 } from '@mui/icons-material';
 import { Link as RouterLink } from 'react-router-dom';
+import { api } from '../../services/api';
 
 const drawerWidth = 240;
 
@@ -104,9 +105,15 @@ const Navigation: React.FC<NavigationProps> = ({
     setAnchorEl(null);
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('isAuthenticated');
-    navigate('/login');
+  const handleLogout = async () => {
+    try {
+      await api.logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout failed:', error);
+      // Still navigate to login even if API call fails
+      navigate('/login');
+    }
   };
 
   const drawer = (

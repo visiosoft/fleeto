@@ -2,166 +2,143 @@
  * API Service for making HTTP requests to the backend
  */
 
-import axios from 'axios';
-import type { Driver, APIResponse } from '../types/api';
+import { API_ENDPOINTS, API_HEADERS, getAuthHeader } from '../config/environment';
 
-const BASE_URL = 'http://localhost:5000/api';
+class ApiService {
+  private static instance: ApiService;
+  private token: string | null = null;
 
-const api = axios.create({
-  baseURL: BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-/**
- * Generic API request handler
- */
-async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const url = `${BASE_URL}${endpoint}`;
-  const headers = {
-    'Content-Type': 'application/json',
-    ...options.headers,
-  };
-
-  const response = await fetch(url, {
-    ...options,
-    headers,
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.message || 'An error occurred while fetching the data.');
+  private constructor() {
+    this.token = localStorage.getItem('token');
   }
 
-  return response.json();
+  public static getInstance(): ApiService {
+    if (!ApiService.instance) {
+      ApiService.instance = new ApiService();
+    }
+    return ApiService.instance;
+  }
+
+  public setToken(token: string) {
+    this.token = token;
+    localStorage.setItem('token', token);
+  }
+
+  public removeToken() {
+    this.token = null;
+    localStorage.removeItem('token');
+  }
+
+  private async fetchWithAuth(endpoint: string, options: RequestInit = {}) {
+    const headers = this.token 
+      ? getAuthHeader(this.token)
+      : API_HEADERS;
+
+    const response = await fetch(endpoint, {
+      ...options,
+      headers: {
+        ...headers,
+        ...options.headers,
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        this.removeToken();
+        window.location.href = '/login';
+      }
+      throw new Error(`API call failed: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  // Auth methods
+  public async login(email: string, password: string) {
+    const response = await this.fetchWithAuth(API_ENDPOINTS.login, {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    });
+    this.setToken(response.token);
+    return response;
+  }
+
+  public async logout() {
+    await this.fetchWithAuth(API_ENDPOINTS.logout, {
+      method: 'POST',
+    });
+    this.removeToken();
+  }
+
+  // Dashboard methods
+  public async getDashboardStats() {
+    return this.fetchWithAuth(API_ENDPOINTS.dashboardStats);
+  }
+
+  public async getContractStats() {
+    return this.fetchWithAuth(API_ENDPOINTS.contractStats);
+  }
+
+  // Vehicle methods
+  public async getVehicles() {
+    return this.fetchWithAuth(API_ENDPOINTS.vehicles);
+  }
+
+  public async getVehicleDetails(id: string) {
+    return this.fetchWithAuth(API_ENDPOINTS.vehicleDetails(id));
+  }
+
+  // Driver methods
+  public async getDrivers() {
+    return this.fetchWithAuth(API_ENDPOINTS.drivers);
+  }
+
+  public async getDriverDetails(id: string) {
+    return this.fetchWithAuth(API_ENDPOINTS.driverDetails(id));
+  }
+
+  // Contract methods
+  public async getContracts() {
+    return this.fetchWithAuth(API_ENDPOINTS.contracts);
+  }
+
+  public async getContractDetails(id: string) {
+    return this.fetchWithAuth(API_ENDPOINTS.contractDetails(id));
+  }
+
+  public async getContractTemplates() {
+    return this.fetchWithAuth(API_ENDPOINTS.contractTemplates);
+  }
+
+  // Profile methods
+  public async getProfile() {
+    return this.fetchWithAuth(API_ENDPOINTS.profile);
+  }
+
+  public async updateProfile(data: any) {
+    return this.fetchWithAuth(API_ENDPOINTS.updateProfile, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Reports methods
+  public async getReports() {
+    return this.fetchWithAuth(API_ENDPOINTS.reports);
+  }
+
+  public async generateReport(type: string) {
+    return this.fetchWithAuth(API_ENDPOINTS.generateReport(type));
+  }
+
+  // Settings methods
+  public async getSettings() {
+    return this.fetchWithAuth(API_ENDPOINTS.settings);
+  }
+
+  public async getCompanySettings() {
+    return this.fetchWithAuth(API_ENDPOINTS.companySettings);
+  }
 }
 
-/**
- * Driver API endpoints
- */
-export const driverAPI = {
-  getAll: () => api.get<APIResponse<Driver[]>>('/drivers'),
-  
-  getById: (id: string) => api.get<APIResponse<Driver>>(`/drivers/${id}`),
-  
-  create: (data: Omit<Driver, '_id'>) => api.post<APIResponse<Driver>>('/drivers', data),
-  
-  update: (id: string, data: Partial<Driver>) => api.put<APIResponse<Driver>>(`/drivers/${id}`, data),
-  
-  delete: (id: string) => api.delete<APIResponse<void>>(`/drivers/${id}`),
-  
-  search: (query: string) => api.get<APIResponse<Driver[]>>(`/drivers/search?q=${query}`),
-};
-
-/**
- * Vehicle API endpoints
- */
-export const vehicleAPI = {
-  getAll: () => request<any[]>('/vehicles'),
-  
-  getById: (id: string) => request<any>(`/vehicles/${id}`),
-  
-  create: (data: any) => request<any>('/vehicles', {
-    method: 'POST',
-    body: JSON.stringify(data),
-  }),
-  
-  update: (id: string, data: any) => request<any>(`/vehicles/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  }),
-  
-  delete: (id: string) => request<void>(`/vehicles/${id}`, {
-    method: 'DELETE',
-  }),
-  
-  search: (params: Record<string, string>) => {
-    const searchParams = new URLSearchParams(params);
-    return request<any[]>(`/vehicles/search?${searchParams.toString()}`);
-  },
-};
-
-/**
- * Maintenance API endpoints
- */
-export const maintenanceAPI = {
-  getAll: () => request<any[]>('/maintenance'),
-  
-  getById: (id: string) => request<any>(`/maintenance/${id}`),
-  
-  create: (data: any) => request<any>('/maintenance', {
-    method: 'POST',
-    body: JSON.stringify(data),
-  }),
-  
-  update: (id: string, data: any) => request<any>(`/maintenance/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  }),
-  
-  delete: (id: string) => request<void>(`/maintenance/${id}`, {
-    method: 'DELETE',
-  }),
-  
-  search: (params: Record<string, string>) => {
-    const searchParams = new URLSearchParams(params);
-    return request<any[]>(`/maintenance/search?${searchParams.toString()}`);
-  },
-};
-
-/**
- * Fuel API endpoints
- */
-export const fuelAPI = {
-  getAll: () => request<any[]>('/fuel'),
-  
-  getById: (id: string) => request<any>(`/fuel/${id}`),
-  
-  create: (data: any) => request<any>('/fuel', {
-    method: 'POST',
-    body: JSON.stringify(data),
-  }),
-  
-  update: (id: string, data: any) => request<any>(`/fuel/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  }),
-  
-  delete: (id: string) => request<void>(`/fuel/${id}`, {
-    method: 'DELETE',
-  }),
-  
-  search: (params: Record<string, string>) => {
-    const searchParams = new URLSearchParams(params);
-    return request<any[]>(`/fuel/search?${searchParams.toString()}`);
-  },
-};
-
-/**
- * Contract API endpoints
- */
-export const contractAPI = {
-  getAll: () => request<any[]>('/contracts'),
-  
-  getById: (id: string) => request<any>(`/contracts/${id}`),
-  
-  create: (data: any) => request<any>('/contracts', {
-    method: 'POST',
-    body: JSON.stringify(data),
-  }),
-  
-  update: (id: string, data: any) => request<any>(`/contracts/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  }),
-  
-  delete: (id: string) => request<void>(`/contracts/${id}`, {
-    method: 'DELETE',
-  }),
-  
-  search: (params: Record<string, string>) => {
-    const searchParams = new URLSearchParams(params);
-    return request<any[]>(`/contracts/search?${searchParams.toString()}`);
-  },
-}; 
+export const api = ApiService.getInstance(); 
