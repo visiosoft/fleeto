@@ -52,10 +52,8 @@ const MENU_ITEMS: MenuItem[] = [
   { text: 'Vehicle Management', path: '/vehicles', icon: <DirectionsCarIcon /> },
   { text: 'Driver Management', path: '/drivers', icon: <PeopleIcon /> },
   { text: 'Tracking', path: '/tracking', icon: <LocationOnIcon /> },
-  { text: 'Maintenance', path: '/maintenance', icon: <BuildIcon /> },
-  { text: 'Fuel Management', path: '/fuel', icon: <LocalGasStationIcon /> },
   { text: 'Cost Management', path: '/costs', icon: <MonetizationOnIcon /> },
-  { text: 'Contract Management', path: '/contracts', icon: <DescriptionIcon /> },
+  { text: 'Contracts', path: '/contracts', icon: <DescriptionIcon /> },
   { text: 'Reports', path: '/reports', icon: <AssessmentIcon /> },
   { text: 'Compliance', path: '/compliance', icon: <GavelIcon /> },
   { text: 'Settings', path: '/settings', icon: <SettingsIcon /> },
@@ -137,7 +135,7 @@ const Navigation: React.FC<NavigationProps> = ({
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" noWrap component="div">
-            Fleet Management
+            Fleet Manager
           </Typography>
         </Toolbar>
       </AppBar>
