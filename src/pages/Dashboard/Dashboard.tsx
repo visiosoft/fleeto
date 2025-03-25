@@ -25,6 +25,10 @@ import {
   TrendingDown as TrendingDownIcon,
   MoreVert as MoreVertIcon,
   AttachMoney as MoneyIcon,
+  Description as DescriptionIcon,
+  CheckCircle as CheckCircleIcon,
+  Warning as WarningIcon,
+  MonetizationOn as MonetizationOnIcon,
 } from '@mui/icons-material';
 import axios from 'axios';
 import { ResponsivePie } from '@nivo/pie';
@@ -238,6 +242,36 @@ interface CurrentMonthMaintenanceResponse {
   maintenanceExpenses: MaintenanceExpense[];
   month: number;
   year: number;
+}
+
+// Add interface for contract statistics
+interface ContractStats {
+  totalContracts: number;
+  activeContracts: number;
+  expiringSoon: number;
+  totalValue: number;
+  recentContracts: {
+    _id: string;
+    startDate: string;
+    endDate: string;
+    status: string;
+  }[];
+  lastUpdated: string;
+  debug: {
+    totalFound: number;
+    contractsWithFutureEndDate: number;
+    currentDate: string;
+    manualCounts: {
+      active: number;
+      expiringSoon: number;
+      totalValue: number;
+    };
+    aggregateCounts: {
+      active: number;
+      expiringSoon: number;
+      totalValue: number;
+    };
+  };
 }
 
 const StatCard: React.FC<{
@@ -1024,14 +1058,7 @@ const CostSummary: React.FC = () => {
 
   return (
     <Grid container spacing={3}>
-      <Grid item xs={12}>
-        <SummaryCard
-          title="Cost Overview"
-          icon={<MoneyIcon />}
-          color="#2196f3"
-          data={costData}
-        />
-      </Grid>
+    
       <Grid item xs={12} md={6}>
         <Card sx={{ height: '100%' }}>
           <CardContent>
@@ -1168,6 +1195,29 @@ const Dashboard: React.FC = () => {
     total: 0,
     trend: 0
   });
+  const [contractStats, setContractStats] = useState<ContractStats>({
+    totalContracts: 0,
+    activeContracts: 0,
+    expiringSoon: 0,
+    totalValue: 0,
+    recentContracts: [],
+    lastUpdated: '',
+    debug: {
+      totalFound: 0,
+      contractsWithFutureEndDate: 0,
+      currentDate: '',
+      manualCounts: {
+        active: 0,
+        expiringSoon: 0,
+        totalValue: 0
+      },
+      aggregateCounts: {
+        active: 0,
+        expiringSoon: 0,
+        totalValue: 0
+      }
+    }
+  });
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -1218,6 +1268,15 @@ const Dashboard: React.FC = () => {
             total: maintenanceResponse.data.data.totalCost,
             trend: 0 // Since we don't have trend data in the API response
           });
+        }
+
+        // Fetch contract statistics
+        const contractsResponse = await axios.get<ApiResponse<ContractStats>>(
+          getApiUrl('/dashboard/contracts/stats')
+        );
+
+        if (contractsResponse.data.status === 'success' && contractsResponse.data.data) {
+          setContractStats(contractsResponse.data.data);
         }
       } catch (error) {
         console.error('Failed to fetch dashboard data:', error);
@@ -1284,16 +1343,61 @@ const Dashboard: React.FC = () => {
           />
         </Grid>
 
+        {/* Contract Statistics */}
+        <Grid item xs={12}>
+            <Typography variant="h6" gutterBottom>
+              Contract Management
+            </Typography>
+            <Grid container spacing={3}>
+              <Grid item xs={12} sm={6} md={3}>
+                <StatCard
+                  title="Total Contracts"
+                  value={isLoading ? "..." : contractStats.totalContracts.toString()}
+                  icon={<DescriptionIcon />}
+                  color={theme.palette.info.main}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <StatCard
+                  title="Active Contracts"
+                  value={isLoading ? "..." : contractStats.activeContracts.toString()}
+                  icon={<CheckCircleIcon />}
+                  color={theme.palette.success.main}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <StatCard
+                  title="Expiring Soon"
+                  value={isLoading ? "..." : contractStats.expiringSoon.toString()}
+                  icon={<WarningIcon />}
+                  color={theme.palette.warning.main}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <StatCard
+                  title="Total Value"
+                  value={isLoading ? "..." : `AED ${contractStats.totalValue.toLocaleString()}`}
+                  icon={<MonetizationOnIcon />}
+                  color={theme.palette.primary.main}
+                />
+              </Grid>
+            </Grid>
+        </Grid>
+
         {/* Detailed Summaries Section */}
         <Grid item xs={12}>
           <Paper sx={{ mt: 3 }}>
             <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
               <Tabs value={tabValue} onChange={handleTabChange} aria-label="dashboard summary tabs">
                 <Tab label="Cost Overview" />
+                <Tab label="Fuel Management" />
+                <Tab label="Maintenance" />
               </Tabs>
             </Box>
             <Box sx={{ p: 3 }}>
               {tabValue === 0 && <CostSummary />}
+              {tabValue === 1 && <FuelSummary />}
+              {tabValue === 2 && <MaintenanceSummary />}
             </Box>
           </Paper>
         </Grid>
