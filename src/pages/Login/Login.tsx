@@ -1,119 +1,109 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Paper,
+  Typography,
   TextField,
   Button,
-  Typography,
-  Container,
-  Alert,
   CircularProgress,
+  Alert
 } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import { useTheme } from '@mui/material/styles';
+import { api } from '../../services/api';
 
 const Login: React.FC = () => {
-  const theme = useTheme();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setLoading(true);
     setError('');
 
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    if (email === 'dev.xulfi@gmail.com' && password === '123456') {
-      // Store authentication state (you can use localStorage or a state management solution)
-      localStorage.setItem('isAuthenticated', 'true');
+    try {
+      await api.login(email, password);
       navigate('/');
-    } else {
+    } catch (err) {
       setError('Invalid email or password');
+    } finally {
+      setLoading(false);
     }
-
-    setIsLoading(false);
   };
 
   return (
-    <Container component="main" maxWidth="xs">
-      <Box
+    <Box
+      sx={{
+        height: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        bgcolor: 'background.default'
+      }}
+    >
+      <Paper
+        elevation={3}
         sx={{
-          marginTop: 8,
+          p: 4,
+          width: '100%',
+          maxWidth: 400,
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'center',
+          alignItems: 'center'
         }}
       >
-        <Paper
-          elevation={3}
-          sx={{
-            padding: 4,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            width: '100%',
-          }}
-        >
-          <Typography component="h1" variant="h5" gutterBottom>
-            Fleet Management System
-          </Typography>
-          <Typography component="h2" variant="h6" color="textSecondary" gutterBottom>
-            Sign In
-          </Typography>
+        <Typography variant="h4" component="h1" gutterBottom>
+          Fleet Management
+        </Typography>
+        <Typography variant="body1" color="text.secondary" gutterBottom>
+          Sign in to your account
+        </Typography>
 
-          {error && (
-            <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
-              {error}
-            </Alert>
-          )}
+        {error && (
+          <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
+            {error}
+          </Alert>
+        )}
 
-          <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              id="email"
-              label="Email Address"
-              name="email"
-              autoComplete="email"
-              autoFocus
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              name="password"
-              label="Password"
-              type="password"
-              id="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              sx={{ mt: 3, mb: 2 }}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <CircularProgress size={24} color="inherit" />
-              ) : (
-                'Sign In'
-              )}
-            </Button>
-          </Box>
-        </Paper>
-      </Box>
-    </Container>
+        <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
+          <TextField
+            margin="normal"
+            required
+            fullWidth
+            id="email"
+            label="Email Address"
+            name="email"
+            autoComplete="email"
+            autoFocus
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <TextField
+            margin="normal"
+            required
+            fullWidth
+            name="password"
+            label="Password"
+            type="password"
+            id="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <Button
+            type="submit"
+            fullWidth
+            variant="contained"
+            sx={{ mt: 3, mb: 2 }}
+            disabled={loading}
+          >
+            {loading ? <CircularProgress size={24} /> : 'Sign In'}
+          </Button>
+        </Box>
+      </Paper>
+    </Box>
   );
 };
 
