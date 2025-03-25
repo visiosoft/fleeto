@@ -25,7 +25,11 @@ import {
   Snackbar,
   Alert,
   Chip,
-  LinearProgress
+  LinearProgress,
+  Card,
+  CardContent,
+  useTheme,
+  CircularProgress
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -37,7 +41,9 @@ import {
   Schedule as ScheduleIcon,
   Description as DescriptionIcon,
   FileCopy as FileCopyIcon,
-  Autorenew as AutorenewIcon
+  Autorenew as AutorenewIcon,
+  MoreVert as MoreVertIcon,
+  MonetizationOn as MonetizationOnIcon
 } from '@mui/icons-material';
 import axios, { AxiosError } from 'axios';
 import { API_CONFIG, getApiUrl } from '../../config/api';
@@ -55,6 +61,12 @@ const CONTRACT_STATUSES = [
 ] as const;
 
 type ContractStatus = (typeof CONTRACT_STATUSES)[number];
+
+interface ApiResponse<T> {
+  status: 'success' | 'error';
+  data?: T;
+  message?: string;
+}
 
 interface ContractFormData extends Omit<Contract, '_id'> {
   _id?: string;
@@ -131,18 +143,54 @@ const calculateStats = (contracts: ContractFormData[]): ContractStats => {
   return stats;
 };
 
+const StatCard: React.FC<{
+  title: string;
+  value: string | number;
+  icon: React.ReactNode;
+  color?: string;
+}> = ({ title, value, icon, color }) => {
+  const theme = useTheme();
+  
+  return (
+    <Card sx={{ height: '100%' }}>
+      <CardContent>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <Box>
+            <Typography variant="subtitle2" color="textSecondary">
+              {title}
+            </Typography>
+            <Typography variant="h4" sx={{ my: 1, color: color }}>
+              {value}
+            </Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: color + '15', p: 1, borderRadius: 2 }}>
+            {React.cloneElement(icon as React.ReactElement, { sx: { color: color } })}
+          </Box>
+        </Box>
+      </CardContent>
+    </Card>
+  );
+};
+
 const ContractManagement: React.FC = () => {
+  const theme = useTheme();
   const [contracts, setContracts] = useState<ContractFormData[]>([]);
   const [currentContract, setCurrentContract] = useState<ContractFormData>(emptyContract);
   const [companies, setCompanies] = useState<string[]>([]);
   const [statuses] = useState<ContractStatus[]>([...CONTRACT_STATUSES]);
-  const [stats, setStats] = useState<ContractStats | null>(null);
+  const [stats, setStats] = useState<ContractStats>({
+    totalContracts: 0,
+    activeContracts: 0,
+    expiringContracts: 0,
+    totalValue: 0,
+    averageValue: 0
+  });
   const [expiringContracts, setExpiringContracts] = useState<ContractFormData[]>([]);
   const [openDialog, setOpenDialog] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [contractToDelete, setContractToDelete] = useState<string>('');
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
@@ -163,21 +211,10 @@ const ContractManagement: React.FC = () => {
   const [isNewTemplateDialogOpen, setIsNewTemplateDialogOpen] = useState(false);
   const [newTemplateName, setNewTemplateName] = useState('');
 
-  useEffect(() => {
-    fetchContracts();
-    fetchCompanies();
-    fetchVehicles();
-    fetchExpiringContracts();
-    fetchTemplates();
-  }, []);
-
   const fetchContracts = async () => {
-    setIsLoading(true);
     try {
       const response = await axios.get(getApiUrl(API_CONFIG.ENDPOINTS.CONTRACTS));
       setContracts(response.data);
-      const calculatedStats = calculateStats(response.data);
-      setStats(calculatedStats);
     } catch (error) {
       console.error('Error fetching contracts:', error);
       setSnackbar({
@@ -185,63 +222,51 @@ const ContractManagement: React.FC = () => {
         message: 'Failed to fetch contracts',
         severity: 'error'
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  const fetchCompanies = async () => {
-    try {
-      const response = await axios.get(getApiUrl(`${API_CONFIG.ENDPOINTS.CONTRACTS}/companies`));
-      setCompanies(response.data);
-    } catch (error) {
-      console.error('Error fetching companies:', error);
-    }
-  };
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        
+        // Fetch contract statistics
+        const statsResponse = await axios.get<ApiResponse<ContractStats>>(
+          getApiUrl('/api/dashboard/contracts/stats')
+        );
 
-  const fetchExpiringContracts = async () => {
-    try {
-      const response = await axios.get(getApiUrl(`${API_CONFIG.ENDPOINTS.CONTRACTS}/expiring`));
-      setExpiringContracts(response.data);
-    } catch (error) {
-      console.error('Error fetching expiring contracts:', error);
-    }
-  };
+        if (statsResponse.data.status === 'success' && statsResponse.data.data) {
+          const contractStats = statsResponse.data.data;
+          setStats({
+            totalContracts: contractStats.totalContracts || 0,
+            activeContracts: contractStats.activeContracts || 0,
+            expiringContracts:  0,
+            totalValue: contractStats.totalValue || 0,
+            averageValue: contractStats.totalValue ? (contractStats.totalValue / (contractStats.totalContracts || 1)) : 0
+          });
+        }
 
-  const fetchVehicles = async () => {
-    try {
-      const response = await axios.get(getApiUrl(API_CONFIG.ENDPOINTS.VEHICLES));
-      const vehiclesData: EditorVehicle[] = response.data.map((v: any) => ({
-        _id: v._id,
-        licensePlate: v.licensePlate,
-        make: v.make,
-        model: v.model,
-        year: v.year
-      }));
-      setVehicles(vehiclesData);
-    } catch (error) {
-      console.error('Error fetching vehicles:', error);
-      setSnackbar({
-        open: true,
-        message: 'Failed to fetch vehicles',
-        severity: 'error'
-      });
-    }
-  };
+        // Fetch contracts list
+        await fetchContracts();
 
-  const fetchTemplates = async () => {
-    try {
-      const response = await axios.get(getApiUrl(API_CONFIG.ENDPOINTS.CONTRACT_TEMPLATES));
-      setTemplates(response.data);
-    } catch (error) {
-      console.error('Failed to fetch templates:', error);
-      setSnackbar({
-        open: true,
-        message: 'Failed to fetch templates',
-        severity: 'error'
-      });
-    }
-  };
+        // Fetch companies
+        const companiesResponse = await axios.get(getApiUrl(`${API_CONFIG.ENDPOINTS.CONTRACTS}/companies`));
+        setCompanies(companiesResponse.data);
+
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        setSnackbar({
+          open: true,
+          message: 'Failed to fetch data',
+          severity: 'error'
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const handleAddContract = () => {
     setCurrentContract(emptyContract);
@@ -680,177 +705,158 @@ const ContractManagement: React.FC = () => {
     </Grid>
   );
 
+  if (isLoading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
   return (
     <Box>
-      <Typography variant="h4" gutterBottom>
-        Contract Management
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+        <Typography variant="h4">Contract Management</Typography>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => handleAddContract()}
+        >
+          Add Contract
+        </Button>
+      </Box>
 
-      {/* Statistics Cards */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} md={3}>
-          <Paper sx={{ p: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-              <Typography variant="h6" gutterBottom>Total Contracts</Typography>
-            </Box>
-            <Typography variant="h4">{stats?.totalContracts || 0}</Typography>
-            <Typography variant="body2" color="textSecondary">
-              All Time
-            </Typography>
-          </Paper>
+      <Grid container spacing={3}>
+        {/* Contract Statistics */}
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            title="Total Contracts"
+            value={isLoading ? "..." : stats.totalContracts}
+            icon={<DescriptionIcon />}
+            color={theme.palette.info.main}
+          />
         </Grid>
-        <Grid item xs={12} md={3}>
-          <Paper sx={{ p: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-              <Typography variant="h6" gutterBottom>Active Contracts</Typography>
-            </Box>
-            <Typography variant="h4">{stats?.activeContracts || 0}</Typography>
-            <Typography variant="body2" color="textSecondary">
-              Currently Active
-            </Typography>
-          </Paper>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            title="Active Contracts"
+            value={isLoading ? "..." : stats.activeContracts}
+            icon={<CheckCircleIcon />}
+            color={theme.palette.success.main}
+          />
         </Grid>
-        <Grid item xs={12} md={3}>
-          <Paper sx={{ p: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-              <Typography variant="h6" gutterBottom>Expiring Soon</Typography>
-            </Box>
-            <Typography variant="h4">{stats?.expiringContracts || 0}</Typography>
-            <Typography variant="body2" color="textSecondary">
-              Next 30 Days
-            </Typography>
-          </Paper>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            title="Expiring Soon"
+            value={isLoading ? "..." : stats.expiringContracts}
+            icon={<WarningIcon />}
+            color={theme.palette.warning.main}
+          />
         </Grid>
-        <Grid item xs={12} md={3}>
-          <Paper sx={{ p: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-              <Typography variant="h6" gutterBottom>Total Value</Typography>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            title="Total Value"
+            value={isLoading ? "..." : `AED ${stats.totalValue.toLocaleString()}`}
+            icon={<MonetizationOnIcon />}
+            color={theme.palette.primary.main}
+          />
+        </Grid>
+
+        {/* Expiring Contracts Section */}
+        {expiringContracts.length > 0 && (
+          <Grid item xs={12}>
+            <Paper sx={{ p: 2, mb: 3 }}>
+              <Typography variant="h6" gutterBottom>
+                Contracts Expiring in 30 Days
+              </Typography>
+              <Grid container spacing={2}>
+                {expiringContracts.map((contract) => (
+                  <Grid item xs={12} sm={6} md={4} key={contract._id}>
+                    <Paper sx={{ p: 2 }}>
+                      <Typography variant="subtitle1">{contract.companyName}</Typography>
+                      <Typography variant="body2" color="textSecondary">
+                        Expires: {moment(contract.endDate).format('MMMM D, YYYY')}
+                      </Typography>
+                      <Box sx={{ mt: 1 }}>
+                        <Chip
+                          label={contract.status}
+                          color={getStatusColor(contract.status)}
+                          size="small"
+                        />
+                      </Box>
+                    </Paper>
+                  </Grid>
+                ))}
+              </Grid>
+            </Paper>
+          </Grid>
+        )}
+
+        {/* Contracts Table */}
+        <Grid item xs={12}>
+          <Paper>
+            <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Typography variant="h6">Recent Contracts</Typography>
+              <IconButton>
+                <MoreVertIcon />
+              </IconButton>
             </Box>
-            <Typography variant="h4">${(stats?.totalValue || 0).toFixed(2)}</Typography>
-            <Typography variant="body2" color="textSecondary">
-              Average: ${(stats?.averageValue || 0).toFixed(2)}
-            </Typography>
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Contract ID</TableCell>
+                    <TableCell>Start Date</TableCell>
+                    <TableCell>End Date</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell>Value</TableCell>
+                    <TableCell>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {contracts.map((contract) => (
+                    <TableRow key={contract._id}>
+                      <TableCell>{contract._id}</TableCell>
+                      <TableCell>{moment(contract.startDate).format('MMM DD, YYYY')}</TableCell>
+                      <TableCell>{moment(contract.endDate).format('MMM DD, YYYY')}</TableCell>
+                      <TableCell>
+                        <Chip
+                          label={contract.status}
+                          color={getStatusColor(contract.status)}
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell>AED {contract.value.toLocaleString()}</TableCell>
+                      <TableCell>
+                        <IconButton size="small" onClick={() => handleEditContract(contract)}>
+                          <EditIcon />
+                        </IconButton>
+                        <IconButton size="small" color="error">
+                          <DeleteIcon />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
           </Paper>
         </Grid>
       </Grid>
 
-      {/* Expiring Contracts Section */}
-      {expiringContracts.length > 0 && (
-        <Paper sx={{ p: 2, mb: 3 }}>
-          <Typography variant="h6" gutterBottom>
-            Contracts Expiring in 30 Days
-          </Typography>
-          <Grid container spacing={2}>
-            {expiringContracts.map((contract) => (
-              <Grid item xs={12} sm={6} md={4} key={contract._id}>
-                <Paper sx={{ p: 2 }}>
-                  <Typography variant="subtitle1">{contract.companyName}</Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    Expires: {moment(contract.endDate).format('MMMM D, YYYY')}
-                  </Typography>
-                  <Box sx={{ mt: 1 }}>
-                    <Chip
-                      label={contract.status}
-                      color={getStatusColor(contract.status)}
-                      size="small"
-                    />
-                  </Box>
-                </Paper>
-              </Grid>
-            ))}
-          </Grid>
-        </Paper>
-      )}
-
-      {/* Contracts Table */}
-      <Paper sx={{ p: 2 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Typography variant="h6">
-            Contract List
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button
-              variant="outlined"
-              color="primary"
-              onClick={() => setIsTemplateListOpen(true)}
-              startIcon={<DescriptionIcon />}
-            >
-              Contract Templates
-            </Button>
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<AddIcon />}
-              onClick={handleAddContract}
-            >
-              Add Contract
-            </Button>
-          </Box>
-        </Box>
-
-        {isLoading ? (
-          <LinearProgress />
-        ) : (
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Company</TableCell>
-                  <TableCell>Vehicle</TableCell>
-                  <TableCell>Contract Type</TableCell>
-                  <TableCell>Start Date</TableCell>
-                  <TableCell>End Date</TableCell>
-                  <TableCell>Value</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {contracts.map((contract) => (
-                  <TableRow key={contract._id}>
-                    <TableCell>{contract.companyName}</TableCell>
-                    <TableCell>
-                      {vehicles.find(v => v._id === contract.vehicleId)?.licensePlate || 'N/A'}
-                    </TableCell>
-                    <TableCell>{contract.contractType}</TableCell>
-                    <TableCell>{moment(contract.startDate).format('YYYY-MM-DD')}</TableCell>
-                    <TableCell>{moment(contract.endDate).format('YYYY-MM-DD')}</TableCell>
-                    <TableCell>${contract.value.toFixed(2)}</TableCell>
-                    <TableCell>
-                      <Chip
-                        label={contract.status}
-                        color={getStatusColor(contract.status)}
-                        size="small"
-                      />
-                    </TableCell>
-                    {renderActionsCell(contract)}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
-      </Paper>
-
-      {/* Contract Form Dialog */}
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
+      {/* Add/Edit Contract Dialog */}
+      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
         <DialogTitle>
-          {currentContract._id ? 'Edit Contract' : 'Add Contract'}
-          <IconButton
-            aria-label="close"
-            onClick={handleCloseDialog}
-            sx={{ position: 'absolute', right: 8, top: 8 }}
-          >
-            <CloseIcon />
-          </IconButton>
+          {selectedContract ? 'Edit Contract' : 'Add New Contract'}
         </DialogTitle>
-        <DialogContent dividers>
-          {renderContractForm()}
+        <DialogContent>
+          <Box sx={{ pt: 2 }}>
+            {renderContractForm()}
+          </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button onClick={() => handleSaveContract(undefined)} variant="contained" color="primary">
-            {currentContract._id ? 'Update' : 'Create'}
+          <Button variant="contained" onClick={handleCloseDialog}>
+            {selectedContract ? 'Update' : 'Add'}
           </Button>
         </DialogActions>
       </Dialog>

@@ -133,7 +133,6 @@ const ContractManagement: React.FC = () => {
   useEffect(() => {
     fetchContracts();
     fetchStats();
-    fetchExpiringContracts();
     fetchVehicles();
   }, []);
 
@@ -156,21 +155,14 @@ const ContractManagement: React.FC = () => {
 
   const fetchStats = async () => {
     try {
-      const response = await axios.get(getApiUrl(`${API_CONFIG.ENDPOINTS.CONTRACTS}/stats`));
+      const response = await axios.get(getApiUrl(`/dashboard/contracts/stats`));
       setStats(response.data);
     } catch (error) {
       console.error('Error fetching stats:', error);
     }
   };
 
-  const fetchExpiringContracts = async () => {
-    try {
-      const response = await axios.get(getApiUrl(`${API_CONFIG.ENDPOINTS.CONTRACTS}/expiring`));
-      setExpiringContracts(response.data);
-    } catch (error) {
-      console.error('Error fetching expiring contracts:', error);
-    }
-  };
+
 
   const fetchVehicles = async () => {
     try {
