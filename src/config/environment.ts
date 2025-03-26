@@ -6,6 +6,7 @@ export const API_BASE_URL = isDevelopment
 
 export const API_ENDPOINTS = {
   // Auth endpoints
+  register: `${API_BASE_URL}/auth/register`,
   login: `${API_BASE_URL}/auth/login`,
   logout: `${API_BASE_URL}/auth/logout`,
   

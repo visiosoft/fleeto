@@ -8,6 +8,7 @@ import Dashboard from './pages/Dashboard/Dashboard';
 import ContractTemplate from './pages/ContractTemplate/ContractTemplate';
 import Login from './pages/Login/Login';
 import Profile from './pages/Profile/Profile';
+import Register from './pages/Register/Register';
 
 // Lazy load all pages
 const VehicleManagement = React.lazy(() => import('./pages/VehicleManagement'));
@@ -56,6 +57,7 @@ const App: React.FC = () => {
             <Routes>
               {/* Public route */}
               <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
               
               {/* Protected routes */}
               <Route path="/" element={
