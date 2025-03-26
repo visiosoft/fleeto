@@ -67,15 +67,23 @@ const DriverManagement: React.FC = () => {
     severity: 'success'
   });
 
+  const showSnackbar = (message: string, severity: 'success' | 'error') => {
+    setSnackbar({ open: true, message, severity });
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar(prev => ({ ...prev, open: false }));
+  };
+
   const fetchDrivers = useCallback(async () => {
     try {
-      const response = await axios.get(getApiUrl(API_CONFIG.ENDPOINTS.DRIVERS));
+      const response = await axios.get(getApiUrl(API_CONFIG.ENDPOINTS.DRIVERS.LIST));
       setDrivers(response.data);
     } catch (error) {
       console.error('Failed to fetch drivers:', error);
       showSnackbar('Failed to fetch drivers', 'error');
     }
-  }, []);
+  }, [showSnackbar]);
 
   useEffect(() => {
     fetchDrivers();
@@ -106,8 +114,12 @@ const DriverManagement: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this driver?')) {
+      return;
+    }
+
     try {
-      await axios.delete(getApiUrl(`${API_CONFIG.ENDPOINTS.DRIVERS}/${id}`));
+      await axios.delete(getApiUrl(API_CONFIG.ENDPOINTS.DRIVERS.DELETE(id)));
       showSnackbar('Driver deleted successfully', 'success');
       fetchDrivers();
     } catch (error) {
@@ -116,7 +128,8 @@ const DriverManagement: React.FC = () => {
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!formValues.firstName || !formValues.lastName || !formValues.licenseNumber || !formValues.licenseExpiry) {
       showSnackbar('Please fill in all required fields', 'error');
       return;
@@ -129,14 +142,13 @@ const DriverManagement: React.FC = () => {
       };
 
       if (editingDriver) {
-        await axios.put(getApiUrl(`${API_CONFIG.ENDPOINTS.DRIVERS}/${editingDriver._id}`), driverData);
+        await axios.put(getApiUrl(API_CONFIG.ENDPOINTS.DRIVERS.UPDATE(editingDriver._id)), driverData);
         showSnackbar('Driver updated successfully', 'success');
       } else {
-        await axios.post(getApiUrl(API_CONFIG.ENDPOINTS.DRIVERS), driverData);
+        await axios.post(getApiUrl(API_CONFIG.ENDPOINTS.DRIVERS.CREATE), driverData);
         showSnackbar('Driver added successfully', 'success');
       }
-
-      setIsModalOpen(false);
+      handleCloseDialog();
       fetchDrivers();
     } catch (error) {
       console.error('Failed to save driver:', error);
@@ -151,12 +163,9 @@ const DriverManagement: React.FC = () => {
     }));
   };
 
-  const showSnackbar = (message: string, severity: 'success' | 'error') => {
-    setSnackbar({ open: true, message, severity });
-  };
-
-  const handleCloseSnackbar = () => {
-    setSnackbar(prev => ({ ...prev, open: false }));
+  const handleCloseDialog = () => {
+    setIsModalOpen(false);
+    setFormValues({});
   };
 
   return (
@@ -216,7 +225,7 @@ const DriverManagement: React.FC = () => {
 
       <Dialog
         open={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={handleCloseDialog}
         maxWidth="md"
         fullWidth
       >
@@ -322,7 +331,7 @@ const DriverManagement: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setIsModalOpen(false)}>Cancel</Button>
+          <Button onClick={handleCloseDialog}>Cancel</Button>
           <Button onClick={handleSubmit} variant="contained">
             {editingDriver ? 'Update' : 'Add'}
           </Button>

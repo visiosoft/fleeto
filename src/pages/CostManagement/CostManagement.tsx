@@ -189,7 +189,7 @@ const Row: React.FC<{
         <TableCell component="th" scope="row">
           {row.vehicleName}
         </TableCell>
-        <TableCell align="right">${row.expenses.toLocaleString()}</TableCell>
+        <TableCell align="right">AED {row.expenses.toLocaleString()}</TableCell>
         <TableCell align="right">{row.details.length}</TableCell>
       </TableRow>
       <TableRow>
@@ -224,7 +224,7 @@ const Row: React.FC<{
                       </TableCell>
                       <TableCell>{detail.description}</TableCell>
                       <TableCell align="right">
-                        ${detail.amount.toLocaleString()}
+                        AED {detail.amount.toLocaleString()}
                       </TableCell>
                       <TableCell>{detail.paymentMethod}</TableCell>
                       <TableCell>
@@ -508,7 +508,7 @@ const CostManagement: React.FC = () => {
               Total Expenses
             </Typography>
             <Typography variant="h4" color="primary">
-              ${filteredData?.total.toLocaleString()}
+              AED {filteredData?.total.toLocaleString()}
             </Typography>
           </Paper>
         </Grid>
@@ -756,7 +756,7 @@ const CostManagement: React.FC = () => {
               onChange={(e) => setFormValues({ ...formValues, amount: e.target.value })}
               sx={{ mb: 2 }}
               InputProps={{
-                startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                startAdornment: <InputAdornment position="start">AED</InputAdornment>,
               }}
             />
 
@@ -853,7 +853,7 @@ const CostManagement: React.FC = () => {
               onChange={(e) => setFormValues({ ...formValues, amount: e.target.value })}
               sx={{ mb: 2 }}
               InputProps={{
-                startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                startAdornment: <InputAdornment position="start">AED</InputAdornment>,
               }}
             />
 

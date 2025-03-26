@@ -10,6 +10,8 @@ import Login from './pages/Login/Login';
 import Profile from './pages/Profile/Profile';
 import Register from './pages/Register/Register';
 import CostManagement from './pages/CostManagement/CostManagement';
+import GeneralNotes from './pages/GeneralNotes/GeneralNotes';
+import DriverPayroll from './pages/DriverPayroll/DriverPayroll';
 
 // Lazy load all pages
 const VehicleManagement = React.lazy(() => import('./pages/VehicleManagement'));
@@ -200,6 +202,42 @@ const App: React.FC = () => {
                     handleDrawerToggle={handleDrawerToggle}
                   >
                     <Profile />
+                  </Navigation>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/cost-management" element={
+                <ProtectedRoute>
+                  <Navigation
+                    isMobile={isMobile}
+                    isDrawerOpen={mobileOpen}
+                    handleDrawerToggle={handleDrawerToggle}
+                  >
+                    <CostManagement />
+                  </Navigation>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/driver-payroll" element={
+                <ProtectedRoute>
+                  <Navigation
+                    isMobile={isMobile}
+                    isDrawerOpen={mobileOpen}
+                    handleDrawerToggle={handleDrawerToggle}
+                  >
+                    <DriverPayroll />
+                  </Navigation>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/general-notes" element={
+                <ProtectedRoute>
+                  <Navigation
+                    isMobile={isMobile}
+                    isDrawerOpen={mobileOpen}
+                    handleDrawerToggle={handleDrawerToggle}
+                  >
+                    <GeneralNotes />
                   </Navigation>
                 </ProtectedRoute>
               } />

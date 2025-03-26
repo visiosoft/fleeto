@@ -6,11 +6,24 @@ export const API_CONFIG = {
     FUEL: '/fuel-records',
     CONTRACTS: '/contracts',
     TEMPLATE: '/contracts/template',
-    DRIVERS: '/drivers',
+    DRIVERS: {
+      LIST: '/drivers',
+      CREATE: '/drivers',
+      UPDATE: (id: string) => `/drivers/${id}`,
+      DELETE: (id: string) => `/drivers/${id}`,
+    },
     COMPANY_SETTINGS: '/company-settings',
     UPLOAD_LOGO: '/company-settings/upload-logo',
     CONTRACT_TEMPLATES: '/contract-templates',
     COSTS: '/expenses',
+    PAYROLL: {
+      LIST: '/payroll/entries',
+      CREATE: '/payroll/entries',
+      UPDATE: (id: string) => `/payroll/entries/${id}`,
+      DELETE: (id: string) => `/payroll/entries/${id}`,
+      SUMMARY: '/payroll/summary',
+      EXPORT: '/payroll/export'
+    }
   }
 };
 

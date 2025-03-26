@@ -39,7 +39,14 @@ import {
   AccountCircle as AccountCircleIcon,
   AccountBalance as AccountBalanceIcon,
   ChevronLeft as ChevronLeftIcon,
-  ChevronRight as ChevronRightIcon
+  ChevronRight as ChevronRightIcon,
+  Note as NoteIcon,
+  Dashboard as DashboardIcon,
+  DirectionsCar as CarIcon,
+  Person as DriverIcon,
+  LocalGasStation as FuelIcon,
+  Build as MaintenanceIcon,
+  AttachMoney as PayrollIcon,
 } from '@mui/icons-material';
 
 const drawerWidth = 240;
@@ -65,8 +72,14 @@ const MENU_ITEMS: MenuItem[] = [
   { text: 'Cost Management', path: '/costs', icon: <AccountBalanceIcon /> },
   { text: 'Contract', path: '/contracts', icon: <DescriptionIcon /> },
   { text: 'Tracking', path: '/tracking', icon: <LocationOnIcon /> },
+  
+  {
+    text: 'General Notes',
+    icon: <NoteIcon />,
+    path: '/general-notes',
+  },
+  { text: 'Driver Payroll', icon: <PayrollIcon />, path: '/driver-payroll' },
   { text: 'Reports', path: '/reports', icon: <AssessmentIcon /> },
-  { text: 'Compliance', path: '/compliance', icon: <GavelIcon /> },
   { text: 'Settings', path: '/settings', icon: <SettingsIcon /> },
 ];
 

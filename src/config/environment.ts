@@ -55,6 +55,14 @@ export const API_ENDPOINTS = {
   // Settings endpoints
   settings: `${API_BASE_URL}/settings`,
   companySettings: `${API_BASE_URL}/settings/company`,
+  
+  // Notes endpoints
+  notes: {
+    list: `${API_BASE_URL}/api/notes`,
+    create: `${API_BASE_URL}/api/notes`,
+    update: (id: string) => `${API_BASE_URL}/api/notes/${id}`,
+    delete: (id: string) => `${API_BASE_URL}/api/notes/${id}`,
+  },
 };
 
 export const API_HEADERS = {

@@ -487,7 +487,7 @@ const ContractManagement: React.FC = () => {
       <Grid item xs={12} sm={6}>
         <TextField
           fullWidth
-          label="Contract Type"
+          label="Type"
           name="contractType"
           value={currentContract.contractType}
           onChange={handleTextFieldChange}
@@ -736,7 +736,7 @@ Generate        </Button>
                 <TableRow>
                   <TableCell>Company Name</TableCell>
                   <TableCell>Vehicle</TableCell>
-                  <TableCell>Contract Type</TableCell>
+                  <TableCell>Type</TableCell>
                   <TableCell>Start Date</TableCell>
                   <TableCell>End Date</TableCell>
                   <TableCell>Value</TableCell>
