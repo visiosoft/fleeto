@@ -9,12 +9,12 @@ import ContractTemplate from './pages/ContractTemplate/ContractTemplate';
 import Login from './pages/Login/Login';
 import Profile from './pages/Profile/Profile';
 import Register from './pages/Register/Register';
+import CostManagement from './pages/CostManagement/CostManagement';
 
 // Lazy load all pages
 const VehicleManagement = React.lazy(() => import('./pages/VehicleManagement'));
 const DriverManagement = React.lazy(() => import('./pages/DriverManagement'));
 const Tracking = React.lazy(() => import('./pages/Tracking/Tracking'));
-const CostManagement = React.lazy(() => import('./pages/CostManagement/CostManagement'));
 const ContractManagement = React.lazy(() => import('./pages/ContractManagement'));
 const Reports = React.lazy(() => import('./pages/Reports/Reports'));
 const Compliance = React.lazy(() => import('./pages/Compliance/Compliance'));
