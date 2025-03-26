@@ -584,7 +584,7 @@ const ContractManagement: React.FC = () => {
       <Grid item xs={12} sm={6}>
         <TextField
           fullWidth
-          label="Contract Type"
+          label="Type"
           name="contractType"
           value={currentContract.contractType}
           onChange={handleInputChange}

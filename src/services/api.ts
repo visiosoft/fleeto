@@ -256,6 +256,43 @@ class ApiService {
       method: 'DELETE',
     });
   };
+
+  // Notes
+  getNotes = async () => {
+    return this.fetchWithAuth(API_ENDPOINTS.notes.list);
+  };
+
+  createNote = async (data: {
+    title: string;
+    content: string;
+    category: string;
+    priority: 'low' | 'medium' | 'high';
+    status: 'active' | 'archived';
+  }) => {
+    return this.fetchWithAuth(API_ENDPOINTS.notes.create, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  };
+
+  updateNote = async (id: string, data: {
+    title: string;
+    content: string;
+    category: string;
+    priority: 'low' | 'medium' | 'high';
+    status: 'active' | 'archived';
+  }) => {
+    return this.fetchWithAuth(API_ENDPOINTS.notes.update(id), {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  };
+
+  deleteNote = async (id: string) => {
+    return this.fetchWithAuth(API_ENDPOINTS.notes.delete(id), {
+      method: 'DELETE',
+    });
+  };
 }
 
 export const api = ApiService.getInstance(); 
