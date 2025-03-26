@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
 import {
   AppBar,
   Box,
@@ -18,7 +18,8 @@ import {
   MenuItem,
   Avatar,
   Tooltip,
-  Divider
+  Divider,
+  ListItem
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -35,9 +36,11 @@ import {
   Business as BusinessIcon,
   Logout as LogoutIcon,
   Person as PersonIcon,
-  AccountCircle as AccountCircleIcon
+  AccountCircle as AccountCircleIcon,
+  AccountBalance as AccountBalanceIcon,
+  ChevronLeft as ChevronLeftIcon,
+  ChevronRight as ChevronRightIcon
 } from '@mui/icons-material';
-import { Link as RouterLink } from 'react-router-dom';
 
 const drawerWidth = 240;
 
@@ -59,6 +62,7 @@ const MENU_ITEMS: MenuItem[] = [
   { text: 'Dashboard', path: '/', icon: <AssessmentIcon /> },
   { text: 'Vehicle Management', path: '/vehicles', icon: <DirectionsCarIcon /> },
   { text: 'Driver Management', path: '/drivers', icon: <PeopleIcon /> },
+  { text: 'Cost Management', path: '/costs', icon: <AccountBalanceIcon /> },
   { text: 'Contract', path: '/contracts', icon: <DescriptionIcon /> },
   { text: 'Tracking', path: '/tracking', icon: <LocationOnIcon /> },
   { text: 'Reports', path: '/reports', icon: <AssessmentIcon /> },
@@ -135,6 +139,7 @@ const Navigation: React.FC<NavigationProps> = ({
             <ListItemText primary={item.text} />
           </ListItemButton>
         ))}
+      
       </List>
     </div>
   );
