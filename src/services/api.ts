@@ -174,23 +174,88 @@ class ApiService {
     });
   }
 
-  // Reports methods
-  public async getReports() {
-    return this.fetchWithAuth(API_ENDPOINTS.reports);
-  }
+  // Reports
+  getExpensesReport = async () => {
+    return this.fetchWithAuth(API_ENDPOINTS.reports.expenses);
+  };
 
-  public async generateReport(type: string) {
-    return this.fetchWithAuth(API_ENDPOINTS.generateReport(type));
-  }
+  getVehiclesReport = async () => {
+    return this.fetchWithAuth(API_ENDPOINTS.reports.vehicles);
+  };
 
-  // Settings methods
-  public async getSettings() {
+  getDriversReport = async () => {
+    return this.fetchWithAuth(API_ENDPOINTS.reports.drivers);
+  };
+
+  getContractsReport = async () => {
+    return this.fetchWithAuth(API_ENDPOINTS.reports.contracts);
+  };
+
+  // Settings
+  getSettings = async () => {
     return this.fetchWithAuth(API_ENDPOINTS.settings);
-  }
+  };
 
-  public async getCompanySettings() {
+  updateSettings = async (data: any) => {
+    return this.fetchWithAuth(API_ENDPOINTS.settings, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  };
+
+  getCompanySettings = async () => {
     return this.fetchWithAuth(API_ENDPOINTS.companySettings);
-  }
+  };
+
+  updateCompanySettings = async (data: any) => {
+    return this.fetchWithAuth(API_ENDPOINTS.companySettings, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  };
+
+  // Cost Management
+  getCurrentMonthCosts = async () => {
+    return this.fetchWithAuth(API_ENDPOINTS.costs.currentMonth);
+  };
+
+  createCost = async (data: {
+    vehicleId: string;
+    driverId: string;
+    expenseType: string;
+    amount: string;
+    date: string;
+    description: string;
+    paymentStatus: string;
+    paymentMethod: string;
+  }) => {
+    return this.fetchWithAuth(API_ENDPOINTS.costs.create, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  };
+
+  updateCost = async (id: string, data: {
+    vehicleId: string;
+    driverId: string;
+    expenseType: string;
+    amount: string;
+    date: string;
+    description: string;
+    paymentStatus: string;
+    paymentMethod: string;
+  }) => {
+    return this.fetchWithAuth(API_ENDPOINTS.costs.update(id), {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  };
+
+  deleteCost = async (id: string) => {
+    return this.fetchWithAuth(`${API_ENDPOINTS.costs.create}/${id}`, {
+      method: 'DELETE',
+    });
+  };
 }
 
 export const api = ApiService.getInstance(); 

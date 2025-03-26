@@ -17,27 +17,44 @@ export const API_ENDPOINTS = {
   // Vehicle endpoints
   vehicles: `${API_BASE_URL}/vehicles`,
   vehicleDetails: (id: string) => `${API_BASE_URL}/vehicles/${id}`,
+  vehicleExpenses: (id: string) => `${API_BASE_URL}/vehicles/${id}/expenses`,
   
   // Driver endpoints
   drivers: `${API_BASE_URL}/drivers`,
   driverDetails: (id: string) => `${API_BASE_URL}/drivers/${id}`,
+  driverExpenses: (id: string) => `${API_BASE_URL}/drivers/${id}/expenses`,
   
   // Contract endpoints
   contracts: `${API_BASE_URL}/contracts`,
   contractDetails: (id: string) => `${API_BASE_URL}/contracts/${id}`,
   contractTemplates: `${API_BASE_URL}/contracts/templates`,
   
+  // Cost Management endpoints
+  costs: {
+    currentMonth: `${API_BASE_URL}/api/costs/current-month`,
+    byVehicle: (id: string) => `${API_BASE_URL}/costs/vehicle/${id}`,
+    byDriver: (id: string) => `${API_BASE_URL}/costs/driver/${id}`,
+    byDateRange: `${API_BASE_URL}/costs/date-range`,
+    create: `${API_BASE_URL}/api/expenses`,
+    update: (id: string) => `${API_BASE_URL}/api/expenses/${id}`,
+  },
+  
   // Profile endpoints
   profile: `${API_BASE_URL}/profile`,
   updateProfile: `${API_BASE_URL}/profile/update`,
+  changePassword: `${API_BASE_URL}/profile/change-password`,
   
   // Reports endpoints
-  reports: `${API_BASE_URL}/reports`,
-  generateReport: (type: string) => `${API_BASE_URL}/reports/${type}`,
+  reports: {
+    expenses: `${API_BASE_URL}/reports/expenses`,
+    vehicles: `${API_BASE_URL}/reports/vehicles`,
+    drivers: `${API_BASE_URL}/reports/drivers`,
+    contracts: `${API_BASE_URL}/reports/contracts`,
+  },
   
   // Settings endpoints
   settings: `${API_BASE_URL}/settings`,
-  companySettings: `${API_BASE_URL}/company-settings`,
+  companySettings: `${API_BASE_URL}/settings/company`,
 };
 
 export const API_HEADERS = {
