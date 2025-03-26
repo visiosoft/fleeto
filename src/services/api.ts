@@ -54,20 +54,72 @@ class ApiService {
   }
 
   // Auth methods
-  public async login(email: string, password: string) {
-    const response = await this.fetchWithAuth(API_ENDPOINTS.login, {
+  public async register(data: {
+    companyData: {
+      name: string;
+      registrationNumber: string;
+      email: string;
+      phone: string;
+      address: {
+        street: string;
+        city: string;
+        state: string;
+        country: string;
+        postalCode: string;
+      };
+    };
+    adminData: {
+      firstName: string;
+      lastName: string;
+      email: string;
+      password: string;
+    };
+  }) {
+    // Registration doesn't need auth token
+    const response = await fetch(API_ENDPOINTS.register, {
       method: 'POST',
+      headers: API_HEADERS,
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Registration failed: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  public async login(email: string, password: string) {
+    const response = await fetch(API_ENDPOINTS.login, {
+      method: 'POST',
+      headers: API_HEADERS,
       body: JSON.stringify({ email, password }),
     });
-    this.setToken(response.token);
-    return response;
+
+    if (!response.ok) {
+      throw new Error(`Login failed: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    if (data.token) {
+      this.setToken(data.token);
+      localStorage.setItem('isAuthenticated', 'true');
+    }
+    return data;
   }
 
   public async logout() {
-    await this.fetchWithAuth(API_ENDPOINTS.logout, {
-      method: 'POST',
-    });
+    if (this.token) {
+      try {
+        await this.fetchWithAuth(API_ENDPOINTS.logout, {
+          method: 'POST',
+        });
+      } catch (error) {
+        console.error('Logout failed:', error);
+      }
+    }
     this.removeToken();
+    localStorage.removeItem('isAuthenticated');
   }
 
   // Dashboard methods

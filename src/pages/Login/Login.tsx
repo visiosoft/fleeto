@@ -16,7 +16,6 @@ import {
   Lock as LockIcon,
   Email as EmailIcon
 } from '@mui/icons-material';
-import { api } from '../../services/api';
 
 const Login: React.FC = () => {
   const theme = useTheme();
@@ -31,14 +30,18 @@ const Login: React.FC = () => {
     setLoading(true);
     setError('');
 
-    try {
-      await api.login(email, password);
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Static credentials check
+    if (email === 'dev.xulfi@gmail.com' && password === '123456') {
+      localStorage.setItem('isAuthenticated', 'true');
       navigate('/');
-    } catch (err) {
+    } else {
       setError('Invalid email or password');
-    } finally {
-      setLoading(false);
     }
+
+    setLoading(false);
   };
 
   return (
