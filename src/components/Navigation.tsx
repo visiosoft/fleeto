@@ -47,12 +47,12 @@ const menuItems = [
     title: 'Contract Management',
     path: '/contracts',
     icon: <DescriptionIcon />,
-  },
-  {
-    title: 'Invoice Management',
-    path: '/invoices',
-    icon: <ReceiptIcon />,
-  },
+    },
+    {
+      title: 'Invoice Management',
+      path: '/invoices',
+      icon: <ReceiptIcon />,
+    },
   {
     title: 'Cost Management',
     path: '/costs',

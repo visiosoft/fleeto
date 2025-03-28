@@ -89,7 +89,7 @@ const InvoicePayment: React.FC = () => {
         <Box mb={3}>
           <Typography variant="h6">Invoice Details</Typography>
           <Typography>Invoice Number: {invoice.invoiceNumber}</Typography>
-          <Typography>Total Amount: ${invoice.total.toFixed(2)}</Typography>
+          <Typography>Total Amount: AED{invoice.total.toFixed(2)}</Typography>
           <Typography>Due Date: {new Date(invoice.dueDate).toLocaleDateString()}</Typography>
         </Box>
 

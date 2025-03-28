@@ -57,7 +57,7 @@ const InvoiceStatsCard: React.FC<InvoiceStatsCardProps> = ({ stats }) => {
             </Box>
             <Typography variant="h4">{stats.totalInvoices || 0}</Typography>
             <Typography variant="body2" color="textSecondary">
-              Total Amount: ${formatAmount(stats.totalAmount)}
+              Total Amount: AED {formatAmount(stats.totalAmount)}
             </Typography>
           </CardContent>
         </Card>
@@ -69,7 +69,7 @@ const InvoiceStatsCard: React.FC<InvoiceStatsCardProps> = ({ stats }) => {
               <CheckCircleIcon color="success" sx={{ mr: 1 }} />
               <Typography variant="h6">Paid</Typography>
             </Box>
-            <Typography variant="h4">${formatAmount(stats.paidAmount)}</Typography>
+            <Typography variant="h4">AED {formatAmount(stats.paidAmount)}</Typography>
             <Typography variant="body2" color="textSecondary">
               {stats.byStatus?.paid || 0} invoices
             </Typography>
@@ -89,7 +89,7 @@ const InvoiceStatsCard: React.FC<InvoiceStatsCardProps> = ({ stats }) => {
               <PaymentIcon color="warning" sx={{ mr: 1 }} />
               <Typography variant="h6">Pending</Typography>
             </Box>
-            <Typography variant="h4">${formatAmount(stats.pendingAmount)}</Typography>
+            <Typography variant="h4">AED {formatAmount(stats.pendingAmount)}</Typography>
             <Typography variant="body2" color="textSecondary">
               {stats.byStatus?.sent || 0} invoices
             </Typography>
@@ -109,7 +109,7 @@ const InvoiceStatsCard: React.FC<InvoiceStatsCardProps> = ({ stats }) => {
               <WarningIcon color="error" sx={{ mr: 1 }} />
               <Typography variant="h6">Overdue</Typography>
             </Box>
-            <Typography variant="h4">${formatAmount(stats.overdueAmount)}</Typography>
+            <Typography variant="h4">AED {formatAmount(stats.overdueAmount)}</Typography>
             <Typography variant="body2" color="textSecondary">
               {stats.byStatus?.overdue || 0} invoices
             </Typography>
