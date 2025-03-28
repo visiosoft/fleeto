@@ -47,6 +47,7 @@ import {
   LocalGasStation as FuelIcon,
   Build as MaintenanceIcon,
   AttachMoney as PayrollIcon,
+  Receipt as ReceiptIcon,
 } from '@mui/icons-material';
 
 const drawerWidth = 240;
@@ -72,7 +73,7 @@ const MENU_ITEMS: MenuItem[] = [
   { text: 'Cost Management', path: '/costs', icon: <AccountBalanceIcon /> },
   { text: 'Contract', path: '/contracts', icon: <DescriptionIcon /> },
   { text: 'Tracking', path: '/tracking', icon: <LocationOnIcon /> },
-  
+  { text: 'Invoice Management', path: '/invoices', icon: <ReceiptIcon /> },
   {
     text: 'General Notes',
     icon: <NoteIcon />,
