@@ -72,8 +72,11 @@ const InvoiceManagement: React.FC = () => {
   const fetchStats = async () => {
     try {
       const response = await InvoiceService.getInstance().getInvoiceStats();
+      console.log('Invoice Stats API response:', response);
       if (response.data.status === 'success') {
         setStats(response.data.data);
+      } else {
+        console.error('Failed to fetch invoice stats:', response.data.message);
       }
     } catch (err) {
       console.error('Error fetching invoice stats:', err);

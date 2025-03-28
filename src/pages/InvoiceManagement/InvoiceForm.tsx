@@ -121,7 +121,7 @@ const InvoiceForm: React.FC = () => {
     if (!id && contract) {
       const contractItem: InvoiceItem = {
         _id: Date.now().toString(),
-        description: `${contract.contractType} Contract - ${contract.companyName}`,
+        description: `Van Rental ${contract.contractType} Contract - ${contract.companyName}`,
         quantity: 1,
         unitPrice: contract.value,
         amount: contract.value,

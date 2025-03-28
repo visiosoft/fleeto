@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Table,
   TableBody,
@@ -11,16 +11,19 @@ import {
   Tooltip,
   Box,
   Typography,
+  Dialog,
 } from '@mui/material';
 import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   Receipt as ReceiptIcon,
   Payment as PaymentIcon,
+  Print as PrintIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { Invoice } from '../../../types/api';
 import InvoiceService from '../../../services/InvoiceService';
+import PrintableInvoice from './PrintableInvoice';
 
 interface InvoiceListProps {
   invoices: Invoice[];
@@ -29,6 +32,8 @@ interface InvoiceListProps {
 
 const InvoiceList: React.FC<InvoiceListProps> = ({ invoices = [], onRefresh }) => {
   const navigate = useNavigate();
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [printDialogOpen, setPrintDialogOpen] = useState(false);
 
   const handleEdit = (id: string) => {
     navigate(`/invoices/${id}/edit`);
@@ -58,6 +63,16 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ invoices = [], onRefresh }) =
     }
   };
 
+  const handlePrint = (invoice: Invoice) => {
+    setSelectedInvoice(invoice);
+    setPrintDialogOpen(true);
+  };
+
+  const handlePrintDialogClose = () => {
+    setPrintDialogOpen(false);
+    setSelectedInvoice(null);
+  };
+
   const getStatusColor = (status: Invoice['status']) => {
     switch (status) {
       case 'paid':
@@ -67,7 +82,7 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ invoices = [], onRefresh }) =
       case 'sent':
         return 'warning';
       case 'draft':
-        return 'default';
+        return 'warning';
       case 'cancelled':
         return 'error';
       default:
@@ -86,79 +101,100 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ invoices = [], onRefresh }) =
   }
 
   return (
-    <TableContainer>
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell>Invoice Number</TableCell>
-            <TableCell>Contract ID</TableCell>
-            <TableCell>Issue Date</TableCell>
-            <TableCell>Due Date</TableCell>
-            <TableCell>Total</TableCell>
-            <TableCell>Status</TableCell>
-            <TableCell>Actions</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {invoices.map((invoice) => (
-            <TableRow key={invoice._id}>
-              <TableCell>{invoice.invoiceNumber || 'N/A'}</TableCell>
-              <TableCell>{invoice.contractId || 'N/A'}</TableCell>
-              <TableCell>{invoice.issueDate ? new Date(invoice.issueDate).toLocaleDateString() : 'N/A'}</TableCell>
-              <TableCell>{invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'N/A'}</TableCell>
-              <TableCell>${(invoice.total || 0).toFixed(2)}</TableCell>
-              <TableCell>
-                <Chip
-                  label={invoice.status || 'draft'}
-                  color={getStatusColor(invoice.status || 'draft')}
-                  size="small"
-                />
-              </TableCell>
-              <TableCell>
-                <Box>
-                  <Tooltip title="Edit">
-                    <IconButton
-                      size="small"
-                      onClick={() => handleEdit(invoice._id)}
-                    >
-                      <EditIcon />
-                    </IconButton>
-                  </Tooltip>
-                  {invoice.status === 'sent' && (
-                    <Tooltip title="Record Payment">
-                      <IconButton
-                        size="small"
-                        onClick={() => handleRecordPayment(invoice._id)}
-                      >
-                        <PaymentIcon />
-                      </IconButton>
-                    </Tooltip>
-                  )}
-                  {invoice.status === 'draft' && (
-                    <Tooltip title="Send Invoice">
-                      <IconButton
-                        size="small"
-                        onClick={() => handleSendInvoice(invoice._id)}
-                      >
-                        <ReceiptIcon />
-                      </IconButton>
-                    </Tooltip>
-                  )}
-                  <Tooltip title="Delete">
-                    <IconButton
-                      size="small"
-                      onClick={() => handleDelete(invoice._id)}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
-              </TableCell>
+    <>
+      <TableContainer>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Invoice Number</TableCell>
+              <TableCell>Contract ID</TableCell>
+              <TableCell>Issue Date</TableCell>
+              <TableCell>Due Date</TableCell>
+              <TableCell>Total</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell>Actions</TableCell>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+          </TableHead>
+          <TableBody>
+            {invoices.map((invoice) => (
+              <TableRow key={invoice._id}>
+                <TableCell>{invoice.invoiceNumber || 'N/A'}</TableCell>
+                <TableCell>{invoice.contractId || 'N/A'}</TableCell>
+                <TableCell>{invoice.issueDate ? new Date(invoice.issueDate).toLocaleDateString() : 'N/A'}</TableCell>
+                <TableCell>{invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'N/A'}</TableCell>
+                <TableCell>AED {(invoice.total || 0).toFixed(2)}</TableCell>
+                <TableCell>
+                  <Chip
+                    label={invoice.status || 'draft'}
+                    color={getStatusColor(invoice.status || 'draft')}
+                    size="small"
+                  />
+                </TableCell>
+                <TableCell>
+                  <Box>
+                    <Tooltip title="Edit">
+                      <IconButton
+                        size="small"
+                        onClick={() => handleEdit(invoice._id)}
+                      >
+                        <EditIcon />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Print">
+                      <IconButton
+                        size="small"
+                        onClick={() => handlePrint(invoice)}
+                      >
+                        <PrintIcon />
+                      </IconButton>
+                    </Tooltip>
+                    {invoice.status === 'sent' && (
+                      <Tooltip title="Record Payment">
+                        <IconButton
+                          size="small"
+                          onClick={() => handleRecordPayment(invoice._id)}
+                        >
+                          <PaymentIcon />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                    {invoice.status === 'draft' && (
+                      <Tooltip title="Send Invoice">
+                        <IconButton
+                          size="small"
+                          onClick={() => handleSendInvoice(invoice._id)}
+                        >
+                          <ReceiptIcon />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                    <Tooltip title="Delete">
+                      <IconButton
+                        size="small"
+                        onClick={() => handleDelete(invoice._id)}
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      <Dialog
+        open={printDialogOpen}
+        onClose={handlePrintDialogClose}
+        maxWidth="md"
+        fullWidth
+      >
+        {selectedInvoice && (
+          <PrintableInvoice invoice={selectedInvoice} />
+        )}
+      </Dialog>
+    </>
   );
 };
 
