@@ -536,12 +536,12 @@ const CostManagement: React.FC = () => {
 
       <Paper sx={{ mb: 3 }}>
         <Tabs value={activeTab} onChange={handleTabChange} sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tab label="Expense Distribution" />
+        <Tab label="Detailed List" />
+        <Tab label="Expense Distribution" />
           <Tab label="Vehicle Comparison" />
-          <Tab label="Detailed List" />
         </Tabs>
         <Box sx={{ p: 2 }}>
-          {activeTab === 0 && chartData && (
+          {activeTab === 1 && chartData && (
             <Box height={400}>
               <ResponsivePie
                 data={chartData.expenseTypeData}
@@ -581,7 +581,7 @@ const CostManagement: React.FC = () => {
               />
             </Box>
           )}
-          {activeTab === 1 && chartData && (
+          {activeTab === 2 && chartData && (
             <Box height={400}>
               <ResponsiveBar
                 data={chartData.vehicleData}
@@ -617,7 +617,7 @@ const CostManagement: React.FC = () => {
               />
             </Box>
           )}
-          {activeTab === 2 && (
+          {activeTab === 0 && (
             <TableContainer>
               <Table>
                 <TableHead>

@@ -12,6 +12,9 @@ import Register from './pages/Register/Register';
 import CostManagement from './pages/CostManagement/CostManagement';
 import GeneralNotes from './pages/GeneralNotes/GeneralNotes';
 import DriverPayroll from './pages/DriverPayroll/DriverPayroll';
+import InvoiceManagement from './pages/InvoiceManagement/InvoiceManagement';
+import InvoiceForm from './pages/InvoiceManagement/InvoiceForm';
+import InvoicePayment from './pages/InvoiceManagement/InvoicePayment';
 
 // Lazy load all pages
 const VehicleManagement = React.lazy(() => import('./pages/VehicleManagement'));
@@ -238,6 +241,52 @@ const App: React.FC = () => {
                     handleDrawerToggle={handleDrawerToggle}
                   >
                     <GeneralNotes />
+                  </Navigation>
+                </ProtectedRoute>
+              } />
+              
+              {/* Invoice Management Routes */}
+              <Route path="/invoices" element={
+                <ProtectedRoute>
+                  <Navigation
+                    isMobile={isMobile}
+                    isDrawerOpen={mobileOpen}
+                    handleDrawerToggle={handleDrawerToggle}
+                  >
+                    <InvoiceManagement />
+                  </Navigation>
+                </ProtectedRoute>
+              } />
+              <Route path="/invoices/new" element={
+                <ProtectedRoute>
+                  <Navigation
+                    isMobile={isMobile}
+                    isDrawerOpen={mobileOpen}
+                    handleDrawerToggle={handleDrawerToggle}
+                  >
+                    <InvoiceForm />
+                  </Navigation>
+                </ProtectedRoute>
+              } />
+              <Route path="/invoices/:id/edit" element={
+                <ProtectedRoute>
+                  <Navigation
+                    isMobile={isMobile}
+                    isDrawerOpen={mobileOpen}
+                    handleDrawerToggle={handleDrawerToggle}
+                  >
+                    <InvoiceForm />
+                  </Navigation>
+                </ProtectedRoute>
+              } />
+              <Route path="/invoices/:id/payment" element={
+                <ProtectedRoute>
+                  <Navigation
+                    isMobile={isMobile}
+                    isDrawerOpen={mobileOpen}
+                    handleDrawerToggle={handleDrawerToggle}
+                  >
+                    <InvoicePayment />
                   </Navigation>
                 </ProtectedRoute>
               } />
