@@ -24,7 +24,13 @@ export interface Driver {
 }
 
 export interface APIResponse<T> {
-  data: T;
+  data: {
+    users: User[];
+    limit: number;
+    page: number;
+    total: number;
+    totalPages: number;
+  };
   message?: string;
   status: number;
 }
@@ -98,4 +104,56 @@ export interface InvoiceStats {
     overdue: number;
     cancelled: number;
   };
+}
+
+export interface Company {
+  _id: string;
+  name: string;
+  email: string;
+  phone: string;
+  licenseNumber: string;
+  address: {
+    street: string;
+    city: string;
+    state: string;
+    country: string;
+    postalCode: string;
+  };
+  logo?: string;
+  taxNumber?: string;
+  currency: string;
+  timezone: string;
+  status: 'active' | 'inactive' | 'suspended';
+  subscription: {
+    plan: 'free' | 'basic' | 'premium' | 'enterprise';
+    startDate: string;
+    endDate: string;
+    status: 'active' | 'expired' | 'cancelled';
+  };
+  settings: {
+    invoicePrefix: string;
+    invoiceNumberFormat: string;
+    taxRate: number;
+    paymentTerms: number;
+    defaultCurrency: string;
+    dateFormat: string;
+    timeFormat: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface User {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  role: 'admin' | 'manager' | 'user';
+  status: 'active' | 'inactive';
+  password?: string; // Optional for existing users
+  confirmPassword?: string; // Only used in forms
+  companyId: string;
+  createdAt: string;
+  updatedAt: string;
 } 

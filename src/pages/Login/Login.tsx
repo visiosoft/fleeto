@@ -16,6 +16,8 @@ import {
   Lock as LockIcon,
   Email as EmailIcon
 } from '@mui/icons-material';
+import { useAuth } from '../../contexts/AuthContext';
+import axios from 'axios';
 
 const Login: React.FC = () => {
   const theme = useTheme();
@@ -24,24 +26,49 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      console.log('Attempting login with email:', email);
+      const response = await axios.post('http://localhost:5000/api/auth/login', {
+        email,
+        password,
+      });
 
-    // Static credentials check
-    if (email === 'dev.xulfi@gmail.com' && password === '123456') {
-      localStorage.setItem('isAuthenticated', 'true');
-      navigate('/');
-    } else {
-      setError('Invalid email or password');
+      console.log('Login response:', response.data);
+
+      if (response.data.status === 'success' && response.data.data.token) {
+        console.log('Login successful, token received');
+        const token = response.data.data.token;
+        localStorage.setItem('token', token);
+        
+        // Call login function and wait for it to complete
+        await login(token);
+        
+        console.log('Auth state updated, navigating to dashboard...');
+        // Navigate to root path instead of /dashboard
+        navigate('/', { replace: true });
+      } else {
+        console.log('Login failed - Invalid response structure:', response.data);
+        setError('Login failed - Invalid response from server');
+      }
+    } catch (err: any) {
+      console.error('Login error:', err);
+      if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else if (err.message) {
+        setError(err.message);
+      } else {
+        setError('An error occurred during login');
+      }
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
