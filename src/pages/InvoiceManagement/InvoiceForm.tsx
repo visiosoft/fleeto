@@ -388,7 +388,7 @@ const InvoiceForm: React.FC = () => {
               <Box sx={{ mt: 2 }}>
                 <Typography variant="h6">Summary</Typography>
                 <Typography>Subtotal: ${invoice.subtotal?.toFixed(2)}</Typography>
-                <Typography>Tax (10%): ${invoice.tax?.toFixed(2)}</Typography>
+                <Typography>Tax (5%): ${invoice.tax?.toFixed(2)}</Typography>
                 <Typography variant="h6">Total: ${invoice.total?.toFixed(2)}</Typography>
               </Box>
             </Grid>
