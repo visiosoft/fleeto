@@ -1,8 +1,6 @@
 const isDevelopment = process.env.NODE_ENV === 'development';
 
-export const API_BASE_URL = isDevelopment 
-  ? 'http://localhost:5000'
-  : 'http://localhost:5000';
+export const API_BASE_URL = process.env.REACT_APP_API_URL
 
 export const API_ENDPOINTS = {
   // Auth endpoints
@@ -25,9 +23,9 @@ export const API_ENDPOINTS = {
   driverExpenses: (id: string) => `${API_BASE_URL}/drivers/${id}/expenses`,
   
   // Contract endpoints
-  contracts: `${API_BASE_URL}/api/contracts`,
-  contractDetails: (id: string) => `${API_BASE_URL}/api/contracts/${id}`,
-  contractTemplates: `${API_BASE_URL}/api/contracts/templates`,
+  contracts: `${API_BASE_URL}/contracts`,
+  contractDetails: (id: string) => `${API_BASE_URL}/contracts/${id}`,
+  contractTemplates: `${API_BASE_URL}/contracts/templates`,
   
   // Cost Management endpoints
   costs: {
