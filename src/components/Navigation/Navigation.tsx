@@ -48,6 +48,7 @@ import {
   Build as MaintenanceIcon,
   AttachMoney as PayrollIcon,
   Receipt as ReceiptIcon,
+  Group as GroupIcon,
 } from '@mui/icons-material';
 
 const drawerWidth = 240;
@@ -74,6 +75,8 @@ const MENU_ITEMS: MenuItem[] = [
   { text: 'Contract', path: '/contracts', icon: <DescriptionIcon /> },
   { text: 'Tracking', path: '/tracking', icon: <LocationOnIcon /> },
   { text: 'Invoice Management', path: '/invoices', icon: <ReceiptIcon /> },
+  { text: 'Company Management', path: '/companies', icon: <BusinessIcon /> },
+  { text: 'User Management', path: '/users', icon: <GroupIcon /> },
   {
     text: 'General Notes',
     icon: <NoteIcon />,
