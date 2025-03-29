@@ -29,12 +29,12 @@ export const API_ENDPOINTS = {
   
   // Cost Management endpoints
   costs: {
-    currentMonth: `${API_BASE_URL}/api/costs/current-month`,
+    currentMonth: `${API_BASE_URL}/costs/current-month`,
     byVehicle: (id: string) => `${API_BASE_URL}/costs/vehicle/${id}`,
     byDriver: (id: string) => `${API_BASE_URL}/costs/driver/${id}`,
     byDateRange: `${API_BASE_URL}/costs/date-range`,
-    create: `${API_BASE_URL}/api/expenses`,
-    update: (id: string) => `${API_BASE_URL}/api/expenses/${id}`,
+    create: `${API_BASE_URL}/expenses`,
+    update: (id: string) => `${API_BASE_URL}/expenses/${id}`,
   },
   
   // Profile endpoints
@@ -56,10 +56,10 @@ export const API_ENDPOINTS = {
   
   // Notes endpoints
   notes: {
-    list: `${API_BASE_URL}/api/notes`,
-    create: `${API_BASE_URL}/api/notes`,
-    update: (id: string) => `${API_BASE_URL}/api/notes/${id}`,
-    delete: (id: string) => `${API_BASE_URL}/api/notes/${id}`,
+    list: `${API_BASE_URL}/notes`,
+    create: `${API_BASE_URL}/notes`,
+    update: (id: string) => `${API_BASE_URL}/notes/${id}`,
+    delete: (id: string) => `${API_BASE_URL}/notes/${id}`,
   },
 };
 
