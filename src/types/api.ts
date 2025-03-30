@@ -156,4 +156,18 @@ export interface User {
   companyId: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface LoginResponse {
+  status: 'success' | 'error';
+  message?: string;
+  data?: {
+    user: User;
+    token: string;
+    company: {
+      id: string;
+      name: string;
+      status: string;
+    };
+  };
 } 

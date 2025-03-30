@@ -13,6 +13,17 @@ import {
   Tabs,
   Divider,
   CircularProgress,
+  useMediaQuery,
+  CardActions,
+  Button,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Chip,
+  Tooltip,
 } from '@mui/material';
 import {
   DirectionsCar as CarIcon,
@@ -29,6 +40,11 @@ import {
   CheckCircle as CheckCircleIcon,
   Warning as WarningIcon,
   MonetizationOn as MonetizationOnIcon,
+  DirectionsCar as VehicleIcon,
+  Group as GroupIcon,
+  BusinessCenter as BusinessCenterIcon,
+  Security as SecurityIcon,
+  ArrowForward as ArrowForwardIcon,
 } from '@mui/icons-material';
 import axios from 'axios';
 import { ResponsivePie } from '@nivo/pie';
@@ -37,6 +53,8 @@ import { ResponsiveBar } from '@nivo/bar';
 import { API_CONFIG, getApiUrl } from '../../config/api';
 import costService from '../../services/costService';
 import moment from 'moment';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 // Mock data for fuel summary - replace with actual API calls
 const fuelData = {
@@ -281,43 +299,72 @@ const StatCard: React.FC<{
   trend?: 'up' | 'down';
   trendValue?: string;
   color?: string;
-}> = ({ title, value, icon, trend, trendValue, color }) => {
+  onClick?: () => void;
+}> = ({ title, value, icon, trend, trendValue, color, onClick }) => {
   const theme = useTheme();
   
   return (
-    <Card sx={{ height: '100%' }}>
+    <Card 
+      sx={{ 
+        height: '100%',
+        cursor: onClick ? 'pointer' : 'default',
+        '&:hover': onClick ? {
+          transform: 'translateY(-4px)',
+          transition: 'transform 0.2s ease-in-out',
+          boxShadow: 3,
+        } : {},
+      }}
+      onClick={onClick}
+    >
       <CardContent>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <Box>
-            <Typography variant="subtitle2" color="textSecondary">
-              {title}
-            </Typography>
-            <Typography variant="h4" sx={{ my: 1, color: color }}>
-              {value}
-            </Typography>
-            {trend && (
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                {trend === 'up' ? (
-                  <TrendingUpIcon sx={{ color: theme.palette.success.main, fontSize: '1rem' }} />
-                ) : (
-                  <TrendingDownIcon sx={{ color: theme.palette.error.main, fontSize: '1rem' }} />
-                )}
-                <Typography
-                  variant="caption"
-                  sx={{
-                    color: trend === 'up' ? theme.palette.success.main : theme.palette.error.main,
-                    ml: 0.5,
-                  }}
-                >
-                  {trendValue}
-                </Typography>
-              </Box>
-            )}
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+          <Box
+            sx={{
+              backgroundColor: `${color}15`,
+              borderRadius: '12px',
+              p: 1,
+              mr: 2,
+            }}
+          >
+            {icon}
           </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: color + '15', p: 1, borderRadius: 2 }}>
-            {React.cloneElement(icon as React.ReactElement, { sx: { color: color } })}
-          </Box>
+          <Typography variant="h6" component="div">
+            {title}
+          </Typography>
         </Box>
+        <Typography variant="h4" component="div" sx={{ mb: 1 }}>
+          {value}
+        </Typography>
+        {trend && (
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            {trend === 'up' ? (
+              <TrendingUpIcon sx={{ color: theme.palette.success.main, fontSize: '1rem' }} />
+            ) : (
+              <TrendingDownIcon sx={{ color: theme.palette.error.main, fontSize: '1rem' }} />
+            )}
+            <Typography
+              variant="caption"
+              sx={{
+                color: trend === 'up' ? theme.palette.success.main : theme.palette.error.main,
+                ml: 0.5,
+              }}
+            >
+              {trendValue}
+            </Typography>
+          </Box>
+        )}
+        <LinearProgress
+          variant="determinate"
+          value={70}
+          sx={{
+            height: 6,
+            borderRadius: 3,
+            backgroundColor: `${color}30`,
+            '& .MuiLinearProgress-bar': {
+              backgroundColor: color,
+            },
+          }}
+        />
       </CardContent>
     </Card>
   );
@@ -1177,6 +1224,9 @@ const CostSummary: React.FC = () => {
 
 const Dashboard: React.FC = () => {
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [tabValue, setTabValue] = useState(0);
   const [activeDrivers, setActiveDrivers] = useState<number>(0);
   const [activeVehicles, setActiveVehicles] = useState<number>(0);
@@ -1298,6 +1348,14 @@ const Dashboard: React.FC = () => {
   // Format maintenance cost with currency symbol
   const totalMaintenanceCost = `AED ${maintenanceCost.total.toLocaleString()}`;
 
+  if (isLoading) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Typography>Loading dashboard...</Typography>
+      </Box>
+    );
+  }
+
   return (
     <Box>
       <Typography variant="h4" sx={{ mb: 4 }}>
@@ -1309,37 +1367,41 @@ const Dashboard: React.FC = () => {
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             title="Total Vehicles"
-            value={isLoading ? "..." : activeVehicles.toString()}
-            icon={<CarIcon />}
+            value={activeVehicles.toString()}
+            icon={<VehicleIcon />}
             color={theme.palette.primary.main}
+            onClick={() => navigate('/vehicles')}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             title="Active Drivers"
-            value={isLoading ? "..." : activeDrivers.toString()}
+            value={activeDrivers.toString()}
             icon={<DriverIcon />}
             color={theme.palette.success.main}
+            onClick={() => navigate('/drivers')}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             title="Fuel Consumption"
-            value={isLoading ? "..." : totalFuelConsumption}
+            value={totalFuelConsumption}
             icon={<FuelIcon />}
             trend={fuelConsumption.trend < 0 ? "down" : "up"}
             trendValue={`${Math.abs(fuelConsumption.trend)}% this month`}
             color={theme.palette.warning.main}
+            onClick={() => navigate('/cost-management')}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             title="Maintenance Cost"
-            value={isLoading ? "..." : totalMaintenanceCost}
+            value={totalMaintenanceCost}
             icon={<MaintenanceIcon />}
             trend={maintenanceCost.trend < 0 ? "down" : "up"}
             trendValue={`${Math.abs(maintenanceCost.trend)}% this month`}
             color={theme.palette.error.main}
+            onClick={() => navigate('/cost-management')}
           />
         </Grid>
 
@@ -1352,33 +1414,37 @@ const Dashboard: React.FC = () => {
               <Grid item xs={12} sm={6} md={3}>
                 <StatCard
                   title="Total Contracts"
-                  value={isLoading ? "..." : contractStats.totalContracts.toString()}
+                  value={contractStats.totalContracts.toString()}
                   icon={<DescriptionIcon />}
                   color={theme.palette.info.main}
+                  onClick={() => navigate('/contract-management')}
                 />
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
                 <StatCard
                   title="Active Contracts"
-                  value={isLoading ? "..." : contractStats.activeContracts.toString()}
+                  value={contractStats.activeContracts.toString()}
                   icon={<CheckCircleIcon />}
                   color={theme.palette.success.main}
+                  onClick={() => navigate('/contract-management')}
                 />
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
                 <StatCard
                   title="Expiring Soon"
-                  value={isLoading ? "..." : contractStats.expiringSoon.toString()}
+                  value={contractStats.expiringSoon.toString()}
                   icon={<WarningIcon />}
                   color={theme.palette.warning.main}
+                  onClick={() => navigate('/contract-management')}
                 />
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
                 <StatCard
                   title="Total Value"
-                  value={isLoading ? "..." : `AED ${contractStats.totalValue.toLocaleString()}`}
+                  value={`AED ${contractStats.totalValue.toLocaleString()}`}
                   icon={<MonetizationOnIcon />}
                   color={theme.palette.primary.main}
+                  onClick={() => navigate('/contract-management')}
                 />
               </Grid>
             </Grid>

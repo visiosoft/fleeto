@@ -17,7 +17,6 @@ import {
   Email as EmailIcon
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
-import axios from 'axios';
 
 const Login: React.FC = () => {
   const theme = useTheme();
@@ -35,28 +34,11 @@ const Login: React.FC = () => {
 
     try {
       console.log('Attempting login with email:', email);
-      const response = await axios.post('http://localhost:5000/api/auth/login', {
-        email,
-        password,
-      });
-
-      console.log('Login response:', response.data);
-
-      if (response.data.status === 'success' && response.data.data.token) {
-        console.log('Login successful, token received');
-        const token = response.data.data.token;
-        localStorage.setItem('token', token);
-        
-        // Call login function and wait for it to complete
-        await login(token);
-        
-        console.log('Auth state updated, navigating to dashboard...');
-        // Navigate to root path instead of /dashboard
-        navigate('/', { replace: true });
-      } else {
-        console.log('Login failed - Invalid response structure:', response.data);
-        setError('Login failed - Invalid response from server');
-      }
+      await login(email, password);
+      
+      console.log('Auth state updated, navigating to dashboard...');
+      // Navigate to root path instead of /dashboard
+      navigate('/', { replace: true });
     } catch (err: any) {
       console.error('Login error:', err);
       if (err.response?.data?.message) {
@@ -227,7 +209,6 @@ const Login: React.FC = () => {
             align="center"
             sx={{ mt: 2 }}
           >
-            Use dev.xulfi@gmail.com / 123456 to sign in
           </Typography>
         </Paper>
       </Container>
