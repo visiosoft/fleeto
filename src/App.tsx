@@ -1,9 +1,9 @@
 import React, { Suspense, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import Navigation from './components/Navigation/Navigation';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment';
-import { useMediaQuery, useTheme, CircularProgress, Box, CssBaseline } from '@mui/material';
+import { useMediaQuery, useTheme, CircularProgress, Box, CssBaseline, ThemeProvider } from '@mui/material';
 import Dashboard from './pages/Dashboard/Dashboard';
 import ContractTemplate from './pages/ContractTemplate/ContractTemplate';
 import Login from './pages/Login/Login';
@@ -19,6 +19,8 @@ import CompanyManagement from './pages/CompanyManagement/CompanyManagement';
 import CompanyUsers from './pages/CompanyUsers/CompanyUsers';
 import UserManagement from './pages/UserManagement/UserManagement';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import CompanySelection from './pages/CompanySelection/CompanySelection';
+import { theme } from './theme';
 
 // Lazy load all pages
 const VehicleManagement = React.lazy(() => import('./pages/VehicleManagement'));
@@ -37,19 +39,23 @@ const LoadingFallback = () => (
   </Box>
 );
 
-// Protected Route wrapper
+// Protected Route component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated } = useAuth();
-  console.log('ProtectedRoute - isAuthenticated:', isAuthenticated);
-  
-  if (!isAuthenticated) {
-    console.log('ProtectedRoute - Redirecting to login');
-    return <Navigate to="/login" replace />;
+  const { token, selectedCompany } = useAuth();
+  const location = useLocation();
+
+  if (!token) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
-  
+
+  if (!selectedCompany) {
+    return <Navigate to="/select-company" state={{ from: location }} replace />;
+  }
+
   return <>{children}</>;
 };
 
+// App content component
 const AppContent: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -68,6 +74,9 @@ const AppContent: React.FC = () => {
           {/* Public routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          
+          {/* Company selection route */}
+          <Route path="/select-company" element={<CompanySelection />} />
           
           {/* Protected routes */}
           <Route path="/" element={
@@ -351,18 +360,28 @@ const AppContent: React.FC = () => {
   );
 };
 
+// Wrapper component to handle navigation context
+const AppWrapper: React.FC = () => {
+  const navigate = useNavigate();
+  
+  return (
+    <AuthProvider navigate={navigate}>
+      <LocalizationProvider dateAdapter={AdapterMoment}>
+        <AppContent />
+      </LocalizationProvider>
+    </AuthProvider>
+  );
+};
+
+// Main App component
 const App: React.FC = () => {
   return (
-    <>
+    <ThemeProvider theme={theme}>
       <CssBaseline />
-      <AuthProvider>
-        <LocalizationProvider dateAdapter={AdapterMoment}>
-          <Router>
-            <AppContent />
-          </Router>
-        </LocalizationProvider>
-      </AuthProvider>
-    </>
+      <Router>
+        <AppWrapper />
+      </Router>
+    </ThemeProvider>
   );
 };
 

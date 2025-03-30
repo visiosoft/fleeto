@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
 import {
   AppBar,
@@ -49,7 +49,10 @@ import {
   AttachMoney as PayrollIcon,
   Receipt as ReceiptIcon,
   Group as GroupIcon,
+  BusinessCenter as BusinessCenterIcon,
+  Security as SecurityIcon,
 } from '@mui/icons-material';
+import { useAuth } from '../../contexts/AuthContext';
 
 const drawerWidth = 240;
 
@@ -115,7 +118,24 @@ const Navigation: React.FC<NavigationProps> = ({
   const theme = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
+  const { logout, user, companies } = useAuth();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [companyName, setCompanyName] = useState<string>('');
+
+  useEffect(() => {
+    // Get company name from localStorage
+    const savedCompanies = localStorage.getItem('companies');
+    if (savedCompanies) {
+      try {
+        const parsedCompanies = JSON.parse(savedCompanies);
+        if (parsedCompanies && parsedCompanies.length > 0) {
+          setCompanyName(parsedCompanies[0].name);
+        }
+      } catch (error) {
+        console.error('Error parsing companies from localStorage:', error);
+      }
+    }
+  }, []);
 
   const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -125,16 +145,16 @@ const Navigation: React.FC<NavigationProps> = ({
     setAnchorEl(null);
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('isAuthenticated');
-    navigate('/login');
+  const handleLogout = async () => {
+    handleMenuClose();
+    await logout();
   };
 
   const drawer = (
     <div>
       <Toolbar>
         <Typography variant="h6" noWrap component="div">
-          Fleet Management
+         { 'Fleet Management'}
         </Typography>
       </Toolbar>
       <Divider />
@@ -156,7 +176,6 @@ const Navigation: React.FC<NavigationProps> = ({
             <ListItemText primary={item.text} />
           </ListItemButton>
         ))}
-      
       </List>
     </div>
   );
@@ -186,7 +205,7 @@ const Navigation: React.FC<NavigationProps> = ({
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            {MENU_ITEMS.find(item => item.path === location.pathname)?.text || 'Dashboard'}
+            {companyName || 'Dashboard'}
           </Typography>
           
           {/* Profile Menu */}
