@@ -1417,7 +1417,7 @@ const Dashboard: React.FC = () => {
                   value={contractStats.totalContracts.toString()}
                   icon={<DescriptionIcon />}
                   color={theme.palette.info.main}
-                  onClick={() => navigate('/contract-management')}
+                  onClick={() => navigate('/contracts')}
                 />
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
@@ -1426,7 +1426,7 @@ const Dashboard: React.FC = () => {
                   value={contractStats.activeContracts.toString()}
                   icon={<CheckCircleIcon />}
                   color={theme.palette.success.main}
-                  onClick={() => navigate('/contract-management')}
+                  onClick={() => navigate('/contracts')}
                 />
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
@@ -1435,7 +1435,7 @@ const Dashboard: React.FC = () => {
                   value={contractStats.expiringSoon.toString()}
                   icon={<WarningIcon />}
                   color={theme.palette.warning.main}
-                  onClick={() => navigate('/contract-management')}
+                  onClick={() => navigate('/contracts')}
                 />
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
@@ -1444,7 +1444,7 @@ const Dashboard: React.FC = () => {
                   value={`AED ${contractStats.totalValue.toLocaleString()}`}
                   icon={<MonetizationOnIcon />}
                   color={theme.palette.primary.main}
-                  onClick={() => navigate('/contract-management')}
+                  onClick={() => navigate('/contracts')}
                 />
               </Grid>
             </Grid>
