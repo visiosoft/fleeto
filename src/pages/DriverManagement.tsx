@@ -87,7 +87,7 @@ const DriverManagement: React.FC = () => {
 
   useEffect(() => {
     fetchDrivers();
-  }, [fetchDrivers]);
+  }, []);
 
   const handleAdd = () => {
     setFormValues({
