@@ -10,13 +10,33 @@ class InvoiceService {
   private axiosInstance;
 
   private constructor() {
+    // Get the token from localStorage
+    const token = localStorage.getItem('token');
+    
     this.axiosInstance = axios.create({
       baseURL: `${BASE_URL}/invoices`,
       headers: {
         'Content-Type': 'application/json',
+        // Include the Authorization header if token exists
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
       },
       timeout: 5000, // 5 seconds timeout
     });
+
+    // Add request interceptor to always use the latest token
+    this.axiosInstance.interceptors.request.use(
+      (config) => {
+        // Update token on each request to ensure we have the latest
+        const currentToken = localStorage.getItem('token');
+        if (currentToken) {
+          config.headers['Authorization'] = `Bearer ${currentToken}`;
+        }
+        return config;
+      },
+      (error) => {
+        return Promise.reject(error);
+      }
+    );
 
     // Add response interceptor for better error handling
     this.axiosInstance.interceptors.response.use(

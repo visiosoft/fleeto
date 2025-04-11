@@ -22,13 +22,6 @@ import {
   Snackbar,
   Alert,
   SelectChangeEvent,
-  TableContainer,
-  Table,
-  TableHead,
-  TableBody,
-  TableRow,
-  TableCell,
-  TablePagination,
 } from '@mui/material';
 import {
   DirectionsCar,
@@ -39,7 +32,6 @@ import {
   Delete,
   Add,
   Close,
-  Visibility,
 } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import moment from 'moment';
@@ -49,7 +41,6 @@ import { API_CONFIG, getApiUrl } from '../../config/api';
 import { Vehicle } from '../../types';
 import FuelManagement from '../../components/FuelManagement/FuelManagement';
 import Maintenance from '../../components/Maintenance/Maintenance';
-import PageLayout from '../../components/PageLayout/PageLayout';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -101,8 +92,6 @@ const VehicleManagement: React.FC = () => {
     message: '',
     severity: 'success' as 'success' | 'error' | 'info' | 'warning',
   });
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
 
   const fetchVehicles = useCallback(async () => {
     try {
@@ -414,92 +403,89 @@ const VehicleManagement: React.FC = () => {
     </Grid>
   );
 
-  const handleChangePage = (event: unknown, newPage: number) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
-
   return (
-    <PageLayout
-      title="Vehicle Management"
-      onAdd={handleAdd}
-      onRefresh={fetchVehicles}
-      onFilter={() => {}}
-      addButtonText="Add Vehicle"
-    >
-      <Box sx={{ width: '100%', height: '100%', p: 0 }}>
-        <TableContainer 
-          sx={{ 
-            width: '100%', 
-            height: '100%',
-            '& .MuiTable-root': {
-              width: '100%',
-              minWidth: '100%',
-              tableLayout: 'fixed',
-            },
-            '& .MuiTableCell-root': {
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-            }
-          }}
-        >
-          <Table stickyHeader>
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ width: '15%' }}>Vehicle ID</TableCell>
-                <TableCell sx={{ width: '15%' }}>Plate Number</TableCell>
-                <TableCell sx={{ width: '15%' }}>Type</TableCell>
-                <TableCell sx={{ width: '15%' }}>Status</TableCell>
-                <TableCell sx={{ width: '15%' }}>Last Maintenance</TableCell>
-                <TableCell sx={{ width: '15%' }}>Next Maintenance</TableCell>
-                <TableCell align="right" sx={{ width: '10%' }}>Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {vehicles
-                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((vehicle) => (
-                  <TableRow key={vehicle.id}>
-                    <TableCell>{vehicle.id}</TableCell>
-                    <TableCell>{vehicle.licensePlate}</TableCell>
-                    <TableCell>{vehicle.fuelType}</TableCell>
-                    <TableCell>
-                      <Chip
-                        label={vehicle.status}
-                        color={getStatusColor(vehicle.status)}
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell>{vehicle.lastServiceDate}</TableCell>
-                    <TableCell>{vehicle.registrationExpiry}</TableCell>
-                    <TableCell align="right">
-                      <IconButton size="small" color="primary" onClick={() => handleEdit(vehicle)}>
+    <Box sx={{ width: '100%' }}>
+      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+        <Tabs value={tabValue} onChange={handleTabChange}>
+          <Tab icon={<DirectionsCar />} label="Vehicles" />
+          <Tab icon={<LocalGasStation />} label="Fuel" />
+          <Tab icon={<Build />} label="Maintenance" />
+          <Tab icon={<History />} label="History" />
+        </Tabs>
+      </Box>
+
+      <TabPanel value={tabValue} index={0}>
+        <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between' }}>
+          <Typography variant="h5">Vehicle List</Typography>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<Add />}
+            onClick={handleAdd}
+          >
+            Add Vehicle
+          </Button>
+        </Box>
+
+        <Grid container spacing={2}>
+          {vehicles.map((vehicle) => (
+            <Grid item xs={12} sm={6} md={4} key={vehicle.id}>
+              <Card>
+                <CardContent>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                    <Typography variant="h6">
+                      {vehicle.make} {vehicle.model} {vehicle.year}
+                    </Typography>
+                    <Box>
+                      <IconButton size="small" onClick={() => handleEdit(vehicle)}>
                         <Edit />
                       </IconButton>
-                      <IconButton size="small" color="error" onClick={() => handleDeleteConfirm(vehicle.id || vehicle._id || '')}>
+                      <IconButton 
+                        size="small" 
+                        color="error" 
+                        onClick={() => handleDeleteConfirm(vehicle.id || vehicle._id || '')}
+                      >
                         <Delete />
                       </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        <TablePagination
-          rowsPerPageOptions={[5, 10, 25]}
-          component="div"
-          count={vehicles.length}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
-      </Box>
+                    </Box>
+                  </Box>
+                  <Typography color="textSecondary" gutterBottom>
+                    License Plate: {vehicle.licensePlate}
+                  </Typography>
+                  <Typography color="textSecondary" gutterBottom>
+                    VIN: {vehicle.vin}
+                  </Typography>
+                  <Box sx={{ mt: 1 }}>
+                    <Chip
+                      label={vehicle.status}
+                      color={getStatusColor(vehicle.status)}
+                      size="small"
+                      sx={{ mr: 1 }}
+                    />
+                    <Chip
+                      label={`${vehicle.currentMileage.toLocaleString()} miles`}
+                      variant="outlined"
+                      size="small"
+                    />
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      </TabPanel>
+
+      <TabPanel value={tabValue} index={1}>
+        <FuelManagement />
+      </TabPanel>
+
+      <TabPanel value={tabValue} index={2}>
+        <Maintenance />
+      </TabPanel>
+
+      <TabPanel value={tabValue} index={3}>
+        <Typography>Vehicle History (Coming Soon)</Typography>
+      </TabPanel>
 
       {/* Add/Edit Dialog */}
       <Dialog
@@ -553,7 +539,7 @@ const VehicleManagement: React.FC = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </PageLayout>
+    </Box>
   );
 };
 

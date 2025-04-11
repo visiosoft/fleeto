@@ -19,8 +19,7 @@ import {
   Avatar,
   Tooltip,
   Divider,
-  ListItem,
-  Button
+  ListItem
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -52,10 +51,8 @@ import {
   Group as GroupIcon,
   BusinessCenter as BusinessCenterIcon,
   Security as SecurityIcon,
-  AccountTree as SitemapIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
-import Breadcrumb from '../Breadcrumb/Breadcrumb';
 
 const drawerWidth = 240;
 
@@ -91,7 +88,6 @@ const MENU_ITEMS: MenuItem[] = [
   { text: 'Driver Payroll', icon: <PayrollIcon />, path: '/driver-payroll' },
   { text: 'Reports', path: '/reports', icon: <AssessmentIcon /> },
   { text: 'Settings', path: '/settings', icon: <SettingsIcon /> },
-  { text: 'Sitemap', path: '/sitemap', icon: <SitemapIcon /> },
 ];
 
 // Memoized MenuItem component
@@ -185,13 +181,17 @@ const Navigation: React.FC<NavigationProps> = ({
   );
 
   return (
-    <Box sx={{ display: 'flex' }}>
-      <CssBaseline />
+    <Box sx={{ 
+      display: 'flex',
+      width: '100%',
+      height: '100vh',
+      overflow: 'hidden'
+    }}>
       <AppBar
         position="fixed"
         sx={{
           width: '100%',
-          zIndex: theme.zIndex.drawer + 1,
+          zIndex: (theme) => theme.zIndex.drawer + 1,
         }}
       >
         <Toolbar>
@@ -205,36 +205,39 @@ const Navigation: React.FC<NavigationProps> = ({
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            {companyName || 'Fleeto'}
+            {companyName || 'Dashboard'}
           </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Button
-              color="inherit"
-              startIcon={<BusinessIcon />}
-              onClick={() => navigate('/company-settings')}
-            >
-              Company Settings
-            </Button>
-            <IconButton
-              onClick={handleProfileMenuOpen}
-              size="small"
-              sx={{ ml: 2 }}
-              aria-controls={Boolean(anchorEl) ? 'account-menu' : undefined}
-              aria-haspopup="true"
-              aria-expanded={Boolean(anchorEl) ? 'true' : undefined}
-            >
-              <Avatar sx={{ width: 32, height: 32 }}>
-                {user?.firstName?.[0] || 'U'}
-              </Avatar>
-            </IconButton>
+          
+          {/* Profile Menu */}
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Tooltip title="Account settings">
+              <IconButton
+                size="large"
+                edge="end"
+                aria-label="account of current user"
+                aria-controls="menu-appbar"
+                aria-haspopup="true"
+                onClick={handleProfileMenuOpen}
+                color="inherit"
+              >
+                <Avatar sx={{ width: 32, height: 32, bgcolor: theme.palette.primary.main }}>
+                  <AccountCircleIcon />
+                </Avatar>
+              </IconButton>
+            </Tooltip>
             <Menu
               anchorEl={anchorEl}
-              id="account-menu"
+              anchorOrigin={{
+                vertical: 'bottom',
+                horizontal: 'right',
+              }}
+              keepMounted
+              transformOrigin={{
+                vertical: 'top',
+                horizontal: 'right',
+              }}
               open={Boolean(anchorEl)}
               onClose={handleMenuClose}
-              onClick={handleMenuClose}
-              transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-              anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
             >
               <MenuItem onClick={() => { handleMenuClose(); navigate('/profile'); }}>
                 <ListItemIcon>
@@ -259,74 +262,42 @@ const Navigation: React.FC<NavigationProps> = ({
           </Box>
         </Toolbar>
       </AppBar>
-      <Box
-        component="nav"
-        sx={{ 
-          width: { sm: drawerWidth }, 
-          flexShrink: { sm: 0 },
-          mt: '64px',
-          height: 'calc(100vh - 64px)',
+
+      <Drawer
+        variant={isMobile ? 'temporary' : 'permanent'}
+        open={isMobile ? isDrawerOpen : true}
+        onClose={handleDrawerToggle}
+        sx={{
+          width: drawerWidth,
+          flexShrink: 0,
+          '& .MuiDrawer-paper': {
+            width: drawerWidth,
+            boxSizing: 'border-box',
+            marginTop: '64px',
+            height: 'calc(100% - 64px)',
+            border: 'none'
+          },
         }}
       >
-        {isMobile ? (
-          <Drawer
-            variant="temporary"
-            open={isDrawerOpen}
-            onClose={handleDrawerToggle}
-            ModalProps={{
-              keepMounted: true,
-            }}
-            sx={{
-              display: { xs: 'block', sm: 'none' },
-              '& .MuiDrawer-paper': { 
-                boxSizing: 'border-box', 
-                width: drawerWidth,
-                height: '100%',
-              },
-            }}
-          >
-            {drawer}
-          </Drawer>
-        ) : (
-          <Drawer
-            variant="permanent"
-            sx={{
-              display: { xs: 'none', sm: 'block' },
-              '& .MuiDrawer-paper': { 
-                boxSizing: 'border-box', 
-                width: drawerWidth,
-                height: '100%',
-              },
-            }}
-            open
-          >
-            {drawer}
-          </Drawer>
-        )}
-      </Box>
+        {drawer}
+      </Drawer>
+
       <Box
         component="main"
         sx={{
           flexGrow: 1,
-          p: 0,
-          mt: '64px',
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
+          p: 2,
+          width: { xs: '100%', sm: `calc(100% - ${drawerWidth}px)` },
+          marginTop: '64px',
+          backgroundColor: (theme) => theme.palette.background.default,
+          height: 'calc(100vh - 64px)',
           overflow: 'auto',
-          bgcolor: 'background.default',
           '& > *': {
             width: '100%',
-            p: 1.75,
-            maxWidth: '100%',
-            boxSizing: 'border-box',
           }
         }}
       >
-        <Box sx={{ p: 1.75 }}>
-          <Breadcrumb />
-        </Box>
-        <Box sx={{ p: 1.75 }}>
-          {children}
-        </Box>
+        {children}
       </Box>
     </Box>
   );

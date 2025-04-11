@@ -21,7 +21,6 @@ import UserManagement from './pages/UserManagement/UserManagement';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import CompanySelection from './pages/CompanySelection/CompanySelection';
 import { theme } from './theme';
-import Sitemap from './components/Sitemap/Sitemap';
 
 // Lazy load all pages
 const VehicleManagement = React.lazy(() => import('./pages/VehicleManagement'));
@@ -352,8 +351,6 @@ const AppContent: React.FC = () => {
               </Navigation>
             </ProtectedRoute>
           } />
-          
-          <Route path="/sitemap" element={<Sitemap />} />
           
           {/* Redirect to login if no route matches */}
           <Route path="*" element={<Navigate to="/login" replace />} />

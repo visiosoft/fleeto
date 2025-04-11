@@ -33,7 +33,7 @@ const Login: React.FC = () => {
     setError('');
 
     try {
-      console.log('Attempting login with email:', email);
+      console.log('Attempting login with email:', email,password);
       await login(email, password);
       
       console.log('Auth state updated, navigating to dashboard...');
