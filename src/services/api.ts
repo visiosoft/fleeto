@@ -30,8 +30,11 @@ class ApiService {
   }
 
   private async fetchWithAuth(endpoint: string, options: RequestInit = {}) {
-    const headers = this.token 
-      ? getAuthHeader(this.token)
+    // Always get the most recent token from localStorage
+    const currentToken = localStorage.getItem('token');
+    
+    const headers = currentToken 
+      ? getAuthHeader(currentToken)
       : API_HEADERS;
 
     const response = await fetch(endpoint, {
