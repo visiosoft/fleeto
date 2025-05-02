@@ -43,6 +43,7 @@ import axios, { AxiosError } from 'axios';
 import { API_CONFIG, getApiUrl } from '../config/api';
 import moment from 'moment';
 import ContractTemplateEditor, { Vehicle as EditorVehicle } from '../components/ContractTemplate/ContractTemplateEditor';
+import { useNavigate } from 'react-router-dom';
 
 const CONTRACT_STATUSES = [
   'Active',
@@ -129,6 +130,7 @@ const ContractManagement: React.FC = () => {
     name: 'Default Template',
     content: ''
   });
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchContracts();
@@ -161,8 +163,6 @@ const ContractManagement: React.FC = () => {
       console.error('Error fetching stats:', error);
     }
   };
-
-
 
   const fetchVehicles = async () => {
     try {
@@ -403,8 +403,8 @@ const ContractManagement: React.FC = () => {
         vehicles: vehicles
       }));
       
-      // Navigate to template editor with contract data
-      window.location.href = `/contracts/template/${contract._id}`;
+      // Navigate to template editor with contract data using React Router
+      navigate(`/contracts/template/${contract._id}`);
     } catch (error) {
       console.error('Error fetching contract details:', error);
       setSnackbar({
