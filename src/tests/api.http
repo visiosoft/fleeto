@@ -1,0 +1,167 @@
+### Variables
+@baseUrl = http://localhost:5000
+@contentType = application/json
+
+### Register Company with Admin User
+POST {{baseUrl}}/api/auth/register
+Content-Type: {{contentType}}
+
+{
+  "companyData": {
+    "name": "Test Company",
+    "registrationNumber": "REG123",
+    "email": "company@test.com",
+    "phone": "1234567890"
+  },
+  "adminData": {
+    "firstName": "Admin",
+    "lastName": "User",
+    "email": "admin@test.com",
+    "password": "password123"
+  }
+}
+
+### Login User
+POST {{baseUrl}}/api/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "admin@test.com",
+  "password": "password123"
+}
+
+### Get Current User Profile
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer {{token}}
+
+### Get Active Counts
+GET {{baseUrl}}/api/dashboard/active-counts
+Authorization: Bearer {{token}}
+
+### Get Active Vehicles
+GET {{baseUrl}}/api/dashboard/active-vehicles
+Authorization: Bearer {{token}}
+
+### Get Active Drivers
+GET {{baseUrl}}/api/dashboard/active-drivers
+Authorization: Bearer {{token}}
+
+### Get Current Month Fuel Cost
+GET {{baseUrl}}/api/dashboard/fuel/current-month
+Authorization: Bearer {{token}}
+
+### Get Current Month Maintenance Cost
+GET {{baseUrl}}/api/dashboard/maintenance/current-month
+Authorization: Bearer {{token}}
+
+### Get Current Month Insurance Cost
+GET {{baseUrl}}/api/dashboard/insurance/current-month
+Authorization: Bearer {{token}}
+
+### Get Current Month Other Cost
+GET {{baseUrl}}/api/dashboard/other/current-month
+Authorization: Bearer {{token}}
+
+### Get Current Month Total Cost
+GET {{baseUrl}}/api/dashboard/total/current-month
+Authorization: Bearer {{token}}
+
+### Get Current Month Cost Breakdown
+GET {{baseUrl}}/api/dashboard/cost-breakdown/current-month
+Authorization: Bearer {{token}}
+
+### Get Current Month Cost by Vehicle
+GET {{baseUrl}}/api/dashboard/cost-by-vehicle/current-month
+Authorization: Bearer {{token}}
+
+### Get Current Month Cost by Driver
+GET {{baseUrl}}/api/dashboard/cost-by-driver/current-month
+Authorization: Bearer {{token}}
+
+### Get Current Month Cost by Category
+GET {{baseUrl}}/api/dashboard/cost-by-category/current-month
+Authorization: Bearer {{token}}
+
+### Get Current Month Cost by Location
+GET {{baseUrl}}/api/dashboard/cost-by-location/current-month
+Authorization: Bearer {{token}}
+
+### Get Current Month Cost by Date
+GET {{baseUrl}}/api/dashboard/cost-by-date/current-month
+Authorization: Bearer {{token}}
+
+### Get Current Month Cost by Vehicle Type
+GET {{baseUrl}}/api/dashboard/cost-by-vehicle-type/current-month
+Authorization: Bearer {{token}}
+
+### Get Current Month Cost by Driver Type
+GET {{baseUrl}}/api/dashboard/cost-by-driver-type/current-month
+Authorization: Bearer {{token}}
+
+### Get Current Month Cost by Cost Type
+GET {{baseUrl}}/api/dashboard/cost-by-cost-type/current-month
+Authorization: Bearer {{token}}
+
+### Get Current Month Cost by Cost Category
+GET {{baseUrl}}/api/dashboard/cost-by-cost-category/current-month
+Authorization: Bearer {{token}}
+
+### Get Current Month Cost by Cost Subcategory
+GET {{baseUrl}}/api/dashboard/cost-by-cost-subcategory/current-month
+Authorization: Bearer {{token}}
+
+### Get Current Month Cost by Cost Item
+GET {{baseUrl}}/api/dashboard/cost-by-cost-item/current-month
+Authorization: Bearer {{token}}
+
+### Get Current Month Cost by Cost Unit
+GET {{baseUrl}}/api/dashboard/cost-by-cost-unit/current-month
+Authorization: Bearer {{token}}
+
+### Get Current Month Cost by Cost Currency
+GET {{baseUrl}}/api/dashboard/cost-by-cost-currency/current-month
+Authorization: Bearer {{token}}
+
+### Get Current Month Cost by Cost Status
+GET {{baseUrl}}/api/dashboard/cost-by-cost-status/current-month
+Authorization: Bearer {{token}}
+
+### Get Current Month Cost by Cost Payment Method
+GET {{baseUrl}}/api/dashboard/cost-by-cost-payment-method/current-month
+Authorization: Bearer {{token}}
+
+### Get Current Month Cost by Cost Payment Status
+GET {{baseUrl}}/api/dashboard/cost-by-cost-payment-status/current-month
+Authorization: Bearer {{token}}
+
+### Get Current Month Cost by Cost Payment Date
+GET {{baseUrl}}/api/dashboard/cost-by-cost-payment-date/current-month
+Authorization: Bearer {{token}}
+
+### Get Current Month Cost by Cost Payment Amount
+GET {{baseUrl}}/api/dashboard/cost-by-cost-payment-amount/current-month
+Authorization: Bearer {{token}}
+
+### Get Current Month Cost by Cost Payment Currency
+GET {{baseUrl}}/api/dashboard/cost-by-cost-payment-currency/current-month
+Authorization: Bearer {{token}}
+
+### Get Current Month Cost by Cost Payment Method Type
+GET {{baseUrl}}/api/dashboard/cost-by-cost-payment-method-type/current-month
+Authorization: Bearer {{token}}
+
+### Get Current Month Cost by Cost Payment Status Type
+GET {{baseUrl}}/api/dashboard/cost-by-cost-payment-status-type/current-month
+Authorization: Bearer {{token}}
+
+### Get Current Month Cost by Cost Payment Date Type
+GET {{baseUrl}}/api/dashboard/cost-by-cost-payment-date-type/current-month
+Authorization: Bearer {{token}}
+
+### Get Current Month Cost by Cost Payment Amount Type
+GET {{baseUrl}}/api/dashboard/cost-by-cost-payment-amount-type/current-month
+Authorization: Bearer {{token}}
+
+### Get Current Month Cost by Cost Payment Currency Type
+GET {{baseUrl}}/api/dashboard/cost-by-cost-payment-currency-type/current-month
+Authorization: Bearer {{token}} 
