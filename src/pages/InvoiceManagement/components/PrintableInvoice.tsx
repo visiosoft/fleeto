@@ -12,6 +12,11 @@ const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({ invoice }) => {
     window.print();
   };
 
+  // Calculate totals from items
+  const subtotal = invoice?.items?.reduce((sum, item) => sum + (item.amount || 0), 0) || 0;
+  const vat = subtotal * 0.05; // 5% VAT
+  const total = subtotal + vat;
+
   return (
     <>
       <Box sx={{ 
@@ -74,7 +79,7 @@ const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({ invoice }) => {
             }
           }}>
             <Typography variant="h6" gutterBottom sx={{ fontSize: '1.25rem' }}>
-              INVOICE
+              TAX INVOICE
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
               Invoice Number: {invoice?.invoiceNumber || 'N/A'}
@@ -134,11 +139,11 @@ const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({ invoice }) => {
                 <TableBody>
                   <TableRow>
                     <TableCell sx={{ fontSize: '0.75rem', py: 1 }}>Subtotal:</TableCell>
-                    <TableCell align="right" sx={{ fontSize: '0.75rem', py: 1 }}>AED {(invoice?.subtotal || 0).toFixed(2)}</TableCell>
+                    <TableCell align="right" sx={{ fontSize: '0.75rem', py: 1 }}>AED {subtotal.toFixed(2)}</TableCell>
                   </TableRow>
                   <TableRow>
                     <TableCell sx={{ fontSize: '0.75rem', py: 1 }}>VAT (5%):</TableCell>
-                    <TableCell align="right" sx={{ fontSize: '0.75rem', py: 1 }}>AED {((invoice?.subtotal || 0) * 0.05).toFixed(2)}</TableCell>
+                    <TableCell align="right" sx={{ fontSize: '0.75rem', py: 1 }}>AED {vat.toFixed(2)}</TableCell>
                   </TableRow>
                   <TableRow>
                     <TableCell sx={{ py: 1 }}>
@@ -146,7 +151,7 @@ const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({ invoice }) => {
                     </TableCell>
                     <TableCell align="right" sx={{ py: 1 }}>
                       <Typography variant="body2" sx={{ fontSize: '0.875rem', fontWeight: 'bold' }}>
-                        AED {((invoice?.subtotal || 0) + ((invoice?.subtotal || 0) * 0.05)).toFixed(2)}
+                        AED {total.toFixed(2)}
                       </Typography>
                     </TableCell>
                   </TableRow>

@@ -59,6 +59,14 @@ export interface Contract {
 export interface Invoice {
   _id: string;
   contractId: string;
+  contract?: {
+    companyName: string;
+    address: string;
+    contactPhone: string;
+    contactEmail: string;
+    trn: string;
+    tradeLicenseNo: string;
+  };
   invoiceNumber: string;
   issueDate: string;
   dueDate: string;

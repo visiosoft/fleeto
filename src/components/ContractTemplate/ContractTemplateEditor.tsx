@@ -198,12 +198,8 @@ const ContractTemplateEditor: React.FC<Props> = ({
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
-    severity: 'success' as 'success' | 'error' | 'info' | 'warning',
+    severity: 'success' as 'success' | 'error'
   });
-
-  useEffect(() => {
-    updatePreview();
-  }, [content, contract]);
 
   useEffect(() => {
     const vehicle = vehicles.find((v: Vehicle) => v._id === contract.vehicleId);
@@ -232,6 +228,7 @@ const ContractTemplateEditor: React.FC<Props> = ({
       .replace(/\[Vehicle Year\]/g, vehicle?.year || '');
 
     setContent(filledTemplate);
+    updatePreview();
   }, [contract, vehicles, content]);
 
   const updatePreview = () => {
@@ -294,7 +291,9 @@ const ContractTemplateEditor: React.FC<Props> = ({
   };
 
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setContent(e.target.value);
+    const newContent = e.target.value;
+    setContent(newContent);
+    updatePreview();
   };
 
   const handleSave = async () => {
@@ -329,232 +328,60 @@ const ContractTemplateEditor: React.FC<Props> = ({
     }
   };
 
-  const generatePDFFromContent = async () => {
-    const element = document.getElementById('contract-preview');
-    if (!element) return null;
-
-    const pdf = new jsPDF({
-      orientation: 'portrait',
-      unit: 'pt',
-      format: 'a4'
-    });
-
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-    const margin = 40;
-
-    // Function to add header and footer to each page
-    const addHeaderAndFooter = async () => {
-      try {
-        // Add header banner
-        const headerImg = new Image();
-        headerImg.src = '/bannerheader.png';
-        await new Promise((resolve, reject) => {
-          headerImg.onload = resolve;
-          headerImg.onerror = reject;
-          // Set a timeout in case the image loading hangs
-          setTimeout(reject, 5000);
-        });
-        pdf.addImage(headerImg, 'PNG', 0, 0, pageWidth, 160);
-
-        // Add footer banner at the bottom of the page
-        const footerImg = new Image();
-        footerImg.src = '/bannerfooter2.png';
-        await new Promise((resolve, reject) => {
-          footerImg.onload = resolve;
-          footerImg.onerror = reject;
-          setTimeout(reject, 5000);
-        });
-        pdf.addImage(footerImg, 'PNG', 0, pageHeight - 100, pageWidth, 100);
-      } catch (error) {
-        console.error('Error loading banner images:', error);
-      }
-    };
-
-    try {
-      // Add header and footer to first page
-      await addHeaderAndFooter();
-
-      // Reset text color and font for content
-      pdf.setTextColor(0, 0, 0);
-      pdf.setFontSize(10);
-      
-      // Use standard PDF font instead of custom font
-      pdf.setFont('helvetica', 'normal');
-      
-      // Start content after header banner
-      let y = 180;
-
-      // Filter out banner tags and split content into lines
-      const lines = content
-        .replace(/<div[^>]*>|<\/div>|<img[^>]*>/g, '')
-        .split('\n')
-        .filter(line => line.trim() !== '' && !line.includes('@import'));
-      
-      for (const line of lines) {
-        if (line.trim() === '') {
-          y += 15;
-          continue;
-        }
-
-        // Check if we need a new page
-        if (y > pageHeight - 140) {
-          pdf.addPage();
-          await addHeaderAndFooter();
-          y = 180;
-        }
-
-        // Make headings bold and slightly larger
-        if (line.trim().startsWith('CONTRACT AGREEMENT')) {
-          pdf.setFont('helvetica', 'bold');
-          pdf.setFontSize(14);
-          const textWidth = pdf.getStringUnitWidth(line.trim()) * 14;
-          pdf.text(line.trim(), (pageWidth - textWidth) / 2, y);
-          y += 30;
-          pdf.setFont('helvetica', 'normal');
-          pdf.setFontSize(10);
-          continue;
-        }
-
-        if (line.startsWith('PARTIES:') || 
-            line.startsWith('WHEREAS:') || 
-            line.startsWith('TERMS AND CONDITIONS:')) {
-          pdf.setFont('helvetica', 'bold');
-          pdf.setFontSize(12);
-          pdf.text(line.trim(), margin, y);
-          y += 25;
-          pdf.setFont('helvetica', 'normal');
-          pdf.setFontSize(10);
-          continue;
-        }
-
-        // Handle main numbered sections (1., 2., etc.)
-        if (/^\d+\.\s[A-Z]/.test(line.trim())) {
-          pdf.setFont('helvetica', 'bold');
-          const words = line.trim().split(' ');
-          let currentLine = '';
-          let isFirstLine = true;
-          
-          for (const word of words) {
-            const testLine = currentLine + (currentLine ? ' ' : '') + word;
-            const testWidth = pdf.getStringUnitWidth(testLine) * 10;
-
-            if (testWidth > pageWidth - (2 * margin)) {
-              pdf.text(currentLine, margin, y);
-              currentLine = word;
-              y += 15;
-              isFirstLine = false;
-            } else {
-              currentLine = testLine;
-            }
-          }
-
-          if (currentLine) {
-            pdf.text(currentLine, margin, y);
-            y += 20;
-          }
-          
-          pdf.setFont('helvetica', 'normal');
-          continue;
-        }
-
-        // Handle bullet points (subsections)
-        if (line.trim().startsWith('•')) {
-          const words = line.trim().split(' ');
-          let currentLine = '';
-          let isFirstLine = true;
-          
-          for (const word of words) {
-            const testLine = currentLine + (currentLine ? ' ' : '') + word;
-            const testWidth = pdf.getStringUnitWidth(testLine) * 10;
-
-            if (testWidth > pageWidth - (2 * margin + 20)) {
-              pdf.text(currentLine, isFirstLine ? margin + 20 : margin + 30, y);
-              currentLine = word;
-              y += 15;
-              isFirstLine = false;
-            } else {
-              currentLine = testLine;
-            }
-          }
-
-          if (currentLine) {
-            pdf.text(currentLine, isFirstLine ? margin + 20 : margin + 30, y);
-            y += 15;
-          }
-          continue;
-        }
-
-        // Regular text with proper wrapping
-        const words = line.trim().split(' ');
-        let currentLine = '';
-        let isFirstLine = true;
-        
-        for (const word of words) {
-          const testLine = currentLine + (currentLine ? ' ' : '') + word;
-          const testWidth = pdf.getStringUnitWidth(testLine) * 10;
-
-          if (testWidth > pageWidth - (2 * margin)) {
-            pdf.text(currentLine, isFirstLine ? margin : margin + 10, y);
-            currentLine = word;
-            y += 15;
-            isFirstLine = false;
-          } else {
-            currentLine = testLine;
-          }
-        }
-
-        if (currentLine) {
-          pdf.text(currentLine, isFirstLine ? margin : margin + 10, y);
-          y += 15;
-        }
-      }
-
-      return pdf;
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-      return null;
-    }
-  };
-
-  const handlePrint = async () => {
-    try {
-      const pdf = await generatePDFFromContent();
-      if (pdf) {
-        const blob = pdf.output('blob');
-        const url = URL.createObjectURL(blob);
-        const printWindow = window.open(url);
-        if (printWindow) {
-          printWindow.onload = () => {
-            printWindow.print();
-          };
-        }
-      }
-    } catch (error) {
-      console.error('Error printing PDF:', error);
-    }
-  };
-
   const handleGeneratePDF = async () => {
     if (!contract._id) return;
 
     setIsLoading(true);
     try {
-      const response = await axios.get(
-        getApiUrl(`${API_CONFIG.ENDPOINTS.TEMPLATE}/${contract._id}/pdf`),
-        { responseType: 'blob' }
-      );
+      const element = document.getElementById('contract-preview');
+      if (!element) {
+        throw new Error('Contract preview element not found');
+      }
 
-      // Create a blob from the PDF Stream
-      const file = new Blob([response.data], { type: 'application/pdf' });
-      
-      // Create a link and click it to trigger download
-      const fileURL = URL.createObjectURL(file);
-      const link = document.createElement('a');
-      link.href = fileURL;
-      link.download = `${contract.companyName}_contract.pdf`;
-      link.click();
-      
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'pt',
+        format: 'a4'
+      });
+
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 40;
+
+      // Add header banner
+      const headerImg = new Image();
+      headerImg.src = '/bannerheader.png';
+      await new Promise((resolve, reject) => {
+        headerImg.onload = resolve;
+        headerImg.onerror = reject;
+        setTimeout(reject, 5000);
+      });
+      pdf.addImage(headerImg, 'PNG', 0, 0, pageWidth, 160);
+
+      // Add footer banner
+      const footerImg = new Image();
+      footerImg.src = '/bannerfooter2.png';
+      await new Promise((resolve, reject) => {
+        footerImg.onload = resolve;
+        footerImg.onerror = reject;
+        setTimeout(reject, 5000);
+      });
+      pdf.addImage(footerImg, 'PNG', 0, pageHeight - 100, pageWidth, 100);
+
+      // Convert the content to canvas
+      const canvas = await html2canvas(element, {
+        useCORS: true,
+        logging: false,
+        background: '#ffffff'
+      });
+
+      // Add the content to the PDF
+      const imgData = canvas.toDataURL('image/png');
+      pdf.addImage(imgData, 'PNG', margin, 180, pageWidth - (2 * margin), 0);
+
+      // Save the PDF
+      pdf.save(`${contract.companyName}_contract.pdf`);
+
       setSnackbar({
         open: true,
         message: 'PDF generated successfully',
@@ -569,6 +396,73 @@ const ContractTemplateEditor: React.FC<Props> = ({
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handlePrint = async () => {
+    try {
+      const element = document.getElementById('contract-preview');
+      if (!element) {
+        throw new Error('Contract preview element not found');
+      }
+
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'pt',
+        format: 'a4'
+      });
+
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 40;
+
+      // Add header banner
+      const headerImg = new Image();
+      headerImg.src = '/bannerheader.png';
+      await new Promise((resolve, reject) => {
+        headerImg.onload = resolve;
+        headerImg.onerror = reject;
+        setTimeout(reject, 5000);
+      });
+      pdf.addImage(headerImg, 'PNG', 0, 0, pageWidth, 160);
+
+      // Add footer banner
+      const footerImg = new Image();
+      footerImg.src = '/bannerfooter2.png';
+      await new Promise((resolve, reject) => {
+        footerImg.onload = resolve;
+        footerImg.onerror = reject;
+        setTimeout(reject, 5000);
+      });
+      pdf.addImage(footerImg, 'PNG', 0, pageHeight - 100, pageWidth, 100);
+
+      // Convert the content to canvas
+      const canvas = await html2canvas(element, {
+        useCORS: true,
+        logging: false,
+        background: '#ffffff'
+      });
+
+      // Add the content to the PDF
+      const imgData = canvas.toDataURL('image/png');
+      pdf.addImage(imgData, 'PNG', margin, 180, pageWidth - (2 * margin), 0);
+
+      // Open in new window for printing
+      const blob = pdf.output('blob');
+      const url = URL.createObjectURL(blob);
+      const printWindow = window.open(url);
+      if (printWindow) {
+        printWindow.onload = () => {
+          printWindow.print();
+        };
+      }
+    } catch (error) {
+      console.error('Error printing PDF:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to print PDF',
+        severity: 'error'
+      });
     }
   };
 
