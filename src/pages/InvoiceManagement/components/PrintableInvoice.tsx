@@ -146,7 +146,7 @@ const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({ invoice }) => {
                     </TableCell>
                     <TableCell align="right" sx={{ py: 1 }}>
                       <Typography variant="body2" sx={{ fontSize: '0.875rem', fontWeight: 'bold' }}>
-                        AED {(invoice?.items?.reduce((sum, item) => sum + (item.amount || 0), 0) || 0).toFixed(2)}
+                        AED {((invoice?.subtotal || 0) + ((invoice?.subtotal || 0) * 0.05)).toFixed(2)}
                       </Typography>
                     </TableCell>
                   </TableRow>
@@ -181,6 +181,23 @@ const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({ invoice }) => {
             <Typography variant="body2" color="text.secondary" align="center" sx={{ fontSize: '0.75rem' }}>
               For any questions, please contact us at dev.xulfi@gmail.com
             </Typography>
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="body2" sx={{ fontSize: '0.75rem', fontWeight: 'bold' }} align="center">
+                Bank Details
+              </Typography>
+              <Typography variant="body2" sx={{ fontSize: '0.75rem' }} align="center">
+                Account Holder: ZULFIQAR ALI KHAN
+              </Typography>
+              <Typography variant="body2" sx={{ fontSize: '0.75rem' }} align="center">
+                Bank Name: Dubai Islamic Bank
+              </Typography>
+              <Typography variant="body2" sx={{ fontSize: '0.75rem' }} align="center">
+                Account Number: 060520259403601
+              </Typography>
+              <Typography variant="body2" sx={{ fontSize: '0.75rem' }} align="center">
+                IBAN: AE120240060520259403601
+              </Typography>
+            </Box>
           </Box>
         </Box>
 
