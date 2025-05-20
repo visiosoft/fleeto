@@ -21,6 +21,8 @@ import {
   Select,
   Alert,
   LinearProgress,
+  Switch,
+  FormControlLabel,
 } from '@mui/material';
 import { Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { Invoice, InvoiceItem, Contract } from '../../types/api';
@@ -43,6 +45,7 @@ const InvoiceForm: React.FC = () => {
     items: [],
     subtotal: 0,
     tax: 0,
+    includeVat: false,
     total: 0,
     notes: '',
   });
@@ -54,7 +57,7 @@ const InvoiceForm: React.FC = () => {
     } else {
       generateInvoiceNumber();
     }
-  }, [id]);
+  }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchContracts = async () => {
     try {
@@ -102,7 +105,11 @@ const InvoiceForm: React.FC = () => {
       setLoading(true);
       const response = await InvoiceService.getInstance().getInvoiceById(id!);
       if (response.data.status === 'success') {
-        setInvoice(response.data.data);
+        const invoiceData = response.data.data;
+        setInvoice({
+          ...invoiceData,
+          includeVat: invoiceData.includeVat ?? false
+        });
       }
     } catch (err) {
       setError('Failed to fetch invoice');
@@ -174,8 +181,8 @@ const InvoiceForm: React.FC = () => {
 
   const calculateTotals = () => {
     const subtotal = invoice.items?.reduce((sum, item) => sum + item.amount, 0) || 0;
-    const tax = subtotal * 0.1; // 10% tax
-    const total = subtotal + tax;
+    const tax = !invoice.includeVat ? subtotal * 0.05 : 0; // 5% tax if VAT is not included
+    const total = !invoice.includeVat ? subtotal + tax : subtotal; // If VAT is included, total equals subtotal
 
     setInvoice(prev => ({
       ...prev,
@@ -185,9 +192,23 @@ const InvoiceForm: React.FC = () => {
     }));
   };
 
+  const handleVATToggle = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const includeVat = event.target.checked;
+    const currentSubtotal = invoice.subtotal || 0;
+    const newTax = !includeVat ? currentSubtotal * 0.05 : 0;
+    const newTotal = !includeVat ? currentSubtotal + newTax : currentSubtotal;
+    
+    setInvoice(prev => ({
+      ...prev,
+      includeVat,
+      tax: newTax,
+      total: newTotal
+    }));
+  };
+
   useEffect(() => {
     calculateTotals();
-  }, [invoice.items]);
+  }, [invoice.items, invoice.includeVat]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -357,7 +378,7 @@ const InvoiceForm: React.FC = () => {
                             size="small"
                           />
                         </TableCell>
-                        <TableCell>${item.amount.toFixed(2)}</TableCell>
+                        <TableCell>AED {item.amount.toFixed(2)}</TableCell>
                         <TableCell>
                           <IconButton
                             size="small"
@@ -387,9 +408,21 @@ const InvoiceForm: React.FC = () => {
             <Grid item xs={12} md={6}>
               <Box sx={{ mt: 2 }}>
                 <Typography variant="h6">Summary</Typography>
-                <Typography>Subtotal: ${invoice.subtotal?.toFixed(2)}</Typography>
-                <Typography>Tax (5%): ${invoice.tax?.toFixed(2)}</Typography>
-                <Typography variant="h6">Total: ${invoice.total?.toFixed(2)}</Typography>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={invoice.includeVat}
+                      onChange={handleVATToggle}
+                      color="primary"
+                    />
+                  }
+                  label="Exclude VAT"
+                />
+                <Typography>Subtotal: AED {invoice.subtotal?.toFixed(2) || '0.00'}</Typography>
+                {!invoice.includeVat && (
+                  <Typography>Tax (5%): AED {invoice.tax?.toFixed(2) || '0.00'}</Typography>
+                )}
+                <Typography variant="h6">Total: AED {invoice.total?.toFixed(2) || '0.00'}</Typography>
               </Box>
             </Grid>
 
