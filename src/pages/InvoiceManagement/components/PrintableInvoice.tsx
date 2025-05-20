@@ -1,15 +1,66 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button } from '@mui/material';
-import { Print as PrintIcon } from '@mui/icons-material';
+import { Print as PrintIcon, WhatsApp as WhatsAppIcon } from '@mui/icons-material';
 import { Invoice } from '../../../types/api';
+import html2pdf from 'html2pdf.js';
 
 interface PrintableInvoiceProps {
   invoice: Invoice;
 }
 
 const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({ invoice }) => {
+  const contentRef = useRef<HTMLDivElement>(null);
+
   const handlePrint = () => {
     window.print();
+  };
+
+  const generatePDF = async (): Promise<string | null> => {
+    if (!contentRef.current) return null;
+
+    const opt = {
+      margin: 1,
+      filename: `Invoice_${invoice.invoiceNumber}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+    };
+
+    try {
+      const pdf = await html2pdf().set(opt).from(contentRef.current).save();
+      return `Invoice_${invoice.invoiceNumber}.pdf`;
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      return null;
+    }
+  };
+
+  const handleWhatsAppShare = async () => {
+    try {
+      // Generate PDF first
+      const pdfFileName = await generatePDF();
+      if (!pdfFileName) {
+        console.error('Failed to generate PDF');
+        return;
+      }
+
+      // Create a simple message
+      const message = `Your invoice ${invoice.invoiceNumber} is ready. Please check the attached PDF for details.`;
+
+      // Encode the message for URL
+      const encodedMessage = encodeURIComponent(message);
+      
+      // Create WhatsApp share URL with phone number
+      const phoneNumber = invoice.contract?.contactPhone?.replace(/[^0-9]/g, '') || '';
+      const whatsappUrl = phoneNumber 
+        ? `https://wa.me/${phoneNumber}?text=${encodedMessage}`
+        : `https://wa.me/?text=${encodedMessage}`;
+      
+      // Open WhatsApp in a new window
+      window.open(whatsappUrl, '_blank');
+    } catch (error) {
+      console.error('Error sharing to WhatsApp:', error);
+    }
   };
 
   // Calculate totals from items
@@ -19,19 +70,22 @@ const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({ invoice }) => {
 
   return (
     <>
-      <Box sx={{ 
-        p: 3, 
-        maxWidth: '800px', 
-        margin: '0 auto',
-        '@media print': {
-          padding: '15px',
-          margin: 0,
-          maxWidth: 'none',
-          '& button': {
-            display: 'none'
+      <Box 
+        ref={contentRef}
+        sx={{ 
+          p: 3, 
+          maxWidth: '800px', 
+          margin: '0 auto',
+          '@media print': {
+            padding: '15px',
+            margin: 0,
+            maxWidth: 'none',
+            '& button': {
+              display: 'none'
+            }
           }
-        }
-      }}>
+        }}
+      >
         {/* Header Banner */}
         <Box sx={{ 
           mb: 2,
@@ -235,8 +289,22 @@ const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({ invoice }) => {
           />
         </Box>
 
-        {/* Print Button */}
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2, '@media print': { display: 'none' } }}>
+        {/* Action Buttons */}
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'flex-end', 
+          gap: 2, 
+          mb: 2, 
+          '@media print': { display: 'none' } 
+        }}>
+          <Button
+            variant="contained"
+            color="success"
+            startIcon={<WhatsAppIcon />}
+            onClick={handleWhatsAppShare}
+          >
+            Share on WhatsApp
+          </Button>
           <Button
             variant="contained"
             color="primary"
