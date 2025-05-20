@@ -74,6 +74,7 @@ export interface Invoice {
   items: InvoiceItem[];
   subtotal: number;
   tax: number;
+  includeVat: boolean;
   total: number;
   notes: string;
   paymentHistory: PaymentRecord[];

@@ -14,8 +14,8 @@ const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({ invoice }) => {
 
   // Calculate totals from items
   const subtotal = invoice?.items?.reduce((sum, item) => sum + (item.amount || 0), 0) || 0;
-  const vat = subtotal * 0.05; // 5% VAT
-  const total = subtotal + vat;
+  const vat = invoice?.includeVat ? subtotal * 0.05 : 0; // 5% VAT if included
+  const total = invoice?.includeVat ? subtotal + vat : subtotal; // If VAT is not included, total equals subtotal
 
   return (
     <>
@@ -62,9 +62,9 @@ const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({ invoice }) => {
         {/* Main Content */}
         <Box sx={{
           '@media print': {
-            paddingTop: '80px', // Match header height
-            paddingBottom: '80px', // Match footer height
-            minHeight: 'calc(100vh - 160px)', // Account for header and footer
+            paddingTop: '80px',
+            paddingBottom: '80px',
+            minHeight: 'calc(100vh - 160px)',
             pageBreakInside: 'avoid'
           }
         }}>
@@ -79,7 +79,7 @@ const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({ invoice }) => {
             }
           }}>
             <Typography variant="h6" gutterBottom sx={{ fontSize: '1.25rem' }}>
-              TAX INVOICE
+              INVOICE
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
               Invoice Number: {invoice?.invoiceNumber || 'N/A'}
@@ -141,10 +141,12 @@ const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({ invoice }) => {
                     <TableCell sx={{ fontSize: '0.75rem', py: 1 }}>Subtotal:</TableCell>
                     <TableCell align="right" sx={{ fontSize: '0.75rem', py: 1 }}>AED {subtotal.toFixed(2)}</TableCell>
                   </TableRow>
-                  <TableRow>
-                    <TableCell sx={{ fontSize: '0.75rem', py: 1 }}>VAT (5%):</TableCell>
-                    <TableCell align="right" sx={{ fontSize: '0.75rem', py: 1 }}>AED {vat.toFixed(2)}</TableCell>
-                  </TableRow>
+                  {invoice?.includeVat && (
+                    <TableRow>
+                      <TableCell sx={{ fontSize: '0.75rem', py: 1 }}>VAT (5%):</TableCell>
+                      <TableCell align="right" sx={{ fontSize: '0.75rem', py: 1 }}>AED {vat.toFixed(2)}</TableCell>
+                    </TableRow>
+                  )}
                   <TableRow>
                     <TableCell sx={{ py: 1 }}>
                       <Typography variant="body2" sx={{ fontSize: '0.875rem', fontWeight: 'bold' }}>Total:</Typography>
