@@ -32,7 +32,7 @@ import {
   Delete as DeleteIcon,
 } from '@mui/icons-material';
 import UserService, { CreateUserData, UpdateUserData } from '../../services/UserService';
-import { User, APIResponse } from '../../types/api';
+import { User } from '../../types/api';
 import { useAuth } from '../../contexts/AuthContext';
 import CompanyService from '../../services/CompanyService';
 

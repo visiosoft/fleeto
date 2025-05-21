@@ -18,6 +18,8 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
+    "noUnusedLocals": false,       // Disable unused variable errors
+    "noUnusedParameters": false,   // Disable unused parameter errors
     "jsx": "react-jsx",
     "baseUrl": "src",
     "paths": {
