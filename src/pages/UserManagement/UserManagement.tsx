@@ -34,17 +34,9 @@ import {
 import UserService, { CreateUserData, UpdateUserData } from '../../services/UserService';
 import { User } from '../../types/api';
 import { useAuth } from '../../contexts/AuthContext';
-import CompanyService from '../../services/CompanyService';
-
-interface Company {
-  _id: string;
-  name: string;
-}
 
 const UserManagement: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [selectedCompany, setSelectedCompany] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
@@ -58,48 +50,30 @@ const UserManagement: React.FC = () => {
     status: 'active',
     password: '',
     confirmPassword: '',
-    companyId: '',
   });
-  const { token } = useAuth();
+  const { token, selectedCompanyId } = useAuth();
   const userService = UserService.getInstance();
-  const companyService = CompanyService.getInstance();
 
   useEffect(() => {
-    if (token) {
+    if (token && selectedCompanyId) {
       userService.setToken(token);
-      fetchCompanies();
+      fetchUsers();
     }
-  }, [token]);
+  }, [token, selectedCompanyId]);
 
-  useEffect(() => {
-    if (selectedCompany) {
-      fetchUsers(selectedCompany);
-    }
-  }, [selectedCompany]);
-
-  const fetchCompanies = async () => {
-    try {
-      const response = await companyService.getAllCompanies();
-      const companies = response.data.data.companies;
-      setCompanies(companies);
-      if (companies.length > 0) {
-        setSelectedCompany(companies[0]._id);
-      }
-    } catch (err) {
-      setError('Failed to fetch companies');
-      console.error('Error fetching companies:', err);
-    }
-  };
-
-  const fetchUsers = async (companyId: string) => {
+  const fetchUsers = async () => {
     try {
       setLoading(true);
-      const response = await userService.getUsers(companyId);
+      if (!selectedCompanyId) {
+        setError('No company selected');
+        setUsers([]);
+        return;
+      }
+      const response = await userService.getUsers(selectedCompanyId);
       console.log('API Response:', response);
       
-
       if (response && response.data) {
-       setUsers(response.data.users);
+        setUsers(response.data.users);
       } else {
         console.error('Invalid response format:', response);
         setUsers([]);
@@ -129,7 +103,6 @@ const UserManagement: React.FC = () => {
         status: 'active',
         password: '',
         confirmPassword: '',
-        companyId: selectedCompany,
       });
     }
     setOpenDialog(true);
@@ -147,7 +120,6 @@ const UserManagement: React.FC = () => {
       status: 'active',
       password: '',
       confirmPassword: '',
-      companyId: selectedCompany,
     });
   };
 
@@ -173,12 +145,12 @@ const UserManagement: React.FC = () => {
           setError('Password is required for new users');
           return;
         }
-        const createData = { ...formData };
+        const createData = { ...formData, companyId: selectedCompanyId };
         delete createData.confirmPassword;
         await userService.createUser(createData as CreateUserData);
       }
       handleCloseDialog();
-      fetchUsers(selectedCompany);
+      fetchUsers();
     } catch (err) {
       setError('Failed to save user');
       console.error('Error saving user:', err);
@@ -189,7 +161,7 @@ const UserManagement: React.FC = () => {
     if (window.confirm('Are you sure you want to delete this user?')) {
       try {
         await userService.deleteUser(id);
-        fetchUsers(selectedCompany);
+        fetchUsers();
       } catch (err) {
         setError('Failed to delete user');
         console.error('Error deleting user:', err);
@@ -229,24 +201,6 @@ const UserManagement: React.FC = () => {
           {error}
         </Alert>
       )}
-
-      <Box sx={{ mb: 3 }}>
-        <FormControl fullWidth>
-          <InputLabel>Select Company</InputLabel>
-          <Select
-            value={selectedCompany}
-            label="Select Company"
-            onChange={(e) => setSelectedCompany(e.target.value)}
-            required
-          >
-            {companies.map((company) => (
-              <MenuItem key={company._id} value={company._id}>
-                {company.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </Box>
 
       <Paper sx={{ width: '100%', overflow: 'hidden' }}>
         {loading ? (
@@ -309,23 +263,6 @@ const UserManagement: React.FC = () => {
         <form onSubmit={handleSubmit}>
           <DialogContent>
             <Grid container spacing={2}>
-              <Grid item xs={12}>
-                <FormControl fullWidth>
-                  <InputLabel>Company</InputLabel>
-                  <Select
-                    value={formData.companyId}
-                    label="Company"
-                    onChange={(e) => setFormData({ ...formData, companyId: e.target.value })}
-                    required
-                  >
-                    {companies.map((company) => (
-                      <MenuItem key={company._id} value={company._id}>
-                        {company.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
               <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
@@ -344,7 +281,7 @@ const UserManagement: React.FC = () => {
                   required
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12}>
                 <TextField
                   fullWidth
                   label="Email"
@@ -429,4 +366,4 @@ const UserManagement: React.FC = () => {
   );
 };
 
-export default UserManagement; 
+export default UserManagement;

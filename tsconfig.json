@@ -24,7 +24,11 @@
     "baseUrl": "src",
     "paths": {
       "*": ["*", "utils/*", "components/*", "pages/*", "services/*", "types/*", "config/*"]
-    }
+    },
+    "typeRoots": [
+      "./node_modules/@types",
+      "./src/components/LoadingAnimation/animations"
+    ]
   },
   "include": [
     "src"
