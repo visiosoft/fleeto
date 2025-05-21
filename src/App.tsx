@@ -20,6 +20,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import CompanySelection from './pages/CompanySelection/CompanySelection';
 import { ThemeProvider } from './contexts/ThemeContext';
 import LoadingDemo from './pages/LoadingDemo/LoadingDemo';
+import LandingPage from './pages/LandingPage/LandingPage';
 
 // Lazy load all pages
 const VehicleManagement = React.lazy(() => import('./pages/VehicleManagement'));
@@ -69,6 +70,7 @@ const AppContent: React.FC = () => {
       <Suspense fallback={<LoadingFallback />}>
         <Routes>
           {/* Public routes */}
+          <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           
