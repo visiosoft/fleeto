@@ -3,7 +3,6 @@ import { useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
 import {
   AppBar,
   Box,
-  CssBaseline,
   Drawer,
   IconButton,
   List,
@@ -13,13 +12,11 @@ import {
   Toolbar,
   Typography,
   useTheme,
-  useMediaQuery,
   Menu,
   MenuItem,
   Avatar,
-  Tooltip,
   Divider,
-  ListItem
+  Tooltip,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -35,22 +32,13 @@ import {
   Description as DescriptionIcon,
   Business as BusinessIcon,
   Logout as LogoutIcon,
-  Person as PersonIcon,
-  AccountCircle as AccountCircleIcon,
   AccountBalance as AccountBalanceIcon,
-  ChevronLeft as ChevronLeftIcon,
-  ChevronRight as ChevronRightIcon,
   Note as NoteIcon,
-  Dashboard as DashboardIcon,
-  DirectionsCar as CarIcon,
-  Person as DriverIcon,
-  LocalGasStation as FuelIcon,
-  Build as MaintenanceIcon,
-  AttachMoney as PayrollIcon,
   Receipt as ReceiptIcon,
   Group as GroupIcon,
-  BusinessCenter as BusinessCenterIcon,
-  Security as SecurityIcon,
+  Person as PersonIcon,
+  AccountCircle as AccountCircleIcon,
+  AttachMoney as PayrollIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 
