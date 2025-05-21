@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavig
 import Navigation from './components/Navigation/Navigation';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment';
-import { useMediaQuery, useTheme, CircularProgress, Box, CssBaseline, ThemeProvider } from '@mui/material';
+import { useMediaQuery, useTheme, CircularProgress, Box, CssBaseline } from '@mui/material';
 import Dashboard from './pages/Dashboard/Dashboard';
 import ContractTemplate from './pages/ContractTemplate/ContractTemplate';
 import Login from './pages/Login/Login';
@@ -18,7 +18,7 @@ import InvoicePayment from './pages/InvoiceManagement/InvoicePayment';
 import UserManagement from './pages/UserManagement/UserManagement';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import CompanySelection from './pages/CompanySelection/CompanySelection';
-import { theme } from './theme';
+import { ThemeProvider } from './contexts/ThemeContext';
 import LoadingDemo from './pages/LoadingDemo/LoadingDemo';
 
 // Lazy load all pages
@@ -362,7 +362,7 @@ const AppWrapper: React.FC = () => {
 // Main App component
 const App: React.FC = () => {
   return (
-    <ThemeProvider theme={theme}>
+    <ThemeProvider>
       <CssBaseline />
       <Router>
         <AppWrapper />

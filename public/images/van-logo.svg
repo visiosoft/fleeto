@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Van Body -->
+  <path d="M8 20H32V28H8V20Z" fill="#2D9B9B"/>
+  <!-- Van Front -->
+  <path d="M32 20L36 24V28H32V20Z" fill="#2D9B9B"/>
+  <!-- Van Roof -->
+  <path d="M8 16H28V20H8V16Z" fill="#2D9B9B"/>
+  <!-- Windows -->
+  <path d="M12 16H24V20H12V16Z" fill="#FFFFFF"/>
+  <!-- Front Window -->
+  <path d="M28 16H32V20H28V16Z" fill="#FFFFFF"/>
+  <!-- Wheels -->
+  <circle cx="12" cy="28" r="3" fill="#333333"/>
+  <circle cx="28" cy="28" r="3" fill="#333333"/>
+  <!-- Wheel Details -->
+  <circle cx="12" cy="28" r="1.5" fill="#FFFFFF"/>
+  <circle cx="28" cy="28" r="1.5" fill="#FFFFFF"/>
+</svg> 
