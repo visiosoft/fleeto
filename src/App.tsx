@@ -15,12 +15,11 @@ import DriverPayroll from './pages/DriverPayroll/DriverPayroll';
 import InvoiceManagement from './pages/InvoiceManagement/InvoiceManagement';
 import InvoiceForm from './pages/InvoiceManagement/InvoiceForm';
 import InvoicePayment from './pages/InvoiceManagement/InvoicePayment';
-import CompanyManagement from './pages/CompanyManagement/CompanyManagement';
-import CompanyUsers from './pages/CompanyUsers/CompanyUsers';
 import UserManagement from './pages/UserManagement/UserManagement';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import CompanySelection from './pages/CompanySelection/CompanySelection';
 import { theme } from './theme';
+import LoadingDemo from './pages/LoadingDemo/LoadingDemo';
 
 // Lazy load all pages
 const VehicleManagement = React.lazy(() => import('./pages/VehicleManagement'));
@@ -326,26 +325,15 @@ const AppContent: React.FC = () => {
               </Navigation>
             </ProtectedRoute>
           } />
-          <Route path="/companies" element={
-            <ProtectedRoute>
-              <Navigation
-                isMobile={isMobile}
-                isDrawerOpen={mobileOpen}
-                handleDrawerToggle={handleDrawerToggle}
-              >
-                <CompanyManagement />
-              </Navigation>
-            </ProtectedRoute>
-          } />
           
-          <Route path="/companies/:companyId/users" element={
+          <Route path="/loading-demo" element={
             <ProtectedRoute>
               <Navigation
                 isMobile={isMobile}
                 isDrawerOpen={mobileOpen}
                 handleDrawerToggle={handleDrawerToggle}
               >
-                <CompanyUsers />
+                <LoadingDemo />
               </Navigation>
             </ProtectedRoute>
           } />

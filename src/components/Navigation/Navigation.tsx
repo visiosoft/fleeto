@@ -17,6 +17,12 @@ import {
   Avatar,
   Divider,
   Tooltip,
+  Badge,
+  InputBase,
+  Button,
+  Stack,
+  Chip,
+  alpha,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -39,6 +45,16 @@ import {
   Person as PersonIcon,
   AccountCircle as AccountCircleIcon,
   AttachMoney as PayrollIcon,
+  Search as SearchIcon,
+  Notifications as NotificationsIcon,
+  Map as MapIcon,
+  List as ListIcon,
+  Help as HelpIcon,
+  WbSunny as WbSunnyIcon,
+  DarkMode as DarkModeIcon,
+  AccessTime as AccessTimeIcon,
+  Warning as WarningIcon,
+  Timer as TimerIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -66,7 +82,6 @@ const MENU_ITEMS: MenuItem[] = [
   { text: 'Contract', path: '/contracts', icon: <DescriptionIcon /> },
   { text: 'Tracking', path: '/tracking', icon: <LocationOnIcon /> },
   { text: 'Invoice Management', path: '/invoices', icon: <ReceiptIcon /> },
-  { text: 'Company Management', path: '/companies', icon: <BusinessIcon /> },
   { text: 'User Management', path: '/users', icon: <GroupIcon /> },
   {
     text: 'General Notes',
@@ -109,20 +124,35 @@ const Navigation: React.FC<NavigationProps> = ({
   const { logout, user, companies } = useAuth();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [companyName, setCompanyName] = useState<string>('');
+  const [companyLogo, setCompanyLogo] = useState<string>('');
+  const [viewMode, setViewMode] = useState<'map' | 'list'>('list');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [fleetStatus, setFleetStatus] = useState({ active: 38, total: 50 });
 
   useEffect(() => {
-    // Get company name from localStorage
+    // Get company name and logo from localStorage
     const savedCompanies = localStorage.getItem('companies');
     if (savedCompanies) {
       try {
         const parsedCompanies = JSON.parse(savedCompanies);
         if (parsedCompanies && parsedCompanies.length > 0) {
           setCompanyName(parsedCompanies[0].name);
+          setCompanyLogo(parsedCompanies[0].logo || '');
         }
       } catch (error) {
         console.error('Error parsing companies from localStorage:', error);
       }
     }
+  }, []);
+
+  // Update time every minute
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000);
+    return () => clearInterval(timer);
   }, []);
 
   const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
@@ -138,11 +168,29 @@ const Navigation: React.FC<NavigationProps> = ({
     await logout();
   };
 
+  const handleViewModeToggle = () => {
+    setViewMode(viewMode === 'map' ? 'list' : 'map');
+  };
+
+  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(event.target.value);
+  };
+
+  const handleDarkModeToggle = () => {
+    setIsDarkMode(!isDarkMode);
+    // TODO: Implement theme switching
+  };
+
+  const handleEmergencyHelp = () => {
+    // TODO: Implement emergency help functionality
+    console.log('Emergency help requested');
+  };
+
   const drawer = (
     <div>
       <Toolbar>
         <Typography variant="h6" noWrap component="div">
-         { 'Fleet Management'}
+          {'Fleet Management'}
         </Typography>
       </Toolbar>
       <Divider />
@@ -180,9 +228,11 @@ const Navigation: React.FC<NavigationProps> = ({
         sx={{
           width: '100%',
           zIndex: (theme) => theme.zIndex.drawer + 1,
+          backgroundColor: theme.palette.primary.main,
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
         }}
       >
-        <Toolbar>
+        <Toolbar sx={{ gap: 2 }}>
           <IconButton
             color="inherit"
             aria-label="open drawer"
@@ -192,9 +242,140 @@ const Navigation: React.FC<NavigationProps> = ({
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            {companyName || 'Dashboard'}
-          </Typography>
+          
+          {/* Logo and Company Name */}
+          <Box
+            component={RouterLink}
+            to="/"
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              textDecoration: 'none',
+              color: 'inherit',
+              minWidth: 200,
+            }}
+          >
+            {companyLogo ? (
+              <Box
+                component="img"
+                src={companyLogo}
+                alt="Company Logo"
+                sx={{
+                  height: 40,
+                  width: 'auto',
+                  mr: 2,
+                }}
+              />
+            ) : (
+              <BusinessIcon sx={{ fontSize: 32, mr: 1 }} />
+            )}
+            <Typography
+              variant="h6"
+              noWrap
+              sx={{
+                fontWeight: 600,
+                letterSpacing: '0.02em',
+                color: '#FFFFFF',
+              }}
+            >
+              {companyName || 'Fleet Management'}
+            </Typography>
+          </Box>
+
+          {/* Quick Access Menu */}
+          <Stack direction="row" spacing={1} sx={{ flexGrow: 1 }}>
+            <Tooltip title="Toggle View">
+              <IconButton color="inherit" onClick={handleViewModeToggle}>
+                {viewMode === 'map' ? <ListIcon /> : <MapIcon />}
+              </IconButton>
+            </Tooltip>
+            
+            <Tooltip title="Notifications">
+              <IconButton color="inherit">
+                <Badge badgeContent={3} color="error">
+                  <NotificationsIcon />
+                </Badge>
+              </IconButton>
+            </Tooltip>
+
+            <Tooltip title="Engine Faults">
+              <IconButton color="inherit">
+                <Badge badgeContent={2} color="error">
+                  <WarningIcon />
+                </Badge>
+              </IconButton>
+            </Tooltip>
+
+            <Tooltip title="Geofence Alerts">
+              <IconButton color="inherit">
+                <Badge badgeContent={1} color="warning">
+                  <TimerIcon />
+                </Badge>
+              </IconButton>
+            </Tooltip>
+          </Stack>
+
+          {/* Search Bar */}
+          <Box
+            sx={{
+              position: 'relative',
+              borderRadius: 1,
+              backgroundColor: alpha(theme.palette.common.white, 0.15),
+              '&:hover': {
+                backgroundColor: alpha(theme.palette.common.white, 0.25),
+              },
+              width: 300,
+              display: { xs: 'none', md: 'flex' },
+            }}
+          >
+            <Box sx={{ p: 1, display: 'flex', alignItems: 'center' }}>
+              <SearchIcon sx={{ color: 'white' }} />
+              <InputBase
+                placeholder="Search by vehicle ID, driver, location..."
+                value={searchQuery}
+                onChange={handleSearch}
+                sx={{
+                  color: 'white',
+                  ml: 1,
+                  flex: 1,
+                  '& input::placeholder': {
+                    color: 'white',
+                    opacity: 0.7,
+                  },
+                }}
+              />
+            </Box>
+          </Box>
+
+          {/* Fleet Status */}
+          <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 1 }}>
+            <AccessTimeIcon sx={{ fontSize: 20 }} />
+            <Typography variant="body2" sx={{ color: 'white' }}>
+              {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} | {fleetStatus.active}/{fleetStatus.total} Vehicles Active
+            </Typography>
+          </Box>
+
+          {/* Theme Toggle */}
+          <IconButton color="inherit" onClick={handleDarkModeToggle}>
+            {isDarkMode ? <WbSunnyIcon /> : <DarkModeIcon />}
+          </IconButton>
+
+          {/* Emergency Help Button */}
+          <Button
+            variant="contained"
+            color="error"
+            startIcon={<HelpIcon />}
+            onClick={handleEmergencyHelp}
+            sx={{
+              display: { xs: 'none', md: 'flex' },
+              backgroundColor: theme.palette.error.main,
+              '&:hover': {
+                backgroundColor: theme.palette.error.dark,
+              },
+            }}
+          >
+            Emergency
+          </Button>
           
           {/* Profile Menu */}
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -208,7 +389,7 @@ const Navigation: React.FC<NavigationProps> = ({
                 onClick={handleProfileMenuOpen}
                 color="inherit"
               >
-                <Avatar sx={{ width: 32, height: 32, bgcolor: theme.palette.primary.main }}>
+                <Avatar sx={{ width: 32, height: 32, bgcolor: theme.palette.secondary.main }}>
                   <AccountCircleIcon />
                 </Avatar>
               </IconButton>
