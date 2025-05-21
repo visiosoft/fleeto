@@ -26,8 +26,6 @@ import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  Print as PrintIcon,
-  Download as DownloadIcon,
 } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -100,16 +98,6 @@ const DriverPayroll: React.FC = () => {
     paymentDate: '',
     notes: '',
   });
-
-  // Add default values for summary
-  const defaultSummary = {
-    totalPayroll: 0,
-    pendingPayments: 0,
-    paidPayments: 0,
-    averageSalary: 0,
-    totalDrivers: 0,
-    monthlyBreakdown: []
-  };
 
   const fetchPayrollData = async () => {
     try {
@@ -191,7 +179,14 @@ const DriverPayroll: React.FC = () => {
     } catch (err) {
       console.error('Error fetching data:', err);
       setError(err instanceof Error ? err.message : 'An error occurred');
-      setSummary(defaultSummary);
+      setSummary({
+        totalPayroll: 0,
+        pendingPayments: 0,
+        paidPayments: 0,
+        averageSalary: 0,
+        totalDrivers: 0,
+        monthlyBreakdown: []
+      });
       setDrivers([]);
     } finally {
       setLoading(false);
@@ -385,7 +380,7 @@ const DriverPayroll: React.FC = () => {
               Total Payroll
             </Typography>
             <Typography variant="h4">
-              AED {(summary?.totalPayroll || defaultSummary.totalPayroll).toLocaleString()}
+              AED {(summary?.totalPayroll || 0).toLocaleString()}
             </Typography>
           </Paper>
         </Grid>
@@ -395,7 +390,7 @@ const DriverPayroll: React.FC = () => {
               Pending Payments
             </Typography>
             <Typography variant="h4">
-              AED {(summary?.pendingPayments || defaultSummary.pendingPayments).toLocaleString()}
+              AED {(summary?.pendingPayments || 0).toLocaleString()}
             </Typography>
           </Paper>
         </Grid>
@@ -405,7 +400,7 @@ const DriverPayroll: React.FC = () => {
               Paid Payments
             </Typography>
             <Typography variant="h4">
-              AED {(summary?.paidPayments || defaultSummary.paidPayments).toLocaleString()}
+              AED {(summary?.paidPayments || 0).toLocaleString()}
             </Typography>
           </Paper>
         </Grid>
@@ -415,7 +410,7 @@ const DriverPayroll: React.FC = () => {
               Average Salary
             </Typography>
             <Typography variant="h4">
-              AED {(summary?.averageSalary || defaultSummary.averageSalary).toLocaleString()}
+              AED {(summary?.averageSalary || 0).toLocaleString()}
             </Typography>
           </Paper>
         </Grid>

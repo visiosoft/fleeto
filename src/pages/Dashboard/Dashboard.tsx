@@ -56,52 +56,11 @@ import moment from 'moment';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
-// Mock data for fuel summary - replace with actual API calls
-const fuelData = {
-  monthlyCost: 1480,
-  yearToDate: 12750,
-  avgConsumption: 9.2, // L/100km
-  trendPercentage: -3,
-  byVehicleType: [
-    { id: 'Sedan', value: 35 },
-    { id: 'SUV', value: 40 },
-    { id: 'Van', value: 15 },
-    { id: 'Truck', value: 10 },
-  ] as ChartDataItem[],
-  monthlyTrend: [
-    { month: 'Jan', cost: 1250 },
-    { month: 'Feb', cost: 1350 },
-    { month: 'Mar', cost: 1420 },
-    { month: 'Apr', cost: 1380 },
-    { month: 'May', cost: 1480 },
-  ]
-};
-
 // Define types for our chart data
 interface ChartDataItem {
   id: string;
   value: number;
 }
-
-// Mock data for maintenance summary - replace with actual API calls
-const maintenanceData = {
-  monthlyCost: 2340,
-  yearToDate: 18650,
-  scheduledPercentage: 65,
-  trendPercentage: 8,
-  byType: [
-    { id: 'Scheduled', value: 65 },
-    { id: 'Repairs', value: 25 },
-    { id: 'Inspection', value: 10 },
-  ] as ChartDataItem[],
-  monthlyTrend: [
-    { month: 'Jan', cost: 1850 },
-    { month: 'Feb', cost: 1920 },
-    { month: 'Mar', cost: 2050 },
-    { month: 'Apr', cost: 2180 },
-    { month: 'May', cost: 2340 },
-  ]
-};
 
 // Define interfaces for API response data
 interface ExpenseCategory {

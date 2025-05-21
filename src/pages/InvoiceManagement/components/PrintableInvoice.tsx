@@ -1,6 +1,5 @@
 import React, { useRef } from 'react';
 import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button } from '@mui/material';
-import { Print as PrintIcon, WhatsApp as WhatsAppIcon } from '@mui/icons-material';
 import { Invoice } from '../../../types/api';
 import html2pdf from 'html2pdf.js';
 
@@ -300,7 +299,6 @@ const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({ invoice }) => {
           <Button
             variant="contained"
             color="success"
-            startIcon={<WhatsAppIcon />}
             onClick={handleWhatsAppShare}
           >
             Share on WhatsApp
@@ -308,7 +306,6 @@ const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({ invoice }) => {
           <Button
             variant="contained"
             color="primary"
-            startIcon={<PrintIcon />}
             onClick={handlePrint}
           >
             Print Invoice

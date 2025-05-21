@@ -185,7 +185,6 @@ const ContractManagement: React.FC = () => {
   const theme = useTheme();
   const [contracts, setContracts] = useState<ContractFormData[]>([]);
   const [currentContract, setCurrentContract] = useState<ContractFormData>(emptyContract);
-  const [companies, setCompanies] = useState<string[]>([]);
   const [statuses] = useState<ContractStatus[]>([...CONTRACT_STATUSES]);
   const [stats, setStats] = useState<ContractStats>({
     totalContracts: 0,
@@ -257,10 +256,6 @@ const ContractManagement: React.FC = () => {
 
         // Fetch contracts list
         await fetchContracts();
-
-        // Fetch companies
-        const companiesResponse = await axios.get(getApiUrl(`${API_CONFIG.ENDPOINTS.CONTRACTS}/companies`));
-        setCompanies(companiesResponse.data);
 
       } catch (error) {
         console.error('Error fetching data:', error);
