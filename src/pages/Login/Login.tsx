@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Box,
   Paper,
@@ -21,11 +21,15 @@ import { useAuth } from '../../contexts/AuthContext';
 const Login: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
+  const location = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const { login } = useAuth();
+
+  // Get the redirect path from location state or default to dashboard
+  const from = (location.state as any)?.from || '/dashboard';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,12 +37,10 @@ const Login: React.FC = () => {
     setError('');
 
     try {
-      console.log('Attempting login with email:', email,password);
+      console.log('Attempting login with email:', email);
       await login(email, password);
-      
-      console.log('Auth state updated, navigating to dashboard...');
-      // Navigate to root path instead of /dashboard
-      navigate('/', { replace: true });
+      // Navigation is handled by AuthContext, but we'll navigate to the stored path
+      navigate(from, { replace: true });
     } catch (err: any) {
       console.error('Login error:', err);
       if (err.response?.data?.message) {
