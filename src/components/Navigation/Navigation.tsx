@@ -11,7 +11,7 @@ import {
   ListItemText,
   Toolbar,
   Typography,
-  useTheme,
+  useTheme as useMuiTheme,
   Menu,
   MenuItem,
   Avatar,
@@ -55,8 +55,10 @@ import {
   AccessTime as AccessTimeIcon,
   Warning as WarningIcon,
   Timer as TimerIcon,
+  LocalHospital as EmergencyIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const drawerWidth = 240;
 
@@ -118,16 +120,15 @@ const Navigation: React.FC<NavigationProps> = ({
   isDrawerOpen,
   handleDrawerToggle,
 }) => {
-  const theme = useTheme();
+  const muiTheme = useMuiTheme();
+  const { isDarkMode, toggleTheme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
   const { logout, user, companies } = useAuth();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [companyName, setCompanyName] = useState<string>('');
   const [companyLogo, setCompanyLogo] = useState<string>('');
-  const [viewMode, setViewMode] = useState<'map' | 'list'>('list');
   const [searchQuery, setSearchQuery] = useState('');
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [fleetStatus, setFleetStatus] = useState({ active: 38, total: 50 });
 
@@ -168,22 +169,13 @@ const Navigation: React.FC<NavigationProps> = ({
     await logout();
   };
 
-  const handleViewModeToggle = () => {
-    setViewMode(viewMode === 'map' ? 'list' : 'map');
-  };
-
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(event.target.value);
   };
 
-  const handleDarkModeToggle = () => {
-    setIsDarkMode(!isDarkMode);
-    // TODO: Implement theme switching
-  };
-
   const handleEmergencyHelp = () => {
-    // TODO: Implement emergency help functionality
-    console.log('Emergency help requested');
+    // Call 911 or emergency services
+    window.location.href = 'tel:911';
   };
 
   const drawer = (
@@ -228,118 +220,105 @@ const Navigation: React.FC<NavigationProps> = ({
         sx={{
           width: '100%',
           zIndex: (theme) => theme.zIndex.drawer + 1,
-          backgroundColor: theme.palette.primary.main,
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
         }}
       >
-        <Toolbar sx={{ gap: 2 }}>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { sm: 'none' } }}
-          >
-            <MenuIcon />
-          </IconButton>
-          
-          {/* Logo and Company Name */}
-          <Box
-            component={RouterLink}
-            to="/"
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              textDecoration: 'none',
-              color: 'inherit',
-              minWidth: 200,
-            }}
-          >
-            {companyLogo ? (
-              <Box
-                component="img"
-                src={companyLogo}
-                alt="Company Logo"
-                sx={{
-                  height: 40,
-                  width: 'auto',
-                  mr: 2,
-                }}
-              />
-            ) : (
-              <BusinessIcon sx={{ fontSize: 32, mr: 1 }} />
-            )}
-            <Typography
-              variant="h6"
-              noWrap
-              sx={{
-                fontWeight: 600,
-                letterSpacing: '0.02em',
-                color: '#FFFFFF',
+        <Toolbar sx={{ 
+          gap: 2,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}>
+          {/* Left Section */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <IconButton
+              color="inherit"
+              aria-label="open drawer"
+              edge="start"
+              onClick={handleDrawerToggle}
+              sx={{ 
+                mr: 2, 
+                display: { sm: 'none' },
+                color: muiTheme.palette.text.secondary,
               }}
             >
-              {companyName || 'Fleet Management'}
-            </Typography>
+              <MenuIcon />
+            </IconButton>
+            
+            {/* Logo and Company Name */}
+            <Box
+              component={RouterLink}
+              to="/"
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                textDecoration: 'none',
+                color: 'inherit',
+                minWidth: 200,
+              }}
+            >
+              {companyLogo ? (
+                <Box
+                  component="img"
+                  src={companyLogo}
+                  alt="Company Logo"
+                  sx={{
+                    height: 40,
+                    width: 'auto',
+                    mr: 2,
+                  }}
+                />
+              ) : (
+                <Box
+                  component="img"
+                  src="/images/van-logo.svg"
+                  alt="Fleet Management Logo"
+                  sx={{
+                    height: 40,
+                    width: 40,
+                    mr: 2,
+                  }}
+                />
+              )}
+              <Typography
+                variant="h6"
+                noWrap
+                sx={{
+                  fontWeight: 600,
+                  letterSpacing: '0.02em',
+                  color: muiTheme.palette.text.primary,
+                }}
+              >
+                {companyName || 'Fleet Management'}
+              </Typography>
+            </Box>
           </Box>
 
-          {/* Quick Access Menu */}
-          <Stack direction="row" spacing={1} sx={{ flexGrow: 1 }}>
-            <Tooltip title="Toggle View">
-              <IconButton color="inherit" onClick={handleViewModeToggle}>
-                {viewMode === 'map' ? <ListIcon /> : <MapIcon />}
-              </IconButton>
-            </Tooltip>
-            
-            <Tooltip title="Notifications">
-              <IconButton color="inherit">
-                <Badge badgeContent={3} color="error">
-                  <NotificationsIcon />
-                </Badge>
-              </IconButton>
-            </Tooltip>
-
-            <Tooltip title="Engine Faults">
-              <IconButton color="inherit">
-                <Badge badgeContent={2} color="error">
-                  <WarningIcon />
-                </Badge>
-              </IconButton>
-            </Tooltip>
-
-            <Tooltip title="Geofence Alerts">
-              <IconButton color="inherit">
-                <Badge badgeContent={1} color="warning">
-                  <TimerIcon />
-                </Badge>
-              </IconButton>
-            </Tooltip>
-          </Stack>
-
-          {/* Search Bar */}
+          {/* Center Section - Search Bar */}
           <Box
             sx={{
               position: 'relative',
               borderRadius: 1,
-              backgroundColor: alpha(theme.palette.common.white, 0.15),
+              backgroundColor: muiTheme.palette.background.paper,
+              border: `1px solid ${muiTheme.palette.mode === 'dark' ? '#404040' : '#E2E8F0'}`,
               '&:hover': {
-                backgroundColor: alpha(theme.palette.common.white, 0.25),
+                borderColor: muiTheme.palette.primary.main,
               },
               width: 300,
               display: { xs: 'none', md: 'flex' },
             }}
           >
             <Box sx={{ p: 1, display: 'flex', alignItems: 'center' }}>
-              <SearchIcon sx={{ color: 'white' }} />
+              <SearchIcon sx={{ color: muiTheme.palette.text.secondary }} />
               <InputBase
                 placeholder="Search by vehicle ID, driver, location..."
                 value={searchQuery}
                 onChange={handleSearch}
                 sx={{
-                  color: 'white',
+                  color: muiTheme.palette.text.primary,
                   ml: 1,
                   flex: 1,
                   '& input::placeholder': {
-                    color: 'white',
+                    color: muiTheme.palette.text.secondary,
                     opacity: 0.7,
                   },
                 }}
@@ -347,87 +326,138 @@ const Navigation: React.FC<NavigationProps> = ({
             </Box>
           </Box>
 
-          {/* Fleet Status */}
-          <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 1 }}>
-            <AccessTimeIcon sx={{ fontSize: 20 }} />
-            <Typography variant="body2" sx={{ color: 'white' }}>
-              {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} | {fleetStatus.active}/{fleetStatus.total} Vehicles Active
-            </Typography>
-          </Box>
+          {/* Right Section */}
+          <Box sx={{ 
+            display: 'flex', 
+            alignItems: 'center',
+            gap: 1,
+          }}>
+            {/* Fleet Status */}
+            <Box sx={{ 
+              display: { xs: 'none', md: 'flex' }, 
+              alignItems: 'center', 
+              gap: 1,
+              mr: 2,
+            }}>
+              <AccessTimeIcon sx={{ fontSize: 20, color: muiTheme.palette.text.secondary }} />
+              <Typography variant="body2" sx={{ color: muiTheme.palette.text.primary }}>
+                {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} | {fleetStatus.active}/{fleetStatus.total} Active
+              </Typography>
+            </Box>
 
-          {/* Theme Toggle */}
-          <IconButton color="inherit" onClick={handleDarkModeToggle}>
-            {isDarkMode ? <WbSunnyIcon /> : <DarkModeIcon />}
-          </IconButton>
+            {/* Quick Actions */}
+            <Stack direction="row" spacing={0.5}>
+              <Tooltip title="Notifications">
+                <IconButton 
+                  size="small"
+                  sx={{ color: muiTheme.palette.text.secondary }}
+                >
+                  <Badge badgeContent={3} color="error">
+                    <NotificationsIcon />
+                  </Badge>
+                </IconButton>
+              </Tooltip>
 
-          {/* Emergency Help Button */}
-          <Button
-            variant="contained"
-            color="error"
-            startIcon={<HelpIcon />}
-            onClick={handleEmergencyHelp}
-            sx={{
-              display: { xs: 'none', md: 'flex' },
-              backgroundColor: theme.palette.error.main,
-              '&:hover': {
-                backgroundColor: theme.palette.error.dark,
-              },
-            }}
-          >
-            Emergency
-          </Button>
-          
-          {/* Profile Menu */}
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Tooltip title="Account settings">
-              <IconButton
-                size="large"
-                edge="end"
-                aria-label="account of current user"
-                aria-controls="menu-appbar"
-                aria-haspopup="true"
-                onClick={handleProfileMenuOpen}
-                color="inherit"
-              >
-                <Avatar sx={{ width: 32, height: 32, bgcolor: theme.palette.secondary.main }}>
-                  <AccountCircleIcon />
-                </Avatar>
-              </IconButton>
-            </Tooltip>
-            <Menu
-              anchorEl={anchorEl}
-              anchorOrigin={{
-                vertical: 'bottom',
-                horizontal: 'right',
+              <Tooltip title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}>
+                <IconButton 
+                  onClick={toggleTheme}
+                  size="small"
+                  sx={{ 
+                    color: muiTheme.palette.text.secondary,
+                    '&:hover': {
+                      backgroundColor: muiTheme.palette.mode === 'dark' ? '#404040' : '#E2E8F0',
+                    }
+                  }}
+                >
+                  {isDarkMode ? <WbSunnyIcon /> : <DarkModeIcon />}
+                </IconButton>
+              </Tooltip>
+            </Stack>
+
+            {/* Emergency Help Button */}
+            <Button
+              variant="contained"
+              startIcon={<EmergencyIcon />}
+              onClick={handleEmergencyHelp}
+              size="small"
+              sx={{
+                display: { xs: 'none', md: 'flex' },
+                backgroundColor: muiTheme.palette.error.main,
+                color: '#FFFFFF',
+                ml: 1,
+                fontWeight: 'bold',
+                '&:hover': {
+                  backgroundColor: muiTheme.palette.error.dark,
+                  transform: 'scale(1.05)',
+                  transition: 'transform 0.2s ease-in-out',
+                },
+                '& .MuiButton-startIcon': {
+                  marginRight: 0.5,
+                },
               }}
-              keepMounted
-              transformOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-              open={Boolean(anchorEl)}
-              onClose={handleMenuClose}
             >
-              <MenuItem onClick={() => { handleMenuClose(); navigate('/profile'); }}>
-                <ListItemIcon>
-                  <PersonIcon fontSize="small" />
-                </ListItemIcon>
-                Profile
-              </MenuItem>
-              <MenuItem onClick={() => { handleMenuClose(); navigate('/settings'); }}>
-                <ListItemIcon>
-                  <SettingsIcon fontSize="small" />
-                </ListItemIcon>
-                Settings
-              </MenuItem>
-              <Divider />
-              <MenuItem onClick={handleLogout}>
-                <ListItemIcon>
-                  <LogoutIcon fontSize="small" />
-                </ListItemIcon>
-                Logout
-              </MenuItem>
-            </Menu>
+              911
+            </Button>
+            
+            {/* Profile Menu */}
+            <Box sx={{ ml: 1 }}>
+              <Tooltip title="Account settings">
+                <IconButton
+                  size="small"
+                  edge="end"
+                  aria-label="account of current user"
+                  aria-controls="menu-appbar"
+                  aria-haspopup="true"
+                  onClick={handleProfileMenuOpen}
+                  sx={{ color: muiTheme.palette.text.secondary }}
+                >
+                  <Avatar sx={{ width: 32, height: 32, bgcolor: muiTheme.palette.primary.main }}>
+                    <AccountCircleIcon />
+                  </Avatar>
+                </IconButton>
+              </Tooltip>
+              <Menu
+                anchorEl={anchorEl}
+                anchorOrigin={{
+                  vertical: 'bottom',
+                  horizontal: 'right',
+                }}
+                keepMounted
+                transformOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
+                open={Boolean(anchorEl)}
+                onClose={handleMenuClose}
+                PaperProps={{
+                  sx: {
+                    mt: 1,
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    border: `1px solid ${muiTheme.palette.mode === 'dark' ? '#404040' : '#E2E8F0'}`,
+                  }
+                }}
+              >
+                <MenuItem onClick={() => { handleMenuClose(); navigate('/profile'); }}>
+                  <ListItemIcon>
+                    <PersonIcon fontSize="small" sx={{ color: muiTheme.palette.text.secondary }} />
+                  </ListItemIcon>
+                  <Typography sx={{ color: muiTheme.palette.text.primary }}>Profile</Typography>
+                </MenuItem>
+                <MenuItem onClick={() => { handleMenuClose(); navigate('/settings'); }}>
+                  <ListItemIcon>
+                    <SettingsIcon fontSize="small" sx={{ color: muiTheme.palette.text.secondary }} />
+                  </ListItemIcon>
+                  <Typography sx={{ color: muiTheme.palette.text.primary }}>Settings</Typography>
+                </MenuItem>
+                <Divider />
+                <MenuItem onClick={handleLogout}>
+                  <ListItemIcon>
+                    <LogoutIcon fontSize="small" sx={{ color: muiTheme.palette.text.secondary }} />
+                  </ListItemIcon>
+                  <Typography sx={{ color: muiTheme.palette.text.primary }}>Logout</Typography>
+                </MenuItem>
+              </Menu>
+            </Box>
           </Box>
         </Toolbar>
       </AppBar>
