@@ -45,11 +45,12 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   const location = useLocation();
 
   if (!token) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    // Store the attempted URL to redirect back after login
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
 
   if (!selectedCompany) {
-    return <Navigate to="/select-company" state={{ from: location }} replace />;
+    return <Navigate to="/select-company" state={{ from: location.pathname }} replace />;
   }
 
   return <>{children}</>;
@@ -78,7 +79,7 @@ const AppContent: React.FC = () => {
           <Route path="/select-company" element={<CompanySelection />} />
           
           {/* Protected routes */}
-          <Route path="/" element={
+          <Route path="/dashboard" element={
             <ProtectedRoute>
               <Navigation
                 isMobile={isMobile}
@@ -98,18 +99,6 @@ const AppContent: React.FC = () => {
                 handleDrawerToggle={handleDrawerToggle}
               >
                 <UserManagement />
-              </Navigation>
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/dashboard" element={
-            <ProtectedRoute>
-              <Navigation
-                isMobile={isMobile}
-                isDrawerOpen={mobileOpen}
-                handleDrawerToggle={handleDrawerToggle}
-              >
-                <Dashboard />
               </Navigation>
             </ProtectedRoute>
           } />
