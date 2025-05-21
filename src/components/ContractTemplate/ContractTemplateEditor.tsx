@@ -6,8 +6,6 @@ import {
   Paper,
   Typography,
   Grid,
-  Divider,
-  Stack,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -21,13 +19,13 @@ import {
   Alert,
   CircularProgress,
   IconButton,
+  Divider,
 } from '@mui/material';
 import {
   Print as PrintIcon,
   Download as DownloadIcon,
   Save as SaveIcon,
   Refresh as RefreshIcon,
-  PictureAsPdf as PdfIcon,
   Close as CloseIcon,
 } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';

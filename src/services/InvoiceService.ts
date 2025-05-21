@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Invoice, InvoiceStats } from '../types/api';
+import { Invoice } from '../types/api';
 
 const BASE_URL = process.env.REACT_APP_API_URL;
 const MAX_RETRIES = 3;
