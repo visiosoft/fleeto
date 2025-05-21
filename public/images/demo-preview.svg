@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200" height="675" viewBox="0 0 1200 675" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1200" height="675" fill="#F5F7FA"/>
+  
+  <!-- Video Frame -->
+  <rect x="100" y="87.5" width="1000" height="500" rx="8" fill="#2D9B9B"/>
+  
+  <!-- Play Button -->
+  <circle cx="600" cy="337.5" r="60" fill="white" fill-opacity="0.9"/>
+  <path d="M580 307.5L640 337.5L580 367.5V307.5Z" fill="#2D9B9B"/>
+  
+  <!-- Video Preview Elements -->
+  <rect x="150" y="137.5" width="900" height="400" fill="#E8F4F4"/>
+  
+  <!-- Map Elements -->
+  <path d="M200 200L300 150L400 250L500 200L600 300L700 250L800 350" stroke="#2D9B9B" stroke-width="4"/>
+  <circle cx="300" cy="150" r="8" fill="#2D9B9B"/>
+  <circle cx="600" cy="300" r="8" fill="#2D9B9B"/>
+  <circle cx="800" cy="350" r="8" fill="#2D9B9B"/>
+  
+  <!-- Stats Overlay -->
+  <rect x="150" y="137.5" width="300" height="100" fill="white" fill-opacity="0.9"/>
+  <rect x="150" y="437.5" width="300" height="100" fill="white" fill-opacity="0.9"/>
+  <rect x="750" y="137.5" width="300" height="100" fill="white" fill-opacity="0.9"/>
+  <rect x="750" y="437.5" width="300" height="100" fill="white" fill-opacity="0.9"/>
+</svg> 

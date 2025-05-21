@@ -1,19 +1,63 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    @keyframes move {
+      0% { transform: translateX(-3px); }
+      50% { transform: translateX(3px); }
+      100% { transform: translateX(-3px); }
+    }
+    @keyframes rotate {
+      0% { transform: rotate(0deg); }
+      25% { transform: rotate(3deg); }
+      75% { transform: rotate(-3deg); }
+      100% { transform: rotate(0deg); }
+    }
+    .van-body {
+      animation: move 2s ease-in-out infinite;
+    }
+    .wheels {
+      animation: rotate 1s linear infinite;
+    }
+  </style>
+  
   <!-- Van Body -->
-  <path d="M8 20H32V28H8V20Z" fill="#2D9B9B"/>
-  <!-- Van Front -->
-  <path d="M32 20L36 24V28H32V20Z" fill="#2D9B9B"/>
-  <!-- Van Roof -->
-  <path d="M8 16H28V20H8V16Z" fill="#2D9B9B"/>
-  <!-- Windows -->
-  <path d="M12 16H24V20H12V16Z" fill="#FFFFFF"/>
-  <!-- Front Window -->
-  <path d="M28 16H32V20H28V16Z" fill="#FFFFFF"/>
+  <g class="van-body">
+    <!-- Main Body -->
+    <path d="M12 30H48V42H12V30Z" fill="#2D9B9B"/>
+    <!-- Front Window -->
+    <path d="M36 18H48V30H36V18Z" fill="#2D9B9B"/>
+    <!-- Side Window -->
+    <path d="M24 18H36V30H24V18Z" fill="#6B9080"/>
+    <!-- Roof -->
+    <path d="M18 18H42V24H18V18Z" fill="#2D9B9B"/>
+    <!-- Front Bumper -->
+    <path d="M48 30H52V36H48V30Z" fill="#1F6D6D"/>
+    <!-- Side Door -->
+    <path d="M24 30H36V36H24V30Z" fill="#1F6D6D"/>
+  </g>
+  
   <!-- Wheels -->
-  <circle cx="12" cy="28" r="3" fill="#333333"/>
-  <circle cx="28" cy="28" r="3" fill="#333333"/>
-  <!-- Wheel Details -->
-  <circle cx="12" cy="28" r="1.5" fill="#FFFFFF"/>
-  <circle cx="28" cy="28" r="1.5" fill="#FFFFFF"/>
+  <g class="wheels">
+    <circle cx="18" cy="42" r="6" fill="#333"/>
+    <circle cx="42" cy="42" r="6" fill="#333"/>
+    <circle cx="18" cy="42" r="3" fill="#666"/>
+    <circle cx="42" cy="42" r="3" fill="#666"/>
+    <!-- Wheel Details -->
+    <circle cx="18" cy="42" r="1.5" fill="#999"/>
+    <circle cx="42" cy="42" r="1.5" fill="#999"/>
+  </g>
+  
+  <!-- Headlight -->
+  <circle cx="52" cy="24" r="3" fill="#FFD700"/>
+  <circle cx="52" cy="24" r="1.5" fill="#FFF"/>
+  
+  <!-- Taillight -->
+  <circle cx="12" cy="36" r="2" fill="#FF4444"/>
+  <circle cx="12" cy="36" r="1" fill="#FFF"/>
+  
+  <!-- Windshield -->
+  <path d="M36 18H48V24H36V18Z" fill="#E3F2FD" fill-opacity="0.5"/>
+  
+  <!-- Side Window -->
+  <path d="M24 18H36V24H24V18Z" fill="#E3F2FD" fill-opacity="0.5"/>
 </svg> 

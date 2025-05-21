@@ -1,44 +1,50 @@
 import { createTheme } from '@mui/material/styles';
 
-export const theme = createTheme({
+const theme = createTheme({
   palette: {
     primary: {
-      main: '#2F394D', // Deep Slate Gray
-      light: '#4A5568',
-      dark: '#1A202C',
+      main: '#2D9B9B', // Ocean Teal
+      light: '#4DAFB0',
+      dark: '#1F6D6D',
+      contrastText: '#FFFFFF',
     },
     secondary: {
-      main: '#00B589', // Emergent Green
-      light: '#00D1A0',
-      dark: '#009B73',
+      main: '#6B9080', // Sage Green
+      light: '#8BA99D',
+      dark: '#4B645A',
+      contrastText: '#FFFFFF',
     },
     error: {
-      main: '#FF6F61', // Safety Coral
+      main: '#FF6F61', // Coral
       light: '#FF8F84',
-      dark: '#E55A4D',
+      dark: '#B24D43',
+      contrastText: '#FFFFFF',
+    },
+    warning: {
+      main: '#FFB347', // Amber
+      light: '#FFC26B',
+      dark: '#B27D32',
+      contrastText: '#000000',
+    },
+    info: {
+      main: '#6C757D', // Medium Gray
+      light: '#8A9299',
+      dark: '#4B5257',
+      contrastText: '#FFFFFF',
     },
     success: {
       main: '#00B589', // Emergent Green
-      light: '#00D1A0',
-      dark: '#009B73',
-    },
-    warning: {
-      main: '#FFC154', // Amber for Idle status
-      light: '#FFD17A',
-      dark: '#E5A93B',
-    },
-    info: {
-      main: '#25A8B0', // Cool Teal
-      light: '#2EC2CB',
-      dark: '#1E8E95',
+      light: '#33C4A1',
+      dark: '#007E60',
+      contrastText: '#FFFFFF',
     },
     background: {
-      default: '#E0E5EC', // Soft Cloud
+      default: '#F5F7FA', // Light gray background
       paper: '#FFFFFF',
     },
     text: {
-      primary: '#3A3A3A', // Dark Gray for light backgrounds
-      secondary: '#4A5568',
+      primary: '#333333', // Dark Charcoal
+      secondary: '#6C757D', // Medium Gray
     },
     action: {
       active: '#2F394D',
@@ -150,6 +156,38 @@ export const theme = createTheme({
     },
   },
   components: {
+    MuiCssBaseline: {
+      styleOverrides: {
+        body: {
+          margin: 0,
+          padding: 0,
+          overflowX: 'hidden',
+        },
+        '#root': {
+          margin: 0,
+          padding: 0,
+          width: '100%',
+          maxWidth: '100vw',
+          overflowX: 'hidden',
+        },
+      },
+    },
+    MuiContainer: {
+      styleOverrides: {
+        root: {
+          margin: 0,
+          padding: 0,
+          width: '100%',
+          maxWidth: '100% !important',
+          '&.MuiContainer-maxWidthLg': {
+            maxWidth: '1200px !important',
+          },
+          '&.MuiContainer-maxWidthMd': {
+            maxWidth: '900px !important',
+          },
+        },
+      },
+    },
     MuiButton: {
       styleOverrides: {
         root: {
@@ -275,5 +313,16 @@ export const theme = createTheme({
         },
       },
     },
+    MuiAppBar: {
+      styleOverrides: {
+        root: {
+          backgroundColor: '#FFFFFF',
+          color: '#333333',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+        },
+      },
+    },
   },
-}); 
+});
+
+export default theme; 
