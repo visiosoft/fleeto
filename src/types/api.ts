@@ -179,4 +179,19 @@ export interface LoginResponse {
       status: string;
     };
   };
+}
+
+export interface Receipt {
+  _id: string;
+  invoiceId: string;
+  paymentMethod: 'bank_transfer' | 'credit_card' | 'check' | 'cash' | 'other';
+  amount: number;
+  paymentDate: string;
+  referenceNumber: string;
+  notes?: string;
+  clientName: string;
+  clientEmail?: string;
+  status: 'pending' | 'received' | 'paid' | 'failed' | 'refunded';
+  createdAt: string;
+  updatedAt: string;
 } 

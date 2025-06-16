@@ -21,6 +21,8 @@ import CompanySelection from './pages/CompanySelection/CompanySelection';
 import { ThemeProvider } from './contexts/ThemeContext';
 import LoadingDemo from './pages/LoadingDemo/LoadingDemo';
 import LandingPage from './pages/LandingPage/LandingPage';
+import ReceiptManagement from './pages/ReceiptManagement/ReceiptManagement';
+import ReceiptForm from './pages/ReceiptManagement/ReceiptForm';
 
 // Lazy load all pages
 const VehicleManagement = React.lazy(() => import('./pages/VehicleManagement'));
@@ -328,6 +330,10 @@ const AppContent: React.FC = () => {
               </Navigation>
             </ProtectedRoute>
           } />
+          
+          <Route path="/receipts" element={<ReceiptManagement />} />
+          <Route path="/receipts/new" element={<ReceiptForm />} />
+          <Route path="/receipts/:id/edit" element={<ReceiptForm />} />
           
           {/* Redirect to login if no route matches */}
           <Route path="*" element={<Navigate to="/login" replace />} />

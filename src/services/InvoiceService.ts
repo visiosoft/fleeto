@@ -110,7 +110,12 @@ class InvoiceService {
   // Update invoice
   async updateInvoice(id: string, invoice: Partial<Invoice>) {
     return this.retryRequest(() => 
-      this.axiosInstance.put(`/${id}`, invoice)
+      this.axiosInstance.put(`/${id}`, invoice, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        validateStatus: (status) => status < 500, // Don't retry on 4xx errors
+      })
     );
   }
 

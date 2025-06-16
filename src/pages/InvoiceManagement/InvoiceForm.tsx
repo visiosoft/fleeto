@@ -214,15 +214,49 @@ const InvoiceForm: React.FC = () => {
     e.preventDefault();
     try {
       setLoading(true);
+      setError(null);
+      
+      // Validate required fields
+      if (!invoice.contractId) {
+        throw new Error('Contract is required');
+      }
+      if (!invoice.items || invoice.items.length === 0) {
+        throw new Error('At least one item is required');
+      }
+      
+      // Ensure all required fields are included in the update
+      const invoiceData = {
+        ...invoice,
+        issueDate: invoice.issueDate,
+        dueDate: invoice.dueDate,
+        items: invoice.items,
+        subtotal: invoice.subtotal,
+        tax: invoice.tax,
+        total: invoice.total,
+        status: invoice.status,
+        notes: invoice.notes,
+        includeVat: invoice.includeVat
+      };
+      
+      console.log('Submitting invoice:', invoiceData);
+      
       if (id) {
-        await InvoiceService.getInstance().updateInvoice(id, invoice);
+        const response = await InvoiceService.getInstance().updateInvoice(id, invoiceData);
+        console.log('Update response:', response);
+        if (response.data.status !== 'success') {
+          throw new Error(response.data.message || 'Failed to update invoice');
+        }
       } else {
-        await InvoiceService.getInstance().createInvoice(invoice as Omit<Invoice, '_id' | 'createdAt' | 'updatedAt'>);
+        const response = await InvoiceService.getInstance().createInvoice(invoiceData as Omit<Invoice, '_id' | 'createdAt' | 'updatedAt'>);
+        console.log('Create response:', response);
+        if (response.data.status !== 'success') {
+          throw new Error(response.data.message || 'Failed to create invoice');
+        }
       }
       navigate('/invoices');
-    } catch (err) {
-      setError('Failed to save invoice');
+    } catch (err: any) {
       console.error('Error saving invoice:', err);
+      setError(err.response?.data?.message || err.message || 'Failed to save invoice');
     } finally {
       setLoading(false);
     }
@@ -298,7 +332,10 @@ const InvoiceForm: React.FC = () => {
                 type="date"
                 label="Issue Date"
                 value={invoice.issueDate}
-                onChange={(e) => setInvoice(prev => ({ ...prev, issueDate: e.target.value }))}
+                onChange={(e) => {
+                  console.log('Issue date changed:', e.target.value);
+                  setInvoice(prev => ({ ...prev, issueDate: e.target.value }));
+                }}
                 required
                 InputLabelProps={{ shrink: true }}
               />
@@ -309,7 +346,10 @@ const InvoiceForm: React.FC = () => {
                 type="date"
                 label="Due Date"
                 value={invoice.dueDate}
-                onChange={(e) => setInvoice(prev => ({ ...prev, dueDate: e.target.value }))}
+                onChange={(e) => {
+                  console.log('Due date changed:', e.target.value);
+                  setInvoice(prev => ({ ...prev, dueDate: e.target.value }));
+                }}
                 required
                 InputLabelProps={{ shrink: true }}
               />
