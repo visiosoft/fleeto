@@ -22,49 +22,54 @@ const ContractTemplate: React.FC = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!id || !token) {
-        setError('No contract ID provided or not authenticated');
+      if (!id) {
+        setError('No contract ID provided');
         setLoading(false);
         return;
       }
 
       try {
-        // Fetch contract data
-        const contractResponse = await axios.get(getApiUrl(`${API_CONFIG.ENDPOINTS.CONTRACTS}/${id}`), {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
+        const token = localStorage.getItem('token');
+
+        // Try with auth header first if token exists
+        let contractResponse;
+        try {
+          contractResponse = await axios.get(
+            getApiUrl(`${API_CONFIG.ENDPOINTS.CONTRACTS}/${id}`),
+            token ? { headers: { Authorization: `Bearer ${token}` } } : undefined
+          );
+        } catch (err) {
+          // Fallback: try without auth in case backend allows public access
+          contractResponse = await axios.get(
+            getApiUrl(`${API_CONFIG.ENDPOINTS.CONTRACTS}/${id}`)
+          );
+        }
+
         const contractData = contractResponse.data;
         setContract(contractData);
-        
-        // Set template from contract data if available
+
         if (contractData.template) {
           setTemplate({
             _id: contractData.template._id || 'default',
             name: 'Contract Template',
             content: contractData.template.content || defaultTemplate
           });
+        } else {
+          setTemplate({ _id: 'default', name: 'Contract Template', content: defaultTemplate });
         }
 
-        // Fetch vehicles data
-        const vehiclesResponse = await axios.get(getApiUrl(API_CONFIG.ENDPOINTS.VEHICLES), {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
+        const vehiclesResponse = await axios.get(getApiUrl(API_CONFIG.ENDPOINTS.VEHICLES), token ? { headers: { Authorization: `Bearer ${token}` } } : undefined);
         setVehicles(vehiclesResponse.data || []);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-        setError('Failed to load contract data');
-        navigate('/contracts');
+      } catch (error: any) {
+        console.error('Error fetching contract/template/vehicles:', error?.response?.data || error);
+        setError(error?.response?.data?.message || 'Failed to load contract data');
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [id, navigate, token]);
+  }, [id]);
 
   const handleSave = async (content: string) => {
     if (!contract?._id || !token) return;

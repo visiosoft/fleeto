@@ -179,7 +179,7 @@ export interface LoginResponse {
       status: string;
     };
   };
-}
+} 
 
 export interface Receipt {
   _id: string;

@@ -299,14 +299,24 @@ const ContractTemplateEditor: React.FC<Props> = ({
 
     setIsLoading(true);
     try {
+      const token = localStorage.getItem('token');
       await axios.patch(
         getApiUrl(`${API_CONFIG.ENDPOINTS.TEMPLATE}/${contract._id}`),
         {
-          template: {
-            content,
-            letterhead: contract.template?.letterhead
+          templateName: template?.name || 'Contract Template',
+          templateHtml: content,
+          templateData: {
+            companyName: contract.companyName,
+            tradeLicenseNo: contract.tradeLicenseNo,
+            vehicleName: '',
+            startDate: contract.startDate,
+            endDate: contract.endDate,
+            amount: contract.value,
           }
-        }
+        },
+        token
+          ? { headers: { Authorization: `Bearer ${token}` } }
+          : undefined
       );
 
       setSnackbar({
@@ -346,38 +356,96 @@ const ContractTemplateEditor: React.FC<Props> = ({
       const pageHeight = pdf.internal.pageSize.getHeight();
       const margin = 40;
 
-      // Add header banner
+      // Preload header banner
       const headerImg = new Image();
       headerImg.src = '/bannerheader.png';
       await new Promise((resolve, reject) => {
-        headerImg.onload = resolve;
-        headerImg.onerror = reject;
+        headerImg.onload = resolve as any;
+        headerImg.onerror = reject as any;
         setTimeout(reject, 5000);
       });
-      pdf.addImage(headerImg, 'PNG', 0, 0, pageWidth, 160);
+      const headerHeight = 120; // reduce to leave more room per page
 
-      // Add footer banner
+      // Preload footer banner
       const footerImg = new Image();
       footerImg.src = '/bannerfooter2.png';
       await new Promise((resolve, reject) => {
-        footerImg.onload = resolve;
-        footerImg.onerror = reject;
+        footerImg.onload = resolve as any;
+        footerImg.onerror = reject as any;
         setTimeout(reject, 5000);
       });
-      pdf.addImage(footerImg, 'PNG', 0, pageHeight - 100, pageWidth, 100);
+      const footerHeight = 80;
 
-      // Convert the content to canvas
-      const canvas = await html2canvas(element, {
+      // Render the content to a single canvas
+      const fullCanvas = await (html2canvas as any)(element, {
         useCORS: true,
         logging: false,
-        background: '#ffffff'
-      });
+        background: '#ffffff',
+        scale: 2,
+        scrollY: -window.scrollY,
+      } as any);
 
-      // Add the content to the PDF
-      const imgData = canvas.toDataURL('image/png');
-      pdf.addImage(imgData, 'PNG', margin, 180, pageWidth - (2 * margin), 0);
+      // Dimensions mapping from canvas px to PDF pts
+      const availableWidth = pageWidth - (2 * margin);
+      const scale = availableWidth / fullCanvas.width; // px -> pts scale for width
+      const availableHeightPts = pageHeight - headerHeight - footerHeight - (2 * margin);
+      const availableHeightPxPerPage = Math.floor(availableHeightPts / scale); // convert back to source px height per page slice
 
-      // Save the PDF
+      // If the preview already contains a header banner image, skip it on first page slice
+      let firstPageSkipPx = 0;
+      const headerDomImg = element.querySelector('img[src*="bannerheader"]') as HTMLImageElement | null;
+      if (headerDomImg) {
+        const elementRect = element.getBoundingClientRect();
+        const headerRect = headerDomImg.getBoundingClientRect();
+        const relativeBottom = headerRect.bottom - elementRect.top; // px in CSS pixels
+        const canvasScale = fullCanvas.width / element.clientWidth; // px per CSS pixel
+        firstPageSkipPx = Math.max(0, Math.round(relativeBottom * canvasScale));
+      }
+
+      // Helper to draw header/footer per page
+      const drawHeaderFooter = () => {
+        pdf.addImage(headerImg, 'PNG', 0, 0, pageWidth, headerHeight);
+        pdf.addImage(footerImg, 'PNG', 0, pageHeight - footerHeight, pageWidth, footerHeight);
+      };
+
+      // Slice the full canvas into page-sized chunks and add to PDF
+      let sourceY = firstPageSkipPx;
+      let isFirstPage = true;
+
+      while (sourceY < fullCanvas.height) {
+        if (!isFirstPage) {
+          pdf.addPage();
+        }
+        drawHeaderFooter();
+
+        const sliceHeightPx = Math.min(availableHeightPxPerPage, fullCanvas.height - sourceY);
+
+        // Create a temporary canvas for this page slice
+        const pageCanvas = document.createElement('canvas');
+        pageCanvas.width = fullCanvas.width;
+        pageCanvas.height = sliceHeightPx;
+        const ctx = pageCanvas.getContext('2d');
+        if (!ctx) throw new Error('Failed to create canvas context');
+
+        // Draw slice of the full canvas into the page canvas
+        ctx.drawImage(
+          fullCanvas,
+          0, sourceY, fullCanvas.width, sliceHeightPx,
+          0, 0, fullCanvas.width, sliceHeightPx
+        );
+
+        const imgData = pageCanvas.toDataURL('image/png');
+        const destX = margin;
+        const destY = headerHeight + margin;
+        const destW = availableWidth;
+        const destH = sliceHeightPx * scale; // maintain scale
+
+        pdf.addImage(imgData, 'PNG', destX, destY, destW, destH);
+
+        sourceY += sliceHeightPx;
+        isFirstPage = false;
+      }
+
       pdf.save(`${contract.companyName}_contract.pdf`);
 
       setSnackbar({
