@@ -19,11 +19,57 @@ exports.getAllInvoices = async (req, res) => {
         console.log(`Fetching invoices for company ID: ${companyId}`);
         
         const collection = await InvoiceModel.getCollection();
-        const invoices = await collection.find({
-            companyId: companyId.toString()
-        })
-            .sort({ createdAt: -1 })
-            .toArray();
+        const contractCollection = await ContractModel.getCollection();
+        
+        // Use aggregation to join with contracts
+        const invoices = await collection.aggregate([
+            {
+                $match: {
+                    companyId: companyId.toString()
+                }
+            },
+            {
+                $lookup: {
+                    from: 'contracts',
+                    let: { contractId: '$contractId' },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: { $eq: ['$_id', '$$contractId'] }
+                            }
+                        }
+                    ],
+                    as: 'contract'
+                }
+            },
+            {
+                $unwind: {
+                    path: '$contract',
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
+                $addFields: {
+                    contract: {
+                        $cond: {
+                            if: { $ne: ['$contract', null] },
+                            then: {
+                                companyName: '$contract.companyName',
+                                address: '$contract.address',
+                                contactPhone: '$contract.contactPhone',
+                                contactEmail: '$contract.contactEmail',
+                                trn: '$contract.trn',
+                                tradeLicenseNo: '$contract.tradeLicenseNo'
+                            },
+                            else: null
+                        }
+                    }
+                }
+            },
+            {
+                $sort: { createdAt: -1 }
+            }
+        ]).toArray();
         
         // Ensure includeVat is included in response
         const formattedInvoices = invoices.map(invoice => ({
@@ -32,6 +78,11 @@ exports.getAllInvoices = async (req, res) => {
         }));
         
         console.log(`Found ${invoices.length} invoices for company ${companyId}`);
+        
+        // Debug: Log contract information for first invoice
+        if (invoices.length > 0) {
+            console.log('Sample invoice contract data:', JSON.stringify(invoices[0].contract, null, 2));
+        }
         
         res.status(200).json({
             status: 'success',
@@ -63,17 +114,63 @@ exports.getInvoiceById = async (req, res) => {
         console.log(`Fetching invoice ${id} for company ID: ${companyId}`);
         
         const collection = await InvoiceModel.getCollection();
-        const invoice = await collection.findOne({ 
-            _id: new ObjectId(id),
-            companyId: companyId.toString()
-        });
+        
+        // Use aggregation to join with contract
+        const invoices = await collection.aggregate([
+            {
+                $match: {
+                    _id: new ObjectId(id),
+                    companyId: companyId.toString()
+                }
+            },
+            {
+                $lookup: {
+                    from: 'contracts',
+                    let: { contractId: '$contractId' },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: { $eq: ['$_id', '$$contractId'] }
+                            }
+                        }
+                    ],
+                    as: 'contract'
+                }
+            },
+            {
+                $unwind: {
+                    path: '$contract',
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
+                $addFields: {
+                    contract: {
+                        $cond: {
+                            if: { $ne: ['$contract', null] },
+                            then: {
+                                companyName: '$contract.companyName',
+                                address: '$contract.address',
+                                contactPhone: '$contract.contactPhone',
+                                contactEmail: '$contract.contactEmail',
+                                trn: '$contract.trn',
+                                tradeLicenseNo: '$contract.tradeLicenseNo'
+                            },
+                            else: null
+                        }
+                    }
+                }
+            }
+        ]).toArray();
 
-        if (!invoice) {
+        if (!invoices || invoices.length === 0) {
             return res.status(404).json({
                 status: 'error',
                 message: 'Invoice not found'
             });
         }
+        
+        const invoice = invoices[0];
         
         // Ensure includeVat is included in response
         const formattedInvoice = {
