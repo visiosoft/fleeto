@@ -85,6 +85,7 @@ const MENU_ITEMS: MenuItem[] = [
   { text: 'Tracking', path: '/tracking', icon: <LocationOnIcon /> },
   { text: 'Invoice Management', path: '/invoices', icon: <ReceiptIcon /> },
   { text: 'Receipt Management', path: '/receipts', icon: <ReceiptIcon /> },
+  { text: 'Letterhead Templates', path: '/letterheads', icon: <DescriptionIcon /> },
   { text: 'User Management', path: '/users', icon: <GroupIcon /> },
   {
     text: 'General Notes',

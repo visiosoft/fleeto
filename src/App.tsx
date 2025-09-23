@@ -23,6 +23,8 @@ import LoadingDemo from './pages/LoadingDemo/LoadingDemo';
 import LandingPage from './pages/LandingPage/LandingPage';
 import ReceiptManagement from './pages/ReceiptManagement/ReceiptManagement';
 import ReceiptForm from './pages/ReceiptManagement/ReceiptForm';
+import LetterheadManagement from './pages/LetterheadManagement/LetterheadManagement';
+import LetterheadPDF from './pages/LetterheadManagement/LetterheadPDF';
 
 // Lazy load all pages
 const VehicleManagement = React.lazy(() => import('./pages/VehicleManagement'));
@@ -361,6 +363,30 @@ const AppContent: React.FC = () => {
                 handleDrawerToggle={handleDrawerToggle}
               >
                 <ReceiptForm />
+              </Navigation>
+            </ProtectedRoute>
+          } />
+          
+          {/* Letterhead Management Routes */}
+          <Route path="/letterheads" element={
+            <ProtectedRoute>
+              <Navigation
+                isMobile={isMobile}
+                isDrawerOpen={mobileOpen}
+                handleDrawerToggle={handleDrawerToggle}
+              >
+                <LetterheadManagement />
+              </Navigation>
+            </ProtectedRoute>
+          } />
+          <Route path="/letterheads/:id/pdf" element={
+            <ProtectedRoute>
+              <Navigation
+                isMobile={isMobile}
+                isDrawerOpen={mobileOpen}
+                handleDrawerToggle={handleDrawerToggle}
+              >
+                <LetterheadPDF />
               </Navigation>
             </ProtectedRoute>
           } />

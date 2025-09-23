@@ -194,4 +194,54 @@ export interface Receipt {
   status: 'pending' | 'received' | 'paid' | 'failed' | 'refunded';
   createdAt: string;
   updatedAt: string;
+}
+
+export interface Letterhead {
+  _id: string;
+  companyId: string;
+  name: string;
+  description?: string;
+  isDefault: boolean;
+  header: {
+    logo?: string;
+    companyName?: string;
+    tagline?: string;
+    address: {
+      street?: string;
+      city?: string;
+      state?: string;
+      zipCode?: string;
+      country?: string;
+    };
+    contact: {
+      phone?: string;
+      email?: string;
+      website?: string;
+    };
+  };
+  footer: {
+    text?: string;
+    includePageNumbers: boolean;
+    includeDate: boolean;
+  };
+  styling: {
+    primaryColor: string;
+    secondaryColor: string;
+    fontFamily: string;
+    fontSize: number;
+    logoSize: {
+      width: number;
+      height: number;
+    };
+  };
+  margins: {
+    top: number;
+    bottom: number;
+    left: number;
+    right: number;
+  };
+  customText?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 } 

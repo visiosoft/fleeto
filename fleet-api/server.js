@@ -21,6 +21,7 @@ const payrollRoutes = require('./routes/payrollRoutes');
 const invoiceRoutes = require('./routes/invoiceRoutes');
 const companyRoutes = require('./routes/companyRoutes');
 const receiptRoutes = require('./routes/receiptRoutes');
+const letterheadRoutes = require('./routes/letterheadRoutes');
 
 // Initialize Express app
 const app = express();
@@ -54,6 +55,7 @@ app.use('/api/payroll', payrollRoutes);
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/companies', companyRoutes);
 app.use('/api/receipts', receiptRoutes);
+app.use('/api/letterheads', letterheadRoutes);
 
 // Generic API routes for other collections
 const COLLECTIONS = db.COLLECTIONS;
