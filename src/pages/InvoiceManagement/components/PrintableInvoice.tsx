@@ -246,16 +246,17 @@ const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({ invoice }) => {
                 Bank Details
               </Typography>
               <Typography variant="body2" sx={{ fontSize: '0.75rem' }} align="center">
-                Account Holder: ZULFIQAR ALI KHAN
+                EFFICIENT MOVE NEW & USED FURNITURE REMOVAL L.L.C
+
               </Typography>
               <Typography variant="body2" sx={{ fontSize: '0.75rem' }} align="center">
-                Bank Name: Dubai Islamic Bank
+                Bank Name: WIO Bank
               </Typography>
               <Typography variant="body2" sx={{ fontSize: '0.75rem' }} align="center">
-                Account Number: 060520259403601
+                Account Number: 9834601124
               </Typography>
               <Typography variant="body2" sx={{ fontSize: '0.75rem' }} align="center">
-                IBAN: AE120240060520259403601
+                IBAN: AE230860000009834601124
               </Typography>
             </Box>
           </Box>

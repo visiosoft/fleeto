@@ -331,9 +331,39 @@ const AppContent: React.FC = () => {
             </ProtectedRoute>
           } />
           
-          <Route path="/receipts" element={<ReceiptManagement />} />
-          <Route path="/receipts/new" element={<ReceiptForm />} />
-          <Route path="/receipts/:id/edit" element={<ReceiptForm />} />
+          <Route path="/receipts" element={
+            <ProtectedRoute>
+              <Navigation
+                isMobile={isMobile}
+                isDrawerOpen={mobileOpen}
+                handleDrawerToggle={handleDrawerToggle}
+              >
+                <ReceiptManagement />
+              </Navigation>
+            </ProtectedRoute>
+          } />
+          <Route path="/receipts/new" element={
+            <ProtectedRoute>
+              <Navigation
+                isMobile={isMobile}
+                isDrawerOpen={mobileOpen}
+                handleDrawerToggle={handleDrawerToggle}
+              >
+                <ReceiptForm />
+              </Navigation>
+            </ProtectedRoute>
+          } />
+          <Route path="/receipts/:id/edit" element={
+            <ProtectedRoute>
+              <Navigation
+                isMobile={isMobile}
+                isDrawerOpen={mobileOpen}
+                handleDrawerToggle={handleDrawerToggle}
+              >
+                <ReceiptForm />
+              </Navigation>
+            </ProtectedRoute>
+          } />
           
           {/* Redirect to login if no route matches */}
           <Route path="*" element={<Navigate to="/login" replace />} />

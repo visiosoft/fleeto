@@ -30,7 +30,7 @@ const drawerWidth = 240;
 const menuItems = [
   {
     title: 'Dashboard',
-    path: '/',
+    path: '/dashboard',
     icon: <DashboardIcon />,
   },
   {

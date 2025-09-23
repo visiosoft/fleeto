@@ -77,7 +77,7 @@ interface MenuItem {
 
 // Define menu items outside the component
 const MENU_ITEMS: MenuItem[] = [
-  { text: 'Dashboard', path: '/', icon: <AssessmentIcon /> },
+  { text: 'Dashboard', path: '/dashboard', icon: <AssessmentIcon /> },
   { text: 'Vehicle Management', path: '/vehicles', icon: <DirectionsCarIcon /> },
   { text: 'Driver Management', path: '/drivers', icon: <PeopleIcon /> },
   { text: 'Cost Management', path: '/costs', icon: <AccountBalanceIcon /> },
@@ -248,7 +248,7 @@ const Navigation: React.FC<NavigationProps> = ({
             {/* Logo and Company Name */}
             <Box
               component={RouterLink}
-              to="/"
+              to="/dashboard"
               sx={{
                 display: 'flex',
                 alignItems: 'center',

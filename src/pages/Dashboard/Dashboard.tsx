@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Grid,
@@ -25,6 +25,7 @@ import {
   Chip,
   Tooltip,
   Alert as MuiAlert,
+  Fab,
 } from '@mui/material';
 import {
   DirectionsCar as CarIcon,
@@ -46,16 +47,14 @@ import {
   BusinessCenter as BusinessCenterIcon,
   Security as SecurityIcon,
   ArrowForward as ArrowForwardIcon,
+  Refresh as RefreshIcon,
 } from '@mui/icons-material';
-import axios from 'axios';
 import { ResponsivePie } from '@nivo/pie';
 import { ResponsiveLine } from '@nivo/line';
 import { ResponsiveBar } from '@nivo/bar';
-import { API_CONFIG, getApiUrl } from '../../config/api';
-import costService from '../../services/costService';
-import moment from 'moment';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useDashboardData } from '../../hooks/useDashboardData';
 
 // Define types for our chart data
 interface ChartDataItem {
@@ -489,108 +488,13 @@ const SummaryCard: React.FC<{
   );
 };
 
-const FuelSummary: React.FC = () => {
+const FuelSummary: React.FC<{ fuelData: any }> = ({ fuelData }) => {
   const theme = useTheme();
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [fuelData, setFuelData] = useState<{
-    monthlyCost: number;
-    yearToDate: number;
-    avgConsumption: number;
-    trendPercentage: number;
-    byVehicleType: ChartDataItem[];
-    monthlyTrend: { month: string; cost: number }[];
-  }>({
-    monthlyCost: 0,
-    yearToDate: 0,
-    avgConsumption: 0,
-    trendPercentage: 0,
-    byVehicleType: [],
-    monthlyTrend: [],
-  });
 
-  useEffect(() => {
-    const fetchFuelData = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        // Fetch current month's fuel data
-        const currentMonthResponse = await axios.get<ApiResponse<CurrentMonthFuelResponse>>(
-          getApiUrl('/dashboard/fuel/current-month')
-        );
-
-        console.log('Current month fuel response:', currentMonthResponse.data);
-
-        if (currentMonthResponse.data.status === 'error') {
-          throw new Error(currentMonthResponse.data.message || 'Failed to fetch fuel data');
-        }
-
-        if (!currentMonthResponse.data.data) {
-          throw new Error('No fuel data available');
-        }
-
-        const { totalCost, totalTransactions, fuelExpenses } = currentMonthResponse.data.data;
-
-        // Calculate average consumption (L/100km)
-        const avgConsumption = totalTransactions > 0 ? totalCost / totalTransactions : 0;
-
-        // Create vehicle type distribution based on the current month's total
-        const vehicleTypeData = [
-          { id: 'Sedan', value: totalCost * 0.4, label: 'Sedan' },
-          { id: 'SUV', value: totalCost * 0.3, label: 'SUV' },
-          { id: 'Van', value: totalCost * 0.2, label: 'Van' },
-          { id: 'Truck', value: totalCost * 0.1, label: 'Truck' },
-        ];
-
-        // Transform monthly data for the bar chart
-        const monthlyTrendData = [
-          {
-            month: moment().format('MMM'),
-            cost: totalCost
-          }
-        ];
-
-        console.log('Processed fuel data:', {
-          monthlyCost: totalCost,
-          yearToDate: totalCost, // Since we only have current month data
-          avgConsumption,
-          trendPercentage: 0, // No trend data available
-          monthlyTrend: monthlyTrendData,
-          vehicleTypes: vehicleTypeData,
-        });
-
-        setFuelData({
-          monthlyCost: totalCost,
-          yearToDate: totalCost,
-          avgConsumption: avgConsumption,
-          trendPercentage: 0,
-          byVehicleType: vehicleTypeData,
-          monthlyTrend: monthlyTrendData,
-        });
-      } catch (error) {
-        console.error('Failed to fetch fuel data:', error);
-        setError(error instanceof Error ? error.message : 'Failed to fetch fuel data. Please try again later.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchFuelData();
-  }, []);
-
-  if (isLoading) {
+  if (!fuelData) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
         <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (error) {
-    return (
-      <Box sx={{ p: 2 }}>
-        <Typography color="error">{error}</Typography>
       </Box>
     );
   }
@@ -727,107 +631,13 @@ const FuelSummary: React.FC = () => {
   );
 };
 
-const MaintenanceSummary: React.FC = () => {
+const MaintenanceSummary: React.FC<{ maintenanceData: any }> = ({ maintenanceData }) => {
   const theme = useTheme();
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [maintenanceData, setMaintenanceData] = useState<{
-    monthlyCost: number;
-    yearToDate: number;
-    scheduledPercentage: number;
-    trendPercentage: number;
-    byType: ChartDataItem[];
-    monthlyTrend: { month: string; cost: number }[];
-  }>({
-    monthlyCost: 0,
-    yearToDate: 0,
-    scheduledPercentage: 0,
-    trendPercentage: 0,
-    byType: [],
-    monthlyTrend: [],
-  });
 
-  useEffect(() => {
-    const fetchMaintenanceData = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        // Fetch current month's maintenance data
-        const currentMonthResponse = await axios.get<ApiResponse<CurrentMonthMaintenanceResponse>>(
-          getApiUrl('/dashboard/maintenance/current-month')
-        );
-
-        console.log('Current month maintenance response:', currentMonthResponse.data);
-
-        if (currentMonthResponse.data.status === 'error') {
-          throw new Error(currentMonthResponse.data.message || 'Failed to fetch maintenance data');
-        }
-
-        if (!currentMonthResponse.data.data) {
-          throw new Error('No maintenance data available');
-        }
-
-        const { totalCost, totalTransactions, maintenanceExpenses } = currentMonthResponse.data.data;
-
-        // Calculate scheduled maintenance percentage (mock for now)
-        const scheduledPercentage = 65;
-
-        // Create maintenance type distribution based on the current month's total
-        const maintenanceTypeData = [
-          { id: 'Scheduled', value: totalCost * 0.6, label: 'Scheduled' },
-          { id: 'Repairs', value: totalCost * 0.3, label: 'Repairs' },
-          { id: 'Inspection', value: totalCost * 0.1, label: 'Inspection' },
-        ];
-
-        // Transform monthly data for the bar chart
-        const monthlyTrendData = [
-          {
-            month: moment().format('MMM'),
-            cost: totalCost
-          }
-        ];
-
-        console.log('Processed maintenance data:', {
-          monthlyCost: totalCost,
-          yearToDate: totalCost, // Since we only have current month data
-          scheduledPercentage,
-          trendPercentage: 0, // No trend data available
-          monthlyTrend: monthlyTrendData,
-          maintenanceTypes: maintenanceTypeData,
-        });
-
-        setMaintenanceData({
-          monthlyCost: totalCost,
-          yearToDate: totalCost,
-          scheduledPercentage,
-          trendPercentage: 0,
-          byType: maintenanceTypeData,
-          monthlyTrend: monthlyTrendData,
-        });
-      } catch (error) {
-        console.error('Failed to fetch maintenance data:', error);
-        setError(error instanceof Error ? error.message : 'Failed to fetch maintenance data. Please try again later.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchMaintenanceData();
-  }, []);
-
-  if (isLoading) {
+  if (!maintenanceData) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
         <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (error) {
-    return (
-      <Box sx={{ p: 2 }}>
-        <Typography color="error">{error}</Typography>
       </Box>
     );
   }
@@ -964,101 +774,11 @@ const MaintenanceSummary: React.FC = () => {
   );
 };
 
-const CostSummary: React.FC = () => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [costData, setCostData] = useState<{
-    monthlyCost: number;
-    yearToDate: number;
-    trendPercentage: number;
-    byCategory: ChartDataItem[];
-  }>({
-    monthlyCost: 0,
-    yearToDate: 0,
-    trendPercentage: 0,
-    byCategory: [],
-  });
-
-  useEffect(() => {
-    const fetchCostData = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        // Fetch monthly expenses
-        const monthlyResponse = await axios.get<ApiResponse<MonthlyExpensesResponse>>(
-          getApiUrl(API_CONFIG.ENDPOINTS.COSTS + '/monthly')
-        );
-
-        if (monthlyResponse.data.status === 'error' || !monthlyResponse.data.data?.monthlyExpenses) {
-          throw new Error(monthlyResponse.data.message || 'Failed to fetch monthly expenses');
-        }
-
-        const monthlyExpenses = monthlyResponse.data.data.monthlyExpenses;
-        const currentMonthTotal = monthlyExpenses.length > 0 ? monthlyExpenses[0].totalAmount : 0;
-
-        // Fetch yearly expenses
-        const yearlyResponse = await axios.get<ApiResponse<YearlyExpensesResponse>>(
-          getApiUrl(API_CONFIG.ENDPOINTS.COSTS + '/yearly')
-        );
-
-        if (yearlyResponse.data.status === 'error' || !yearlyResponse.data.data?.yearlyExpenses) {
-          throw new Error(yearlyResponse.data.message || 'Failed to fetch yearly expenses');
-        }
-
-        const yearlyExpenses = yearlyResponse.data.data.yearlyExpenses;
-        const yearlyTotal = yearlyResponse.data.data.grandTotal || 0;
-
-        // Fetch category expenses
-        const categoryResponse = await axios.get<ApiResponse<CategoryExpensesResponse>>(
-          getApiUrl(API_CONFIG.ENDPOINTS.COSTS + '/by-category')
-        );
-
-        if (categoryResponse.data.status === 'error' || !categoryResponse.data.data?.categories) {
-          throw new Error(categoryResponse.data.message || 'Failed to fetch category expenses');
-        }
-
-        const categories = categoryResponse.data.data.categories;
-        
-        // Calculate trend percentage (mock for now, you can implement actual calculation)
-        const trendPercentage = 5; // Example: 5% increase
-
-        // Transform category data for the pie chart
-        const categoryChartData = categories.map((item: CategoryExpense) => ({
-          id: item.category.charAt(0).toUpperCase() + item.category.slice(1),
-          value: item.totalAmount,
-          label: item.category.charAt(0).toUpperCase() + item.category.slice(1),
-        }));
-
-        setCostData({
-          monthlyCost: currentMonthTotal,
-          yearToDate: yearlyTotal,
-          trendPercentage: trendPercentage,
-          byCategory: categoryChartData,
-        });
-      } catch (error) {
-        console.error('Failed to fetch cost data:', error);
-        setError(error instanceof Error ? error.message : 'Failed to fetch cost data. Please try again later.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchCostData();
-  }, []);
-
-  if (isLoading) {
+const CostSummary: React.FC<{ costData: any }> = ({ costData }) => {
+  if (!costData) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
         <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (error) {
-    return (
-      <Box sx={{ p: 2 }}>
-        <Typography color="error">{error}</Typography>
       </Box>
     );
   }
@@ -1188,146 +908,96 @@ const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [tabValue, setTabValue] = useState(0);
-  const [activeDrivers, setActiveDrivers] = useState<number>(0);
-  const [activeVehicles, setActiveVehicles] = useState<number>(0);
-  const [isLoading, setIsLoading] = useState(true);
-  const [fuelConsumption, setFuelConsumption] = useState<{
-    total: number;
-    trend: number;
-  }>({
-    total: 0,
-    trend: 0
-  });
-  const [maintenanceCost, setMaintenanceCost] = useState<{
-    total: number;
-    trend: number;
-  }>({
-    total: 0,
-    trend: 0
-  });
-  const [contractStats, setContractStats] = useState<ContractStats>({
-    totalContracts: 0,
-    activeContracts: 0,
-    expiringSoon: 0,
-    totalValue: 0,
-    recentContracts: [],
-    lastUpdated: '',
-    debug: {
-      totalFound: 0,
-      contractsWithFutureEndDate: 0,
-      currentDate: '',
-      manualCounts: {
-        active: 0,
-        expiringSoon: 0,
-        totalValue: 0
-      },
-      aggregateCounts: {
-        active: 0,
-        expiringSoon: 0,
-        totalValue: 0
-      }
-    }
-  });
-
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        setIsLoading(true);
-        
-        // Fetch active drivers
-        const driversResponse = await axios.get<ApiResponse<DriverResponse>>(
-          getApiUrl('/dashboard/active-drivers')
-        );
-
-        if (driversResponse.data.status === 'error' || !driversResponse.data.data) {
-          throw new Error(driversResponse.data.message || 'Failed to fetch active drivers');
-        }
-
-        setActiveDrivers(driversResponse.data.data.totalActiveDrivers);
-
-        // Fetch active vehicles
-        const vehiclesResponse = await axios.get<ApiResponse<VehicleResponse>>(
-          getApiUrl('/dashboard/active-vehicles')
-        );
-
-        if (vehiclesResponse.data.status === 'error' || !vehiclesResponse.data.data) {
-          throw new Error(vehiclesResponse.data.message || 'Failed to fetch active vehicles');
-        }
-
-        setActiveVehicles(vehiclesResponse.data.data.totalActiveVehicles);
-
-        // Fetch current month's fuel data
-        const fuelResponse = await axios.get<ApiResponse<CurrentMonthFuelResponse>>(
-          getApiUrl('/dashboard/fuel/current-month')
-        );
-
-        if (fuelResponse.data.status === 'success' && fuelResponse.data.data) {
-          setFuelConsumption({
-            total: fuelResponse.data.data.totalCost,
-            trend: 0 // Since we don't have trend data in the API response
-          });
-        }
-
-        // Fetch current month's maintenance data
-        const maintenanceResponse = await axios.get<ApiResponse<CurrentMonthMaintenanceResponse>>(
-          getApiUrl('/dashboard/maintenance/current-month')
-        );
-
-        if (maintenanceResponse.data.status === 'success' && maintenanceResponse.data.data) {
-          setMaintenanceCost({
-            total: maintenanceResponse.data.data.totalCost,
-            trend: 0 // Since we don't have trend data in the API response
-          });
-        }
-
-        // Fetch contract statistics
-        const contractsResponse = await axios.get<ApiResponse<ContractStats>>(
-          getApiUrl('/dashboard/contracts/stats')
-        );
-
-        if (contractsResponse.data.status === 'success' && contractsResponse.data.data) {
-          setContractStats(contractsResponse.data.data);
-        }
-      } catch (error) {
-        console.error('Failed to fetch dashboard data:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchDashboardData();
-  }, []);
+  
+  // Use the custom hook for dashboard data
+  const { data, isLoading, error, refresh, refreshAll, isRefreshing } = useDashboardData();
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
 
   // Format fuel consumption with currency symbol
-  const totalFuelConsumption = `AED ${fuelConsumption.total.toLocaleString()}`;
+  const totalFuelConsumption = data ? `AED ${data.fuelConsumption.total.toLocaleString()}` : 'AED 0';
   
   // Format maintenance cost with currency symbol
-  const totalMaintenanceCost = `AED ${maintenanceCost.total.toLocaleString()}`;
+  const totalMaintenanceCost = data ? `AED ${data.maintenanceCost.total.toLocaleString()}` : 'AED 0';
 
   if (isLoading) {
     return (
+      <Box sx={{ p: 3, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+        <Box sx={{ textAlign: 'center' }}>
+          <CircularProgress size={60} />
+          <Typography variant="h6" sx={{ mt: 2 }}>
+            Loading dashboard...
+          </Typography>
+        </Box>
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
       <Box sx={{ p: 3 }}>
-        <Typography>Loading dashboard...</Typography>
+        <MuiAlert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </MuiAlert>
+        <Button variant="contained" onClick={refresh} startIcon={<RefreshIcon />}>
+          Retry
+        </Button>
+      </Box>
+    );
+  }
+
+  if (!data) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Typography>No data available</Typography>
       </Box>
     );
   }
 
   return (
     <Box>
-      <Typography variant="h4" sx={{ mb: 4 }}>
-        Dashboard
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+        <Typography variant="h4">
+          Dashboard
+        </Typography>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Tooltip title="Refresh data">
+            <IconButton 
+              onClick={refresh} 
+              disabled={isRefreshing}
+              color="primary"
+            >
+              <RefreshIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Refresh all data">
+            <IconButton 
+              onClick={refreshAll} 
+              disabled={isRefreshing}
+              color="primary"
+            >
+              <RefreshIcon />
+            </IconButton>
+          </Tooltip>
+        </Box>
+      </Box>
+
+      {isRefreshing && (
+        <Box sx={{ mb: 2 }}>
+          <MuiAlert severity="info">
+            Refreshing data...
+          </MuiAlert>
+        </Box>
+      )}
 
       <Grid container spacing={3}>
         {/* Key Metrics */}
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             title="Total Vehicles"
-            value={activeVehicles.toString()}
+            value={data.activeVehicles.toString()}
             icon={<VehicleIcon />}
             color={theme.palette.primary.main}
             onClick={() => navigate('/vehicles')}
@@ -1336,7 +1006,7 @@ const Dashboard: React.FC = () => {
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             title="Active Drivers"
-            value={activeDrivers.toString()}
+            value={data.activeDrivers.toString()}
             icon={<DriverIcon />}
             color={theme.palette.success.main}
             onClick={() => navigate('/drivers')}
@@ -1347,8 +1017,8 @@ const Dashboard: React.FC = () => {
             title="Fuel Consumption"
             value={totalFuelConsumption}
             icon={<FuelIcon />}
-            trend={fuelConsumption.trend < 0 ? "down" : "up"}
-            trendValue={`${Math.abs(fuelConsumption.trend)}% this month`}
+            trend={data.fuelConsumption.trend < 0 ? "down" : "up"}
+            trendValue={`${Math.abs(data.fuelConsumption.trend)}% this month`}
             color={theme.palette.warning.main}
             onClick={() => navigate('/cost-management')}
           />
@@ -1358,8 +1028,8 @@ const Dashboard: React.FC = () => {
             title="Maintenance Cost"
             value={totalMaintenanceCost}
             icon={<MaintenanceIcon />}
-            trend={maintenanceCost.trend < 0 ? "down" : "up"}
-            trendValue={`${Math.abs(maintenanceCost.trend)}% this month`}
+            trend={data.maintenanceCost.trend < 0 ? "down" : "up"}
+            trendValue={`${Math.abs(data.maintenanceCost.trend)}% this month`}
             color={theme.palette.error.main}
             onClick={() => navigate('/cost-management')}
           />
@@ -1374,7 +1044,7 @@ const Dashboard: React.FC = () => {
               <Grid item xs={12} sm={6} md={3}>
                 <StatCard
                   title="Total Contracts"
-                  value={contractStats.totalContracts.toString()}
+                  value={data.contractStats.totalContracts.toString()}
                   icon={<DescriptionIcon />}
                   color={theme.palette.info.main}
                   onClick={() => navigate('/contract-management')}
@@ -1383,7 +1053,7 @@ const Dashboard: React.FC = () => {
               <Grid item xs={12} sm={6} md={3}>
                 <StatCard
                   title="Active Contracts"
-                  value={contractStats.activeContracts.toString()}
+                  value={data.contractStats.activeContracts.toString()}
                   icon={<CheckCircleIcon />}
                   color={theme.palette.success.main}
                   onClick={() => navigate('/contract-management')}
@@ -1392,7 +1062,7 @@ const Dashboard: React.FC = () => {
               <Grid item xs={12} sm={6} md={3}>
                 <StatCard
                   title="Expiring Soon"
-                  value={contractStats.expiringSoon.toString()}
+                  value={data.contractStats.expiringSoon.toString()}
                   icon={<WarningIcon />}
                   color={theme.palette.warning.main}
                   onClick={() => navigate('/contract-management')}
@@ -1401,7 +1071,7 @@ const Dashboard: React.FC = () => {
               <Grid item xs={12} sm={6} md={3}>
                 <StatCard
                   title="Total Value"
-                  value={`AED ${contractStats.totalValue.toLocaleString()}`}
+                  value={`AED ${data.contractStats.totalValue.toLocaleString()}`}
                   icon={<MonetizationOnIcon />}
                   color={theme.palette.primary.main}
                   onClick={() => navigate('/contract-management')}
@@ -1421,9 +1091,9 @@ const Dashboard: React.FC = () => {
               </Tabs>
             </Box>
             <Box sx={{ p: 3 }}>
-              {tabValue === 0 && <CostSummary />}
-              {tabValue === 1 && <FuelSummary />}
-              {tabValue === 2 && <MaintenanceSummary />}
+              {tabValue === 0 && <CostSummary costData={data.costData} />}
+              {tabValue === 1 && <FuelSummary fuelData={data.fuelData} />}
+              {tabValue === 2 && <MaintenanceSummary maintenanceData={data.maintenanceData} />}
             </Box>
           </Paper>
         </Grid>
@@ -1466,6 +1136,22 @@ const Dashboard: React.FC = () => {
           />
         </Grid>
       </Grid>
+
+      {/* Floating Action Button for Quick Refresh */}
+      <Fab
+        color="primary"
+        aria-label="refresh"
+        onClick={refresh}
+        disabled={isRefreshing}
+        sx={{
+          position: 'fixed',
+          bottom: 16,
+          right: 16,
+          zIndex: 1000,
+        }}
+      >
+        <RefreshIcon />
+      </Fab>
     </Box>
   );
 };
