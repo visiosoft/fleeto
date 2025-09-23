@@ -191,6 +191,7 @@ export interface Receipt {
   notes?: string;
   clientName: string;
   clientEmail?: string;
+  clientPhone?: string;
   status: 'pending' | 'received' | 'paid' | 'failed' | 'refunded';
   createdAt: string;
   updatedAt: string;

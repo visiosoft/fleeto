@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Receipt } from '../types/api';
 
-const BASE_URL = process.env.REACT_APP_API_URL;
+const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000; // 1 second
 

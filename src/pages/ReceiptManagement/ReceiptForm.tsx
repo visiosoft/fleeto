@@ -11,15 +11,20 @@ import {
   MenuItem,
   Alert,
   LinearProgress,
+  Autocomplete,
+  Chip,
 } from '@mui/material';
-import { Receipt } from '../../types/api';
+import { Receipt, Invoice } from '../../types/api';
 import ReceiptService from '../../services/ReceiptService';
+import InvoiceService from '../../services/InvoiceService';
 
 const ReceiptForm: React.FC = () => {
   const { id } = useParams<{ id?: string }>();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [receipt, setReceipt] = useState<Partial<Receipt>>({
     invoiceId: '',
     paymentMethod: 'bank_transfer',
@@ -29,14 +34,47 @@ const ReceiptForm: React.FC = () => {
     notes: '',
     clientName: '',
     clientEmail: '',
+    clientPhone: '',
     status: 'pending',
   });
 
   useEffect(() => {
     if (id) {
       fetchReceipt();
+    } else {
+      fetchInvoices();
     }
   }, [id]);
+
+  const fetchInvoices = async () => {
+    try {
+      setLoading(true);
+      const response = await InvoiceService.getInstance().getAllInvoices(1, 100);
+      if (response.data.status === 'success') {
+        setInvoices(response.data.data);
+      }
+    } catch (err) {
+      setError('Failed to fetch invoices');
+      console.error('Error fetching invoices:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleInvoiceSelect = (invoice: Invoice | null) => {
+    setSelectedInvoice(invoice);
+    if (invoice) {
+      setReceipt(prev => ({
+        ...prev,
+        invoiceId: invoice.invoiceNumber,
+        referenceNumber: invoice.invoiceNumber, // Copy invoice ID to reference ID
+        clientName: invoice.contract?.companyName || '',
+        clientEmail: invoice.contract?.contactEmail || '',
+        clientPhone: invoice.contract?.contactPhone || '',
+        amount: invoice.total || 0,
+      }));
+    }
+  };
 
   const fetchReceipt = async () => {
     try {
@@ -101,11 +139,46 @@ const ReceiptForm: React.FC = () => {
             )}
 
             <Grid item xs={12} md={6}>
+              <Autocomplete
+                fullWidth
+                options={invoices}
+                getOptionLabel={(option) => `${option.invoiceNumber} - ${option.contract?.companyName || 'Unknown Client'} (${option.contract?.contactPhone || 'No Phone'})`}
+                value={selectedInvoice}
+                onChange={(_, newValue) => handleInvoiceSelect(newValue)}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Select Invoice"
+                    placeholder="Search by invoice number or client name"
+                  />
+                )}
+                renderOption={(props, option) => (
+                  <Box component="li" {...props}>
+                    <Box>
+                      <Typography variant="body1" fontWeight="bold">
+                        {option.invoiceNumber}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {option.contract?.companyName || 'Unknown Client'} - ${option.total}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        📞 {option.contract?.contactPhone || 'No Phone'} | ✉️ {option.contract?.contactEmail || 'No Email'}
+                      </Typography>
+                    </Box>
+                  </Box>
+                )}
+                isOptionEqualToValue={(option, value) => option._id === value?._id}
+              />
+            </Grid>
+
+            <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
-                label="Invoice ID"
+                label="Invoice ID (Auto-filled)"
                 value={receipt.invoiceId}
                 onChange={(e) => setReceipt(prev => ({ ...prev, invoiceId: e.target.value }))}
+                disabled
+                helperText="This field is automatically filled when you select an invoice above"
               />
             </Grid>
 
@@ -153,10 +226,11 @@ const ReceiptForm: React.FC = () => {
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
-                label="Reference Number"
+                label="Reference Number (Auto-filled)"
                 value={receipt.referenceNumber}
                 onChange={(e) => setReceipt(prev => ({ ...prev, referenceNumber: e.target.value }))}
                 required
+                helperText="This field is automatically filled with the invoice ID when you select an invoice"
               />
             </Grid>
 
@@ -194,6 +268,17 @@ const ReceiptForm: React.FC = () => {
                 label="Client Email"
                 value={receipt.clientEmail}
                 onChange={(e) => setReceipt(prev => ({ ...prev, clientEmail: e.target.value }))}
+              />
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                type="tel"
+                label="Client Phone"
+                value={receipt.clientPhone}
+                onChange={(e) => setReceipt(prev => ({ ...prev, clientPhone: e.target.value }))}
+                placeholder="+971 XX XXX XXXX"
               />
             </Grid>
 

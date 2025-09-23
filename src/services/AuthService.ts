@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { LoginResponse } from '../types/api';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
 
 class AuthService {
   private static instance: AuthService;
