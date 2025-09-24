@@ -26,8 +26,8 @@ jobs:
           
           # Pull latest changes
           echo "📥 Pulling latest code..."
-          git fetch origin main
-          git reset --hard origin/main
+          git fetch origin master
+          git reset --hard origin/master
           
           # Install dependencies
           echo "📦 Installing dependencies..."
