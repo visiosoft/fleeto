@@ -262,6 +262,13 @@ const StatCard: React.FC<{
 }> = ({ title, value, icon, trend, trendValue, color, onClick }) => {
   const theme = useTheme();
   
+  const handleClick = () => {
+    console.log('StatCard clicked:', title);
+    if (onClick) {
+      onClick();
+    }
+  };
+  
   return (
     <Card 
       sx={{ 
@@ -273,7 +280,7 @@ const StatCard: React.FC<{
           boxShadow: 3,
         } : {},
       }}
-      onClick={onClick}
+      onClick={handleClick}
     >
       <CardContent>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -283,29 +290,31 @@ const StatCard: React.FC<{
               borderRadius: '12px',
               p: 1,
               mr: 2,
+              pointerEvents: 'none',
             }}
           >
             {icon}
           </Box>
-          <Typography variant="h6" component="div">
+          <Typography variant="h6" component="div" sx={{ pointerEvents: 'none' }}>
             {title}
           </Typography>
         </Box>
-        <Typography variant="h4" component="div" sx={{ mb: 1 }}>
+        <Typography variant="h4" component="div" sx={{ mb: 1, pointerEvents: 'none' }}>
           {value}
         </Typography>
         {trend && (
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             {trend === 'up' ? (
-              <TrendingUpIcon sx={{ color: theme.palette.success.main, fontSize: '1rem' }} />
+              <TrendingUpIcon sx={{ color: theme.palette.success.main, fontSize: '1rem', pointerEvents: 'none' }} />
             ) : (
-              <TrendingDownIcon sx={{ color: theme.palette.error.main, fontSize: '1rem' }} />
+              <TrendingDownIcon sx={{ color: theme.palette.error.main, fontSize: '1rem', pointerEvents: 'none' }} />
             )}
             <Typography
               variant="caption"
               sx={{
                 color: trend === 'up' ? theme.palette.success.main : theme.palette.error.main,
                 ml: 0.5,
+                pointerEvents: 'none',
               }}
             >
               {trendValue}
@@ -319,6 +328,7 @@ const StatCard: React.FC<{
             height: 6,
             borderRadius: 3,
             backgroundColor: `${color}30`,
+            pointerEvents: 'none',
             '& .MuiLinearProgress-bar': {
               backgroundColor: color,
             },
@@ -960,8 +970,8 @@ const Dashboard: React.FC = () => {
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
         <Typography variant="h4">
-          Dashboard
-        </Typography>
+        Dashboard
+      </Typography>
         <Box sx={{ display: 'flex', gap: 1 }}>
           <Tooltip title="Refresh data">
             <IconButton 
@@ -1000,7 +1010,10 @@ const Dashboard: React.FC = () => {
             value={data.activeVehicles.toString()}
             icon={<VehicleIcon />}
             color={theme.palette.primary.main}
-            onClick={() => navigate('/vehicles')}
+            onClick={() => {
+              console.log('Navigating to vehicles');
+              navigate('/vehicles');
+            }}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
@@ -1009,7 +1022,10 @@ const Dashboard: React.FC = () => {
             value={data.activeDrivers.toString()}
             icon={<DriverIcon />}
             color={theme.palette.success.main}
-            onClick={() => navigate('/drivers')}
+            onClick={() => {
+              console.log('Navigating to drivers');
+              navigate('/drivers');
+            }}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
@@ -1047,7 +1063,10 @@ const Dashboard: React.FC = () => {
                   value={data.contractStats.totalContracts.toString()}
                   icon={<DescriptionIcon />}
                   color={theme.palette.info.main}
-                  onClick={() => navigate('/contract-management')}
+                  onClick={() => {
+              console.log('Navigating to contracts');
+              navigate('/contracts');
+            }}
                 />
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
@@ -1056,7 +1075,10 @@ const Dashboard: React.FC = () => {
                   value={data.contractStats.activeContracts.toString()}
                   icon={<CheckCircleIcon />}
                   color={theme.palette.success.main}
-                  onClick={() => navigate('/contract-management')}
+                  onClick={() => {
+              console.log('Navigating to contracts');
+              navigate('/contracts');
+            }}
                 />
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
@@ -1065,7 +1087,10 @@ const Dashboard: React.FC = () => {
                   value={data.contractStats.expiringSoon.toString()}
                   icon={<WarningIcon />}
                   color={theme.palette.warning.main}
-                  onClick={() => navigate('/contract-management')}
+                  onClick={() => {
+              console.log('Navigating to contracts');
+              navigate('/contracts');
+            }}
                 />
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
@@ -1074,7 +1099,10 @@ const Dashboard: React.FC = () => {
                   value={`AED ${data.contractStats.totalValue.toLocaleString()}`}
                   icon={<MonetizationOnIcon />}
                   color={theme.palette.primary.main}
-                  onClick={() => navigate('/contract-management')}
+                  onClick={() => {
+              console.log('Navigating to contracts');
+              navigate('/contracts');
+            }}
                 />
               </Grid>
             </Grid>

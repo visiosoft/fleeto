@@ -45,8 +45,17 @@ const LoadingFallback = () => (
 
 // Protected Route component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { token, selectedCompany } = useAuth();
+  const { token, selectedCompany, isLoading } = useAuth();
   const location = useLocation();
+
+  // Show loading while auth state is being restored
+  if (isLoading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   if (!token) {
     // Store the attempted URL to redirect back after login

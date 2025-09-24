@@ -13,6 +13,7 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
+  isLoading: boolean;
   companies: Company[];
   selectedCompany: Company | null;
   selectedCompanyId: string | null;
@@ -32,6 +33,7 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children, navigate }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
@@ -72,6 +74,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, navigate }
         localStorage.removeItem('selectedCompanyId');
       }
     }
+    
+    // Set loading to false after attempting to load auth state
+    setIsLoading(false);
   }, []);
 
   const login = async (email: string, password: string) => {
@@ -157,6 +162,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, navigate }
         user,
         token,
         isAuthenticated: !!token,
+        isLoading,
         companies,
         selectedCompany,
         selectedCompanyId,

@@ -8,7 +8,7 @@
  * @returns The complete API URL
  */
 export const getApiUrl = (endpoint: string): string => {
-    const baseUrl = process.env.REACT_APP_API_URL;
+    const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
     return `${baseUrl}${endpoint}`;
 };
 
