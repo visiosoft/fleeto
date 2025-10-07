@@ -56,6 +56,7 @@ import {
   Warning as WarningIcon,
   Timer as TimerIcon,
   LocalHospital as EmergencyIcon,
+  WhatsApp as WhatsAppIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -86,6 +87,7 @@ const MENU_ITEMS: MenuItem[] = [
   { text: 'Invoice Management', path: '/invoices', icon: <ReceiptIcon /> },
   { text: 'Receipt Management', path: '/receipts', icon: <ReceiptIcon /> },
   { text: 'Letterhead Templates', path: '/letterheads', icon: <DescriptionIcon /> },
+  { text: 'WhatsApp Expenses', path: '/whatsapp-expenses', icon: <WhatsAppIcon /> },
   { text: 'User Management', path: '/users', icon: <GroupIcon /> },
   {
     text: 'General Notes',

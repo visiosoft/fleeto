@@ -1,0 +1,79 @@
+### Twilio WhatsApp API Tests
+### Make sure to replace the JWT token with a valid one from your authentication
+
+@baseUrl = http://localhost:5000/api/twilio-whatsapp
+@authToken = process.env.TWILIO_AUTH_TOKEN
+
+### 1. Test Webhook (simulate Twilio webhook)
+POST {{baseUrl}}/webhook
+Content-Type: application/x-www-form-urlencoded
+
+From=whatsapp:+1234567890&Body=/expense fuel%0AVehicle: ABC-123%0AAmount: 150.50 AED%0ALocation: ADNOC Station%0ADate: 2024-01-15
+
+### 2. Get all expenses (requires auth)
+GET {{baseUrl}}/expenses
+Authorization: Bearer {{authToken}}
+
+### 3. Get expense statistics (requires auth)
+GET {{baseUrl}}/expenses/stats
+Authorization: Bearer {{authToken}}
+
+### 4. Get single expense (requires auth)
+GET {{baseUrl}}/expenses/expense_id_here
+Authorization: Bearer {{authToken}}
+
+### 5. Update expense status (requires auth)
+PATCH {{baseUrl}}/expenses/expense_id_here/status
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "status": "approved",
+  "notes": "Approved by manager"
+}
+
+### 6. Send test message (requires auth)
+POST {{baseUrl}}/send-test
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "to": "whatsapp:+1234567890",
+  "message": "Test message from Fleet Management API"
+}
+
+### 7. Delete expense (requires auth)
+DELETE {{baseUrl}}/expenses/expense_id_here
+Authorization: Bearer {{authToken}}
+
+### 8. Test different expense types
+
+### Fuel Expense
+POST {{baseUrl}}/webhook
+Content-Type: application/x-www-form-urlencoded
+
+From=whatsapp:+1234567890&Body=/expense fuel%0AVehicle: ABC-123%0AAmount: 150.50 AED%0ALocation: ADNOC Station%0ADate: 2024-01-15
+
+### Maintenance Expense
+POST {{baseUrl}}/webhook
+Content-Type: application/x-www-form-urlencoded
+
+From=whatsapp:+1234567890&Body=/expense maintenance%0AVehicle: XYZ-789%0AType: Oil Change%0AAmount: 200.00 AED%0AGarage: Auto Care%0ADate: 2024-01-15
+
+### Other Expense
+POST {{baseUrl}}/webhook
+Content-Type: application/x-www-form-urlencoded
+
+From=whatsapp:+1234567890&Body=/expense other%0AVehicle: DEF-456%0ADescription: Parking Fee%0AAmount: 25.00 AED%0ADate: 2024-01-15
+
+### Help Command
+POST {{baseUrl}}/webhook
+Content-Type: application/x-www-form-urlencoded
+
+From=whatsapp:+1234567890&Body=/help
+
+### Template Command
+POST {{baseUrl}}/webhook
+Content-Type: application/x-www-form-urlencoded
+
+From=whatsapp:+1234567890&Body=/expense

@@ -22,6 +22,8 @@ const invoiceRoutes = require('./routes/invoiceRoutes');
 const companyRoutes = require('./routes/companyRoutes');
 const receiptRoutes = require('./routes/receiptRoutes');
 const letterheadRoutes = require('./routes/letterheadRoutes');
+const whatsappRoutes = require('./routes/whatsappRoutes');
+const twilioWhatsAppRoutes = require('./routes/twilioWhatsAppRoutes');
 
 // Initialize Express app
 const app = express();
@@ -56,6 +58,8 @@ app.use('/api/invoices', invoiceRoutes);
 app.use('/api/companies', companyRoutes);
 app.use('/api/receipts', receiptRoutes);
 app.use('/api/letterheads', letterheadRoutes);
+app.use('/api/whatsapp', whatsappRoutes);
+app.use('/api/twilio-whatsapp', twilioWhatsAppRoutes);
 
 // Generic API routes for other collections
 const COLLECTIONS = db.COLLECTIONS;

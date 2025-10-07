@@ -25,6 +25,7 @@ import ReceiptManagement from './pages/ReceiptManagement/ReceiptManagement';
 import ReceiptForm from './pages/ReceiptManagement/ReceiptForm';
 import LetterheadManagement from './pages/LetterheadManagement/LetterheadManagement';
 import LetterheadPDF from './pages/LetterheadManagement/LetterheadPDF';
+import WhatsAppExpenses from './pages/WhatsAppExpenses/WhatsAppExpenses';
 
 // Lazy load all pages
 const VehicleManagement = React.lazy(() => import('./pages/VehicleManagement'));
@@ -396,6 +397,17 @@ const AppContent: React.FC = () => {
                 handleDrawerToggle={handleDrawerToggle}
               >
                 <LetterheadPDF />
+              </Navigation>
+            </ProtectedRoute>
+          } />
+          <Route path="/whatsapp-expenses" element={
+            <ProtectedRoute>
+              <Navigation
+                isMobile={isMobile}
+                isDrawerOpen={mobileOpen}
+                handleDrawerToggle={handleDrawerToggle}
+              >
+                <WhatsAppExpenses />
               </Navigation>
             </ProtectedRoute>
           } />
