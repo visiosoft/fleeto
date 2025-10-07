@@ -5,11 +5,14 @@ const db = require('../config/db');
 
 class TwilioWhatsAppService {
   constructor() {
-    // Hardcoded Twilio credentials for testing
-    // Replace these with your actual Twilio credentials from Twilio Console
-    const accountSid = process.env.TWILIO_ACCOUNT_SID || 'process.env.TWILIO_ACCOUNT_SID';
-    const authToken = process.env.TWILIO_AUTH_TOKEN || 'process.env.TWILIO_AUTH_TOKEN';
-    const whatsappNumber = process.env.TWILIO_WHATSAPP_NUMBER || 'process.env.TWILIO_WHATSAPP_NUMBER';
+    // Get Twilio credentials from environment variables
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
+    const whatsappNumber = process.env.TWILIO_WHATSAPP_NUMBER;
+    
+    if (!accountSid || !authToken || !whatsappNumber) {
+      throw new Error('Missing required environment variables: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_WHATSAPP_NUMBER');
+    }
     
     this.client = twilio(accountSid, authToken);
     this.fromNumber = whatsappNumber;
