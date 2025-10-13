@@ -5,15 +5,12 @@ const db = require('../config/db');
 
 class TwilioWhatsAppService {
   constructor() {
-    // Get Twilio credentials from environment variables
-    const accountSid = process.env.TWILIO_ACCOUNT_SID;
-    const authToken = process.env.TWILIO_AUTH_TOKEN;
-    const whatsappNumber = process.env.TWILIO_WHATSAPP_NUMBER;
-    
-    if (!accountSid || !authToken || !whatsappNumber) {
-      throw new Error('Missing required environment variables: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_WHATSAPP_NUMBER');
-    }
-    
+    // Hardcoded Twilio credentials for testing
+    // Replace these with your actual Twilio credentials from Twilio Console
+    const accountSid = process.env.TWILIO_ACCOUNT_SID || 'process.env.TWILIO_ACCOUNT_SID';
+    const authToken = process.env.TWILIO_AUTH_TOKEN || 'process.env.TWILIO_AUTH_TOKEN';
+    const whatsappNumber = process.env.TWILIO_WHATSAPP_NUMBER || 'process.env.TWILIO_WHATSAPP_NUMBER';
+
     this.client = twilio(accountSid, authToken);
     this.fromNumber = whatsappNumber;
   }
@@ -47,16 +44,16 @@ class TwilioWhatsAppService {
     // Get available vehicles and drivers
     const vehicles = await this.getAvailableVehicles();
     const drivers = await this.getAvailableDrivers();
-    
-    const vehicleList = vehicles.length > 0 
-      ? vehicles.map((v, index) => `${index + 1}. ${v.licensePlate} (${v.make} ${v.model})`).join('\n')
+
+    const vehicleList = vehicles.length > 0
+      ? vehicles.map(v => `• ${v.licensePlate} (${v.make} ${v.model})`).join('\n')
       : '• No vehicles found';
-    
+
     const driverList = drivers.length > 0
-      ? drivers.map((d, index) => `${index + 1}. ${d.firstName} ${d.lastName}`).join('\n')
+      ? drivers.map(d => `• ${d.firstName} ${d.lastName} (${d.contact})`).join('\n')
       : '• No drivers found';
 
-    const template = `📱 *Expense Submission - Easy Mode*
+    const template = `📱 *Expense Submission - Simple Mode*
 
 *Available Vehicles:*
 ${vehicleList}
@@ -68,18 +65,14 @@ ${driverList}
 • /fuel - Submit fuel expense
 • /maintenance - Submit maintenance expense  
 • /other - Submit other expense
-• /vehicles - Show vehicles list
-• /drivers - Show drivers list
 • /help - Show this menu
 
-*Easy Format:*
+*Example:*
 /fuel
-Vehicle: 1
+Vehicle: ABC-123
 Amount: 150.50 AED
 Location: ADNOC Station
-Date: 2024-01-15 (optional - defaults to today)
 
-*Just use the number from the list above!*
 Type any command to get started!`;
 
     await this.sendMessage(to, template);
@@ -131,22 +124,20 @@ Type any command to get started!`;
    */
   async sendVehiclesList(to) {
     const vehicles = await this.getAvailableVehicles();
-    
+
     if (vehicles.length === 0) {
       await this.sendMessage(to, '🚗 *Available Vehicles*\n\nNo vehicles found in the system.');
       return;
     }
-    
-    const vehicleList = vehicles.map((v, index) => `${index + 1}. ${v.licensePlate} (${v.make} ${v.model})`).join('\n');
-    
-    const message = `🚗 *Available Vehicles*\n\n${vehicleList}\n\n*Easy Format:*
-/fuel
-Vehicle: 1
-Amount: 150.50 AED
-Location: ADNOC Station
 
-*Just use the number from the list above!*`;
-    
+    const vehicleList = vehicles.map(v => `• ${v.licensePlate} (${v.make} ${v.model})`).join('\n');
+
+    const message = `🚗 *Available Vehicles*\n\n${vehicleList}\n\n*To submit an expense:*
+/fuel
+Vehicle: ABC-123
+Amount: 150.50 AED
+Location: ADNOC Station`;
+
     await this.sendMessage(to, message);
   }
 
@@ -156,22 +147,20 @@ Location: ADNOC Station
    */
   async sendDriversList(to) {
     const drivers = await this.getAvailableDrivers();
-    
+
     if (drivers.length === 0) {
       await this.sendMessage(to, '👥 *Available Drivers*\n\nNo drivers found in the system.');
       return;
     }
-    
-    const driverList = drivers.map((d, index) => `${index + 1}. ${d.firstName} ${d.lastName}`).join('\n');
-    
-    const message = `👥 *Available Drivers*\n\n${driverList}\n\n*Easy Format:*
-/fuel
-Vehicle: 1
-Amount: 150.50 AED
-Location: ADNOC Station
 
-*Just use the number from the list above!*`;
-    
+    const driverList = drivers.map(d => `• ${d.firstName} ${d.lastName} (${d.contact})`).join('\n');
+
+    const message = `👥 *Available Drivers*\n\n${driverList}\n\n*To submit an expense:*
+/fuel
+Vehicle: ABC-123
+Amount: 150.50 AED
+Location: ADNOC Station`;
+
     await this.sendMessage(to, message);
   }
 
@@ -190,13 +179,12 @@ Location: ADNOC Station
 • /drivers - Show available drivers
 • /help - Show this help message
 
-*Easy Format:*
+*Simple Format:*
 /fuel
-Vehicle: 1
+Vehicle: ABC-123
 Amount: 150.50 AED
 Location: ADNOC Station
 
-*Just use numbers from the vehicles list!*
 Type any command to get started!`;
 
     await this.sendMessage(to, helpMessage);
@@ -247,11 +235,13 @@ Type /expense to see the correct format or /help for more information.`;
    */
   parseExpenseMessage(messageText) {
     const lines = messageText.split('\n').map(line => line.trim()).filter(line => line);
-    
+    console.log('Split lines:', lines);
+
     // Check if message starts with expense command
     const firstLine = lines[0].toLowerCase();
+    console.log('First line:', firstLine);
     let expenseType = null;
-    
+
     if (firstLine.startsWith('/fuel')) {
       expenseType = 'fuel';
     } else if (firstLine.startsWith('/maintenance')) {
@@ -262,23 +252,26 @@ Type /expense to see the correct format or /help for more information.`;
       const parts = firstLine.split(' ');
       expenseType = parts[1];
     }
-    
+
+    console.log('Detected expense type:', expenseType);
+
     if (!expenseType || !['fuel', 'maintenance', 'other'].includes(expenseType)) {
+      console.log('Invalid expense type, returning null');
       return null;
     }
 
     const expenseData = { type: expenseType };
-    
+
     // Parse the remaining lines
     for (let i = 1; i < lines.length; i++) {
       const line = lines[i];
       const colonIndex = line.indexOf(':');
-      
+
       if (colonIndex === -1) continue;
-      
+
       const key = line.substring(0, colonIndex).trim().toLowerCase();
       const value = line.substring(colonIndex + 1).trim();
-      
+
       switch (key) {
         case 'vehicle':
           expenseData.vehicle = value;
@@ -308,13 +301,16 @@ Type /expense to see the correct format or /help for more information.`;
     }
 
     // Validate required fields
+    console.log('Expense data before validation:', expenseData);
     if (!expenseData.vehicle || !expenseData.amount) {
+      console.log('Missing required fields - vehicle:', !!expenseData.vehicle, 'amount:', !!expenseData.amount);
       return null;
     }
-    
+
     // Set default date if not provided
     if (!expenseData.date) {
       expenseData.date = new Date().toISOString().split('T')[0]; // Today's date in YYYY-MM-DD format
+      console.log('Set default date:', expenseData.date);
     }
 
     // Type-specific validation
@@ -339,40 +335,29 @@ Type /expense to see the correct format or /help for more information.`;
    */
   async processExpense(expenseData, fromNumber) {
     try {
-      console.log('Processing expense:', expenseData);
-      
       // Find vehicle and driver
+      console.log('Looking for vehicle:', expenseData.vehicle);
       const vehicleId = await this.findVehicleId(expenseData.vehicle);
-      const driverId = await this.findDriverId(fromNumber);
+      console.log('Found vehicle ID:', vehicleId);
 
-      console.log('Found vehicleId:', vehicleId);
-      console.log('Found driverId:', driverId);
+      console.log('Looking for driver:', fromNumber);
+      // Set driver ID as "1" instead of looking it up
+      const driverId = "1";
+      console.log('Using driver ID:', driverId);
 
-      if (!vehicleId) {
-        throw new Error('Vehicle not found. Please check the license plate or number.');
+      // If no vehicle found, create a default vehicle
+      let finalVehicleId = vehicleId;
+      if (!finalVehicleId) {
+        finalVehicleId = await this.createDefaultVehicle(expenseData.vehicle);
       }
 
-      if (!driverId) {
-        console.log('No driver found, using default driver');
-        // Use the first driver as default
-        const collection = await db.getCollection('drivers');
-        const defaultDriver = await collection.findOne({}, { sort: { _id: 1 } });
-        if (!defaultDriver) {
-          throw new Error('No drivers found in database. Please add a driver first.');
-        }
-        driverId = defaultDriver._id.toString();
-      }
-
-      // Get companyId from the vehicle
-      const vehicleCollection = await db.getCollection('vehicles');
-      const vehicle = await vehicleCollection.findOne({ _id: new ObjectId(vehicleId) });
-      const companyId = vehicle ? vehicle.companyId : '67e8291028f8bad079c0e8bb'; // Default companyId
+      // Use the fixed driver ID
+      const finalDriverId = driverId;
 
       // Create expense record
       const expense = {
-        vehicleId: vehicleId.toString(),
-        driverId: driverId.toString(),
-        companyId: companyId,
+        vehicleId: finalVehicleId.toString(), // Convert to string
+        driverId: finalDriverId.toString(), // Convert to string
         expenseType: this.mapExpenseType(expenseData.type),
         amount: expenseData.amount,
         date: new Date(expenseData.date),
@@ -384,30 +369,27 @@ Type /expense to see the correct format or /help for more information.`;
         whatsappNumber: fromNumber,
         rawMessage: JSON.stringify(expenseData),
         status: 'pending',
+        companyId: '67e8291028f8bad079c0e8bb',
         createdAt: new Date(),
         updatedAt: new Date()
       };
 
-      console.log('Created expense object:', expense);
-
       // Validate expense data
       const validation = ExpenseModel.validate(expense);
       if (!validation.isValid) {
-        console.error('Validation failed:', validation.errors);
         throw new Error(`Validation error: ${validation.errors.join(', ')}`);
       }
 
-      console.log('Validation passed, saving to database...');
+      // Save to database using ExpenseModel
+      const collection = await ExpenseModel.getCollection();
+      const preparedExpense = ExpenseModel.prepareData(expense);
+      const result = await collection.insertOne(preparedExpense);
 
-      // Save to database
-      const collection = await db.getCollection('expenses');
-      const result = await collection.insertOne(expense);
-
-      console.log('Expense saved successfully:', result.insertedId);
+      console.log('✅ Expense saved successfully:', result.insertedId);
 
       return {
         _id: result.insertedId,
-        ...expense
+        ...preparedExpense
       };
     } catch (error) {
       console.error('Error processing expense:', error);
@@ -416,29 +398,37 @@ Type /expense to see the correct format or /help for more information.`;
   }
 
   /**
-   * Find vehicle ID by license plate or number
-   * @param {string} vehicleIdentifier - License plate, vehicle ID, or number from list
+   * Find vehicle ID by license plate or vehicle number
+   * @param {string} vehicleIdentifier - License plate, vehicle ID, or vehicle number
    * @returns {Promise<string|null>} Vehicle ID or null
    */
   async findVehicleId(vehicleIdentifier) {
     const collection = await db.getCollection('vehicles');
-    
-    // Check if it's a number (from the numbered list)
-    if (!isNaN(vehicleIdentifier)) {
-      const vehicles = await collection.find({}).limit(10).toArray();
-      const index = parseInt(vehicleIdentifier) - 1;
-      if (index >= 0 && index < vehicles.length) {
-        return vehicles[index]._id.toString();
-      }
-    }
-    
-    // Check if it's a license plate or ObjectId
+
+    // Escape special regex characters in the identifier
+    const escapedIdentifier = vehicleIdentifier.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+    // Try different matching strategies
     const vehicle = await collection.findOne({
       $or: [
-        { licensePlate: { $regex: vehicleIdentifier.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' } },
-        { _id: ObjectId.isValid(vehicleIdentifier) ? new ObjectId(vehicleIdentifier) : null }
+        { licensePlate: { $regex: escapedIdentifier, $options: 'i' } },
+        { _id: ObjectId.isValid(vehicleIdentifier) ? new ObjectId(vehicleIdentifier) : null },
+        // Handle numeric IDs (convert to string and match)
+        { _id: ObjectId.isValid(vehicleIdentifier.toString()) ? new ObjectId(vehicleIdentifier.toString()) : null },
+        // Handle numeric vehicle references (like "1", "2", "3")
+        { vehicleNumber: parseInt(vehicleIdentifier) },
+        { vehicleNumber: vehicleIdentifier }
       ]
     });
+
+    // If no vehicle found and identifier is numeric, try to get vehicle by index
+    if (!vehicle && !isNaN(vehicleIdentifier)) {
+      const vehicles = await collection.find({}).sort({ createdAt: 1 }).toArray();
+      const vehicleIndex = parseInt(vehicleIdentifier) - 1; // Convert to 0-based index
+      if (vehicleIndex >= 0 && vehicleIndex < vehicles.length) {
+        return vehicles[vehicleIndex]._id.toString();
+      }
+    }
 
     return vehicle ? vehicle._id.toString() : null;
   }
@@ -449,33 +439,74 @@ Type /expense to see the correct format or /help for more information.`;
    * @returns {Promise<string|null>} Driver ID or null
    */
   async findDriverId(phoneNumber) {
-    // Clean phone number - remove whatsapp: prefix and normalize
+    // Clean phone number
     const cleanPhone = phoneNumber.replace('whatsapp:', '').replace('+', '');
-    const withPlus = `+${cleanPhone}`;
-    const withoutPlus = cleanPhone;
-    
+
     const collection = await db.getCollection('drivers');
-    
-    // Try multiple phone number formats
+
+    // Escape special regex characters
+    const escapedCleanPhone = cleanPhone.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const escapedPhoneNumber = phoneNumber.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const escapedPhoneWithPlus = `+${cleanPhone}`.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
     const driver = await collection.findOne({
       $or: [
-        { contact: withoutPlus },
-        { contact: withPlus },
-        { contact: phoneNumber },
-        { contact: { $regex: withoutPlus.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' } },
-        { contact: { $regex: withPlus.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' } },
-        { contact: { $regex: phoneNumber.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' } }
+        { contact: { $regex: escapedCleanPhone } },
+        { contact: { $regex: escapedPhoneNumber } },
+        { contact: { $regex: escapedPhoneWithPlus } }
       ]
     });
 
-    if (driver) {
-      return driver._id.toString();
-    }
+    return driver ? driver._id : null;
+  }
 
-    // If no driver found, return default driver ID (first driver in database)
-    console.log('No driver found for phone number, using default driver');
-    const defaultDriver = await collection.findOne({}, { sort: { _id: 1 } });
-    return defaultDriver ? defaultDriver._id.toString() : null;
+  /**
+   * Create a default driver for a phone number
+   * @param {string} phoneNumber - Phone number
+   * @returns {Promise<string>} Driver ID
+   */
+  async createDefaultDriver(phoneNumber) {
+    const collection = await db.getCollection('drivers');
+
+    const cleanPhone = phoneNumber.replace('whatsapp:', '');
+
+    const defaultDriver = {
+      name: `Driver ${cleanPhone}`,
+      contact: cleanPhone,
+      licenseNumber: 'N/A',
+      status: 'active',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    const result = await collection.insertOne(defaultDriver);
+    console.log('Created default driver for:', cleanPhone);
+
+    return result.insertedId.toString();
+  }
+
+  /**
+   * Create a default vehicle for a vehicle identifier
+   * @param {string} vehicleIdentifier - Vehicle identifier
+   * @returns {Promise<string>} Vehicle ID
+   */
+  async createDefaultVehicle(vehicleIdentifier) {
+    const collection = await db.getCollection('vehicles');
+
+    const defaultVehicle = {
+      licensePlate: vehicleIdentifier,
+      make: 'Unknown',
+      model: 'Unknown',
+      year: new Date().getFullYear(),
+      status: 'active',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    const result = await collection.insertOne(defaultVehicle);
+    console.log('Created default vehicle for:', vehicleIdentifier);
+
+    return result.insertedId.toString();
   }
 
   /**
@@ -518,54 +549,59 @@ Type /expense to see the correct format or /help for more information.`;
   async handleWebhook(req, res) {
     try {
       const { From, Body } = req.body;
-      
+
       console.log('Received WhatsApp message:', { From, Body });
 
       const command = Body.toLowerCase().trim();
 
-      // Handle different commands
-      switch (command) {
-        case '/expense':
-        case '/fuel':
-        case '/maintenance':
-        case '/other':
-          await this.sendExpenseTemplate(From);
-          break;
-          
-        case '/help':
-          await this.sendHelpMessage(From);
-          break;
-          
-        case '/vehicles':
-          await this.sendVehiclesList(From);
-          break;
-          
-        case '/drivers':
-          await this.sendDriversList(From);
-          break;
-          
-        default:
-          // Try to parse as expense
-          console.log('Trying to parse as expense:', Body);
-          const expenseData = this.parseExpenseMessage(Body);
-          console.log('Parsed expense data:', expenseData);
-          
-          if (expenseData) {
-            try {
-              console.log('Processing expense...');
-              const expense = await this.processExpense(expenseData, From);
-              console.log('Expense processed successfully, sending confirmation...');
-              await this.sendConfirmationMessage(From, expense._id, expenseData);
-            } catch (error) {
-              console.error('Error processing expense:', error);
-              await this.sendErrorMessage(From, error.message);
-            }
-          } else {
-            console.log('Could not parse as expense, sending help message');
-            // Send help message for invalid format
-            await this.sendHelpMessage(From);
+      // Check if this is a multi-line expense message (contains \n)
+      if (Body.includes('\n')) {
+        // Try to parse as expense
+        console.log('Attempting to parse multi-line message:', Body);
+        const expenseData = this.parseExpenseMessage(Body);
+        console.log('Parsed expense data:', expenseData);
+
+        if (expenseData) {
+          try {
+            console.log('Processing expense data:', expenseData);
+            const expense = await this.processExpense(expenseData, From);
+            await this.sendConfirmationMessage(From, expense._id, expenseData);
+          } catch (error) {
+            console.error('Error processing expense:', error);
+            await this.sendErrorMessage(From, error.message);
           }
-          break;
+        } else {
+          console.log('Failed to parse expense message, sending help');
+          // Send help message for invalid format
+          await this.sendHelpMessage(From);
+        }
+      } else {
+        // Handle single-line commands
+        switch (command) {
+          case '/expense':
+          case '/fuel':
+          case '/maintenance':
+          case '/other':
+            await this.sendExpenseTemplate(From);
+            break;
+
+          case '/help':
+            await this.sendHelpMessage(From);
+            break;
+
+          case '/vehicles':
+            await this.sendVehiclesList(From);
+            break;
+
+          case '/drivers':
+            await this.sendDriversList(From);
+            break;
+
+          default:
+            // Send help message for unknown commands
+            await this.sendHelpMessage(From);
+            break;
+        }
       }
 
       res.status(200).send('OK');

@@ -82,7 +82,7 @@ class WhatsAppService {
       if (params.limit) queryParams.append('limit', params.limit.toString());
 
       const response = await axios.get(
-        `${BASE_URL}/api/whatsapp/expenses?${queryParams.toString()}`,
+        `${BASE_URL}/api/twilio-whatsapp/expenses?${queryParams.toString()}`,
         { headers: this.getHeaders() }
       );
 
@@ -97,7 +97,7 @@ class WhatsAppService {
   async getExpense(id: string): Promise<WhatsAppExpense> {
     try {
       const response = await axios.get(
-        `${BASE_URL}/api/whatsapp/expenses/${id}`,
+        `${BASE_URL}/api/twilio-whatsapp/expenses/${id}`,
         { headers: this.getHeaders() }
       );
 
@@ -112,7 +112,7 @@ class WhatsAppService {
   async updateExpenseStatus(id: string, status: 'approved' | 'rejected' | 'pending', notes?: string): Promise<void> {
     try {
       await axios.patch(
-        `${BASE_URL}/api/whatsapp/expenses/${id}/status`,
+        `${BASE_URL}/api/twilio-whatsapp/expenses/${id}/status`,
         { status, notes },
         { headers: this.getHeaders() }
       );
@@ -126,7 +126,7 @@ class WhatsAppService {
   async getExpenseStats(): Promise<WhatsAppExpenseStats> {
     try {
       const response = await axios.get(
-        `${BASE_URL}/api/whatsapp/expenses/stats`,
+        `${BASE_URL}/api/twilio-whatsapp/expenses/stats`,
         { headers: this.getHeaders() }
       );
 
@@ -141,7 +141,7 @@ class WhatsAppService {
   async deleteExpense(id: string): Promise<void> {
     try {
       await axios.delete(
-        `${BASE_URL}/api/whatsapp/expenses/${id}`,
+        `${BASE_URL}/api/twilio-whatsapp/expenses/${id}`,
         { headers: this.getHeaders() }
       );
     } catch (error) {
@@ -154,7 +154,7 @@ class WhatsAppService {
   async getBotStatus(): Promise<BotStatus> {
     try {
       const response = await axios.get(
-        `${BASE_URL}/api/whatsapp/bot/status`,
+        `${BASE_URL}/api/twilio-whatsapp/bot/status`,
         { headers: this.getHeaders() }
       );
 
@@ -168,7 +168,7 @@ class WhatsAppService {
   async startBot(): Promise<void> {
     try {
       await axios.post(
-        `${BASE_URL}/api/whatsapp/bot/start`,
+        `${BASE_URL}/api/twilio-whatsapp/bot/start`,
         {},
         { headers: this.getHeaders() }
       );
@@ -181,7 +181,7 @@ class WhatsAppService {
   async stopBot(): Promise<void> {
     try {
       await axios.post(
-        `${BASE_URL}/api/whatsapp/bot/stop`,
+        `${BASE_URL}/api/twilio-whatsapp/bot/stop`,
         {},
         { headers: this.getHeaders() }
       );

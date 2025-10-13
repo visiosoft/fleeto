@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const vehicleController = require('../controllers/vehicleController');
-const { auth, checkRole, checkCompanyAccess } = require('../middleware/auth');
+const { auth, authorize, checkCompanyAccess } = require('../middleware/auth');
 
 // Apply authentication and company access middleware to all routes
 router.use(auth);
@@ -106,7 +106,7 @@ router.get('/:id', vehicleController.getVehicleById);
  *       500:
  *         description: Server error
  */
-router.post('/', checkRole('admin', 'manager'), vehicleController.createVehicle);
+router.post('/', authorize('admin', 'manager'), vehicleController.createVehicle);
 
 /**
  * @swagger
@@ -139,7 +139,7 @@ router.post('/', checkRole('admin', 'manager'), vehicleController.createVehicle)
  *       500:
  *         description: Server error
  */
-router.put('/:id', checkRole('admin', 'manager'), vehicleController.updateVehicle);
+router.put('/:id', authorize('admin', 'manager'), vehicleController.updateVehicle);
 
 /**
  * @swagger
@@ -162,17 +162,17 @@ router.put('/:id', checkRole('admin', 'manager'), vehicleController.updateVehicl
  *       500:
  *         description: Server error
  */
-router.delete('/:id', checkRole('admin'), vehicleController.deleteVehicle);
+router.delete('/:id', authorize('admin'), vehicleController.deleteVehicle);
 
 // Vehicle maintenance routes
 router.get('/:id/maintenance', vehicleController.getVehicleMaintenance);
-router.post('/:id/maintenance', checkRole('admin', 'manager'), vehicleController.addMaintenanceRecord);
-router.put('/:id/maintenance/:maintenanceId', checkRole('admin', 'manager'), vehicleController.updateMaintenanceRecord);
-router.delete('/:id/maintenance/:maintenanceId', checkRole('admin'), vehicleController.deleteMaintenanceRecord);
+router.post('/:id/maintenance', authorize('admin', 'manager'), vehicleController.addMaintenanceRecord);
+router.put('/:id/maintenance/:maintenanceId', authorize('admin', 'manager'), vehicleController.updateMaintenanceRecord);
+router.delete('/:id/maintenance/:maintenanceId', authorize('admin'), vehicleController.deleteMaintenanceRecord);
 
 // Vehicle document routes
 router.get('/:id/documents', vehicleController.getVehicleDocuments);
-router.post('/:id/documents', checkRole('admin', 'manager'), vehicleController.addVehicleDocument);
-router.delete('/:id/documents/:documentId', checkRole('admin'), vehicleController.deleteVehicleDocument);
+router.post('/:id/documents', authorize('admin', 'manager'), vehicleController.addVehicleDocument);
+router.delete('/:id/documents/:documentId', authorize('admin'), vehicleController.deleteVehicleDocument);
 
 module.exports = router; 

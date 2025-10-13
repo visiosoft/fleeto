@@ -19,6 +19,8 @@ const userRoutes = require('./routes/userRoutes');
 const invoiceRoutes = require('./routes/invoiceRoutes');
 const noteRoutes = require('./routes/noteRoutes');
 const receiptRoutes = require('./routes/receiptRoutes');
+const twilioWhatsAppRoutes = require('./routes/twilioWhatsAppRoutes');
+const costRoutes = require('./routes/costRoutes');
 
 // API Routes
 app.use('/api/auth', authRoutes);
@@ -29,6 +31,8 @@ app.use('/api/users', userRoutes);
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/notes', noteRoutes);
 app.use('/api/receipts', receiptRoutes);
+app.use('/api/twilio-whatsapp', twilioWhatsAppRoutes);
+app.use('/api/costs', costRoutes);
 
 // MongoDB connection
 mongoose.connect('mongodb+srv://devxulfiqar:nSISUpLopruL7S8j@mypaperlessoffice.z5g84.mongodb.net/fleet-management?retryWrites=true&w=majority', {
