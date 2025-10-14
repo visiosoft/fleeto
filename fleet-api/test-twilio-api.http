@@ -2,7 +2,7 @@
 ### Make sure to replace the JWT token with a valid one from your authentication
 
 @baseUrl = http://localhost:5000/api/twilio-whatsapp
-@authToken = process.env.TWILIO_AUTH_TOKEN
+@authToken = YOUR_JWT_TOKEN_HERE
 
 ### 1. Test Webhook (simulate Twilio webhook)
 POST {{baseUrl}}/webhook

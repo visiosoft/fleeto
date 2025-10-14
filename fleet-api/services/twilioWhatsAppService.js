@@ -5,11 +5,14 @@ const db = require('../config/db');
 
 class TwilioWhatsAppService {
   constructor() {
-    // Hardcoded Twilio credentials for testing
-    // Replace these with your actual Twilio credentials from Twilio Console
-    const accountSid = process.env.TWILIO_ACCOUNT_SID || 'process.env.TWILIO_ACCOUNT_SID';
-    const authToken = process.env.TWILIO_AUTH_TOKEN || 'process.env.TWILIO_AUTH_TOKEN';
-    const whatsappNumber = process.env.TWILIO_WHATSAPP_NUMBER || 'process.env.TWILIO_WHATSAPP_NUMBER';
+    // Get Twilio credentials from environment variables
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
+    const whatsappNumber = process.env.TWILIO_WHATSAPP_NUMBER;
+
+    if (!accountSid || !authToken || !whatsappNumber) {
+      throw new Error('Missing required Twilio environment variables: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_WHATSAPP_NUMBER');
+    }
 
     this.client = twilio(accountSid, authToken);
     this.fromNumber = whatsappNumber;
@@ -429,10 +432,15 @@ Type /expense to see the correct format or /help for more information.`;
       console.log('📊 Trying index-based lookup for numeric identifier:', vehicleIdentifier);
       const vehicles = await collection.find({}).sort({ createdAt: 1 }).toArray();
       console.log('📋 Total vehicles found:', vehicles.length);
-      console.log('📋 Vehicle list:', vehicles.map(v => ({ id: v._id.toString(), licensePlate: v.licensePlate, createdAt: v.createdAt })));
+      console.log('📋 Vehicle list:', vehicles.map((v, index) => ({ 
+        index: index + 1, 
+        id: v._id.toString(), 
+        licensePlate: v.licensePlate, 
+        createdAt: v.createdAt 
+      })));
       
       const vehicleIndex = parseInt(vehicleIdentifier) - 1; // Convert to 0-based index
-      console.log('🎯 Looking for vehicle at index:', vehicleIndex);
+      console.log('🎯 Looking for vehicle at index:', vehicleIndex, '(1-based input:', vehicleIdentifier, ')');
       
       if (vehicleIndex >= 0 && vehicleIndex < vehicles.length) {
         const selectedVehicle = vehicles[vehicleIndex];

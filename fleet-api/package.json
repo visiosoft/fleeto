@@ -4,9 +4,10 @@
   "description": "Fleet Management API with multi-company support",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js",
+    "start": "node app.js",
+    "dev": "nodemon app.js",
     "test": "jest",
+    "setup-env": "node setup-env.js",
     "whatsapp": "node start-whatsapp-bot.js",
     "whatsapp-manual": "node start-whatsapp-manual.js",
     "whatsapp-web": "node start-whatsapp-web.js",

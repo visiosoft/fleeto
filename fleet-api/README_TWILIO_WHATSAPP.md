@@ -20,13 +20,29 @@ npm install twilio
 
 ### 2. Environment Setup
 
-Add these variables to your `.env` file:
+Create a `.env` file in the `fleet-api` directory with these variables:
 
 ```env
-TWILIO_ACCOUNT_SID=your_twilio_account_sid
-TWILIO_AUTH_TOKEN=your_twilio_auth_token
+# Database Configuration
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/database?retryWrites=true&w=majority
+
+# Server Configuration
+PORT=5000
+NODE_ENV=development
+
+# JWT Configuration
+JWT_SECRET=your_jwt_secret_here
+
+# Twilio WhatsApp Configuration
+TWILIO_ACCOUNT_SID=your_twilio_account_sid_here
+TWILIO_AUTH_TOKEN=your_twilio_auth_token_here
 TWILIO_WHATSAPP_NUMBER=process.env.TWILIO_WHATSAPP_NUMBER
+
+# WhatsApp Webhook URL (for production)
+WHATSAPP_WEBHOOK_URL=https://yourdomain.com/api/twilio-whatsapp/webhook
 ```
+
+**⚠️ Important:** Never commit your `.env` file to version control. Add it to `.gitignore`.
 
 ### 3. Test the Integration
 
