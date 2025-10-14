@@ -71,7 +71,7 @@ ${driverList}
 /fuel
 Vehicle: ABC-123
 Amount: 150.50 AED
-Location: ADNOC Station
+Description: ADNOC Station
 
 Type any command to get started!`;
 
@@ -403,6 +403,7 @@ Type /expense to see the correct format or /help for more information.`;
    * @returns {Promise<string|null>} Vehicle ID or null
    */
   async findVehicleId(vehicleIdentifier) {
+    console.log('🔍 Looking for vehicle with identifier:', vehicleIdentifier);
     const collection = await db.getCollection('vehicles');
 
     // Escape special regex characters in the identifier
@@ -421,16 +422,30 @@ Type /expense to see the correct format or /help for more information.`;
       ]
     });
 
+    console.log('🚗 Direct vehicle match found:', vehicle ? vehicle._id.toString() : 'None');
+
     // If no vehicle found and identifier is numeric, try to get vehicle by index
     if (!vehicle && !isNaN(vehicleIdentifier)) {
+      console.log('📊 Trying index-based lookup for numeric identifier:', vehicleIdentifier);
       const vehicles = await collection.find({}).sort({ createdAt: 1 }).toArray();
+      console.log('📋 Total vehicles found:', vehicles.length);
+      console.log('📋 Vehicle list:', vehicles.map(v => ({ id: v._id.toString(), licensePlate: v.licensePlate, createdAt: v.createdAt })));
+      
       const vehicleIndex = parseInt(vehicleIdentifier) - 1; // Convert to 0-based index
+      console.log('🎯 Looking for vehicle at index:', vehicleIndex);
+      
       if (vehicleIndex >= 0 && vehicleIndex < vehicles.length) {
-        return vehicles[vehicleIndex]._id.toString();
+        const selectedVehicle = vehicles[vehicleIndex];
+        console.log('✅ Selected vehicle:', selectedVehicle._id.toString(), selectedVehicle.licensePlate);
+        return selectedVehicle._id.toString();
+      } else {
+        console.log('❌ Vehicle index out of range:', vehicleIndex, 'Total vehicles:', vehicles.length);
       }
     }
 
-    return vehicle ? vehicle._id.toString() : null;
+    const result = vehicle ? vehicle._id.toString() : null;
+    console.log('🔍 Final vehicle ID result:', result);
+    return result;
   }
 
   /**
@@ -531,7 +546,7 @@ Type /expense to see the correct format or /help for more information.`;
   buildDescription(expenseData) {
     switch (expenseData.type) {
       case 'fuel':
-        return `Fuel expense at ${expenseData.location}`;
+        return `${expenseData.location}`;
       case 'maintenance':
         return `${expenseData.serviceType} at ${expenseData.garage}`;
       case 'other':
