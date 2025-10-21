@@ -10,12 +10,24 @@ class TwilioWhatsAppService {
     const authToken = process.env.TWILIO_AUTH_TOKEN;
     const whatsappNumber = process.env.TWILIO_WHATSAPP_NUMBER;
 
+    // Test mode - set to true to prevent sending real WhatsApp messages
+    this.testMode = process.env.WHATSAPP_TEST_MODE === 'true' || !accountSid || !authToken || !whatsappNumber;
+
     if (!accountSid || !authToken || !whatsappNumber) {
-      throw new Error('Missing required Twilio environment variables: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_WHATSAPP_NUMBER');
+      console.warn('⚠️  Twilio environment variables not set. Running in TEST MODE.');
+      console.warn('Set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_WHATSAPP_NUMBER in your .env file');
+      this.client = null;
+      this.fromNumber = null;
+      this.isConfigured = false;
+    } else {
+      this.client = twilio(accountSid, authToken);
+      this.fromNumber = whatsappNumber;
+      this.isConfigured = true;
     }
 
-    this.client = twilio(accountSid, authToken);
-    this.fromNumber = whatsappNumber;
+    if (this.testMode) {
+      console.log('🧪 TEST MODE: WhatsApp messages will be logged but not sent');
+    }
   }
 
   /**
@@ -26,6 +38,15 @@ class TwilioWhatsAppService {
    */
   async sendMessage(to, message) {
     try {
+      if (this.testMode || !this.isConfigured) {
+        console.log('📱 [TEST MODE] WhatsApp message would be sent to:', to);
+        console.log('📱 [TEST MODE] Message:');
+        console.log('─'.repeat(50));
+        console.log(message);
+        console.log('─'.repeat(50));
+        return { sid: 'test-message-id', status: 'sent' };
+      }
+
       const response = await this.client.messages.create({
         body: message,
         from: this.fromNumber,
@@ -174,10 +195,20 @@ Location: ADNOC Station`;
   async sendHelpMessage(to) {
     const helpMessage = `📱 *Expense Management Help*
 
-*Quick Commands:*
+*Submit Expenses:*
 • /fuel - Submit fuel expense
 • /maintenance - Submit maintenance expense  
 • /other - Submit other expense
+
+*View Expenses:*
+• /expenses - Show current month expenses
+• /expenses-all - Show all your expenses
+• /monthly - Show current month expenses
+• /yearly - Show current year expenses
+• /expenses-jan - Show January expenses
+• /expenses-2024-01 - Show specific month/year
+
+*Other Commands:*
 • /vehicles - Show available vehicles
 • /drivers - Show available drivers
 • /help - Show this help message
@@ -565,6 +596,402 @@ Type /expense to see the correct format or /help for more information.`;
   }
 
   /**
+   * Send expenses list for a specific WhatsApp number (shows current month by default)
+   * @param {string} to - Recipient number
+   */
+  async sendExpensesList(to) {
+    try {
+      // Get current month expenses by default
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+
+      const expenses = await this.getExpensesForWhatsAppNumber(to, startOfMonth, endOfMonth);
+      
+      const monthName = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      
+      if (expenses.length === 0) {
+        await this.sendMessage(to, `📅 *${monthName} Expenses*\n\nNo expenses found for this month.`);
+        return;
+      }
+
+      const totalAmount = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+      const statusCounts = expenses.reduce((acc, expense) => {
+        acc[expense.status] = (acc[expense.status] || 0) + 1;
+        return acc;
+      }, {});
+
+      let message = `📅 *${monthName} Expenses*\n\n`;
+      message += `💰 *Total Amount:* ${totalAmount.toFixed(2)} AED\n`;
+      message += `📋 *Total Expenses:* ${expenses.length}\n\n`;
+
+      message += `*Expenses:*\n`;
+      expenses.slice(0, 10).forEach((expense, index) => {
+        const date = new Date(expense.date).toLocaleDateString();
+        message += `${index + 1}. ${expense.expenseType.toUpperCase()}\n`;
+        message += `   💰 ${expense.amount} AED - ${date}\n`;
+        message += `   🚗 ${expense.vehicle || 'N/A'}\n\n`;
+      });
+
+      if (expenses.length > 10) {
+        message += `... and ${expenses.length - 10} more expenses\n\n`;
+      }
+
+      message += `*More Commands:*\n`;
+      message += `• /monthly - Current month (same as /expenses)\n`;
+      message += `• /yearly - Current year\n`;
+      message += `• /expenses-jan - Specific month\n`;
+      message += `• /expenses-all - All expenses`;
+
+      await this.sendMessage(to, message);
+    } catch (error) {
+      console.error('Error sending expenses list:', error);
+      await this.sendErrorMessage(to, 'Failed to retrieve expenses');
+    }
+  }
+
+  /**
+   * Send all expenses for a specific WhatsApp number
+   * @param {string} to - Recipient number
+   */
+  async sendAllExpenses(to) {
+    try {
+      const expenses = await this.getExpensesForWhatsAppNumber(to);
+      
+      if (expenses.length === 0) {
+        await this.sendMessage(to, '📊 *All Your Expenses*\n\nNo expenses found.');
+        return;
+      }
+
+      const totalAmount = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+      const recentExpenses = expenses.slice(0, 10); // Show last 10 expenses
+
+      let message = `📊 *All Your Expenses Summary*\n\n`;
+      message += `💰 *Total Amount:* ${totalAmount.toFixed(2)} AED\n`;
+      message += `📋 *Total Expenses:* ${expenses.length}\n\n`;
+      message += `*Recent Expenses:*\n`;
+
+      recentExpenses.forEach((expense, index) => {
+        const date = new Date(expense.date).toLocaleDateString();
+        const status = expense.status === 'approved' ? '✅' : expense.status === 'rejected' ? '❌' : '⏳';
+        message += `${index + 1}. ${status} ${expense.expenseType.toUpperCase()}\n`;
+        message += `   💰 ${expense.amount} AED - ${date}\n`;
+        message += `   🚗 ${expense.vehicle || 'N/A'}\n\n`;
+      });
+
+      if (expenses.length > 10) {
+        message += `... and ${expenses.length - 10} more expenses\n\n`;
+      }
+
+      message += `*Commands:*\n`;
+      message += `• /expenses - Current month\n`;
+      message += `• /monthly - Current month\n`;
+      message += `• /yearly - Current year\n`;
+      message += `• /expenses-jan - Specific month`;
+
+      await this.sendMessage(to, message);
+    } catch (error) {
+      console.error('Error sending all expenses:', error);
+      await this.sendErrorMessage(to, 'Failed to retrieve all expenses');
+    }
+  }
+
+  /**
+   * Send monthly expenses for current month
+   * @param {string} to - Recipient number
+   */
+  async sendMonthlyExpenses(to) {
+    try {
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+
+      const expenses = await this.getExpensesForWhatsAppNumber(to, startOfMonth, endOfMonth);
+      
+      const monthName = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      
+      if (expenses.length === 0) {
+        await this.sendMessage(to, `📅 *${monthName} Expenses*\n\nNo expenses found for this month.`);
+        return;
+      }
+
+      const totalAmount = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+      const statusCounts = expenses.reduce((acc, expense) => {
+        acc[expense.status] = (acc[expense.status] || 0) + 1;
+        return acc;
+      }, {});
+
+      let message = `📅 *${monthName} Expenses*\n\n`;
+      message += `💰 *Total Amount:* ${totalAmount.toFixed(2)} AED\n`;
+      message += `📋 *Total Expenses:* ${expenses.length}\n\n`;
+      message += `*Status Breakdown:*\n`;
+      message += `✅ Approved: ${statusCounts.approved || 0}\n`;
+      message += `⏳ Pending: ${statusCounts.pending || 0}\n`;
+      message += `❌ Rejected: ${statusCounts.rejected || 0}\n\n`;
+
+      message += `*Expenses:*\n`;
+      expenses.slice(0, 10).forEach((expense, index) => {
+        const date = new Date(expense.date).toLocaleDateString();
+        const status = expense.status === 'approved' ? '✅' : expense.status === 'rejected' ? '❌' : '⏳';
+        message += `${index + 1}. ${status} ${expense.expenseType.toUpperCase()}\n`;
+        message += `   💰 ${expense.amount} AED - ${date}\n`;
+        message += `   🚗 ${expense.vehicle || 'N/A'}\n\n`;
+      });
+
+      if (expenses.length > 10) {
+        message += `... and ${expenses.length - 10} more expenses`;
+      }
+
+      await this.sendMessage(to, message);
+    } catch (error) {
+      console.error('Error sending monthly expenses:', error);
+      await this.sendErrorMessage(to, 'Failed to retrieve monthly expenses');
+    }
+  }
+
+  /**
+   * Send yearly expenses for current year
+   * @param {string} to - Recipient number
+   */
+  async sendYearlyExpenses(to) {
+    try {
+      const now = new Date();
+      const startOfYear = new Date(now.getFullYear(), 0, 1);
+      const endOfYear = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
+
+      const expenses = await this.getExpensesForWhatsAppNumber(to, startOfYear, endOfYear);
+      
+      const year = now.getFullYear();
+      
+      if (expenses.length === 0) {
+        await this.sendMessage(to, `📅 *${year} Expenses*\n\nNo expenses found for this year.`);
+        return;
+      }
+
+      const totalAmount = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+      
+      // Group by month
+      const monthlyTotals = {};
+      expenses.forEach(expense => {
+        const month = new Date(expense.date).toLocaleDateString('en-US', { month: 'short' });
+        monthlyTotals[month] = (monthlyTotals[month] || 0) + expense.amount;
+      });
+
+      let message = `📅 *${year} Expenses Summary*\n\n`;
+      message += `💰 *Total Amount:* ${totalAmount.toFixed(2)} AED\n`;
+      message += `📋 *Total Expenses:* ${expenses.length}\n\n`;
+      message += `*Monthly Breakdown:*\n`;
+
+      Object.entries(monthlyTotals)
+        .sort((a, b) => new Date(`2024-${a[0]}-01`) - new Date(`2024-${b[0]}-01`))
+        .forEach(([month, amount]) => {
+          message += `• ${month}: ${amount.toFixed(2)} AED\n`;
+        });
+
+      message += `\n*Top Expense Types:*\n`;
+      const typeTotals = {};
+      expenses.forEach(expense => {
+        typeTotals[expense.expenseType] = (typeTotals[expense.expenseType] || 0) + expense.amount;
+      });
+
+      Object.entries(typeTotals)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .forEach(([type, amount]) => {
+          message += `• ${type.toUpperCase()}: ${amount.toFixed(2)} AED\n`;
+        });
+
+      await this.sendMessage(to, message);
+    } catch (error) {
+      console.error('Error sending yearly expenses:', error);
+      await this.sendErrorMessage(to, 'Failed to retrieve yearly expenses');
+    }
+  }
+
+  /**
+   * Send expenses for a specific month
+   * @param {string} to - Recipient number
+   * @param {string} monthParam - Month parameter (e.g., 'jan', '2024-01')
+   */
+  async sendExpensesForMonth(to, monthParam) {
+    try {
+      let startDate, endDate, monthName;
+      
+      // Parse month parameter
+      if (monthParam.match(/^\d{4}-\d{2}$/)) {
+        // Format: 2024-01
+        const [year, month] = monthParam.split('-');
+        startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
+        endDate = new Date(parseInt(year), parseInt(month), 0, 23, 59, 59);
+        monthName = startDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      } else {
+        // Format: jan, feb, etc.
+        const monthNames = {
+          'jan': 0, 'feb': 1, 'mar': 2, 'apr': 3, 'may': 4, 'jun': 5,
+          'jul': 6, 'aug': 7, 'sep': 8, 'oct': 9, 'nov': 10, 'dec': 11
+        };
+        
+        const monthIndex = monthNames[monthParam.toLowerCase()];
+        if (monthIndex === undefined) {
+          await this.sendMessage(to, `❌ Invalid month format. Use: jan, feb, mar, etc. or 2024-01, 2024-02, etc.`);
+          return;
+        }
+        
+        const now = new Date();
+        startDate = new Date(now.getFullYear(), monthIndex, 1);
+        endDate = new Date(now.getFullYear(), monthIndex + 1, 0, 23, 59, 59);
+        monthName = startDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      }
+
+      const expenses = await this.getExpensesForWhatsAppNumber(to, startDate, endDate);
+      
+      if (expenses.length === 0) {
+        await this.sendMessage(to, `📅 *${monthName} Expenses*\n\nNo expenses found for this month.`);
+        return;
+      }
+
+      const totalAmount = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+
+      let message = `📅 *${monthName} Expenses*\n\n`;
+      message += `💰 *Total Amount:* ${totalAmount.toFixed(2)} AED\n`;
+      message += `📋 *Total Expenses:* ${expenses.length}\n\n`;
+
+      message += `*Expenses:*\n`;
+      expenses.forEach((expense, index) => {
+        const date = new Date(expense.date).toLocaleDateString();
+        const status = expense.status === 'approved' ? '✅' : expense.status === 'rejected' ? '❌' : '⏳';
+        message += `${index + 1}. ${status} ${expense.expenseType.toUpperCase()}\n`;
+        message += `   💰 ${expense.amount} AED - ${date}\n`;
+        message += `   🚗 ${expense.vehicle || 'N/A'}\n\n`;
+      });
+
+      await this.sendMessage(to, message);
+    } catch (error) {
+      console.error('Error sending expenses for month:', error);
+      await this.sendErrorMessage(to, 'Failed to retrieve expenses for the specified month');
+    }
+  }
+
+  /**
+   * Get expenses for a specific WhatsApp number with optional date range
+   * @param {string} whatsappNumber - WhatsApp number
+   * @param {Date} startDate - Start date (optional)
+   * @param {Date} endDate - End date (optional)
+   * @returns {Promise<Array>} Array of expenses
+   */
+  async getExpensesForWhatsAppNumber(whatsappNumber, startDate = null, endDate = null) {
+    try {
+      const collection = await db.getCollection('expenses');
+      
+      const query = {
+        whatsappNumber: whatsappNumber,
+        source: 'whatsapp_twilio'
+      };
+
+      // Add date range if provided
+      if (startDate && endDate) {
+        query.date = {
+          $gte: startDate,
+          $lte: endDate
+        };
+      }
+
+      const expenses = await collection
+        .find(query)
+        .sort({ date: -1 })
+        .toArray();
+
+      // Populate vehicle information
+      const populatedExpenses = await Promise.all(
+        expenses.map(async (expense) => {
+          let vehicleInfo = 'Unknown Vehicle';
+          if (expense.vehicleId) {
+            try {
+              console.log('🔍 Looking up vehicle for expense:', expense._id);
+              console.log('🔍 VehicleId:', expense.vehicleId, 'Type:', typeof expense.vehicleId);
+              
+              // Convert string to ObjectId if needed
+              let vehicleId;
+              if (typeof expense.vehicleId === 'string') {
+                if (ObjectId.isValid(expense.vehicleId)) {
+                  vehicleId = new ObjectId(expense.vehicleId);
+                } else {
+                  console.log('❌ Invalid ObjectId string:', expense.vehicleId);
+                  return { ...expense, vehicle: 'Invalid Vehicle ID' };
+                }
+              } else {
+                vehicleId = expense.vehicleId;
+              }
+              
+              const vehiclesCollection = await db.getCollection('vehicles');
+              const vehicle = await vehiclesCollection.findOne({ _id: vehicleId });
+              console.log('🚗 Found vehicle:', vehicle);
+              
+              if (vehicle) {
+                vehicleInfo = vehicle.licensePlate || `${vehicle.make || ''} ${vehicle.model || ''}`.trim() || 'Unknown Vehicle';
+                console.log('✅ Vehicle info:', vehicleInfo);
+              } else {
+                console.log('❌ No vehicle found with ID:', vehicleId);
+              }
+            } catch (error) {
+              console.error('❌ Error fetching vehicle:', error);
+              console.error('VehicleId:', expense.vehicleId, 'Type:', typeof expense.vehicleId);
+            }
+          } else {
+            console.log('❌ No vehicleId in expense:', expense._id);
+          }
+
+          return {
+            ...expense,
+            vehicle: vehicleInfo
+          };
+        })
+      );
+
+      return populatedExpenses;
+    } catch (error) {
+      console.error('Error getting expenses for WhatsApp number:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Test expense retrieval without sending WhatsApp messages
+   * @param {string} whatsappNumber - WhatsApp number to test
+   * @param {string} command - Command to test
+   */
+  async testExpenseRetrieval(whatsappNumber, command = '/expenses') {
+    console.log(`🧪 Testing expense retrieval for ${whatsappNumber} with command: ${command}`);
+    
+    try {
+      switch (command.toLowerCase()) {
+        case '/expenses':
+          await this.sendExpensesList(whatsappNumber);
+          break;
+        case '/expenses-all':
+          await this.sendAllExpenses(whatsappNumber);
+          break;
+        case '/monthly':
+          await this.sendMonthlyExpenses(whatsappNumber);
+          break;
+        case '/yearly':
+          await this.sendYearlyExpenses(whatsappNumber);
+          break;
+        default:
+          if (command.startsWith('/expenses-')) {
+            const monthParam = command.replace('/expenses-', '');
+            await this.sendExpensesForMonth(whatsappNumber, monthParam);
+          } else {
+            await this.sendHelpMessage(whatsappNumber);
+          }
+          break;
+      }
+    } catch (error) {
+      console.error('❌ Error in test expense retrieval:', error);
+    }
+  }
+
+  /**
    * Handle incoming webhook from Twilio
    * @param {Object} req - Express request object
    * @param {Object} res - Express response object
@@ -620,9 +1047,31 @@ Type /expense to see the correct format or /help for more information.`;
             await this.sendDriversList(From);
             break;
 
+          case '/expenses':
+            await this.sendExpensesList(From);
+            break;
+
+          case '/expenses-all':
+            await this.sendAllExpenses(From);
+            break;
+
+          case '/monthly':
+            await this.sendMonthlyExpenses(From);
+            break;
+
+          case '/yearly':
+            await this.sendYearlyExpenses(From);
+            break;
+
           default:
-            // Send help message for unknown commands
-            await this.sendHelpMessage(From);
+            // Check if it's a month-specific command (e.g., /expenses-jan, /expenses-2024-01)
+            if (command.startsWith('/expenses-')) {
+              const monthParam = command.replace('/expenses-', '');
+              await this.sendExpensesForMonth(From, monthParam);
+            } else {
+              // Send help message for unknown commands
+              await this.sendHelpMessage(From);
+            }
             break;
         }
       }

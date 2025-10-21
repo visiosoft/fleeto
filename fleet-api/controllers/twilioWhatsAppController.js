@@ -403,6 +403,40 @@ Your expense status has been updated to pending.`;
       });
     }
   }
+
+  /**
+   * Test expense retrieval without sending WhatsApp messages
+   * @param {Object} req - Express request object
+   * @param {Object} res - Express response object
+   */
+  async testExpenseRetrieval(req, res) {
+    try {
+      const { whatsappNumber, command = '/expenses' } = req.body;
+
+      if (!whatsappNumber) {
+        return res.status(400).json({
+          status: 'error',
+          message: 'WhatsApp number is required'
+        });
+      }
+
+      const whatsappService = new TwilioWhatsAppService();
+      await whatsappService.testExpenseRetrieval(whatsappNumber, command);
+
+      res.json({
+        status: 'success',
+        message: 'Test completed - check console logs for output',
+        whatsappNumber,
+        command
+      });
+    } catch (error) {
+      console.error('Error testing expense retrieval:', error);
+      res.status(500).json({
+        status: 'error',
+        message: 'Failed to test expense retrieval'
+      });
+    }
+  }
 }
 
 module.exports = new TwilioWhatsAppController();

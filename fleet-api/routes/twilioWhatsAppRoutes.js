@@ -6,6 +6,9 @@ const twilioWhatsAppController = require('../controllers/twilioWhatsAppControlle
 // Webhook endpoint (no auth required - Twilio calls this)
 router.post('/webhook', twilioWhatsAppController.handleWebhook);
 
+// Test expense retrieval (no auth required for testing)
+router.post('/test-expenses', twilioWhatsAppController.testExpenseRetrieval);
+
 // Apply auth middleware to all other routes
 router.use(auth);
 
