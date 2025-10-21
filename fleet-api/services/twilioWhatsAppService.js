@@ -193,7 +193,7 @@ Location: ADNOC Station`;
    * @param {string} to - Recipient number
    */
   async sendHelpMessage(to) {
-    const helpMessage = `📱 *Expense Management Help*
+    const helpMessage = `📱 *Fleet Management Help*
 
 *Submit Expenses:*
 • /fuel - Submit fuel expense
@@ -208,6 +208,10 @@ Location: ADNOC Station`;
 • /expenses-jan - Show January expenses
 • /expenses-2024-01 - Show specific month/year
 
+*Payment Tracking:*
+• /payments [contract] [amount] [description] - Record payment received
+• /payments [contract] [amount] [description] /summary - Record payment + monthly summary
+
 *Other Commands:*
 • /vehicles - Show available vehicles
 • /drivers - Show available drivers
@@ -218,6 +222,10 @@ Location: ADNOC Station`;
 Vehicle: ABC-123
 Amount: 150.50 AED
 Location: ADNOC Station
+
+*Payment Format:*
+/payments CONTRACT001 5000 Monthly service payment
+/payments CONTRACT002 2500 Equipment maintenance /summary
 
 Type any command to get started!`;
 
@@ -1067,6 +1075,24 @@ Type /expense to see the correct format or /help for more information.`;
             await this.sendYearlyExpenses(From);
             break;
 
+          case '/payments':
+            // Handle payment received command
+            const paymentData = this.parsePaymentMessage(Body);
+            if (paymentData) {
+              const paymentRecord = await this.savePaymentRecord(paymentData, From);
+              if (paymentRecord) {
+                const confirmationMessage = this.generatePaymentConfirmationMessage(paymentRecord);
+                await this.sendMessage(From, confirmationMessage);
+                
+                if (paymentData.requestSummary) {
+                  await this.sendMonthlyPaymentSummary(From);
+                }
+              }
+            } else {
+              await this.sendMessage(From, '❌ Invalid payment format. Please use: /payments [contract_number] [amount] [description]');
+            }
+            break;
+
           default:
             // Check if it's a month-specific command (e.g., /expenses-jan, /expenses-2024-01)
             if (command.startsWith('/expenses-')) {
@@ -1139,10 +1165,10 @@ Type /expense to see the correct format or /help for more information.`;
    */
   parsePaymentMessage(message) {
     try {
-      // Expected format: /received [contract_number] [amount] [description] [optional: /summary]
+      // Expected format: /payments [contract_number] [amount] [description] [optional: /summary]
       const parts = message.trim().split(' ');
       
-      if (parts.length < 4 || parts[0] !== '/received') {
+      if (parts.length < 4 || parts[0] !== '/payments') {
         return null;
       }
 
