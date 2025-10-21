@@ -88,6 +88,39 @@ Content-Type: application/json
 {
   "whatsappNumber": "whatsapp:+14155238886",
   "command": "/help"
+}
+
+###
+
+### 25. Test invoice details command
+POST http://localhost:5000/api/twilio-whatsapp/test-payments
+Content-Type: application/json
+
+{
+  "whatsappNumber": "whatsapp:+14155238886",
+  "command": "/invoice INV-001"
+}
+
+###
+
+### 26. Test payment with invoice number
+POST http://localhost:5000/api/twilio-whatsapp/test-payments
+Content-Type: application/json
+
+{
+  "whatsappNumber": "whatsapp:+14155238886",
+  "command": "/payments INV-001 5000 Monthly service payment"
+}
+
+###
+
+### 27. Test payment with contract number
+POST http://localhost:5000/api/twilio-whatsapp/test-payments
+Content-Type: application/json
+
+{
+  "whatsappNumber": "whatsapp:+14155238886",
+  "command": "/payments CONTRACT-001 2500 Equipment maintenance"
 } CONTRACT004 1500 Partial payment received
 
 ###
@@ -140,6 +173,39 @@ Content-Type: application/json
 {
   "whatsappNumber": "whatsapp:+14155238886",
   "command": "/help"
+}
+
+###
+
+### 25. Test invoice details command
+POST http://localhost:5000/api/twilio-whatsapp/test-payments
+Content-Type: application/json
+
+{
+  "whatsappNumber": "whatsapp:+14155238886",
+  "command": "/invoice INV-001"
+}
+
+###
+
+### 26. Test payment with invoice number
+POST http://localhost:5000/api/twilio-whatsapp/test-payments
+Content-Type: application/json
+
+{
+  "whatsappNumber": "whatsapp:+14155238886",
+  "command": "/payments INV-001 5000 Monthly service payment"
+}
+
+###
+
+### 27. Test payment with contract number
+POST http://localhost:5000/api/twilio-whatsapp/test-payments
+Content-Type: application/json
+
+{
+  "whatsappNumber": "whatsapp:+14155238886",
+  "command": "/payments CONTRACT-001 2500 Equipment maintenance"
 }
 
 ###
@@ -216,6 +282,39 @@ Content-Type: application/json
 {
   "whatsappNumber": "whatsapp:+14155238886",
   "command": "/help"
+}
+
+###
+
+### 25. Test invoice details command
+POST http://localhost:5000/api/twilio-whatsapp/test-payments
+Content-Type: application/json
+
+{
+  "whatsappNumber": "whatsapp:+14155238886",
+  "command": "/invoice INV-001"
+}
+
+###
+
+### 26. Test payment with invoice number
+POST http://localhost:5000/api/twilio-whatsapp/test-payments
+Content-Type: application/json
+
+{
+  "whatsappNumber": "whatsapp:+14155238886",
+  "command": "/payments INV-001 5000 Monthly service payment"
+}
+
+###
+
+### 27. Test payment with contract number
+POST http://localhost:5000/api/twilio-whatsapp/test-payments
+Content-Type: application/json
+
+{
+  "whatsappNumber": "whatsapp:+14155238886",
+  "command": "/payments CONTRACT-001 2500 Equipment maintenance"
 } invalid format
 
 ###
@@ -313,6 +412,39 @@ Content-Type: application/json
 {
   "whatsappNumber": "whatsapp:+14155238886",
   "command": "/help"
+}
+
+###
+
+### 25. Test invoice details command
+POST http://localhost:5000/api/twilio-whatsapp/test-payments
+Content-Type: application/json
+
+{
+  "whatsappNumber": "whatsapp:+14155238886",
+  "command": "/invoice INV-001"
+}
+
+###
+
+### 26. Test payment with invoice number
+POST http://localhost:5000/api/twilio-whatsapp/test-payments
+Content-Type: application/json
+
+{
+  "whatsappNumber": "whatsapp:+14155238886",
+  "command": "/payments INV-001 5000 Monthly service payment"
+}
+
+###
+
+### 27. Test payment with contract number
+POST http://localhost:5000/api/twilio-whatsapp/test-payments
+Content-Type: application/json
+
+{
+  "whatsappNumber": "whatsapp:+14155238886",
+  "command": "/payments CONTRACT-001 2500 Equipment maintenance"
 } CONTRACT008 5000 Payment received for services
 
 ###
@@ -371,6 +503,39 @@ Content-Type: application/json
 {
   "whatsappNumber": "whatsapp:+14155238886",
   "command": "/help"
+}
+
+###
+
+### 25. Test invoice details command
+POST http://localhost:5000/api/twilio-whatsapp/test-payments
+Content-Type: application/json
+
+{
+  "whatsappNumber": "whatsapp:+14155238886",
+  "command": "/invoice INV-001"
+}
+
+###
+
+### 26. Test payment with invoice number
+POST http://localhost:5000/api/twilio-whatsapp/test-payments
+Content-Type: application/json
+
+{
+  "whatsappNumber": "whatsapp:+14155238886",
+  "command": "/payments INV-001 5000 Monthly service payment"
+}
+
+###
+
+### 27. Test payment with contract number
+POST http://localhost:5000/api/twilio-whatsapp/test-payments
+Content-Type: application/json
+
+{
+  "whatsappNumber": "whatsapp:+14155238886",
+  "command": "/payments CONTRACT-001 2500 Equipment maintenance"
 }
 
 ###
@@ -469,6 +634,39 @@ Content-Type: application/json
 {
   "whatsappNumber": "whatsapp:+14155238886",
   "command": "/help"
+}
+
+###
+
+### 25. Test invoice details command
+POST http://localhost:5000/api/twilio-whatsapp/test-payments
+Content-Type: application/json
+
+{
+  "whatsappNumber": "whatsapp:+14155238886",
+  "command": "/invoice INV-001"
+}
+
+###
+
+### 26. Test payment with invoice number
+POST http://localhost:5000/api/twilio-whatsapp/test-payments
+Content-Type: application/json
+
+{
+  "whatsappNumber": "whatsapp:+14155238886",
+  "command": "/payments INV-001 5000 Monthly service payment"
+}
+
+###
+
+### 27. Test payment with contract number
+POST http://localhost:5000/api/twilio-whatsapp/test-payments
+Content-Type: application/json
+
+{
+  "whatsappNumber": "whatsapp:+14155238886",
+  "command": "/payments CONTRACT-001 2500 Equipment maintenance"
 } CONTRACT012 5000 Partial payment received
 
 ###
@@ -520,6 +718,39 @@ Content-Type: application/json
 {
   "whatsappNumber": "whatsapp:+14155238886",
   "command": "/help"
+}
+
+###
+
+### 25. Test invoice details command
+POST http://localhost:5000/api/twilio-whatsapp/test-payments
+Content-Type: application/json
+
+{
+  "whatsappNumber": "whatsapp:+14155238886",
+  "command": "/invoice INV-001"
+}
+
+###
+
+### 26. Test payment with invoice number
+POST http://localhost:5000/api/twilio-whatsapp/test-payments
+Content-Type: application/json
+
+{
+  "whatsappNumber": "whatsapp:+14155238886",
+  "command": "/payments INV-001 5000 Monthly service payment"
+}
+
+###
+
+### 27. Test payment with contract number
+POST http://localhost:5000/api/twilio-whatsapp/test-payments
+Content-Type: application/json
+
+{
+  "whatsappNumber": "whatsapp:+14155238886",
+  "command": "/payments CONTRACT-001 2500 Equipment maintenance"
 } CONTRACT012 5000 Final payment received
 
 ###
@@ -585,4 +816,37 @@ Content-Type: application/json
 {
   "whatsappNumber": "whatsapp:+14155238886",
   "command": "/help"
+}
+
+###
+
+### 25. Test invoice details command
+POST http://localhost:5000/api/twilio-whatsapp/test-payments
+Content-Type: application/json
+
+{
+  "whatsappNumber": "whatsapp:+14155238886",
+  "command": "/invoice INV-001"
+}
+
+###
+
+### 26. Test payment with invoice number
+POST http://localhost:5000/api/twilio-whatsapp/test-payments
+Content-Type: application/json
+
+{
+  "whatsappNumber": "whatsapp:+14155238886",
+  "command": "/payments INV-001 5000 Monthly service payment"
+}
+
+###
+
+### 27. Test payment with contract number
+POST http://localhost:5000/api/twilio-whatsapp/test-payments
+Content-Type: application/json
+
+{
+  "whatsappNumber": "whatsapp:+14155238886",
+  "command": "/payments CONTRACT-001 2500 Equipment maintenance"
 }

@@ -224,11 +224,7 @@ Location: ADNOC Station`;
 *Payment Tracking:*
 • /payments - Show all payments for current month
 • /payments [contract] [amount] [description] - Record payment received
-• /payments [contract] [amount] [description] /summary - Record payment + monthly summary
-• /receivable - Show all receivables for current month
-• /receivable [contract] [amount] [description] - Record receivable (money owed)
-• /received - Show all received payments for current month
-• /received [contract] [amount] [description] - Record payment received
+• /invoice [invoice_number] - Show invoice details and payment status
 
 *Other Commands:*
 • /vehicles - Show available vehicles
@@ -243,7 +239,7 @@ Location: ADNOC Station
 
 *Payment Format:*
 /payments CONTRACT001 5000 Monthly service payment
-/payments CONTRACT002 2500 Equipment maintenance /summary
+/payments INV-001 2500 Equipment maintenance
 
 Type any command to get started!`;
 
@@ -1106,10 +1102,6 @@ Type /expense to see the correct format or /help for more information.`;
                 if (paymentRecord) {
                   const confirmationMessage = this.generatePaymentConfirmationMessage(paymentRecord);
                   await this.sendMessage(From, confirmationMessage);
-                  
-                  if (paymentData.requestSummary) {
-                    await this.sendMonthlyPaymentSummary(From);
-                  }
                 }
               } else {
                 await this.sendMessage(From, '❌ Invalid payment format. Please use: /payments [contract_number] [amount] [description] or just /payments for monthly summary');
@@ -1117,43 +1109,13 @@ Type /expense to see the correct format or /help for more information.`;
             }
             break;
 
-          case '/receivable':
-            // Handle receivable commands
-            if (Body.trim() === '/receivable') {
-              // Show monthly receivables summary
-              await this.sendMonthlyReceivablesSummary(From);
+          case '/invoice':
+            // Handle invoice details command
+            const invoiceNumber = Body.replace('/invoice', '').trim();
+            if (invoiceNumber) {
+              await this.sendInvoiceDetails(From, invoiceNumber);
             } else {
-              // Handle receivable recording command
-              const receivableData = this.parseReceivableMessage(Body);
-              if (receivableData) {
-                const receivableRecord = await this.saveReceivableRecord(receivableData, From);
-                if (receivableRecord) {
-                  const confirmationMessage = this.generateReceivableConfirmationMessage(receivableRecord);
-                  await this.sendMessage(From, confirmationMessage);
-                }
-              } else {
-                await this.sendMessage(From, '❌ Invalid receivable format. Please use: /receivable [contract_number] [amount] [description]');
-              }
-            }
-            break;
-
-          case '/received':
-            // Handle received payments commands
-            if (Body.trim() === '/received') {
-              // Show monthly received payments summary
-              await this.sendMonthlyReceivedSummary(From);
-            } else {
-              // Handle received payment recording command
-              const receivedData = this.parseReceivedMessage(Body);
-              if (receivedData) {
-                const receivedRecord = await this.saveReceivedRecord(receivedData, From);
-                if (receivedRecord) {
-                  const confirmationMessage = this.generateReceivedConfirmationMessage(receivedRecord);
-                  await this.sendMessage(From, confirmationMessage);
-                }
-              } else {
-                await this.sendMessage(From, '❌ Invalid received format. Please use: /received [contract_number] [amount] [description]');
-              }
+              await this.sendMessage(From, '❌ Please provide invoice number. Use: /invoice [invoice_number]');
             }
             break;
 
@@ -1238,8 +1200,7 @@ Type /expense to see the correct format or /help for more information.`;
 
       const contractNumber = parts[1];
       const amount = parseFloat(parts[2]);
-      const description = parts.slice(3).join(' ').replace('/summary', '').trim();
-      const requestSummary = message.includes('/summary');
+      const description = parts.slice(3).join(' ').trim();
 
       if (isNaN(amount) || amount <= 0) {
         return null;
@@ -1249,7 +1210,6 @@ Type /expense to see the correct format or /help for more information.`;
         contractNumber,
         amount,
         description,
-        requestSummary,
         paymentDate: new Date()
       };
     } catch (error) {
@@ -1259,35 +1219,63 @@ Type /expense to see the correct format or /help for more information.`;
   }
 
   /**
-   * Save payment record to database
+   * Save payment record to invoice database
    * @param {Object} paymentData - Payment data
    * @param {string} whatsappNumber - WhatsApp number
    * @returns {Object|null} Saved payment record
    */
   async savePaymentRecord(paymentData, whatsappNumber) {
     try {
-      const collection = await db.getCollection('payments');
+      const Invoice = require('../models/Invoice');
       
+      // Find invoice by contract number or invoice number
+      const invoice = await Invoice.findOne({
+        $or: [
+          { invoiceNumber: paymentData.contractNumber },
+          { 'contract.contractNumber': paymentData.contractNumber }
+        ]
+      });
+
+      if (!invoice) {
+        console.log(`❌ Invoice not found for contract: ${paymentData.contractNumber}`);
+        return null;
+      }
+
+      // Create payment record
       const paymentRecord = {
-        contractNumber: paymentData.contractNumber,
         amount: paymentData.amount,
-        description: paymentData.description,
-        paymentDate: paymentData.paymentDate,
+        paymentMethod: 'bank_transfer', // Default method
+        transactionId: `WHATSAPP_${Date.now()}`,
+        notes: paymentData.description,
+        date: paymentData.paymentDate,
         whatsappNumber: whatsappNumber,
-        source: 'whatsapp_twilio',
-        status: 'received',
-        createdAt: new Date(),
-        updatedAt: new Date()
+        source: 'whatsapp_twilio'
       };
 
-      const result = await collection.insertOne(paymentRecord);
+      // Add payment to invoice
+      invoice.payments.push(paymentRecord);
       
-      if (result.insertedId) {
-        console.log(`✅ Payment record saved: ${result.insertedId}`);
-        return { ...paymentRecord, _id: result.insertedId };
+      // Calculate total paid amount
+      const totalPaid = invoice.payments.reduce((sum, payment) => sum + payment.amount, 0);
+      
+      // Update invoice status based on payment
+      if (totalPaid >= invoice.total) {
+        invoice.status = 'paid';
+      } else if (totalPaid > 0) {
+        invoice.status = 'sent'; // Partially paid
       }
+
+      await invoice.save();
       
-      return null;
+      console.log(`✅ Payment record saved to invoice: ${invoice._id}`);
+      return { 
+        ...paymentRecord, 
+        _id: invoice._id,
+        invoiceNumber: invoice.invoiceNumber,
+        totalAmount: invoice.total,
+        totalPaid: totalPaid,
+        remainingAmount: invoice.total - totalPaid
+      };
     } catch (error) {
       console.error('Error saving payment record:', error);
       return null;
@@ -1300,24 +1288,31 @@ Type /expense to see the correct format or /help for more information.`;
    * @returns {string} Confirmation message
    */
   generatePaymentConfirmationMessage(paymentRecord) {
-    const date = paymentRecord.paymentDate.toLocaleDateString();
-    const time = paymentRecord.paymentDate.toLocaleTimeString();
+    const date = paymentRecord.date.toLocaleDateString();
+    const time = paymentRecord.date.toLocaleTimeString();
     
     return `✅ *Payment Received Successfully!*
 
-📋 *Details:*
+📋 *Invoice Details:*
+• Invoice: ${paymentRecord.invoiceNumber}
 • Contract: ${paymentRecord.contractNumber}
-• Amount: ${paymentRecord.amount} AED
-• Description: ${paymentRecord.description}
+• Payment Amount: ${paymentRecord.amount} AED
+• Description: ${paymentRecord.notes}
 • Date: ${date} at ${time}
 
-🆔 *Payment ID:* ${paymentRecord._id}
+💰 *Payment Summary:*
+• Total Invoice Amount: ${paymentRecord.totalAmount} AED
+• Total Paid: ${paymentRecord.totalPaid} AED
+• Remaining Amount: ${paymentRecord.remainingAmount} AED
 
-Your payment has been recorded and will be processed.`;
+🆔 *Invoice ID:* ${paymentRecord._id}
+📝 *Transaction ID:* ${paymentRecord.transactionId}
+
+Your payment has been recorded and applied to the invoice.`;
   }
 
   /**
-   * Send monthly payment summary
+   * Send monthly payment summary from invoices
    * @param {string} to - Recipient number
    */
   async sendMonthlyPaymentSummary(to) {
@@ -1326,41 +1321,69 @@ Your payment has been recorded and will be processed.`;
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
 
-      const collection = await db.getCollection('payments');
+      const Invoice = require('../models/Invoice');
       
-      const payments = await collection.find({
-        whatsappNumber: to,
-        source: 'whatsapp_twilio',
-        paymentDate: {
-          $gte: startOfMonth,
-          $lte: endOfMonth
+      // Get invoices with payments from WhatsApp in current month
+      const invoices = await Invoice.find({
+        'payments': {
+          $elemMatch: {
+            whatsappNumber: to,
+            source: 'whatsapp_twilio',
+            date: {
+              $gte: startOfMonth,
+              $lte: endOfMonth
+            }
+          }
         }
-      }).sort({ paymentDate: -1 }).toArray();
+      }).populate('contractId').sort({ updatedAt: -1 });
 
       const monthName = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
       
-      if (payments.length === 0) {
+      if (invoices.length === 0) {
         await this.sendMessage(to, `📅 *${monthName} Payments*\n\nNo payments received this month.`);
         return;
       }
 
-      const totalAmount = payments.reduce((sum, payment) => sum + payment.amount, 0);
+      // Extract payments from invoices
+      const allPayments = [];
+      invoices.forEach(invoice => {
+        invoice.payments.forEach(payment => {
+          if (payment.whatsappNumber === to && 
+              payment.source === 'whatsapp_twilio' &&
+              payment.date >= startOfMonth && 
+              payment.date <= endOfMonth) {
+            allPayments.push({
+              ...payment.toObject(),
+              invoiceNumber: invoice.invoiceNumber,
+              contractNumber: invoice.contractId?.contractNumber || 'N/A',
+              totalAmount: invoice.total
+            });
+          }
+        });
+      });
+
+      // Sort by date descending
+      allPayments.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      const totalAmount = allPayments.reduce((sum, payment) => sum + payment.amount, 0);
       
       let message = `📅 *${monthName} Payment Summary*\n\n`;
       message += `💰 *Total Received:* ${totalAmount.toFixed(2)} AED\n`;
-      message += `📋 *Total Payments:* ${payments.length}\n\n`;
+      message += `📋 *Total Payments:* ${allPayments.length}\n`;
+      message += `📄 *Invoices Paid:* ${invoices.length}\n\n`;
       
       message += `*Recent Payments:*\n`;
-      payments.slice(0, 10).forEach((payment, index) => {
-        const date = new Date(payment.paymentDate).toLocaleDateString();
+      allPayments.slice(0, 10).forEach((payment, index) => {
+        const date = new Date(payment.date).toLocaleDateString();
         message += `${index + 1}. 💰 ${payment.amount} AED\n`;
+        message += `   📄 Invoice: ${payment.invoiceNumber}\n`;
         message += `   📋 Contract: ${payment.contractNumber}\n`;
-        message += `   📝 ${payment.description}\n`;
+        message += `   📝 ${payment.notes}\n`;
         message += `   📅 ${date}\n\n`;
       });
 
-      if (payments.length > 10) {
-        message += `... and ${payments.length - 10} more payments`;
+      if (allPayments.length > 10) {
+        message += `... and ${allPayments.length - 10} more payments`;
       }
 
       await this.sendMessage(to, message);
@@ -1370,294 +1393,75 @@ Your payment has been recorded and will be processed.`;
   }
 
   /**
-   * Parse receivable message to extract receivable details
-   * @param {string} message - Receivable message
-   * @returns {Object|null} Parsed receivable data or null if invalid
-   */
-  parseReceivableMessage(message) {
-    try {
-      // Expected format: /receivable [contract_number] [amount] [description]
-      const parts = message.trim().split(' ');
-      
-      if (parts.length < 4 || parts[0] !== '/receivable') {
-        return null;
-      }
-
-      const contractNumber = parts[1];
-      const amount = parseFloat(parts[2]);
-      const description = parts.slice(3).join(' ').trim();
-
-      if (isNaN(amount) || amount <= 0) {
-        return null;
-      }
-
-      return {
-        contractNumber,
-        amount,
-        description,
-        receivableDate: new Date()
-      };
-    } catch (error) {
-      console.error('Error parsing receivable message:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Parse received message to extract received payment details
-   * @param {string} message - Received message
-   * @returns {Object|null} Parsed received data or null if invalid
-   */
-  parseReceivedMessage(message) {
-    try {
-      // Expected format: /received [contract_number] [amount] [description]
-      const parts = message.trim().split(' ');
-      
-      if (parts.length < 4 || parts[0] !== '/received') {
-        return null;
-      }
-
-      const contractNumber = parts[1];
-      const amount = parseFloat(parts[2]);
-      const description = parts.slice(3).join(' ').trim();
-
-      if (isNaN(amount) || amount <= 0) {
-        return null;
-      }
-
-      return {
-        contractNumber,
-        amount,
-        description,
-        receivedDate: new Date()
-      };
-    } catch (error) {
-      console.error('Error parsing received message:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Save receivable record to database
-   * @param {Object} receivableData - Receivable data
-   * @param {string} whatsappNumber - WhatsApp number
-   * @returns {Object|null} Saved receivable record
-   */
-  async saveReceivableRecord(receivableData, whatsappNumber) {
-    try {
-      const collection = await db.getCollection('receivables');
-      
-      const receivableRecord = {
-        contractNumber: receivableData.contractNumber,
-        amount: receivableData.amount,
-        description: receivableData.description,
-        receivableDate: receivableData.receivableDate,
-        whatsappNumber: whatsappNumber,
-        source: 'whatsapp_twilio',
-        status: 'pending',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-
-      const result = await collection.insertOne(receivableRecord);
-      
-      if (result.insertedId) {
-        console.log(`✅ Receivable record saved: ${result.insertedId}`);
-        return { ...receivableRecord, _id: result.insertedId };
-      }
-      
-      return null;
-    } catch (error) {
-      console.error('Error saving receivable record:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Save received payment record to database
-   * @param {Object} receivedData - Received data
-   * @param {string} whatsappNumber - WhatsApp number
-   * @returns {Object|null} Saved received record
-   */
-  async saveReceivedRecord(receivedData, whatsappNumber) {
-    try {
-      const collection = await db.getCollection('received_payments');
-      
-      const receivedRecord = {
-        contractNumber: receivedData.contractNumber,
-        amount: receivedData.amount,
-        description: receivedData.description,
-        receivedDate: receivedData.receivedDate,
-        whatsappNumber: whatsappNumber,
-        source: 'whatsapp_twilio',
-        status: 'received',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-
-      const result = await collection.insertOne(receivedRecord);
-      
-      if (result.insertedId) {
-        console.log(`✅ Received payment record saved: ${result.insertedId}`);
-        return { ...receivedRecord, _id: result.insertedId };
-      }
-      
-      return null;
-    } catch (error) {
-      console.error('Error saving received record:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Generate receivable confirmation message
-   * @param {Object} receivableRecord - Receivable record
-   * @returns {string} Confirmation message
-   */
-  generateReceivableConfirmationMessage(receivableRecord) {
-    const date = receivableRecord.receivableDate.toLocaleDateString();
-    const time = receivableRecord.receivableDate.toLocaleTimeString();
-    
-    return `📋 *Receivable Recorded Successfully!*
-
-📋 *Details:*
-• Contract: ${receivableRecord.contractNumber}
-• Amount: ${receivableRecord.amount} AED
-• Description: ${receivableRecord.description}
-• Date: ${date} at ${time}
-
-🆔 *Receivable ID:* ${receivableRecord._id}
-
-This receivable has been recorded and is pending collection.`;
-  }
-
-  /**
-   * Generate received payment confirmation message
-   * @param {Object} receivedRecord - Received record
-   * @returns {string} Confirmation message
-   */
-  generateReceivedConfirmationMessage(receivedRecord) {
-    const date = receivedRecord.receivedDate.toLocaleDateString();
-    const time = receivedRecord.receivedDate.toLocaleTimeString();
-    
-    return `✅ *Payment Received Successfully!*
-
-📋 *Details:*
-• Contract: ${receivedRecord.contractNumber}
-• Amount: ${receivedRecord.amount} AED
-• Description: ${receivedRecord.description}
-• Date: ${date} at ${time}
-
-🆔 *Received ID:* ${receivedRecord._id}
-
-This payment has been recorded and processed.`;
-  }
-
-  /**
-   * Send monthly receivables summary
+   * Send invoice details and payment status
    * @param {string} to - Recipient number
+   * @param {string} invoiceNumber - Invoice number
    */
-  async sendMonthlyReceivablesSummary(to) {
+  async sendInvoiceDetails(to, invoiceNumber) {
     try {
-      const now = new Date();
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
-
-      const collection = await db.getCollection('receivables');
+      const Invoice = require('../models/Invoice');
       
-      const receivables = await collection.find({
-        whatsappNumber: to,
-        source: 'whatsapp_twilio',
-        receivableDate: {
-          $gte: startOfMonth,
-          $lte: endOfMonth
-        }
-      }).sort({ receivableDate: -1 }).toArray();
+      const invoice = await Invoice.findOne({ invoiceNumber })
+        .populate('contractId');
 
-      const monthName = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-      
-      if (receivables.length === 0) {
-        await this.sendMessage(to, `📋 *${monthName} Receivables*\n\nNo receivables recorded this month.`);
+      if (!invoice) {
+        await this.sendMessage(to, `❌ Invoice not found: ${invoiceNumber}`);
         return;
       }
 
-      const totalAmount = receivables.reduce((sum, receivable) => sum + receivable.amount, 0);
-      
-      let message = `📋 *${monthName} Receivables Summary*\n\n`;
-      message += `💰 *Total Outstanding:* ${totalAmount.toFixed(2)} AED\n`;
-      message += `📋 *Total Receivables:* ${receivables.length}\n\n`;
-      
-      message += `*Recent Receivables:*\n`;
-      receivables.slice(0, 10).forEach((receivable, index) => {
-        const date = new Date(receivable.receivableDate).toLocaleDateString();
-        message += `${index + 1}. 📋 ${receivable.amount} AED\n`;
-        message += `   📋 Contract: ${receivable.contractNumber}\n`;
-        message += `   📝 ${receivable.description}\n`;
-        message += `   📅 ${date}\n\n`;
-      });
+      // Calculate payment totals
+      const totalPaid = invoice.payments.reduce((sum, payment) => sum + payment.amount, 0);
+      const remainingAmount = invoice.total - totalPaid;
+      const paymentCount = invoice.payments.length;
 
-      if (receivables.length > 10) {
-        message += `... and ${receivables.length - 10} more receivables`;
+      // Get WhatsApp payments
+      const whatsappPayments = invoice.payments.filter(payment => 
+        payment.source === 'whatsapp_twilio'
+      );
+
+      let message = `📄 *Invoice Details*\n\n`;
+      message += `🆔 *Invoice Number:* ${invoice.invoiceNumber}\n`;
+      message += `📋 *Contract:* ${invoice.contractId?.contractNumber || 'N/A'}\n`;
+      message += `📅 *Issue Date:* ${invoice.issueDate.toLocaleDateString()}\n`;
+      message += `📅 *Due Date:* ${invoice.dueDate.toLocaleDateString()}\n`;
+      message += `📊 *Status:* ${invoice.status.toUpperCase()}\n\n`;
+
+      message += `💰 *Amount Details:*\n`;
+      message += `• Subtotal: ${invoice.subtotal.toFixed(2)} AED\n`;
+      message += `• Tax: ${invoice.tax.toFixed(2)} AED\n`;
+      message += `• Total: ${invoice.total.toFixed(2)} AED\n`;
+      message += `• Paid: ${totalPaid.toFixed(2)} AED\n`;
+      message += `• Remaining: ${remainingAmount.toFixed(2)} AED\n\n`;
+
+      message += `📋 *Payment Summary:*\n`;
+      message += `• Total Payments: ${paymentCount}\n`;
+      message += `• WhatsApp Payments: ${whatsappPayments.length}\n\n`;
+
+      if (invoice.payments.length > 0) {
+        message += `*Recent Payments:*\n`;
+        invoice.payments.slice(-5).forEach((payment, index) => {
+          const date = new Date(payment.date).toLocaleDateString();
+          const source = payment.source === 'whatsapp_twilio' ? '📱' : '💳';
+          message += `${index + 1}. ${source} ${payment.amount} AED\n`;
+          message += `   📅 ${date}\n`;
+          if (payment.notes) {
+            message += `   📝 ${payment.notes}\n`;
+          }
+          message += `\n`;
+        });
+      }
+
+      if (invoice.notes) {
+        message += `📝 *Notes:* ${invoice.notes}\n`;
       }
 
       await this.sendMessage(to, message);
     } catch (error) {
-      console.error('Error sending monthly receivables summary:', error);
+      console.error('Error sending invoice details:', error);
+      await this.sendMessage(to, '❌ Error retrieving invoice details');
     }
   }
 
-  /**
-   * Send monthly received payments summary
-   * @param {string} to - Recipient number
-   */
-  async sendMonthlyReceivedSummary(to) {
-    try {
-      const now = new Date();
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
-
-      const collection = await db.getCollection('received_payments');
-      
-      const receivedPayments = await collection.find({
-        whatsappNumber: to,
-        source: 'whatsapp_twilio',
-        receivedDate: {
-          $gte: startOfMonth,
-          $lte: endOfMonth
-        }
-      }).sort({ receivedDate: -1 }).toArray();
-
-      const monthName = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-      
-      if (receivedPayments.length === 0) {
-        await this.sendMessage(to, `✅ *${monthName} Received Payments*\n\nNo payments received this month.`);
-        return;
-      }
-
-      const totalAmount = receivedPayments.reduce((sum, payment) => sum + payment.amount, 0);
-      
-      let message = `✅ *${monthName} Received Payments Summary*\n\n`;
-      message += `💰 *Total Received:* ${totalAmount.toFixed(2)} AED\n`;
-      message += `📋 *Total Payments:* ${receivedPayments.length}\n\n`;
-      
-      message += `*Recent Received Payments:*\n`;
-      receivedPayments.slice(0, 10).forEach((payment, index) => {
-        const date = new Date(payment.receivedDate).toLocaleDateString();
-        message += `${index + 1}. ✅ ${payment.amount} AED\n`;
-        message += `   📋 Contract: ${payment.contractNumber}\n`;
-        message += `   📝 ${payment.description}\n`;
-        message += `   📅 ${date}\n\n`;
-      });
-
-      if (receivedPayments.length > 10) {
-        message += `... and ${receivedPayments.length - 10} more received payments`;
-      }
-
-      await this.sendMessage(to, message);
-    } catch (error) {
-      console.error('Error sending monthly received summary:', error);
-    }
-  }
 }
 
 module.exports = TwilioWhatsAppService;
