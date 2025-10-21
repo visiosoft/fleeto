@@ -12,6 +12,9 @@ router.post('/payments', twilioWhatsAppController.handleReceivedPayment);
 // Test expense retrieval (no auth required for testing)
 router.post('/test-expenses', twilioWhatsAppController.testExpenseRetrieval);
 
+// Test payment tracking (no auth required for testing)
+router.post('/test-payments', twilioWhatsAppController.testPaymentTracking);
+
 // Apply auth middleware to all other routes
 router.use(auth);
 
