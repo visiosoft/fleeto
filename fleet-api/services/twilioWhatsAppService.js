@@ -1226,10 +1226,10 @@ Type /expense to see the correct format or /help for more information.`;
    */
   async savePaymentRecord(paymentData, whatsappNumber) {
     try {
-      const Invoice = require('../models/Invoice');
+      const collection = await db.getCollection('invoices');
       
       // Find invoice by contract number or invoice number
-      const invoice = await Invoice.findOne({
+      const invoice = await collection.findOne({
         $or: [
           { invoiceNumber: paymentData.contractNumber },
           { 'contract.contractNumber': paymentData.contractNumber }
@@ -1253,6 +1253,9 @@ Type /expense to see the correct format or /help for more information.`;
       };
 
       // Add payment to invoice
+      if (!invoice.payments) {
+        invoice.payments = [];
+      }
       invoice.payments.push(paymentRecord);
       
       // Calculate total paid amount
@@ -1265,7 +1268,16 @@ Type /expense to see the correct format or /help for more information.`;
         invoice.status = 'sent'; // Partially paid
       }
 
-      await invoice.save();
+      await collection.updateOne(
+        { _id: invoice._id },
+        { 
+          $set: { 
+            payments: invoice.payments,
+            status: invoice.status,
+            updatedAt: new Date()
+          }
+        }
+      );
       
       console.log(`✅ Payment record saved to invoice: ${invoice._id}`);
       return { 
@@ -1321,10 +1333,10 @@ Your payment has been recorded and applied to the invoice.`;
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
 
-      const Invoice = require('../models/Invoice');
+      const collection = await db.getCollection('invoices');
       
       // Get all invoices with payments in current month
-      const invoices = await Invoice.find({
+      const invoices = await collection.find({
         'payments': {
           $elemMatch: {
             date: {
@@ -1333,16 +1345,16 @@ Your payment has been recorded and applied to the invoice.`;
             }
           }
         }
-      }).populate('contractId').sort({ updatedAt: -1 });
+      }).sort({ updatedAt: -1 }).toArray();
 
       const monthName = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
       
       if (invoices.length === 0) {
         // If no payments this month, show all invoices for context
-        const allInvoices = await Invoice.find({})
-          .populate('contractId')
+        const allInvoices = await collection.find({})
           .sort({ updatedAt: -1 })
-          .limit(10);
+          .limit(10)
+          .toArray();
 
         if (allInvoices.length === 0) {
           await this.sendMessage(to, `📅 *${monthName} Payments*\n\nNo invoices found in the system.`);
@@ -1354,7 +1366,7 @@ Your payment has been recorded and applied to the invoice.`;
         message += `*Recent Invoices:*\n`;
         
         allInvoices.forEach((invoice, index) => {
-          const totalPaid = invoice.payments.reduce((sum, p) => sum + p.amount, 0);
+          const totalPaid = invoice.payments ? invoice.payments.reduce((sum, p) => sum + p.amount, 0) : 0;
           const remaining = invoice.total - totalPaid;
           const status = remaining <= 0 ? '✅ PAID' : remaining < invoice.total ? '⏳ PARTIAL' : '❌ PENDING';
           
@@ -1385,7 +1397,7 @@ Your payment has been recorded and applied to the invoice.`;
         if (invoicePayments.length > 0) {
           invoicePayments.forEach(payment => {
             allPayments.push({
-              ...payment.toObject(),
+              ...payment,
               invoiceNumber: invoice.invoiceNumber,
               contractNumber: invoice.contractId?.contractNumber || 'N/A',
               totalAmount: invoice.total,
@@ -1394,7 +1406,7 @@ Your payment has been recorded and applied to the invoice.`;
           });
 
           // Calculate totals for this invoice
-          const totalPaid = invoice.payments.reduce((sum, p) => sum + p.amount, 0);
+          const totalPaid = invoice.payments ? invoice.payments.reduce((sum, p) => sum + p.amount, 0) : 0;
           const remaining = invoice.total - totalPaid;
 
           if (remaining <= 0) {
@@ -1457,7 +1469,9 @@ Your payment has been recorded and applied to the invoice.`;
       await this.sendMessage(to, message);
     } catch (error) {
       console.error('Error sending monthly payment summary:', error);
-      await this.sendMessage(to, '❌ Error retrieving payment summary');
+      console.error('Error details:', error.message);
+      console.error('Stack trace:', error.stack);
+      await this.sendMessage(to, `❌ Error retrieving payment summary: ${error.message}`);
     }
   }
 
@@ -1468,10 +1482,9 @@ Your payment has been recorded and applied to the invoice.`;
    */
   async sendInvoiceDetails(to, invoiceNumber) {
     try {
-      const Invoice = require('../models/Invoice');
+      const collection = await db.getCollection('invoices');
       
-      const invoice = await Invoice.findOne({ invoiceNumber })
-        .populate('contractId');
+      const invoice = await collection.findOne({ invoiceNumber });
 
       if (!invoice) {
         await this.sendMessage(to, `❌ Invoice not found: ${invoiceNumber}`);
@@ -1479,14 +1492,14 @@ Your payment has been recorded and applied to the invoice.`;
       }
 
       // Calculate payment totals
-      const totalPaid = invoice.payments.reduce((sum, payment) => sum + payment.amount, 0);
+      const totalPaid = invoice.payments ? invoice.payments.reduce((sum, payment) => sum + payment.amount, 0) : 0;
       const remainingAmount = invoice.total - totalPaid;
-      const paymentCount = invoice.payments.length;
+      const paymentCount = invoice.payments ? invoice.payments.length : 0;
 
       // Get WhatsApp payments
-      const whatsappPayments = invoice.payments.filter(payment => 
+      const whatsappPayments = invoice.payments ? invoice.payments.filter(payment => 
         payment.source === 'whatsapp_twilio'
-      );
+      ) : [];
 
       let message = `📄 *Invoice Details*\n\n`;
       message += `🆔 *Invoice Number:* ${invoice.invoiceNumber}\n`;
@@ -1506,7 +1519,7 @@ Your payment has been recorded and applied to the invoice.`;
       message += `• Total Payments: ${paymentCount}\n`;
       message += `• WhatsApp Payments: ${whatsappPayments.length}\n\n`;
 
-      if (invoice.payments.length > 0) {
+      if (invoice.payments && invoice.payments.length > 0) {
         message += `*Recent Payments:*\n`;
         invoice.payments.slice(-5).forEach((payment, index) => {
           const date = new Date(payment.date).toLocaleDateString();
