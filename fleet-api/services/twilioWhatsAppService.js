@@ -1372,12 +1372,17 @@ Your payment has been recorded and applied to the invoice.`;
           const remaining = invoiceTotal - totalPaid;
           const status = remaining <= 0 ? '✅ PAID' : remaining < invoiceTotal ? '⏳ PARTIAL' : '❌ PENDING';
           
+          // Calculate amounts after 5% deduction
+          const invoiceTotalAfterDeduction = invoiceTotal * 0.95;
+          const totalPaidAfterDeduction = totalPaid * 0.95;
+          const remainingAfterDeduction = remaining * 0.95;
+          
           message += `${index + 1}. ${status} ${invoice.invoiceNumber || 'N/A'}\n`;
           message += `   📋 Contract: ${invoice.contractId?.contractNumber || 'N/A'}\n`;
-          message += `   💰 Total: ${invoiceTotal.toFixed(2)} AED\n`;
-          message += `   💳 Paid: ${totalPaid.toFixed(2)} AED\n`;
+          message += `   💰 Total: ${invoiceTotalAfterDeduction.toFixed(2)} AED (${invoiceTotal.toFixed(2)} - 5%)\n`;
+          message += `   💳 Paid: ${totalPaidAfterDeduction.toFixed(2)} AED (${totalPaid.toFixed(2)} - 5%)\n`;
           if (remaining > 0) {
-            message += `   ⏳ Remaining: ${remaining.toFixed(2)} AED\n`;
+            message += `   ⏳ Remaining: ${remainingAfterDeduction.toFixed(2)} AED (${remaining.toFixed(2)} - 5%)\n`;
           }
           message += `\n`;
         });
@@ -1440,23 +1445,30 @@ Your payment has been recorded and applied to the invoice.`;
       const totalPaidAmount = paidInvoices.reduce((sum, inv) => sum + (inv.totalAmount || 0), 0);
       const totalPendingAmount = pendingInvoices.reduce((sum, inv) => sum + (inv.remaining || 0), 0);
       
+      // Calculate amounts after 5% deduction (no VAT)
+      const totalAmountAfterDeduction = totalAmount * 0.95;
+      const totalPaidAmountAfterDeduction = totalPaidAmount * 0.95;
+      const totalPendingAmountAfterDeduction = totalPendingAmount * 0.95;
+      
       let message = `📅 *${monthName} Payment Summary*\n\n`;
-      message += `💰 *Total Received:* ${totalAmount.toFixed(2)} AED\n`;
+      message += `💰 *Total Received (After 5% Deduction):* ${totalAmountAfterDeduction.toFixed(2)} AED\n`;
       message += `📋 *Total Payments:* ${allPayments.length}\n`;
       message += `📄 *Invoices with Payments:* ${invoices.length}\n\n`;
 
       message += `✅ *Fully Paid Invoices:* ${paidInvoices.length}\n`;
-      message += `💰 *Total Paid Amount:* ${totalPaidAmount.toFixed(2)} AED\n\n`;
+      message += `💰 *Total Paid Amount (After 5% Deduction):* ${totalPaidAmountAfterDeduction.toFixed(2)} AED\n\n`;
 
       message += `⏳ *Partially Paid Invoices:* ${pendingInvoices.length}\n`;
-      message += `💰 *Remaining Amount:* ${totalPendingAmount.toFixed(2)} AED\n\n`;
+      message += `💰 *Remaining Amount (After 5% Deduction):* ${totalPendingAmountAfterDeduction.toFixed(2)} AED\n\n`;
       
       message += `*Recent Payments:*\n`;
       allPayments.slice(0, 10).forEach((payment, index) => {
         const date = payment.date ? new Date(payment.date).toLocaleDateString() : 'N/A';
         const source = payment.source === 'whatsapp_twilio' ? '📱' : '💳';
         const status = payment.invoiceStatus === 'paid' ? '✅' : '⏳';
-        message += `${index + 1}. ${source} ${status} ${payment.amount || 0} AED\n`;
+        const originalAmount = payment.amount || 0;
+        const amountAfterDeduction = originalAmount * 0.95;
+        message += `${index + 1}. ${source} ${status} ${amountAfterDeduction.toFixed(2)} AED (${originalAmount.toFixed(2)} - 5%)\n`;
         message += `   📄 Invoice: ${payment.invoiceNumber || 'N/A'}\n`;
         message += `   📋 Contract: ${payment.contractNumber || 'N/A'}\n`;
         if (payment.notes) {
