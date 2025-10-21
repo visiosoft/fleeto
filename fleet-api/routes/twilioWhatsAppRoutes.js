@@ -18,6 +18,9 @@ router.get('/expenses', twilioWhatsAppController.getTwilioExpenses);
 // Get expense statistics
 router.get('/expenses/stats', twilioWhatsAppController.getExpenseStats);
 
+// Get monthly expenses grouped by month with totals and counts
+router.get('/expenses/monthly', twilioWhatsAppController.getMonthlyExpenses);
+
 // Get single Twilio WhatsApp expense
 router.get('/expenses/:id', twilioWhatsAppController.getTwilioExpense);
 
