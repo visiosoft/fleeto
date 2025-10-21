@@ -735,7 +735,11 @@ Type /expense to see the correct format or /help for more information.`;
         const status = expense.status === 'approved' ? '✅' : expense.status === 'rejected' ? '❌' : '⏳';
         message += `${index + 1}. ${status} ${expense.expenseType.toUpperCase()}\n`;
         message += `   💰 ${expense.amount} AED - ${date}\n`;
-        message += `   🚗 ${expense.vehicle || 'N/A'}\n\n`;
+        message += `   🚗 ${expense.vehicle || 'N/A'}\n`;
+        if (expense.description) {
+          message += `   📝 ${expense.description}\n`;
+        }
+        message += `\n`;
       });
 
       if (expenses.length > 10) {
