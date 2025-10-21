@@ -1323,12 +1323,10 @@ Your payment has been recorded and applied to the invoice.`;
 
       const Invoice = require('../models/Invoice');
       
-      // Get invoices with payments from WhatsApp in current month
+      // Get all invoices with payments in current month
       const invoices = await Invoice.find({
         'payments': {
           $elemMatch: {
-            whatsappNumber: to,
-            source: 'whatsapp_twilio',
             date: {
               $gte: startOfMonth,
               $lte: endOfMonth
@@ -1340,45 +1338,115 @@ Your payment has been recorded and applied to the invoice.`;
       const monthName = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
       
       if (invoices.length === 0) {
-        await this.sendMessage(to, `📅 *${monthName} Payments*\n\nNo payments received this month.`);
+        // If no payments this month, show all invoices for context
+        const allInvoices = await Invoice.find({})
+          .populate('contractId')
+          .sort({ updatedAt: -1 })
+          .limit(10);
+
+        if (allInvoices.length === 0) {
+          await this.sendMessage(to, `📅 *${monthName} Payments*\n\nNo invoices found in the system.`);
+          return;
+        }
+
+        let message = `📅 *${monthName} Payments*\n\n`;
+        message += `No payments received this month.\n\n`;
+        message += `*Recent Invoices:*\n`;
+        
+        allInvoices.forEach((invoice, index) => {
+          const totalPaid = invoice.payments.reduce((sum, p) => sum + p.amount, 0);
+          const remaining = invoice.total - totalPaid;
+          const status = remaining <= 0 ? '✅ PAID' : remaining < invoice.total ? '⏳ PARTIAL' : '❌ PENDING';
+          
+          message += `${index + 1}. ${status} ${invoice.invoiceNumber}\n`;
+          message += `   📋 Contract: ${invoice.contractId?.contractNumber || 'N/A'}\n`;
+          message += `   💰 Total: ${invoice.total.toFixed(2)} AED\n`;
+          message += `   💳 Paid: ${totalPaid.toFixed(2)} AED\n`;
+          if (remaining > 0) {
+            message += `   ⏳ Remaining: ${remaining.toFixed(2)} AED\n`;
+          }
+          message += `\n`;
+        });
+
+        await this.sendMessage(to, message);
         return;
       }
 
-      // Extract payments from invoices
+      // Extract all payments from invoices for current month
       const allPayments = [];
+      const paidInvoices = [];
+      const pendingInvoices = [];
+
       invoices.forEach(invoice => {
-        invoice.payments.forEach(payment => {
-          if (payment.whatsappNumber === to && 
-              payment.source === 'whatsapp_twilio' &&
-              payment.date >= startOfMonth && 
-              payment.date <= endOfMonth) {
+        const invoicePayments = invoice.payments.filter(payment => 
+          payment.date >= startOfMonth && payment.date <= endOfMonth
+        );
+
+        if (invoicePayments.length > 0) {
+          invoicePayments.forEach(payment => {
             allPayments.push({
               ...payment.toObject(),
               invoiceNumber: invoice.invoiceNumber,
               contractNumber: invoice.contractId?.contractNumber || 'N/A',
-              totalAmount: invoice.total
+              totalAmount: invoice.total,
+              invoiceStatus: invoice.status
+            });
+          });
+
+          // Calculate totals for this invoice
+          const totalPaid = invoice.payments.reduce((sum, p) => sum + p.amount, 0);
+          const remaining = invoice.total - totalPaid;
+
+          if (remaining <= 0) {
+            paidInvoices.push({
+              invoiceNumber: invoice.invoiceNumber,
+              contractNumber: invoice.contractId?.contractNumber || 'N/A',
+              totalAmount: invoice.total,
+              totalPaid: totalPaid,
+              status: 'PAID'
+            });
+          } else {
+            pendingInvoices.push({
+              invoiceNumber: invoice.invoiceNumber,
+              contractNumber: invoice.contractId?.contractNumber || 'N/A',
+              totalAmount: invoice.total,
+              totalPaid: totalPaid,
+              remaining: remaining,
+              status: 'PARTIAL'
             });
           }
-        });
+        }
       });
 
-      // Sort by date descending
+      // Sort payments by date descending
       allPayments.sort((a, b) => new Date(b.date) - new Date(a.date));
 
       const totalAmount = allPayments.reduce((sum, payment) => sum + payment.amount, 0);
+      const totalPaidAmount = paidInvoices.reduce((sum, inv) => sum + inv.totalAmount, 0);
+      const totalPendingAmount = pendingInvoices.reduce((sum, inv) => sum + inv.remaining, 0);
       
       let message = `📅 *${monthName} Payment Summary*\n\n`;
       message += `💰 *Total Received:* ${totalAmount.toFixed(2)} AED\n`;
       message += `📋 *Total Payments:* ${allPayments.length}\n`;
-      message += `📄 *Invoices Paid:* ${invoices.length}\n\n`;
+      message += `📄 *Invoices with Payments:* ${invoices.length}\n\n`;
+
+      message += `✅ *Fully Paid Invoices:* ${paidInvoices.length}\n`;
+      message += `💰 *Total Paid Amount:* ${totalPaidAmount.toFixed(2)} AED\n\n`;
+
+      message += `⏳ *Partially Paid Invoices:* ${pendingInvoices.length}\n`;
+      message += `💰 *Remaining Amount:* ${totalPendingAmount.toFixed(2)} AED\n\n`;
       
       message += `*Recent Payments:*\n`;
       allPayments.slice(0, 10).forEach((payment, index) => {
         const date = new Date(payment.date).toLocaleDateString();
-        message += `${index + 1}. 💰 ${payment.amount} AED\n`;
+        const source = payment.source === 'whatsapp_twilio' ? '📱' : '💳';
+        const status = payment.invoiceStatus === 'paid' ? '✅' : '⏳';
+        message += `${index + 1}. ${source} ${status} ${payment.amount} AED\n`;
         message += `   📄 Invoice: ${payment.invoiceNumber}\n`;
         message += `   📋 Contract: ${payment.contractNumber}\n`;
-        message += `   📝 ${payment.notes}\n`;
+        if (payment.notes) {
+          message += `   📝 ${payment.notes}\n`;
+        }
         message += `   📅 ${date}\n\n`;
       });
 
@@ -1389,6 +1457,7 @@ Your payment has been recorded and applied to the invoice.`;
       await this.sendMessage(to, message);
     } catch (error) {
       console.error('Error sending monthly payment summary:', error);
+      await this.sendMessage(to, '❌ Error retrieving payment summary');
     }
   }
 
