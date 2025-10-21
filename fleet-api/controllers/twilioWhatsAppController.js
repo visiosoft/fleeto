@@ -278,6 +278,72 @@ class TwilioWhatsAppController {
   }
 
   /**
+   * Get monthly expenses grouped by month with totals and counts
+   * @param {Object} req - Express request object
+   * @param {Object} res - Express response object
+   */
+  async getMonthlyExpenses(req, res) {
+    try {
+      const { companyId } = req.user;
+      const { year } = req.query;
+      const collection = await db.getCollection('expenses');
+      
+      const pipeline = [
+        {
+          $match: {
+            companyId: companyId.toString(),
+            source: 'whatsapp_twilio',
+            date: {
+              $gte: new Date(year || new Date().getFullYear(), 0, 1),
+              $lt: new Date((year || new Date().getFullYear()) + 1, 0, 1)
+            }
+          }
+        },
+        {
+          $group: {
+            _id: {
+              month: { $month: '$date' },
+              year: { $year: '$date' }
+            },
+            totalAmount: { $sum: '$amount' },
+            count: { $sum: 1 }
+          }
+        },
+        {
+          $project: {
+            _id: 0,
+            month: '$_id.month',
+            year: '$_id.year',
+            totalAmount: 1,
+            count: 1
+          }
+        },
+        { $sort: { month: 1 } }
+      ];
+
+      const monthlyExpenses = await collection.aggregate(pipeline).toArray();
+      
+      // Calculate yearly total
+      const yearlyTotal = monthlyExpenses.reduce((total, month) => total + month.totalAmount, 0);
+      
+      res.status(200).json({
+        status: 'success',
+        data: {
+          monthlyExpenses,
+          yearlyTotal
+        }
+      });
+    } catch (error) {
+      console.error('Error getting monthly expenses:', error);
+      res.status(500).json({ 
+        status: 'error', 
+        message: 'Failed to retrieve monthly expenses', 
+        error: error.message 
+      });
+    }
+  }
+
+  /**
    * Delete Twilio WhatsApp expense
    * @param {Object} req - Express request object
    * @param {Object} res - Express response object
