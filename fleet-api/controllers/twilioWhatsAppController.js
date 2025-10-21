@@ -18,6 +18,24 @@ class TwilioWhatsAppController {
   }
 
   /**
+   * Handle payment received webhook from Twilio
+   * @param {Object} req - Express request object
+   * @param {Object} res - Express response object
+   */
+  async handleReceivedPayment(req, res) {
+    try {
+      const whatsappService = new TwilioWhatsAppService();
+      await whatsappService.processReceivedPayment(req, res);
+    } catch (error) {
+      console.error('Error handling received payment:', error);
+      res.status(500).json({
+        status: 'error',
+        message: 'Failed to process received payment'
+      });
+    }
+  }
+
+  /**
    * Get all Twilio WhatsApp expenses
    * @param {Object} req - Express request object
    * @param {Object} res - Express response object

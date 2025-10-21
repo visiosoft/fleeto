@@ -1086,6 +1086,198 @@ Type /expense to see the correct format or /help for more information.`;
       res.status(500).send('Error');
     }
   }
+
+  /**
+   * Process received payment webhook
+   * @param {Object} req - Express request object
+   * @param {Object} res - Express response object
+   */
+  async processReceivedPayment(req, res) {
+    try {
+      const { From, Body } = req.body;
+      
+      if (!From || !Body) {
+        console.log('Missing From or Body in received payment webhook');
+        return res.status(400).send('Missing required fields');
+      }
+
+      console.log(`💰 Payment received from ${From}: ${Body}`);
+
+      // Parse the payment message
+      const paymentData = this.parsePaymentMessage(Body);
+      
+      if (!paymentData) {
+        await this.sendMessage(From, '❌ Invalid payment format. Please use: /received [contract_number] [amount] [description]');
+        return res.status(200).send('OK');
+      }
+
+      // Save payment record
+      const paymentRecord = await this.savePaymentRecord(paymentData, From);
+      
+      if (paymentRecord) {
+        // Send confirmation message
+        const confirmationMessage = this.generatePaymentConfirmationMessage(paymentRecord);
+        await this.sendMessage(From, confirmationMessage);
+        
+        // Send monthly payment summary if requested
+        if (paymentData.requestSummary) {
+          await this.sendMonthlyPaymentSummary(From);
+        }
+      }
+
+      res.status(200).send('OK');
+    } catch (error) {
+      console.error('Error processing received payment:', error);
+      res.status(500).send('Error');
+    }
+  }
+
+  /**
+   * Parse payment message to extract payment details
+   * @param {string} message - Payment message
+   * @returns {Object|null} Parsed payment data or null if invalid
+   */
+  parsePaymentMessage(message) {
+    try {
+      // Expected format: /received [contract_number] [amount] [description] [optional: /summary]
+      const parts = message.trim().split(' ');
+      
+      if (parts.length < 4 || parts[0] !== '/received') {
+        return null;
+      }
+
+      const contractNumber = parts[1];
+      const amount = parseFloat(parts[2]);
+      const description = parts.slice(3).join(' ').replace('/summary', '').trim();
+      const requestSummary = message.includes('/summary');
+
+      if (isNaN(amount) || amount <= 0) {
+        return null;
+      }
+
+      return {
+        contractNumber,
+        amount,
+        description,
+        requestSummary,
+        paymentDate: new Date()
+      };
+    } catch (error) {
+      console.error('Error parsing payment message:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Save payment record to database
+   * @param {Object} paymentData - Payment data
+   * @param {string} whatsappNumber - WhatsApp number
+   * @returns {Object|null} Saved payment record
+   */
+  async savePaymentRecord(paymentData, whatsappNumber) {
+    try {
+      const collection = await db.getCollection('payments');
+      
+      const paymentRecord = {
+        contractNumber: paymentData.contractNumber,
+        amount: paymentData.amount,
+        description: paymentData.description,
+        paymentDate: paymentData.paymentDate,
+        whatsappNumber: whatsappNumber,
+        source: 'whatsapp_twilio',
+        status: 'received',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      const result = await collection.insertOne(paymentRecord);
+      
+      if (result.insertedId) {
+        console.log(`✅ Payment record saved: ${result.insertedId}`);
+        return { ...paymentRecord, _id: result.insertedId };
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error saving payment record:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Generate payment confirmation message
+   * @param {Object} paymentRecord - Payment record
+   * @returns {string} Confirmation message
+   */
+  generatePaymentConfirmationMessage(paymentRecord) {
+    const date = paymentRecord.paymentDate.toLocaleDateString();
+    const time = paymentRecord.paymentDate.toLocaleTimeString();
+    
+    return `✅ *Payment Received Successfully!*
+
+📋 *Details:*
+• Contract: ${paymentRecord.contractNumber}
+• Amount: ${paymentRecord.amount} AED
+• Description: ${paymentRecord.description}
+• Date: ${date} at ${time}
+
+🆔 *Payment ID:* ${paymentRecord._id}
+
+Your payment has been recorded and will be processed.`;
+  }
+
+  /**
+   * Send monthly payment summary
+   * @param {string} to - Recipient number
+   */
+  async sendMonthlyPaymentSummary(to) {
+    try {
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+
+      const collection = await db.getCollection('payments');
+      
+      const payments = await collection.find({
+        whatsappNumber: to,
+        source: 'whatsapp_twilio',
+        paymentDate: {
+          $gte: startOfMonth,
+          $lte: endOfMonth
+        }
+      }).sort({ paymentDate: -1 }).toArray();
+
+      const monthName = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      
+      if (payments.length === 0) {
+        await this.sendMessage(to, `📅 *${monthName} Payments*\n\nNo payments received this month.`);
+        return;
+      }
+
+      const totalAmount = payments.reduce((sum, payment) => sum + payment.amount, 0);
+      
+      let message = `📅 *${monthName} Payment Summary*\n\n`;
+      message += `💰 *Total Received:* ${totalAmount.toFixed(2)} AED\n`;
+      message += `📋 *Total Payments:* ${payments.length}\n\n`;
+      
+      message += `*Recent Payments:*\n`;
+      payments.slice(0, 10).forEach((payment, index) => {
+        const date = new Date(payment.paymentDate).toLocaleDateString();
+        message += `${index + 1}. 💰 ${payment.amount} AED\n`;
+        message += `   📋 Contract: ${payment.contractNumber}\n`;
+        message += `   📝 ${payment.description}\n`;
+        message += `   📅 ${date}\n\n`;
+      });
+
+      if (payments.length > 10) {
+        message += `... and ${payments.length - 10} more payments`;
+      }
+
+      await this.sendMessage(to, message);
+    } catch (error) {
+      console.error('Error sending monthly payment summary:', error);
+    }
+  }
 }
 
 module.exports = TwilioWhatsAppService;
