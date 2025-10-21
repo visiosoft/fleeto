@@ -1259,10 +1259,11 @@ Type /expense to see the correct format or /help for more information.`;
       invoice.payments.push(paymentRecord);
       
       // Calculate total paid amount
-      const totalPaid = invoice.payments.reduce((sum, payment) => sum + payment.amount, 0);
+      const totalPaid = invoice.payments.reduce((sum, payment) => sum + (payment.amount || 0), 0);
+      const invoiceTotal = invoice.total || 0;
       
       // Update invoice status based on payment
-      if (totalPaid >= invoice.total) {
+      if (totalPaid >= invoiceTotal) {
         invoice.status = 'paid';
       } else if (totalPaid > 0) {
         invoice.status = 'sent'; // Partially paid
@@ -1366,13 +1367,14 @@ Your payment has been recorded and applied to the invoice.`;
         message += `*Recent Invoices:*\n`;
         
         allInvoices.forEach((invoice, index) => {
-          const totalPaid = invoice.payments ? invoice.payments.reduce((sum, p) => sum + p.amount, 0) : 0;
-          const remaining = invoice.total - totalPaid;
-          const status = remaining <= 0 ? '✅ PAID' : remaining < invoice.total ? '⏳ PARTIAL' : '❌ PENDING';
+          const totalPaid = invoice.payments ? invoice.payments.reduce((sum, p) => sum + (p.amount || 0), 0) : 0;
+          const invoiceTotal = invoice.total || 0;
+          const remaining = invoiceTotal - totalPaid;
+          const status = remaining <= 0 ? '✅ PAID' : remaining < invoiceTotal ? '⏳ PARTIAL' : '❌ PENDING';
           
-          message += `${index + 1}. ${status} ${invoice.invoiceNumber}\n`;
+          message += `${index + 1}. ${status} ${invoice.invoiceNumber || 'N/A'}\n`;
           message += `   📋 Contract: ${invoice.contractId?.contractNumber || 'N/A'}\n`;
-          message += `   💰 Total: ${invoice.total.toFixed(2)} AED\n`;
+          message += `   💰 Total: ${invoiceTotal.toFixed(2)} AED\n`;
           message += `   💳 Paid: ${totalPaid.toFixed(2)} AED\n`;
           if (remaining > 0) {
             message += `   ⏳ Remaining: ${remaining.toFixed(2)} AED\n`;
@@ -1398,30 +1400,31 @@ Your payment has been recorded and applied to the invoice.`;
           invoicePayments.forEach(payment => {
             allPayments.push({
               ...payment,
-              invoiceNumber: invoice.invoiceNumber,
+              invoiceNumber: invoice.invoiceNumber || 'N/A',
               contractNumber: invoice.contractId?.contractNumber || 'N/A',
-              totalAmount: invoice.total,
-              invoiceStatus: invoice.status
+              totalAmount: invoice.total || 0,
+              invoiceStatus: invoice.status || 'unknown'
             });
           });
 
           // Calculate totals for this invoice
-          const totalPaid = invoice.payments ? invoice.payments.reduce((sum, p) => sum + p.amount, 0) : 0;
-          const remaining = invoice.total - totalPaid;
+          const totalPaid = invoice.payments ? invoice.payments.reduce((sum, p) => sum + (p.amount || 0), 0) : 0;
+          const invoiceTotal = invoice.total || 0;
+          const remaining = invoiceTotal - totalPaid;
 
           if (remaining <= 0) {
             paidInvoices.push({
-              invoiceNumber: invoice.invoiceNumber,
+              invoiceNumber: invoice.invoiceNumber || 'N/A',
               contractNumber: invoice.contractId?.contractNumber || 'N/A',
-              totalAmount: invoice.total,
+              totalAmount: invoiceTotal,
               totalPaid: totalPaid,
               status: 'PAID'
             });
           } else {
             pendingInvoices.push({
-              invoiceNumber: invoice.invoiceNumber,
+              invoiceNumber: invoice.invoiceNumber || 'N/A',
               contractNumber: invoice.contractId?.contractNumber || 'N/A',
-              totalAmount: invoice.total,
+              totalAmount: invoiceTotal,
               totalPaid: totalPaid,
               remaining: remaining,
               status: 'PARTIAL'
@@ -1433,9 +1436,9 @@ Your payment has been recorded and applied to the invoice.`;
       // Sort payments by date descending
       allPayments.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-      const totalAmount = allPayments.reduce((sum, payment) => sum + payment.amount, 0);
-      const totalPaidAmount = paidInvoices.reduce((sum, inv) => sum + inv.totalAmount, 0);
-      const totalPendingAmount = pendingInvoices.reduce((sum, inv) => sum + inv.remaining, 0);
+      const totalAmount = allPayments.reduce((sum, payment) => sum + (payment.amount || 0), 0);
+      const totalPaidAmount = paidInvoices.reduce((sum, inv) => sum + (inv.totalAmount || 0), 0);
+      const totalPendingAmount = pendingInvoices.reduce((sum, inv) => sum + (inv.remaining || 0), 0);
       
       let message = `📅 *${monthName} Payment Summary*\n\n`;
       message += `💰 *Total Received:* ${totalAmount.toFixed(2)} AED\n`;
@@ -1450,12 +1453,12 @@ Your payment has been recorded and applied to the invoice.`;
       
       message += `*Recent Payments:*\n`;
       allPayments.slice(0, 10).forEach((payment, index) => {
-        const date = new Date(payment.date).toLocaleDateString();
+        const date = payment.date ? new Date(payment.date).toLocaleDateString() : 'N/A';
         const source = payment.source === 'whatsapp_twilio' ? '📱' : '💳';
         const status = payment.invoiceStatus === 'paid' ? '✅' : '⏳';
-        message += `${index + 1}. ${source} ${status} ${payment.amount} AED\n`;
-        message += `   📄 Invoice: ${payment.invoiceNumber}\n`;
-        message += `   📋 Contract: ${payment.contractNumber}\n`;
+        message += `${index + 1}. ${source} ${status} ${payment.amount || 0} AED\n`;
+        message += `   📄 Invoice: ${payment.invoiceNumber || 'N/A'}\n`;
+        message += `   📋 Contract: ${payment.contractNumber || 'N/A'}\n`;
         if (payment.notes) {
           message += `   📝 ${payment.notes}\n`;
         }
@@ -1492,8 +1495,9 @@ Your payment has been recorded and applied to the invoice.`;
       }
 
       // Calculate payment totals
-      const totalPaid = invoice.payments ? invoice.payments.reduce((sum, payment) => sum + payment.amount, 0) : 0;
-      const remainingAmount = invoice.total - totalPaid;
+      const totalPaid = invoice.payments ? invoice.payments.reduce((sum, payment) => sum + (payment.amount || 0), 0) : 0;
+      const invoiceTotal = invoice.total || 0;
+      const remainingAmount = invoiceTotal - totalPaid;
       const paymentCount = invoice.payments ? invoice.payments.length : 0;
 
       // Get WhatsApp payments
@@ -1502,16 +1506,16 @@ Your payment has been recorded and applied to the invoice.`;
       ) : [];
 
       let message = `📄 *Invoice Details*\n\n`;
-      message += `🆔 *Invoice Number:* ${invoice.invoiceNumber}\n`;
+      message += `🆔 *Invoice Number:* ${invoice.invoiceNumber || 'N/A'}\n`;
       message += `📋 *Contract:* ${invoice.contractId?.contractNumber || 'N/A'}\n`;
-      message += `📅 *Issue Date:* ${invoice.issueDate.toLocaleDateString()}\n`;
-      message += `📅 *Due Date:* ${invoice.dueDate.toLocaleDateString()}\n`;
-      message += `📊 *Status:* ${invoice.status.toUpperCase()}\n\n`;
+      message += `📅 *Issue Date:* ${invoice.issueDate ? invoice.issueDate.toLocaleDateString() : 'N/A'}\n`;
+      message += `📅 *Due Date:* ${invoice.dueDate ? invoice.dueDate.toLocaleDateString() : 'N/A'}\n`;
+      message += `📊 *Status:* ${(invoice.status || 'unknown').toUpperCase()}\n\n`;
 
       message += `💰 *Amount Details:*\n`;
-      message += `• Subtotal: ${invoice.subtotal.toFixed(2)} AED\n`;
-      message += `• Tax: ${invoice.tax.toFixed(2)} AED\n`;
-      message += `• Total: ${invoice.total.toFixed(2)} AED\n`;
+      message += `• Subtotal: ${(invoice.subtotal || 0).toFixed(2)} AED\n`;
+      message += `• Tax: ${(invoice.tax || 0).toFixed(2)} AED\n`;
+      message += `• Total: ${invoiceTotal.toFixed(2)} AED\n`;
       message += `• Paid: ${totalPaid.toFixed(2)} AED\n`;
       message += `• Remaining: ${remainingAmount.toFixed(2)} AED\n\n`;
 
@@ -1522,9 +1526,9 @@ Your payment has been recorded and applied to the invoice.`;
       if (invoice.payments && invoice.payments.length > 0) {
         message += `*Recent Payments:*\n`;
         invoice.payments.slice(-5).forEach((payment, index) => {
-          const date = new Date(payment.date).toLocaleDateString();
+          const date = payment.date ? new Date(payment.date).toLocaleDateString() : 'N/A';
           const source = payment.source === 'whatsapp_twilio' ? '📱' : '💳';
-          message += `${index + 1}. ${source} ${payment.amount} AED\n`;
+          message += `${index + 1}. ${source} ${payment.amount || 0} AED\n`;
           message += `   📅 ${date}\n`;
           if (payment.notes) {
             message += `   📝 ${payment.notes}\n`;
