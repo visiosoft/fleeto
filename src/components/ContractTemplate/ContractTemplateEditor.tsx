@@ -103,71 +103,96 @@ interface Props {
 }
 
 // Export the default template
-export const defaultTemplate = `@import url('https://fonts.googleapis.com/css2?family=KoHo:wght@400;600;700&display=swap');
+export const defaultTemplate = `
 
-                                   CONTRACT AGREEMENT
+<h1 class="document-title">CONTRACT AGREEMENT</h1>
 
-This Contract Agreement (the "Agreement") is made and entered into on [Start Date] in Dubai, United Arab Emirates.
+<p>This Contract Agreement (the "Agreement") is made and entered into on [Start Date] in Dubai, United Arab Emirates.</p>
 
-PARTIES:
+<h2 class="section-title">PARTIES:</h2>
 
-1. Efficient Move New Used Furniture Removal L.L.C, a company registered under the laws of UAE 
+<p>1. Efficient Move New Used Furniture Removal L.L.C, a company registered under the laws of UAE 
    with Trade License No. 1383686, having its registered office at Dubai, UAE 
-   (hereinafter referred to as the "Company")
+   (hereinafter referred to as the "Company")</p>
 
-2. [Client Company Name], a company registered under the laws of UAE with Trade License No. 
-   [Client Trade License No], represented by [Contact Person] (hereinafter referred to as the "Client")
+<p>2. [Client Company Name], a company registered under the laws of UAE with Trade License No. 
+   [Client Trade License No], represented by [Contact Person] (hereinafter referred to as the "Client")</p>
 
-VEHICLE INFORMATION:
+<h2 class="section-title">VEHICLE INFORMATION:</h2>
 
-The following vehicle is assigned under this contract:
-• License Plate: [Vehicle License Plate]
-• Make: [Vehicle Make]
-• Model: [Vehicle Model]
-• Year: [Vehicle Year]
+<p>The following vehicle is assigned under this contract:</p>
+<ul class="document-list">
+<li>License Plate: [Vehicle License Plate]</li>
+<li>Make: [Vehicle Make]</li>
+<li>Model: [Vehicle Model]</li>
+<li>Year: [Vehicle Year]</li>
+</ul>
 
-WHEREAS:
-The Company and Client wish to enter into an agreement for [Contract Type], and both parties agree to be bound by the terms and conditions set forth in this agreement.
+<h2 class="section-title">WHEREAS:</h2>
+<p>The Company and Client wish to enter into an agreement for [Contract Type], and both parties agree to be bound by the terms and conditions set forth in this agreement.</p>
 
-TERMS AND CONDITIONS:
+<h2 class="section-title">TERMS AND CONDITIONS:</h2>
 
-1. CONTRACT DURATION AND VALUE
-   • Duration: From [Start Date] to [End Date]
-   • Renewal: Upon mutual written consent
-   • Total Value: AED [Value]
+<ol class="document-list">
+<li><b>CONTRACT DURATION AND VALUE</b>
+   <ul class="document-list">
+   <li>Duration: From [Start Date] to [End Date]</li>
+   <li>Renewal: Upon mutual written consent</li>
+   <li>Total Value: AED [Value]</li>
+     <li>Security Deposit: AED 1,000</li>
+<li> PDC Check for Total Value</li>
+   </ul>
+</li>
+<li><b>OPERATIONAL REQUIREMENTS</b>
+   <ul class="document-list">
+   <li>Driver's Accommodation: Client to provide accommodation during service period</li>
+   <li>Fuel Costs: Client responsible for all fuel and petrol costs</li>
+   <li>Salik Charges: Client responsible for all toll charges</li>
+   </ul>
+</li>
+<li><b>PARTY OBLIGATIONS</b>
+   <ul class="document-list">
+   <li>Company: Provide services, maintain quality, comply with UAE laws</li>
+   <li>Client: Timely payments, provide information/access, comply with UAE laws</li>
+   </ul>
+</li>
+<li><b>VEHICLE AND TERMINATION</b>
+   <ul class="document-list">
+   <li>Return: Vehicles/equipment returned to Company premises or agreed location</li>
+   <li>Termination: 30 days' notice for material breach</li>
+   <li>Post-termination: Immediate return of vehicles and settlement of dues</li>
+   </ul>
+</li>
+<li><b>GOVERNING LAW</b>
+   <ul class="document-list">
+   <li>Jurisdiction: UAE laws and Dubai Courts</li>
+   <li>Force Majeure: Neither party liable for circumstances beyond control</li>
+   </ul>
+</li>
+<li><b>MAINTENANCE AND REPAIRS</b>
+   <p>In accordance with the principles of good faith and the obligations inherent in contracts under UAE law, the Parties agree as follows:</p>
+   <ol class="document-list" type="a">
+   <li><b>Client's Responsibilities (Routine Maintenance):</b> The Client shall be solely responsible for the cost and logistical arrangement of all routine and preventive maintenance of the Vehicle. This includes, as a minimum, monthly engine oil changes, oil filter changes, air filter changes, tire rotation, and brake inspections, performed in line with the manufacturer's recommended schedule. All maintenance must be performed at a reputable garage using parts and lubricants that meet the manufacturer's specifications.</li>
+   <li><b>Client's Responsibilities (Operational Costs & Liability):</b> The Client shall bear all operational costs including fuel, toll charges, and daily expenses. The Client assumes full financial responsibility for all damages resulting from accidents, collisions, driver negligence, misuse, or improper maintenance. This includes engine damage from overheating, traffic incidents, and any damage attributable to the Client's fault or omission.</li>   <li><b>Company's Responsibilities (Major Repairs):</b> The Company shall be responsible for all major mechanical and structural repairs necessitated by normal wear and tear or latent defects, provided such issues are not a result of the Client's misuse or failure to perform its obligations under this Agreement.</li>
+   <li><b>Reporting and Authorization:</b> The Client must immediately notify the Company in writing of any defect, malfunction, or damage to the Vehicle. For any non-routine repairs, the Company must provide prior written authorization before the Client commissions such repairs. Unauthorized repair costs will not be reimbursed.</li>
+   <li><b>Records:</b> The Client shall maintain complete and accurate records of all maintenance and repairs performed on the Vehicle and make them available for inspection by the Company upon request.</li>
+   </ol>
+</li>
+</ol>
 
-2. OPERATIONAL REQUIREMENTS
-   • Driver's Accommodation: Client to provide accommodation during service period
-   • Fuel Costs: Client responsible for all fuel and petrol costs
-   • Salik Charges: Client responsible for all toll charges
+<p>For Efficient Move New Used Furniture Removal L.L.C:<br/>
+Name: ____________________<br/>
+Title: ____________________<br/>
+License No: 1383686<br/>
+Signature: ________________<br/>
+Date: ____________________</p>
 
-3. PARTY OBLIGATIONS
-   • Company: Provide services, maintain quality, comply with UAE laws
-   • Client: Timely payments, provide information/access, comply with UAE laws
-
-4. VEHICLE AND TERMINATION
-   • Return: Vehicles/equipment returned to Company premises or agreed location
-   • Termination: 7 days' notice for material breach
-   • Post-termination: Immediate return of vehicles and settlement of dues
-
-5. GOVERNING LAW
-   • Jurisdiction: UAE laws and Dubai Courts
-   • Force Majeure: Neither party liable for circumstances beyond control
-
-
-For Efficient Move New Used Furniture Removal L.L.C:
-Name: ____________________
-Title: ____________________
-License No: 1383686
-Signature: ________________
-Date: ____________________
-
-For [Client Company Name]:
-Name: [Contact Person]
-Title: ____________________
-License No: [Client Trade License No]
-Signature: ________________
-Date: ____________________`;
+<p>For [Client Company Name]:<br/>
+Name: [Contact Person]<br/>
+Title: ____________________<br/>
+License No: [Client Trade License No]<br/>
+Signature: ________________<br/>
+Date: ____________________</p>`;
 
 const ContractTemplateEditor: React.FC<Props> = ({
   template,
@@ -207,7 +232,7 @@ const ContractTemplateEditor: React.FC<Props> = ({
       .replace(/\[Client Company Name\]/g, contract.companyName || '')
       .replace(/\[Trade License No\]/g, contract.tradeLicenseNo || '')
       .replace(/\[Contract Type\]/g, contract.contractType || '')
-      .replace(/\[Start Date\]/g, contract.startDate ? new Date(contract.startDate).toLocaleDateString('en-AE', { 
+      .replace(/\[Start Date\]/g, contract.startDate ? new Date(contract.startDate).toLocaleDateString('en-AE', {
         day: 'numeric',
         month: 'long',
         year: 'numeric'
@@ -231,6 +256,10 @@ const ContractTemplateEditor: React.FC<Props> = ({
 
   const updatePreview = () => {
     let processedContent = content;
+
+    // Check if content already contains HTML tags
+    const hasHtmlTags = /<[^>]+>/.test(content);
+
     const contractData = {
       companyName: contract.companyName || '',
       contractType: contract.contractType || '',
@@ -248,7 +277,13 @@ const ContractTemplateEditor: React.FC<Props> = ({
       processedContent = processedContent.replace(regex, String(value));
     });
 
-    // Convert markdown-like syntax to HTML with better structure
+    // If content already has HTML tags, use it directly
+    if (hasHtmlTags) {
+      setPreviewContent(processedContent);
+      return;
+    }
+
+    // Convert markdown-like syntax to HTML with better structure (for plain text only)
     const lines = processedContent.split('\n');
     let inList = false;
     processedContent = lines
@@ -537,7 +572,7 @@ const ContractTemplateEditor: React.FC<Props> = ({
     const today = new Date();
     const nextYear = new Date();
     nextYear.setFullYear(today.getFullYear() + 1);
-    
+
     setRenewalData({
       startDate: today,
       endDate: nextYear,
@@ -641,9 +676,9 @@ const ContractTemplateEditor: React.FC<Props> = ({
               )}
             </Box>
             <Divider sx={{ my: 2 }} />
-            <Paper 
-              id="contract-preview" 
-              sx={{ 
+            <Paper
+              id="contract-preview"
+              sx={{
                 p: 0,
                 backgroundColor: '#fff',
                 minHeight: '297mm',
@@ -681,7 +716,7 @@ const ContractTemplateEditor: React.FC<Props> = ({
                     fontWeight: 700
                   }
                 },
-                '& .document-title': { 
+                '& .document-title': {
                   fontSize: '20px',
                   fontWeight: 700,
                   textAlign: 'center',
@@ -689,7 +724,7 @@ const ContractTemplateEditor: React.FC<Props> = ({
                   color: '#000',
                   fontFamily: '"KoHo", Arial, sans-serif'
                 },
-                '& .section-title': { 
+                '& .section-title': {
                   fontSize: '16px',
                   fontWeight: 700,
                   marginTop: '16px',
@@ -697,7 +732,7 @@ const ContractTemplateEditor: React.FC<Props> = ({
                   color: '#000',
                   fontFamily: '"KoHo", Arial, sans-serif'
                 },
-                '& p': { 
+                '& p': {
                   marginBottom: '10px',
                   lineHeight: 1.5,
                   fontSize: '12px',
@@ -721,8 +756,8 @@ const ContractTemplateEditor: React.FC<Props> = ({
               <div className="banner-header">
                 <img src="/bannerheader.png" alt="Header Banner" />
               </div>
-              <div dangerouslySetInnerHTML={{ 
-                __html: `<div class="document-content">${previewContent}</div>` 
+              <div dangerouslySetInnerHTML={{
+                __html: `<div class="document-content">${previewContent}</div>`
               }} />
               <div className="banner-footer">
                 <img src="/bannerfooter.png" alt="Footer Banner" />
@@ -772,9 +807,9 @@ const ContractTemplateEditor: React.FC<Props> = ({
                     id="contract-value"
                     type="number"
                     value={renewalData.value}
-                    onChange={(e) => setRenewalData(prev => ({ 
-                      ...prev, 
-                      value: Number(e.target.value) 
+                    onChange={(e) => setRenewalData(prev => ({
+                      ...prev,
+                      value: Number(e.target.value)
                     }))}
                     startAdornment={<InputAdornment position="start">AED</InputAdornment>}
                     label="Contract Value"
@@ -786,9 +821,9 @@ const ContractTemplateEditor: React.FC<Props> = ({
         </DialogContent>
         <DialogActions>
           <Button onClick={handleRenewalClose}>Cancel</Button>
-          <Button 
-            onClick={handleRenewalSubmit} 
-            variant="contained" 
+          <Button
+            onClick={handleRenewalSubmit}
+            variant="contained"
             disabled={isRenewing}
           >
             {isRenewing ? 'Renewing...' : 'Renew Contract'}

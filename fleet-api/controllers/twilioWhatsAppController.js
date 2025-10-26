@@ -18,24 +18,6 @@ class TwilioWhatsAppController {
   }
 
   /**
-   * Handle payment received webhook from Twilio
-   * @param {Object} req - Express request object
-   * @param {Object} res - Express response object
-   */
-  async handleReceivedPayment(req, res) {
-    try {
-      const whatsappService = new TwilioWhatsAppService();
-      await whatsappService.processReceivedPayment(req, res);
-    } catch (error) {
-      console.error('Error handling received payment:', error);
-      res.status(500).json({
-        status: 'error',
-        message: 'Failed to process received payment'
-      });
-    }
-  }
-
-  /**
    * Get all Twilio WhatsApp expenses
    * @param {Object} req - Express request object
    * @param {Object} res - Express response object
@@ -518,53 +500,6 @@ Your expense status has been updated to pending.`;
       res.status(500).json({
         status: 'error',
         message: 'Failed to test expense retrieval'
-      });
-    }
-  }
-
-  /**
-   * Test payment tracking without sending WhatsApp messages
-   * @param {Object} req - Express request object
-   * @param {Object} res - Express response object
-   */
-  async testPaymentTracking(req, res) {
-    try {
-      const { whatsappNumber, command } = req.body;
-
-      if (!whatsappNumber || !command) {
-        return res.status(400).json({
-          status: 'error',
-          message: 'WhatsApp number and command are required'
-        });
-      }
-
-      const whatsappService = new TwilioWhatsAppService();
-      
-      // Simulate the webhook processing
-      const mockReq = {
-        body: {
-          From: whatsappNumber,
-          Body: command
-        }
-      };
-      
-      const mockRes = {
-        status: (code) => ({ send: (msg) => console.log(`Response: ${code} - ${msg}`) })
-      };
-
-      await whatsappService.handleWebhook(mockReq, mockRes);
-
-      res.json({
-        status: 'success',
-        message: 'Payment tracking test completed - check console logs for output',
-        whatsappNumber,
-        command
-      });
-    } catch (error) {
-      console.error('Error testing payment tracking:', error);
-      res.status(500).json({
-        status: 'error',
-        message: 'Failed to test payment tracking'
       });
     }
   }

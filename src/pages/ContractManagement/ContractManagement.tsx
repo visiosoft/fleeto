@@ -1201,6 +1201,22 @@ Phone: [Contact Phone]
 Notes:
 [Notes]
 
+6. MAINTENANCE AND REPAIRS
+
+In accordance with the principles of good faith and the obligations inherent in contracts under UAE law, the Parties agree as follows:
+
+a. **Client's Responsibilities (Routine Maintenance):** The Client shall be solely responsible for the cost and logistical arrangement of all routine and preventive maintenance of the Vehicle. This includes, as a minimum, monthly engine oil changes, oil filter changes, air filter changes, tire rotation, and brake inspections, performed in line with the manufacturer's recommended schedule. All maintenance must be performed at a reputable garage using parts and lubricants that meet the manufacturer's specifications.
+
+b. **Client's Responsibilities (Operational Costs):** The Client remains responsible for all costs related to the day-to-day operation of the Vehicle, including but not limited to fuel, Salik tolls, tire replacements due to wear, and daily cleaning.
+
+c. **Company's Responsibilities (Major Repairs):** The Company shall be responsible for all major mechanical and structural repairs necessitated by normal wear and tear or latent defects. This includes, but is not limited to, repairs to the engine block, transmission, drive train, and chassis, provided such issues are not a result of the Client's misuse or failure to perform routine maintenance.
+
+d. **Reporting and Authorization:** The Client must immediately notify the Company in writing of any defect, malfunction, or damage to the Vehicle. For any non-routine repairs, the Company must provide prior written authorization before the Client commissions such repairs. Unauthorized repair costs will not be reimbursed.
+
+e. **Negligence and Misuse:** The Client shall be fully liable for the cost of all repairs resulting from its negligence, misuse, improper maintenance, failure to adhere to the maintenance schedule, or involvement in an accident where the Client's driver is at fault. The Company may recover these costs from the Client.
+
+f. **Records:** The Client shall maintain complete and accurate records of all maintenance and repairs performed on the Vehicle and make them available for inspection by the Company upon request.
+
 Terms and Conditions:
 1. The contract duration is specified above and may be renewed upon mutual agreement.
 2. The contract value is to be paid according to the agreed payment schedule.

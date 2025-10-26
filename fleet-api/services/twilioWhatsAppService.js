@@ -12,13 +12,6 @@ class TwilioWhatsAppService {
 
     // Test mode - set to true to prevent sending real WhatsApp messages
     this.testMode = process.env.WHATSAPP_TEST_MODE === 'true' || !accountSid || !authToken || !whatsappNumber;
-    
-    console.log('🔧 Configuration check:');
-    console.log('  - WHATSAPP_TEST_MODE:', process.env.WHATSAPP_TEST_MODE);
-    console.log('  - TWILIO_ACCOUNT_SID:', accountSid ? 'SET' : 'NOT SET');
-    console.log('  - TWILIO_AUTH_TOKEN:', authToken ? 'SET' : 'NOT SET');
-    console.log('  - TWILIO_WHATSAPP_NUMBER:', whatsappNumber ? 'SET' : 'NOT SET');
-    console.log('  - Test Mode:', this.testMode);
 
     if (!accountSid || !authToken || !whatsappNumber) {
       console.warn('⚠️  Twilio environment variables not set. Running in TEST MODE.');
@@ -45,18 +38,12 @@ class TwilioWhatsAppService {
    */
   async sendMessage(to, message) {
     try {
-      // Ensure proper phone number format
-      if (to && !to.startsWith('whatsapp:+')) {
-        to = to.replace('whatsapp:', 'whatsapp:+').replace('whatsapp: ', 'whatsapp:+');
-      }
-      
       if (this.testMode || !this.isConfigured) {
         console.log('📱 [TEST MODE] WhatsApp message would be sent to:', to);
         console.log('📱 [TEST MODE] Message:');
         console.log('─'.repeat(50));
         console.log(message);
         console.log('─'.repeat(50));
-        console.log('✅ [TEST MODE] Message processed successfully');
         return { sid: 'test-message-id', status: 'sent' };
       }
 
@@ -206,7 +193,7 @@ Location: ADNOC Station`;
    * @param {string} to - Recipient number
    */
   async sendHelpMessage(to) {
-    const helpMessage = `📱 *Fleet Management Help*
+    const helpMessage = `📱 *Expense Management Help*
 
 *Submit Expenses:*
 • /fuel - Submit fuel expense
@@ -221,11 +208,6 @@ Location: ADNOC Station`;
 • /expenses-jan - Show January expenses
 • /expenses-2024-01 - Show specific month/year
 
-*Payment Tracking:*
-• /payments - Show all payments for current month
-• /payments [contract] [amount] [description] - Record payment received
-• /invoice [invoice_number] - Show invoice details and payment status
-
 *Other Commands:*
 • /vehicles - Show available vehicles
 • /drivers - Show available drivers
@@ -236,10 +218,6 @@ Location: ADNOC Station`;
 Vehicle: ABC-123
 Amount: 150.50 AED
 Location: ADNOC Station
-
-*Payment Format:*
-/payments CONTRACT001 5000 Monthly service payment
-/payments INV-001 2500 Equipment maintenance
 
 Type any command to get started!`;
 
@@ -757,11 +735,7 @@ Type /expense to see the correct format or /help for more information.`;
         const status = expense.status === 'approved' ? '✅' : expense.status === 'rejected' ? '❌' : '⏳';
         message += `${index + 1}. ${status} ${expense.expenseType.toUpperCase()}\n`;
         message += `   💰 ${expense.amount} AED - ${date}\n`;
-        message += `   🚗 ${expense.vehicle || 'N/A'}\n`;
-        if (expense.description) {
-          message += `   📝 ${expense.description}\n`;
-        }
-        message += `\n`;
+        message += `   🚗 ${expense.vehicle || 'N/A'}\n\n`;
       });
 
       if (expenses.length > 10) {
@@ -1089,36 +1063,6 @@ Type /expense to see the correct format or /help for more information.`;
             await this.sendYearlyExpenses(From);
             break;
 
-          case '/payments':
-            // Handle payment commands
-            if (Body.trim() === '/payments') {
-              // Show monthly payments summary
-              await this.sendMonthlyPaymentSummary(From);
-            } else {
-              // Handle payment received command
-              const paymentData = this.parsePaymentMessage(Body);
-              if (paymentData) {
-                const paymentRecord = await this.savePaymentRecord(paymentData, From);
-                if (paymentRecord) {
-                  const confirmationMessage = this.generatePaymentConfirmationMessage(paymentRecord);
-                  await this.sendMessage(From, confirmationMessage);
-                }
-              } else {
-                await this.sendMessage(From, '❌ Invalid payment format. Please use: /payments [contract_number] [amount] [description] or just /payments for monthly summary');
-              }
-            }
-            break;
-
-          case '/invoice':
-            // Handle invoice details command
-            const invoiceNumber = Body.replace('/invoice', '').trim();
-            if (invoiceNumber) {
-              await this.sendInvoiceDetails(From, invoiceNumber);
-            } else {
-              await this.sendMessage(From, '❌ Please provide invoice number. Use: /invoice [invoice_number]');
-            }
-            break;
-
           default:
             // Check if it's a month-specific command (e.g., /expenses-jan, /expenses-2024-01)
             if (command.startsWith('/expenses-')) {
@@ -1138,428 +1082,6 @@ Type /expense to see the correct format or /help for more information.`;
       res.status(500).send('Error');
     }
   }
-
-  /**
-   * Process received payment webhook
-   * @param {Object} req - Express request object
-   * @param {Object} res - Express response object
-   */
-  async processReceivedPayment(req, res) {
-    try {
-      const { From, Body } = req.body;
-      
-      if (!From || !Body) {
-        console.log('Missing From or Body in received payment webhook');
-        return res.status(400).send('Missing required fields');
-      }
-
-      console.log(`💰 Payment received from ${From}: ${Body}`);
-
-      // Parse the payment message
-      const paymentData = this.parsePaymentMessage(Body);
-      
-      if (!paymentData) {
-        await this.sendMessage(From, '❌ Invalid payment format. Please use: /received [contract_number] [amount] [description]');
-        return res.status(200).send('OK');
-      }
-
-      // Save payment record
-      const paymentRecord = await this.savePaymentRecord(paymentData, From);
-      
-      if (paymentRecord) {
-        // Send confirmation message
-        const confirmationMessage = this.generatePaymentConfirmationMessage(paymentRecord);
-        await this.sendMessage(From, confirmationMessage);
-        
-        // Send monthly payment summary if requested
-        if (paymentData.requestSummary) {
-          await this.sendMonthlyPaymentSummary(From);
-        }
-      }
-
-      res.status(200).send('OK');
-    } catch (error) {
-      console.error('Error processing received payment:', error);
-      res.status(500).send('Error');
-    }
-  }
-
-  /**
-   * Parse payment message to extract payment details
-   * @param {string} message - Payment message
-   * @returns {Object|null} Parsed payment data or null if invalid
-   */
-  parsePaymentMessage(message) {
-    try {
-      // Expected format: /payments [contract_number] [amount] [description] [optional: /summary]
-      const parts = message.trim().split(' ');
-      
-      if (parts.length < 4 || parts[0] !== '/payments') {
-        return null;
-      }
-
-      const contractNumber = parts[1];
-      const amount = parseFloat(parts[2]);
-      const description = parts.slice(3).join(' ').trim();
-
-      if (isNaN(amount) || amount <= 0) {
-        return null;
-      }
-
-      return {
-        contractNumber,
-        amount,
-        description,
-        paymentDate: new Date()
-      };
-    } catch (error) {
-      console.error('Error parsing payment message:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Save payment record to invoice database
-   * @param {Object} paymentData - Payment data
-   * @param {string} whatsappNumber - WhatsApp number
-   * @returns {Object|null} Saved payment record
-   */
-  async savePaymentRecord(paymentData, whatsappNumber) {
-    try {
-      const collection = await db.getCollection('invoices');
-      
-      // Find invoice by contract number or invoice number
-      const invoice = await collection.findOne({
-        $or: [
-          { invoiceNumber: paymentData.contractNumber },
-          { 'contract.contractNumber': paymentData.contractNumber }
-        ]
-      });
-
-      if (!invoice) {
-        console.log(`❌ Invoice not found for contract: ${paymentData.contractNumber}`);
-        return null;
-      }
-
-      // Create payment record
-      const paymentRecord = {
-        amount: paymentData.amount,
-        paymentMethod: 'bank_transfer', // Default method
-        transactionId: `WHATSAPP_${Date.now()}`,
-        notes: paymentData.description,
-        date: paymentData.paymentDate,
-        whatsappNumber: whatsappNumber,
-        source: 'whatsapp_twilio'
-      };
-
-      // Add payment to invoice
-      if (!invoice.payments) {
-        invoice.payments = [];
-      }
-      invoice.payments.push(paymentRecord);
-      
-      // Calculate total paid amount
-      const totalPaid = invoice.payments.reduce((sum, payment) => sum + (payment.amount || 0), 0);
-      const invoiceTotal = invoice.total || 0;
-      
-      // Update invoice status based on payment
-      if (totalPaid >= invoiceTotal) {
-        invoice.status = 'paid';
-      } else if (totalPaid > 0) {
-        invoice.status = 'sent'; // Partially paid
-      }
-
-      await collection.updateOne(
-        { _id: invoice._id },
-        { 
-          $set: { 
-            payments: invoice.payments,
-            status: invoice.status,
-            updatedAt: new Date()
-          }
-        }
-      );
-      
-      console.log(`✅ Payment record saved to invoice: ${invoice._id}`);
-      return { 
-        ...paymentRecord, 
-        _id: invoice._id,
-        invoiceNumber: invoice.invoiceNumber,
-        totalAmount: invoice.total,
-        totalPaid: totalPaid,
-        remainingAmount: invoice.total - totalPaid
-      };
-    } catch (error) {
-      console.error('Error saving payment record:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Generate payment confirmation message
-   * @param {Object} paymentRecord - Payment record
-   * @returns {string} Confirmation message
-   */
-  generatePaymentConfirmationMessage(paymentRecord) {
-    const date = paymentRecord.date.toLocaleDateString();
-    const time = paymentRecord.date.toLocaleTimeString();
-    
-    return `✅ *Payment Received Successfully!*
-
-📋 *Invoice Details:*
-• Invoice: ${paymentRecord.invoiceNumber}
-• Contract: ${paymentRecord.contractNumber}
-• Payment Amount: ${paymentRecord.amount} AED
-• Description: ${paymentRecord.notes}
-• Date: ${date} at ${time}
-
-💰 *Payment Summary:*
-• Total Invoice Amount: ${paymentRecord.totalAmount} AED
-• Total Paid: ${paymentRecord.totalPaid} AED
-• Remaining Amount: ${paymentRecord.remainingAmount} AED
-
-🆔 *Invoice ID:* ${paymentRecord._id}
-📝 *Transaction ID:* ${paymentRecord.transactionId}
-
-Your payment has been recorded and applied to the invoice.`;
-  }
-
-  /**
-   * Send monthly payment summary from invoices
-   * @param {string} to - Recipient number
-   */
-  async sendMonthlyPaymentSummary(to) {
-    try {
-      const now = new Date();
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
-
-      const collection = await db.getCollection('invoices');
-      
-      // Get all invoices with payments in current month
-      const invoices = await collection.find({
-        'payments': {
-          $elemMatch: {
-            date: {
-              $gte: startOfMonth,
-              $lte: endOfMonth
-            }
-          }
-        }
-      }).sort({ updatedAt: -1 }).toArray();
-
-      const monthName = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-      
-      if (invoices.length === 0) {
-        // If no payments this month, show all invoices for context
-        const allInvoices = await collection.find({})
-          .sort({ updatedAt: -1 })
-          .limit(10)
-          .toArray();
-
-        if (allInvoices.length === 0) {
-          await this.sendMessage(to, `📅 *${monthName} Payments*\n\nNo invoices found in the system.`);
-          return;
-        }
-
-        let message = `📅 *${monthName} Payments*\n\n`;
-        message += `No payments received this month.\n\n`;
-        message += `*Recent Invoices:*\n`;
-        
-        allInvoices.forEach((invoice, index) => {
-          const totalPaid = invoice.payments ? invoice.payments.reduce((sum, p) => sum + (p.amount || 0), 0) : 0;
-          const invoiceTotal = invoice.total || 0;
-          const remaining = invoiceTotal - totalPaid;
-          const status = remaining <= 0 ? '✅ PAID' : remaining < invoiceTotal ? '⏳ PARTIAL' : '❌ PENDING';
-          
-          // Calculate amounts after 5% deduction
-          const invoiceTotalAfterDeduction = invoiceTotal * 0.95;
-          const totalPaidAfterDeduction = totalPaid * 0.95;
-          const remainingAfterDeduction = remaining * 0.95;
-          
-          message += `${index + 1}. ${status} ${invoice.invoiceNumber || 'N/A'}\n`;
-          message += `   📋 Contract: ${invoice.contractId?.contractNumber || 'N/A'}\n`;
-          message += `   💰 Total: ${invoiceTotalAfterDeduction.toFixed(2)} AED (${invoiceTotal.toFixed(2)} - 5%)\n`;
-          message += `   💳 Paid: ${totalPaidAfterDeduction.toFixed(2)} AED (${totalPaid.toFixed(2)} - 5%)\n`;
-          if (remaining > 0) {
-            message += `   ⏳ Remaining: ${remainingAfterDeduction.toFixed(2)} AED (${remaining.toFixed(2)} - 5%)\n`;
-          }
-          message += `\n`;
-        });
-
-        await this.sendMessage(to, message);
-        return;
-      }
-
-      // Extract all payments from invoices for current month
-      const allPayments = [];
-      const paidInvoices = [];
-      const pendingInvoices = [];
-
-      invoices.forEach(invoice => {
-        const invoicePayments = invoice.payments.filter(payment => 
-          payment.date >= startOfMonth && payment.date <= endOfMonth
-        );
-
-        if (invoicePayments.length > 0) {
-          invoicePayments.forEach(payment => {
-            allPayments.push({
-              ...payment,
-              invoiceNumber: invoice.invoiceNumber || 'N/A',
-              contractNumber: invoice.contractId?.contractNumber || 'N/A',
-              totalAmount: invoice.total || 0,
-              invoiceStatus: invoice.status || 'unknown'
-            });
-          });
-
-          // Calculate totals for this invoice
-          const totalPaid = invoice.payments ? invoice.payments.reduce((sum, p) => sum + (p.amount || 0), 0) : 0;
-          const invoiceTotal = invoice.total || 0;
-          const remaining = invoiceTotal - totalPaid;
-
-          if (remaining <= 0) {
-            paidInvoices.push({
-              invoiceNumber: invoice.invoiceNumber || 'N/A',
-              contractNumber: invoice.contractId?.contractNumber || 'N/A',
-              totalAmount: invoiceTotal,
-              totalPaid: totalPaid,
-              status: 'PAID'
-            });
-          } else {
-            pendingInvoices.push({
-              invoiceNumber: invoice.invoiceNumber || 'N/A',
-              contractNumber: invoice.contractId?.contractNumber || 'N/A',
-              totalAmount: invoiceTotal,
-              totalPaid: totalPaid,
-              remaining: remaining,
-              status: 'PARTIAL'
-            });
-          }
-        }
-      });
-
-      // Sort payments by date descending
-      allPayments.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-      const totalAmount = allPayments.reduce((sum, payment) => sum + (payment.amount || 0), 0);
-      const totalPaidAmount = paidInvoices.reduce((sum, inv) => sum + (inv.totalAmount || 0), 0);
-      const totalPendingAmount = pendingInvoices.reduce((sum, inv) => sum + (inv.remaining || 0), 0);
-      
-      // Calculate amounts after 5% deduction (no VAT)
-      const totalAmountAfterDeduction = totalAmount * 0.95;
-      const totalPaidAmountAfterDeduction = totalPaidAmount * 0.95;
-      const totalPendingAmountAfterDeduction = totalPendingAmount * 0.95;
-      
-      let message = `📅 *${monthName} Payment Summary*\n\n`;
-      message += `💰 *Total Received (After 5% Deduction):* ${totalAmountAfterDeduction.toFixed(2)} AED\n`;
-      message += `📋 *Total Payments:* ${allPayments.length}\n`;
-      message += `📄 *Invoices with Payments:* ${invoices.length}\n\n`;
-
-      message += `✅ *Fully Paid Invoices:* ${paidInvoices.length}\n`;
-      message += `💰 *Total Paid Amount (After 5% Deduction):* ${totalPaidAmountAfterDeduction.toFixed(2)} AED\n\n`;
-
-      message += `⏳ *Partially Paid Invoices:* ${pendingInvoices.length}\n`;
-      message += `💰 *Remaining Amount (After 5% Deduction):* ${totalPendingAmountAfterDeduction.toFixed(2)} AED\n\n`;
-      
-      message += `*Recent Payments:*\n`;
-      allPayments.slice(0, 10).forEach((payment, index) => {
-        const date = payment.date ? new Date(payment.date).toLocaleDateString() : 'N/A';
-        const source = payment.source === 'whatsapp_twilio' ? '📱' : '💳';
-        const status = payment.invoiceStatus === 'paid' ? '✅' : '⏳';
-        const originalAmount = payment.amount || 0;
-        const amountAfterDeduction = originalAmount * 0.95;
-        message += `${index + 1}. ${source} ${status} ${amountAfterDeduction.toFixed(2)} AED (${originalAmount.toFixed(2)} - 5%)\n`;
-        message += `   📄 Invoice: ${payment.invoiceNumber || 'N/A'}\n`;
-        message += `   📋 Contract: ${payment.contractNumber || 'N/A'}\n`;
-        if (payment.notes) {
-          message += `   📝 ${payment.notes}\n`;
-        }
-        message += `   📅 ${date}\n\n`;
-      });
-
-      if (allPayments.length > 10) {
-        message += `... and ${allPayments.length - 10} more payments`;
-      }
-
-      await this.sendMessage(to, message);
-    } catch (error) {
-      console.error('Error sending monthly payment summary:', error);
-      console.error('Error details:', error.message);
-      console.error('Stack trace:', error.stack);
-      await this.sendMessage(to, `❌ Error retrieving payment summary: ${error.message}`);
-    }
-  }
-
-  /**
-   * Send invoice details and payment status
-   * @param {string} to - Recipient number
-   * @param {string} invoiceNumber - Invoice number
-   */
-  async sendInvoiceDetails(to, invoiceNumber) {
-    try {
-      const collection = await db.getCollection('invoices');
-      
-      const invoice = await collection.findOne({ invoiceNumber });
-
-      if (!invoice) {
-        await this.sendMessage(to, `❌ Invoice not found: ${invoiceNumber}`);
-        return;
-      }
-
-      // Calculate payment totals
-      const totalPaid = invoice.payments ? invoice.payments.reduce((sum, payment) => sum + (payment.amount || 0), 0) : 0;
-      const invoiceTotal = invoice.total || 0;
-      const remainingAmount = invoiceTotal - totalPaid;
-      const paymentCount = invoice.payments ? invoice.payments.length : 0;
-
-      // Get WhatsApp payments
-      const whatsappPayments = invoice.payments ? invoice.payments.filter(payment => 
-        payment.source === 'whatsapp_twilio'
-      ) : [];
-
-      let message = `📄 *Invoice Details*\n\n`;
-      message += `🆔 *Invoice Number:* ${invoice.invoiceNumber || 'N/A'}\n`;
-      message += `📋 *Contract:* ${invoice.contractId?.contractNumber || 'N/A'}\n`;
-      message += `📅 *Issue Date:* ${invoice.issueDate ? invoice.issueDate.toLocaleDateString() : 'N/A'}\n`;
-      message += `📅 *Due Date:* ${invoice.dueDate ? invoice.dueDate.toLocaleDateString() : 'N/A'}\n`;
-      message += `📊 *Status:* ${(invoice.status || 'unknown').toUpperCase()}\n\n`;
-
-      message += `💰 *Amount Details:*\n`;
-      message += `• Subtotal: ${(invoice.subtotal || 0).toFixed(2)} AED\n`;
-      message += `• Tax: ${(invoice.tax || 0).toFixed(2)} AED\n`;
-      message += `• Total: ${invoiceTotal.toFixed(2)} AED\n`;
-      message += `• Paid: ${totalPaid.toFixed(2)} AED\n`;
-      message += `• Remaining: ${remainingAmount.toFixed(2)} AED\n\n`;
-
-      message += `📋 *Payment Summary:*\n`;
-      message += `• Total Payments: ${paymentCount}\n`;
-      message += `• WhatsApp Payments: ${whatsappPayments.length}\n\n`;
-
-      if (invoice.payments && invoice.payments.length > 0) {
-        message += `*Recent Payments:*\n`;
-        invoice.payments.slice(-5).forEach((payment, index) => {
-          const date = payment.date ? new Date(payment.date).toLocaleDateString() : 'N/A';
-          const source = payment.source === 'whatsapp_twilio' ? '📱' : '💳';
-          message += `${index + 1}. ${source} ${payment.amount || 0} AED\n`;
-          message += `   📅 ${date}\n`;
-          if (payment.notes) {
-            message += `   📝 ${payment.notes}\n`;
-          }
-          message += `\n`;
-        });
-      }
-
-      if (invoice.notes) {
-        message += `📝 *Notes:* ${invoice.notes}\n`;
-      }
-
-      await this.sendMessage(to, message);
-    } catch (error) {
-      console.error('Error sending invoice details:', error);
-      await this.sendMessage(to, '❌ Error retrieving invoice details');
-    }
-  }
-
 }
 
 module.exports = TwilioWhatsAppService;
