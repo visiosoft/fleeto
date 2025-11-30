@@ -94,10 +94,16 @@ const BetaInvoiceView: React.FC = () => {
                             top: 0;
                             width: 100%;
                             margin: 0;
-                            padding: 10px !important;
-                            padding-bottom: 180px !important;
+                            padding: 0 !important;
                             box-shadow: none !important;
-                            font-size: 0.9em;
+                            font-size: 0.75em;
+                        }
+                        .invoice-header {
+                            position: fixed;
+                            top: 0;
+                            left: 0;
+                            width: 100%;
+                            z-index: 1000;
                         }
                         .invoice-footer {
                             position: fixed;
@@ -105,17 +111,20 @@ const BetaInvoiceView: React.FC = () => {
                             left: 0;
                             width: 100%;
                             z-index: 1000;
-                            max-height: 150px;
                         }
-                        .invoice-footer img {
-                            max-height: 150px;
-                            object-fit: contain;
+                        .invoice-content {
+                            margin-top: 140px;
+                            margin-bottom: 140px;
+                            padding: 0 10px;
                         }
                         .printable-invoice .MuiBox-root {
-                            margin-bottom: 8px !important;
+                            margin-bottom: 4px !important;
                         }
                         .printable-invoice .MuiTableContainer-root {
-                            margin-bottom: 8px !important;
+                            margin-bottom: 4px !important;
+                        }
+                        .printable-invoice .MuiDivider-root {
+                            margin: 4px 0 !important;
                         }
                         @page {
                             margin: 0.3cm;
@@ -175,17 +184,15 @@ const BetaInvoiceView: React.FC = () => {
                     p: 5,
                     position: 'relative',
                     minHeight: '29.7cm',
-                    display: 'flex',
-                    flexDirection: 'column',
                     '@media print': {
                         boxShadow: 'none',
                         p: 0,
-                        minHeight: '100vh',
+                        minHeight: 'auto',
                     }
                 }}
             >
                 {/* Banner Header */}
-                <Box mb={2} sx={{ mx: -5, mt: -5, '@media print': { mx: 0, mt: 0, mb: 1 } }}>
+                <Box className="invoice-header" mb={2} sx={{ mx: -5, mt: -5, '@media print': { mx: 0, mt: 0, mb: 0 } }}>
                     <img
                         src="/bannerheader.png"
                         alt="Header"
@@ -193,141 +200,201 @@ const BetaInvoiceView: React.FC = () => {
                     />
                 </Box>
 
-                {/* Header Text */}
-                <Box display="flex" justifyContent="space-between" mb={2} px={0} sx={{ '@media print': { mb: 1 } }}>
-                    <Box>
-                        <Typography variant="h4" fontWeight="bold" color="primary">
-                            INVOICE
-                        </Typography>
-                        <Typography variant="body1" color="text.secondary">
-                            #{invoice.invoiceNumber}
-                        </Typography>
-                        <Box mt={2}>
-                            <Chip
-                                label={invoice.status.toUpperCase()}
-                                color={invoice.status === 'paid' ? 'success' : invoice.status === 'sent' ? 'info' : 'default'}
-                                size="small"
-                            />
-                        </Box>
-                    </Box>
-                    <Box textAlign="right">
-                        <Typography variant="h6" fontWeight="bold">Fleet Management Co.</Typography>
-                        <Typography variant="body2">123 Business Bay</Typography>
-                        <Typography variant="body2">Dubai, UAE</Typography>
-                        <Typography variant="body2">TRN: 100200300400003</Typography>
-                    </Box>
-                </Box>
-
-                <Divider sx={{ mb: 2, '@media print': { mb: 1 } }} />
-
-                {/* Bill To & Details */}
-                <Grid container spacing={4} mb={2} sx={{ '@media print': { mb: 1 } }}>
-                    <Grid item xs={6}>
-                        <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                            BILL TO
-                        </Typography>
-                        <Typography variant="h6" fontWeight="bold">
-                            {invoice.contract?.companyName || 'Unknown Company'}
-                        </Typography>
-                        <Typography variant="body2">
-                            {invoice.contract?.address}
-                        </Typography>
-                        <Typography variant="body2">
-                            {invoice.contract?.contactPhone}
-                        </Typography>
-                        {invoice.contract?.trn && (
-                            <Typography variant="body2">
-                                TRN: {invoice.contract.trn}
-                            </Typography>
-                        )}
-                    </Grid>
-                    <Grid item xs={6} textAlign="right">
-                        <Box mb={2}>
-                            <Typography variant="subtitle2" color="text.secondary">
-                                ISSUE DATE
-                            </Typography>
-                            <Typography variant="body1" fontWeight="bold">
-                                {new Date(invoice.issueDate).toLocaleDateString()}
-                            </Typography>
-                        </Box>
+                {/* Main Invoice Content */}
+                <Box className="invoice-content">
+                    {/* Header Text */}
+                    <Box display="flex" justifyContent="space-between" mb={2} px={0} sx={{ '@media print': { mb: 1 } }}>
                         <Box>
-                            <Typography variant="subtitle2" color="text.secondary">
-                                DUE DATE
+                            <Typography variant="h4" fontWeight="bold" color="primary">
+                                INVOICE
                             </Typography>
-                            <Typography variant="body1" fontWeight="bold">
-                                {new Date(invoice.dueDate).toLocaleDateString()}
+                            <Typography variant="body1" color="text.secondary">
+                                #{invoice.invoiceNumber}
                             </Typography>
-                        </Box>
-                    </Grid>
-                </Grid>
-
-                {/* Line Items */}
-                <TableContainer sx={{ mb: 2, flex: 1, '@media print': { mb: 1 } }}>
-                    <Table>
-                        <TableHead>
-                            <TableRow sx={{ bgcolor: 'grey.100' }}>
-                                <TableCell><strong>Description</strong></TableCell>
-                                <TableCell align="right"><strong>Qty</strong></TableCell>
-                                <TableCell align="right"><strong>Unit Price</strong></TableCell>
-                                <TableCell align="right"><strong>Amount</strong></TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {invoice.items.map((item, index) => (
-                                <TableRow key={index}>
-                                    <TableCell>{item.description}</TableCell>
-                                    <TableCell align="right">{item.quantity}</TableCell>
-                                    <TableCell align="right">{item.unitPrice.toFixed(2)}</TableCell>
-                                    <TableCell align="right">{item.amount.toFixed(2)}</TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
-
-                {/* Totals */}
-                <Box display="flex" justifyContent="flex-end" mb={2} sx={{ '@media print': { mb: 1 } }}>
-                    <Box width="300px">
-                        <Box display="flex" justifyContent="space-between" mb={1}>
-                            <Typography>Subtotal:</Typography>
-                            <Typography>AED {invoice.subtotal.toFixed(2)}</Typography>
-                        </Box>
-                        {!!invoice.includeVat && (
-                            <Box display="flex" justifyContent="space-between" mb={1}>
-                                <Typography>VAT (5%):</Typography>
-                                <Typography>AED {invoice.tax.toFixed(2)}</Typography>
+                            <Box mt={2}>
+                                <Chip
+                                    label={invoice.status.toUpperCase()}
+                                    color={invoice.status === 'paid' ? 'success' : invoice.status === 'sent' ? 'info' : 'default'}
+                                    size="small"
+                                />
                             </Box>
-                        )}
-                        <Divider sx={{ my: 1 }} />
-                        <Box display="flex" justifyContent="space-between" mb={1}>
-                            <Typography variant="h6">Total:</Typography>
-                            <Typography variant="h6">AED {invoice.total.toFixed(2)}</Typography>
                         </Box>
-                        <Box display="flex" justifyContent="space-between" mb={1} color="success.main">
-                            <Typography>Paid:</Typography>
-                            <Typography>AED {(invoice.totalPaid || 0).toFixed(2)}</Typography>
+                        <Box textAlign="right">
+                            <Typography variant="h6" fontWeight="bold">Efficient Move</Typography>
+                            <Typography variant="body2">New & Used Furniture Removal L.L.C</Typography>
+                            <Typography variant="body2">Dubai, UAE</Typography>
+                            <Typography variant="body2">Phone: +971569420950</Typography>
+                            <Typography variant="body2">License No: 1383686</Typography>
                         </Box>
-                        <Box display="flex" justifyContent="space-between" color="error.main">
-                            <Typography fontWeight="bold">Balance Due:</Typography>
-                            <Typography fontWeight="bold">AED {(invoice.remainingBalance || 0).toFixed(2)}</Typography>
+                    </Box>
+
+                    <Divider sx={{ mb: 2, '@media print': { mb: 1 } }} />
+
+                    {/* Bill To & Details */}
+                    <Grid container spacing={4} mb={2} sx={{ '@media print': { mb: 1, spacing: 2 } }}>
+                        <Grid item xs={6}>
+                            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                                BILL TO
+                            </Typography>
+                            <Typography variant="h6" fontWeight="bold">
+                                {invoice.contract?.companyName || 'Unknown Company'}
+                            </Typography>
+                            <Typography variant="body2">
+                                {invoice.contract?.address}
+                            </Typography>
+                            <Typography variant="body2">
+                                {invoice.contract?.contactPhone}
+                            </Typography>
+                            {invoice.contract?.tradeLicenseNo && (
+                                <Typography variant="body2">
+                                    License No: {invoice.contract.tradeLicenseNo}
+                                </Typography>
+                            )}
+                            {invoice.contract?.trn && (
+                                <Typography variant="body2">
+                                    TRN: {invoice.contract.trn}
+                                </Typography>
+                            )}
+                        </Grid>
+                        <Grid item xs={6} textAlign="right">
+                            <Box mb={2}>
+                                <Typography variant="caption" color="text.secondary">
+                                    ISSUE DATE
+                                </Typography>
+                                <Typography variant="body2" fontWeight="bold">
+                                    {new Date(invoice.issueDate).toLocaleDateString()}
+                                </Typography>
+                            </Box>
+                            <Box>
+                                <Typography variant="caption" color="text.secondary">
+                                    DUE DATE
+                                </Typography>
+                                <Typography variant="body2" fontWeight="bold">
+                                    {new Date(invoice.dueDate).toLocaleDateString()}
+                                </Typography>
+                            </Box>
+                        </Grid>
+                    </Grid>
+
+                    {/* Line Items */}
+                    <TableContainer sx={{ mb: 2, '@media print': { mb: 1 } }}>
+                        <Table>
+                            <TableHead>
+                                <TableRow sx={{ bgcolor: 'grey.100' }}>
+                                    <TableCell><strong>Description</strong></TableCell>
+                                    <TableCell align="right"><strong>Qty</strong></TableCell>
+                                    <TableCell align="right"><strong>Unit Price</strong></TableCell>
+                                    <TableCell align="right"><strong>Amount</strong></TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {invoice.items.map((item, index) => (
+                                    <TableRow key={index}>
+                                        <TableCell>{item.description}</TableCell>
+                                        <TableCell align="right">{item.quantity}</TableCell>
+                                        <TableCell align="right">{item.unitPrice.toFixed(2)}</TableCell>
+                                        <TableCell align="right">{item.amount.toFixed(2)}</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+
+                    {/* Totals */}
+                    <Box display="flex" justifyContent="flex-end" mb={2} sx={{ '@media print': { mb: 1 } }}>
+                        <Box width="300px">
+                            <Box display="flex" justifyContent="space-between" mb={1}>
+                                <Typography>Subtotal:</Typography>
+                                <Typography>AED {invoice.subtotal.toFixed(2)}</Typography>
+                            </Box>
+                            {!!invoice.includeVat && (
+                                <Box display="flex" justifyContent="space-between" mb={1}>
+                                    <Typography>VAT (5%):</Typography>
+                                    <Typography>AED {invoice.tax.toFixed(2)}</Typography>
+                                </Box>
+                            )}
+                            <Divider sx={{ my: 1 }} />
+                            <Box display="flex" justifyContent="space-between" mb={1}>
+                                <Typography variant="h6">Total:</Typography>
+                                <Typography variant="h6">AED {invoice.total.toFixed(2)}</Typography>
+                            </Box>
+                            <Box display="flex" justifyContent="space-between" mb={1} color="success.main">
+                                <Typography>Paid:</Typography>
+                                <Typography>AED {(invoice.totalPaid || 0).toFixed(2)}</Typography>
+                            </Box>
+                            <Box display="flex" justifyContent="space-between" color="error.main">
+                                <Typography fontWeight="bold">Balance Due:</Typography>
+                                <Typography fontWeight="bold">AED {(invoice.remainingBalance || 0).toFixed(2)}</Typography>
+                            </Box>
                         </Box>
+                    </Box>
+
+                    {/* Payment History */}
+                    {invoice.payments && invoice.payments.length > 0 && (
+                        <Box mb={2} sx={{ '@media print': { mb: 1 } }}>
+                            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                                PAYMENT HISTORY
+                            </Typography>
+                            <TableContainer>
+                                <Table size="small">
+                                    <TableHead>
+                                        <TableRow sx={{ bgcolor: 'grey.100' }}>
+                                            <TableCell><strong>Date</strong></TableCell>
+                                            <TableCell><strong>Method</strong></TableCell>
+                                            <TableCell><strong>Description</strong></TableCell>
+                                            <TableCell align="right"><strong>Amount</strong></TableCell>
+                                        </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        {invoice.payments.map((payment, index) => (
+                                            <TableRow key={index}>
+                                                <TableCell>
+                                                    {new Date(payment.paymentDate).toLocaleDateString()}
+                                                </TableCell>
+                                                <TableCell>{payment.paymentMethod}</TableCell>
+                                                <TableCell>{payment.notes || '-'}</TableCell>
+                                                <TableCell align="right">
+                                                    AED {(payment.amount || payment.amountPaid || 0).toFixed(2)}
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>
+                        </Box>
+                    )}
+
+                    {/* Notes */}
+                    {invoice.notes && (
+                        <Box mb={2} sx={{ '@media print': { mb: 1 } }}>
+                            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                                NOTES
+                            </Typography>
+                            <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                                {invoice.notes}
+                            </Typography>
+                        </Box>
+                    )}
+
+                    {/* Bank Details */}
+                    <Box mb={2} sx={{ '@media print': { mb: 1 } }}>
+                        <Typography variant="body2" sx={{ fontSize: '0.75rem' }} align="center">
+                            EFFICIENT MOVE NEW & USED FURNITURE REMOVAL L.L.C
+                        </Typography>
+                        <Typography variant="body2" sx={{ fontSize: '0.75rem' }} align="center">
+                            Bank Name: WIO Bank
+                        </Typography>
+                        <Typography variant="body2" sx={{ fontSize: '0.75rem' }} align="center">
+                            Account Number: 9834601124
+                        </Typography>
+                        <Typography variant="body2" sx={{ fontSize: '0.75rem' }} align="center">
+                            IBAN: AE230860000009834601124
+                        </Typography>
                     </Box>
                 </Box>
-
-                {/* Notes */}
-                {invoice.notes && (
-                    <Box mb={2} sx={{ '@media print': { mb: 1 } }}>
-                        <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                            NOTES
-                        </Typography>
-                        <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-                            {invoice.notes}
-                        </Typography>
-                    </Box>
-                )}
 
                 {/* Banner Footer */}
-                <Box mt="auto" className="invoice-footer" sx={{ mx: -5, mb: -5, '@media print': { mx: 0, mb: 0 } }}>
+                <Box className="invoice-footer" sx={{ mx: -5, mb: -5, '@media print': { mx: 0, mb: 0 } }}>
                     <img
                         src="/bannerfooter.png"
                         alt="Footer"
