@@ -85,6 +85,7 @@ const MENU_ITEMS: MenuItem[] = [
   { text: 'Contract', path: '/contracts', icon: <DescriptionIcon /> },
   { text: 'Tracking', path: '/tracking', icon: <LocationOnIcon /> },
   { text: 'Invoice Management', path: '/invoices', icon: <ReceiptIcon /> },
+  { text: 'Beta Invoices', path: '/beta-invoices', icon: <ReceiptIcon /> },
   { text: 'Receipt Management', path: '/receipts', icon: <ReceiptIcon /> },
   { text: 'Letterhead Templates', path: '/letterheads', icon: <DescriptionIcon /> },
   { text: 'WhatsApp Expenses', path: '/whatsapp-expenses', icon: <WhatsAppIcon /> },
@@ -100,13 +101,13 @@ const MENU_ITEMS: MenuItem[] = [
 ];
 
 // Memoized MenuItem component
-const MenuItemComponent = React.memo(({ 
-  item, 
-  isSelected, 
-  onClick 
-}: { 
-  item: MenuItem; 
-  isSelected: boolean; 
+const MenuItemComponent = React.memo(({
+  item,
+  isSelected,
+  onClick
+}: {
+  item: MenuItem;
+  isSelected: boolean;
   onClick: () => void;
 }) => (
   <ListItemButton
@@ -213,7 +214,7 @@ const Navigation: React.FC<NavigationProps> = ({
   );
 
   return (
-    <Box sx={{ 
+    <Box sx={{
       display: 'flex',
       width: '100%',
       height: '100vh',
@@ -226,7 +227,7 @@ const Navigation: React.FC<NavigationProps> = ({
           zIndex: (theme) => theme.zIndex.drawer + 1,
         }}
       >
-        <Toolbar sx={{ 
+        <Toolbar sx={{
           gap: 2,
           display: 'flex',
           justifyContent: 'space-between',
@@ -239,15 +240,15 @@ const Navigation: React.FC<NavigationProps> = ({
               aria-label="open drawer"
               edge="start"
               onClick={handleDrawerToggle}
-              sx={{ 
-                mr: 2, 
+              sx={{
+                mr: 2,
                 display: { sm: 'none' },
                 color: muiTheme.palette.text.secondary,
               }}
             >
               <MenuIcon />
             </IconButton>
-            
+
             {/* Logo and Company Name */}
             <Box
               component={RouterLink}
@@ -331,15 +332,15 @@ const Navigation: React.FC<NavigationProps> = ({
           </Box>
 
           {/* Right Section */}
-          <Box sx={{ 
-            display: 'flex', 
+          <Box sx={{
+            display: 'flex',
             alignItems: 'center',
             gap: 1,
           }}>
             {/* Fleet Status */}
-            <Box sx={{ 
-              display: { xs: 'none', md: 'flex' }, 
-              alignItems: 'center', 
+            <Box sx={{
+              display: { xs: 'none', md: 'flex' },
+              alignItems: 'center',
               gap: 1,
               mr: 2,
             }}>
@@ -352,7 +353,7 @@ const Navigation: React.FC<NavigationProps> = ({
             {/* Quick Actions */}
             <Stack direction="row" spacing={0.5}>
               <Tooltip title="Notifications">
-                <IconButton 
+                <IconButton
                   size="small"
                   sx={{ color: muiTheme.palette.text.secondary }}
                 >
@@ -363,10 +364,10 @@ const Navigation: React.FC<NavigationProps> = ({
               </Tooltip>
 
               <Tooltip title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}>
-                <IconButton 
+                <IconButton
                   onClick={toggleTheme}
                   size="small"
-                  sx={{ 
+                  sx={{
                     color: muiTheme.palette.text.secondary,
                     '&:hover': {
                       backgroundColor: muiTheme.palette.mode === 'dark' ? '#404040' : '#E2E8F0',
@@ -402,7 +403,7 @@ const Navigation: React.FC<NavigationProps> = ({
             >
               911
             </Button>
-            
+
             {/* Profile Menu */}
             <Box sx={{ ml: 1 }}>
               <Tooltip title="Account settings">

@@ -70,7 +70,7 @@ export interface Invoice {
   invoiceNumber: string;
   issueDate: string;
   dueDate: string;
-  status: 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled';
+  status: 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled' | 'partial' | 'unpaid';
   items: InvoiceItem[];
   subtotal: number;
   tax: number;
@@ -78,6 +78,9 @@ export interface Invoice {
   total: number;
   notes: string;
   paymentHistory: PaymentRecord[];
+  payments?: PaymentRecord[];
+  totalPaid?: number;
+  remainingBalance?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -94,17 +97,21 @@ export interface InvoiceItem {
 export interface PaymentRecord {
   _id: string;
   amount: number;
+  amountPaid?: number;
   paymentDate: string;
   paymentMethod: string;
   transactionId?: string;
   notes?: string;
+  createdAt?: string;
 }
 
 export interface InvoiceStats {
   totalInvoices: number;
   totalAmount: number;
   paidAmount: number;
+  totalPaid?: number;
   pendingAmount: number;
+  totalOutstanding?: number;
   overdueAmount: number;
   byStatus: {
     draft: number;
@@ -112,6 +119,8 @@ export interface InvoiceStats {
     paid: number;
     overdue: number;
     cancelled: number;
+    partial?: number;
+    unpaid?: number;
   };
 }
 
@@ -160,8 +169,8 @@ export interface User {
   phone: string;
   role: 'admin' | 'manager' | 'user';
   status: 'active' | 'inactive';
-  password?: string; // Optional for existing users
-  confirmPassword?: string; // Only used in forms
+  password?: string;
+  confirmPassword?: string;
   companyId: string;
   createdAt: string;
   updatedAt: string;
@@ -179,7 +188,7 @@ export interface LoginResponse {
       status: string;
     };
   };
-} 
+}
 
 export interface Receipt {
   _id: string;
@@ -245,4 +254,4 @@ export interface Letterhead {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
-} 
+}

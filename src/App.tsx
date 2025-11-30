@@ -37,6 +37,12 @@ const Compliance = React.lazy(() => import('./pages/Compliance/Compliance'));
 const Settings = React.lazy(() => import('./pages/Settings'));
 const CompanySettings = React.lazy(() => import('./pages/CompanySettings/CompanySettings'));
 
+// Beta Invoice Management
+const BetaInvoiceManagement = React.lazy(() => import('./pages/BetaInvoiceManagement/BetaInvoiceManagement'));
+const BetaInvoiceForm = React.lazy(() => import('./pages/BetaInvoiceManagement/BetaInvoiceForm'));
+const BetaInvoicePayment = React.lazy(() => import('./pages/BetaInvoiceManagement/BetaInvoicePayment'));
+const BetaInvoiceView = React.lazy(() => import('./pages/BetaInvoiceManagement/BetaInvoiceView'));
+
 // Loading component
 const LoadingFallback = () => (
   <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
@@ -88,10 +94,10 @@ const AppContent: React.FC = () => {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          
+
           {/* Company selection route */}
           <Route path="/select-company" element={<CompanySelection />} />
-          
+
           {/* Protected routes */}
           <Route path="/dashboard" element={
             <ProtectedRoute>
@@ -104,7 +110,7 @@ const AppContent: React.FC = () => {
               </Navigation>
             </ProtectedRoute>
           } />
-          
+
           <Route path="/users" element={
             <ProtectedRoute>
               <Navigation
@@ -116,7 +122,7 @@ const AppContent: React.FC = () => {
               </Navigation>
             </ProtectedRoute>
           } />
-          
+
           <Route path="/vehicles" element={
             <ProtectedRoute>
               <Navigation
@@ -128,7 +134,7 @@ const AppContent: React.FC = () => {
               </Navigation>
             </ProtectedRoute>
           } />
-          
+
           <Route path="/drivers" element={
             <ProtectedRoute>
               <Navigation
@@ -140,7 +146,7 @@ const AppContent: React.FC = () => {
               </Navigation>
             </ProtectedRoute>
           } />
-          
+
           <Route path="/tracking" element={
             <ProtectedRoute>
               <Navigation
@@ -152,7 +158,7 @@ const AppContent: React.FC = () => {
               </Navigation>
             </ProtectedRoute>
           } />
-          
+
           <Route path="/costs" element={
             <ProtectedRoute>
               <Navigation
@@ -164,7 +170,7 @@ const AppContent: React.FC = () => {
               </Navigation>
             </ProtectedRoute>
           } />
-          
+
           <Route path="/contracts" element={
             <ProtectedRoute>
               <Navigation
@@ -176,7 +182,7 @@ const AppContent: React.FC = () => {
               </Navigation>
             </ProtectedRoute>
           } />
-          
+
           <Route path="/contracts/template/:id" element={
             <ProtectedRoute>
               <Navigation
@@ -188,7 +194,7 @@ const AppContent: React.FC = () => {
               </Navigation>
             </ProtectedRoute>
           } />
-          
+
           <Route path="/reports" element={
             <ProtectedRoute>
               <Navigation
@@ -200,7 +206,7 @@ const AppContent: React.FC = () => {
               </Navigation>
             </ProtectedRoute>
           } />
-          
+
           <Route path="/compliance" element={
             <ProtectedRoute>
               <Navigation
@@ -212,7 +218,7 @@ const AppContent: React.FC = () => {
               </Navigation>
             </ProtectedRoute>
           } />
-          
+
           <Route path="/settings" element={
             <ProtectedRoute>
               <Navigation
@@ -224,7 +230,7 @@ const AppContent: React.FC = () => {
               </Navigation>
             </ProtectedRoute>
           } />
-          
+
           <Route path="/company-settings" element={
             <ProtectedRoute>
               <Navigation
@@ -236,7 +242,7 @@ const AppContent: React.FC = () => {
               </Navigation>
             </ProtectedRoute>
           } />
-          
+
           <Route path="/profile" element={
             <ProtectedRoute>
               <Navigation
@@ -248,7 +254,7 @@ const AppContent: React.FC = () => {
               </Navigation>
             </ProtectedRoute>
           } />
-          
+
           <Route path="/cost-management" element={
             <ProtectedRoute>
               <Navigation
@@ -260,7 +266,7 @@ const AppContent: React.FC = () => {
               </Navigation>
             </ProtectedRoute>
           } />
-          
+
           <Route path="/driver-payroll" element={
             <ProtectedRoute>
               <Navigation
@@ -272,7 +278,7 @@ const AppContent: React.FC = () => {
               </Navigation>
             </ProtectedRoute>
           } />
-          
+
           <Route path="/general-notes" element={
             <ProtectedRoute>
               <Navigation
@@ -284,7 +290,7 @@ const AppContent: React.FC = () => {
               </Navigation>
             </ProtectedRoute>
           } />
-          
+
           {/* Invoice Management Routes */}
           <Route path="/invoices" element={
             <ProtectedRoute>
@@ -330,7 +336,7 @@ const AppContent: React.FC = () => {
               </Navigation>
             </ProtectedRoute>
           } />
-          
+
           <Route path="/loading-demo" element={
             <ProtectedRoute>
               <Navigation
@@ -342,7 +348,7 @@ const AppContent: React.FC = () => {
               </Navigation>
             </ProtectedRoute>
           } />
-          
+
           <Route path="/receipts" element={
             <ProtectedRoute>
               <Navigation
@@ -376,7 +382,7 @@ const AppContent: React.FC = () => {
               </Navigation>
             </ProtectedRoute>
           } />
-          
+
           {/* Letterhead Management Routes */}
           <Route path="/letterheads" element={
             <ProtectedRoute>
@@ -411,7 +417,64 @@ const AppContent: React.FC = () => {
               </Navigation>
             </ProtectedRoute>
           } />
-          
+
+          {/* Beta Invoice Management Routes */}
+          <Route path="/beta-invoices" element={
+            <ProtectedRoute>
+              <Navigation
+                isMobile={isMobile}
+                isDrawerOpen={mobileOpen}
+                handleDrawerToggle={handleDrawerToggle}
+              >
+                <BetaInvoiceManagement />
+              </Navigation>
+            </ProtectedRoute>
+          } />
+          <Route path="/beta-invoices/new" element={
+            <ProtectedRoute>
+              <Navigation
+                isMobile={isMobile}
+                isDrawerOpen={mobileOpen}
+                handleDrawerToggle={handleDrawerToggle}
+              >
+                <BetaInvoiceForm />
+              </Navigation>
+            </ProtectedRoute>
+          } />
+          <Route path="/beta-invoices/:id" element={
+            <ProtectedRoute>
+              <Navigation
+                isMobile={isMobile}
+                isDrawerOpen={mobileOpen}
+                handleDrawerToggle={handleDrawerToggle}
+              >
+                <BetaInvoiceView />
+              </Navigation>
+            </ProtectedRoute>
+          } />
+          <Route path="/beta-invoices/:id/edit" element={
+            <ProtectedRoute>
+              <Navigation
+                isMobile={isMobile}
+                isDrawerOpen={mobileOpen}
+                handleDrawerToggle={handleDrawerToggle}
+              >
+                <BetaInvoiceForm />
+              </Navigation>
+            </ProtectedRoute>
+          } />
+          <Route path="/beta-invoices/:id/payment" element={
+            <ProtectedRoute>
+              <Navigation
+                isMobile={isMobile}
+                isDrawerOpen={mobileOpen}
+                handleDrawerToggle={handleDrawerToggle}
+              >
+                <BetaInvoicePayment />
+              </Navigation>
+            </ProtectedRoute>
+          } />
+
           {/* Redirect to login if no route matches */}
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
@@ -423,7 +486,7 @@ const AppContent: React.FC = () => {
 // Wrapper component to handle navigation context
 const AppWrapper: React.FC = () => {
   const navigate = useNavigate();
-  
+
   return (
     <AuthProvider navigate={navigate}>
       <LocalizationProvider dateAdapter={AdapterMoment}>
