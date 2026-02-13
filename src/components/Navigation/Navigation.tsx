@@ -88,14 +88,12 @@ const MENU_ITEMS: MenuItem[] = [
   { text: 'Beta Invoices', path: '/beta-invoices', icon: <ReceiptIcon /> },
   { text: 'Receipt Management', path: '/receipts', icon: <ReceiptIcon /> },
   { text: 'Letterhead Templates', path: '/letterheads', icon: <DescriptionIcon /> },
-  { text: 'WhatsApp Expenses', path: '/whatsapp-expenses', icon: <WhatsAppIcon /> },
   { text: 'User Management', path: '/users', icon: <GroupIcon /> },
   {
     text: 'General Notes',
     icon: <NoteIcon />,
     path: '/general-notes',
   },
-  { text: 'Driver Payroll', icon: <PayrollIcon />, path: '/driver-payroll' },
   { text: 'Reports', path: '/reports', icon: <AssessmentIcon /> },
   { text: 'Settings', path: '/settings', icon: <SettingsIcon /> },
 ];
