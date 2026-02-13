@@ -1,7 +1,6 @@
 const axios = require('axios');
 const jwt = require('jsonwebtoken');
-
-const BASE_URL = 'http://localhost:5000/api';
+const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-this-in-production';
 
 // Create a test token
