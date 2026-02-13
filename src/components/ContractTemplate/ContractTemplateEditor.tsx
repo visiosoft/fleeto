@@ -105,94 +105,117 @@ interface Props {
 // Export the default template
 export const defaultTemplate = `
 
-<h1 class="document-title">CONTRACT AGREEMENT</h1>
+<h1 class="document-title">VEHICLE RENTAL AGREEMENT (WITHOUT DRIVER)</h1>
 
-<p>This Contract Agreement (the "Agreement") is made and entered into on [Start Date] in Dubai, United Arab Emirates.</p>
+<p>This Vehicle Rental Agreement (the "Agreement") is made and entered into on [Start Date] in Dubai, United Arab Emirates.</p>
 
 <h2 class="section-title">PARTIES:</h2>
 
 <p>1. Efficient Move New Used Furniture Removal L.L.C, a company registered under the laws of UAE 
-   with Trade License No. 1383686, having its registered office at Dubai, UAE 
-   (hereinafter referred to as the "Company")</p>
+with Trade License No. 1383686, having its registered office at Dubai, UAE 
+(hereinafter referred to as the "Company")</p>
 
 <p>2. [Client Company Name], a company registered under the laws of UAE with Trade License No. 
-   [Client Trade License No], represented by [Contact Person] (hereinafter referred to as the "Client")</p>
+[Client Trade License No], represented by [Contact Person] 
+(hereinafter referred to as the "Client")</p>
 
 <h2 class="section-title">VEHICLE INFORMATION:</h2>
 
-<p>The following vehicle is assigned under this contract:</p>
+<p>The Company hereby rents to the Client the following vehicle without driver:</p>
+
 <ul class="document-list">
 <li>License Plate: [Vehicle License Plate]</li>
-<li>Make: [Vehicle Make]</li>
-<li>Model: [Vehicle Model]</li>
-<li>Year: [Vehicle Year]</li>
+<li>Make / Model / Year : [Vehicle Make]  [Vehicle Model]  [Vehicle Year]</li>
 </ul>
-
-<h2 class="section-title">WHEREAS:</h2>
-<p>The Company and Client wish to enter into an agreement for [Contract Type], and both parties agree to be bound by the terms and conditions set forth in this agreement.</p>
 
 <h2 class="section-title">TERMS AND CONDITIONS:</h2>
 
-<ol class="document-list">
+<ul class="document-list">
+
 <li><b>CONTRACT DURATION AND VALUE</b>
    <ul class="document-list">
    <li>Duration: From [Start Date] to [End Date]</li>
-   <li>Renewal: Upon mutual written consent</li>
-   <li>Total Value: AED [Value]</li>
-     <li>Security Deposit: AED 1,000</li>
-<li> PDC Check for Total Value</li>
+   <li>Renewal: Only upon mutual written consent of both Parties</li>
+   <li>Total Rental Value: AED [Value]</li>
+   <li>Security Deposit: AED 1,000</li>
+   <li>Payment Method: Post-Dated Cheque (PDC) for full rental amount</li>
    </ul>
+   <p>The Security Deposit shall be refundable within 21 days after vehicle return, subject to inspection, clearance of fines, Salik charges, and settlement of all outstanding dues. The Company reserves the right to deduct unpaid amounts, damages, fines, repair costs, or other liabilities from the deposit.</p>
 </li>
-<li><b>OPERATIONAL REQUIREMENTS</b>
+
+<li><b>VEHICLE HANDOVER AND CONDITION</b>
+   <p>The Vehicle shall be delivered in good working and roadworthy condition. A vehicle handover report shall be signed by both Parties at delivery and return. The Client confirms receipt of the Vehicle in satisfactory condition.</p>
+</li>
+
+<li><b>PAYMENT DEFAULT</b>
+   <p>In case of cheque dishonor or delayed payment, the Company reserves the right to immediately repossess the Vehicle without prior notice and pursue legal remedies under UAE law.</p>
+</li>
+
+<li><b>CLIENT RESPONSIBILITIES</b>
    <ul class="document-list">
-   <li>Driver's Accommodation: Client to provide accommodation during service period</li>
-   <li>Fuel Costs: Client responsible for all fuel and petrol costs</li>
-   <li>Salik Charges: Client responsible for all toll charges</li>
+   <li>Fuel and petrol costs</li>
+   <li>Salik (toll) charges</li>
+   <li>Traffic fines, black points, parking violations, and impound charges</li>
+   <li>Compliance with all UAE traffic laws and regulations</li>
    </ul>
+   <p>The Client shall ensure that only legally licensed drivers operate the Vehicle.</p>
 </li>
-<li><b>PARTY OBLIGATIONS</b>
-   <ul class="document-list">
-   <li>Company: Provide services, maintain quality, comply with UAE laws</li>
-   <li>Client: Timely payments, provide information/access, comply with UAE laws</li>
-   </ul>
-</li>
-<li><b>VEHICLE AND TERMINATION</b>
-   <ul class="document-list">
-   <li>Return: Vehicles/equipment returned to Company premises or agreed location</li>
-   <li>Termination: 30 days' notice for material breach</li>
-   <li>Post-termination: Immediate return of vehicles and settlement of dues</li>
-   </ul>
-</li>
-<li><b>GOVERNING LAW</b>
-   <ul class="document-list">
-   <li>Jurisdiction: UAE laws and Dubai Courts</li>
-   <li>Force Majeure: Neither party liable for circumstances beyond control</li>
-   </ul>
-</li>
+
 <li><b>MAINTENANCE AND REPAIRS</b>
-   <p>In accordance with the principles of good faith and the obligations inherent in contracts under UAE law, the Parties agree as follows:</p>
-   <ol class="document-list" type="a">
-   <li><b>Client's Responsibilities (Routine Maintenance):</b> The Client shall be solely responsible for the cost and logistical arrangement of all routine and preventive maintenance of the Vehicle. This includes, as a minimum, monthly engine oil changes, oil filter changes, air filter changes, tire rotation, and brake inspections, performed in line with the manufacturer's recommended schedule. All maintenance must be performed at a reputable garage using parts and lubricants that meet the manufacturer's specifications.</li>
-   <li><b>Client's Responsibilities (Operational Costs & Liability):</b> The Client shall bear all operational costs including fuel, toll charges, and daily expenses. The Client assumes full financial responsibility for all damages resulting from accidents, collisions, driver negligence, misuse, or improper maintenance. This includes engine damage from overheating, traffic incidents, and any damage attributable to the Client's fault or omission.</li>   <li><b>Company's Responsibilities (Major Repairs):</b> The Company shall be responsible for all major mechanical and structural repairs necessitated by normal wear and tear or latent defects, provided such issues are not a result of the Client's misuse or failure to perform its obligations under this Agreement.</li>
-   <li><b>Reporting and Authorization:</b> The Client must immediately notify the Company in writing of any defect, malfunction, or damage to the Vehicle. For any non-routine repairs, the Company must provide prior written authorization before the Client commissions such repairs. Unauthorized repair costs will not be reimbursed.</li>
-   <li><b>Records:</b> The Client shall maintain complete and accurate records of all maintenance and repairs performed on the Vehicle and make them available for inspection by the Company upon request.</li>
-   </ol>
+   <ul class="document-list" type="a">
+   <li><b>Routine Maintenance:</b> The Client shall be responsible for all routine and preventive maintenance including monthly engine oil change, oil filter, air filter, brake inspection, and tire rotation, performed at reputable garages using manufacturer-approved parts.</li>
+   <li><b>Operational Liability:</b> The Client assumes full financial responsibility for damages resulting from accidents, driver negligence, misuse, overloading, overheating, or failure to perform required maintenance.</li>
+   <li><b>Major Repairs:</b> The Company shall be responsible only for major mechanical defects caused by normal wear and tear, provided such defects are not due to misuse or negligence by the Client.</li>
+   <li><b>Accidents:</b> In case of accident, a valid Dubai Police report is mandatory. Insurance deductible/excess shall be borne by the Client. Damage without police report shall be fully payable by the Client.</li>
+   <li><b>Authorization:</b> No non-routine repair shall be carried out without prior written approval from the Company. Unauthorized repairs shall not be reimbursed.</li>
+   <li><b>Records:</b> The Client shall maintain proper maintenance records and provide them upon request.</li>
+   </ul>
 </li>
-</ol>
+
+
+<li><b>PROHIBITED USE</b>
+   <p>The Vehicle shall not be used for illegal activities, racing, reckless driving, sub-renting, or transport outside the Dubai without written consent of the Company.</p>
+</li>
+
+<li><b>TERMINATION</b>
+   <ul class="document-list">
+   <li> Early termination by the Client requires 30 days written notice and full settlement of remaining rental value unless otherwise agreed.</li>
+   <li> Either Party may terminate for material breach with 30 days written notice.</li>
+   <li> Upon termination, the Vehicle must be returned immediately and all dues settled.</li>
+   </ul>
+</li>
+
+<li><b>VEHICLE RETURN</b>
+   <p>The Vehicle shall be returned to the Company premises or agreed location in clean condition along with all keys and documents. Failure to return the Vehicle may result in legal action.</p>
+</li>
+
+<li><b>GOVERNING LAW AND JURISDICTION</b>
+   <p>This Agreement shall be governed by the laws of the United Arab Emirates. The Courts of Dubai shall have exclusive jurisdiction over any dispute arising from this Agreement.</p>
+</li>
+
+<li><b>ENTIRE AGREEMENT</b>
+   <p>This Agreement constitutes the entire understanding between the Parties and supersedes all prior agreements. Any amendment must be in writing and signed by both Parties.</p>
+</li>
+
+</ul>
 
 <p>For Efficient Move New Used Furniture Removal L.L.C:<br/>
 Name: ____________________<br/>
 Title: ____________________<br/>
 License No: 1383686<br/>
 Signature: ________________<br/>
-Date: ____________________</p>
+Date: ____________________<br/>
+Company Stamp:</p>
 
 <p>For [Client Company Name]:<br/>
 Name: [Contact Person]<br/>
 Title: ____________________<br/>
 License No: [Client Trade License No]<br/>
 Signature: ________________<br/>
-Date: ____________________</p>`;
+Date: ____________________<br/>
+Company Stamp:</p>
+
+`;
 
 const ContractTemplateEditor: React.FC<Props> = ({
   template,
@@ -399,7 +422,7 @@ const ContractTemplateEditor: React.FC<Props> = ({
         headerImg.onerror = reject as any;
         setTimeout(reject, 5000);
       });
-      const headerHeight = 120; // reduce to leave more room per page
+      const headerHeight = 160; // reduce to leave more room per page
 
       // Preload footer banner
       const footerImg = new Image();
@@ -409,7 +432,7 @@ const ContractTemplateEditor: React.FC<Props> = ({
         footerImg.onerror = reject as any;
         setTimeout(reject, 5000);
       });
-      const footerHeight = 80;
+      const footerHeight = 160;
 
       // Render the content to a single canvas
       const fullCanvas = await (html2canvas as any)(element, {
@@ -423,7 +446,7 @@ const ContractTemplateEditor: React.FC<Props> = ({
       // Dimensions mapping from canvas px to PDF pts
       const availableWidth = pageWidth - (2 * margin);
       const scale = availableWidth / fullCanvas.width; // px -> pts scale for width
-      const availableHeightPts = pageHeight - headerHeight - footerHeight - (2 * margin);
+      const availableHeightPts = pageHeight - headerHeight - footerHeight - 5 - margin;
       const availableHeightPxPerPage = Math.floor(availableHeightPts / scale); // convert back to source px height per page slice
 
       // If the preview already contains a header banner image, skip it on first page slice
@@ -439,7 +462,18 @@ const ContractTemplateEditor: React.FC<Props> = ({
 
       // Helper to draw header/footer per page
       const drawHeaderFooter = () => {
+        // Draw header with shadow
+        pdf.setFillColor(0, 0, 0);
+        pdf.setGState(new (pdf as any).GState({ opacity: 0.1 }));
+        pdf.rect(0, 4, pageWidth, headerHeight, 'F');
+        pdf.setGState(new (pdf as any).GState({ opacity: 1 }));
         pdf.addImage(headerImg, 'PNG', 0, 0, pageWidth, headerHeight);
+        
+        // Draw footer with shadow
+        pdf.setFillColor(0, 0, 0);
+        pdf.setGState(new (pdf as any).GState({ opacity: 0.1 }));
+        pdf.rect(0, pageHeight - footerHeight - 4, pageWidth, footerHeight, 'F');
+        pdf.setGState(new (pdf as any).GState({ opacity: 1 }));
         pdf.addImage(footerImg, 'PNG', 0, pageHeight - footerHeight, pageWidth, footerHeight);
       };
 
@@ -471,7 +505,7 @@ const ContractTemplateEditor: React.FC<Props> = ({
 
         const imgData = pageCanvas.toDataURL('image/png');
         const destX = margin;
-        const destY = headerHeight + margin;
+        const destY = headerHeight + 5;
         const destW = availableWidth;
         const destH = sliceHeightPx * scale; // maintain scale
 
@@ -517,36 +551,104 @@ const ContractTemplateEditor: React.FC<Props> = ({
       const pageHeight = pdf.internal.pageSize.getHeight();
       const margin = 40;
 
-      // Add header banner
+      // Preload header banner
       const headerImg = new Image();
       headerImg.src = '/bannerheader.png';
       await new Promise((resolve, reject) => {
-        headerImg.onload = resolve;
-        headerImg.onerror = reject;
+        headerImg.onload = resolve as any;
+        headerImg.onerror = reject as any;
         setTimeout(reject, 5000);
       });
-      pdf.addImage(headerImg, 'PNG', 0, 0, pageWidth, 160);
+      const headerHeight = 120;
 
-      // Add footer banner
+      // Preload footer banner
       const footerImg = new Image();
       footerImg.src = '/bannerfooter2.png';
       await new Promise((resolve, reject) => {
-        footerImg.onload = resolve;
-        footerImg.onerror = reject;
+        footerImg.onload = resolve as any;
+        footerImg.onerror = reject as any;
         setTimeout(reject, 5000);
       });
-      pdf.addImage(footerImg, 'PNG', 0, pageHeight - 100, pageWidth, 100);
+      const footerHeight = 120;
 
-      // Convert the content to canvas
-      const canvas = await html2canvas(element, {
+      // Render the content to a single canvas
+      const fullCanvas = await (html2canvas as any)(element, {
         useCORS: true,
         logging: false,
-        background: '#ffffff'
-      });
+        background: '#ffffff',
+        scale: 2,
+        scrollY: -window.scrollY,
+      } as any);
 
-      // Add the content to the PDF
-      const imgData = canvas.toDataURL('image/png');
-      pdf.addImage(imgData, 'PNG', margin, 180, pageWidth - (2 * margin), 0);
+      // Dimensions mapping from canvas px to PDF pts
+      const availableWidth = pageWidth - (2 * margin);
+      const scale = availableWidth / fullCanvas.width;
+      const availableHeightPts = pageHeight - headerHeight - footerHeight - 5 - margin;
+      const availableHeightPxPerPage = Math.floor(availableHeightPts / scale);
+
+      // Skip the header banner from the preview to avoid duplication
+      let firstPageSkipPx = 0;
+      const headerDomImg = element.querySelector('img[src*="bannerheader"]') as HTMLImageElement | null;
+      if (headerDomImg) {
+        const elementRect = element.getBoundingClientRect();
+        const headerRect = headerDomImg.getBoundingClientRect();
+        const relativeBottom = headerRect.bottom - elementRect.top;
+        const canvasScale = fullCanvas.width / element.clientWidth;
+        firstPageSkipPx = Math.max(0, Math.round(relativeBottom * canvasScale));
+      }
+
+      // Helper to draw header/footer per page
+      const drawHeaderFooter = () => {
+        // Draw header with shadow
+        pdf.setFillColor(0, 0, 0);
+        pdf.setGState(new (pdf as any).GState({ opacity: 0.1 }));
+        pdf.rect(0, 4, pageWidth, headerHeight, 'F');
+        pdf.setGState(new (pdf as any).GState({ opacity: 1 }));
+        pdf.addImage(headerImg, 'PNG', 0, 0, pageWidth, headerHeight);
+        
+        // Draw footer with shadow
+        pdf.setFillColor(0, 0, 0);
+        pdf.setGState(new (pdf as any).GState({ opacity: 0.1 }));
+        pdf.rect(0, pageHeight - footerHeight - 4, pageWidth, footerHeight, 'F');
+        pdf.setGState(new (pdf as any).GState({ opacity: 1 }));
+        pdf.addImage(footerImg, 'PNG', 0, pageHeight - footerHeight, pageWidth, footerHeight);
+      };
+
+      // Slice the full canvas into page-sized chunks
+      let sourceY = firstPageSkipPx;
+      let isFirstPage = true;
+
+      while (sourceY < fullCanvas.height) {
+        if (!isFirstPage) {
+          pdf.addPage();
+        }
+        drawHeaderFooter();
+
+        const sliceHeightPx = Math.min(availableHeightPxPerPage, fullCanvas.height - sourceY);
+
+        const pageCanvas = document.createElement('canvas');
+        pageCanvas.width = fullCanvas.width;
+        pageCanvas.height = sliceHeightPx;
+        const ctx = pageCanvas.getContext('2d');
+        if (!ctx) throw new Error('Failed to create canvas context');
+
+        ctx.drawImage(
+          fullCanvas,
+          0, sourceY, fullCanvas.width, sliceHeightPx,
+          0, 0, fullCanvas.width, sliceHeightPx
+        );
+
+        const imgData = pageCanvas.toDataURL('image/png');
+        const destX = margin;
+        const destY = headerHeight + 5;
+        const destW = availableWidth;
+        const destH = sliceHeightPx * scale;
+
+        pdf.addImage(imgData, 'PNG', destX, destY, destW, destH);
+
+        sourceY += sliceHeightPx;
+        isFirstPage = false;
+      }
 
       // Open in new window for printing
       const blob = pdf.output('blob');
@@ -681,17 +783,19 @@ const ContractTemplateEditor: React.FC<Props> = ({
               sx={{
                 p: 0,
                 backgroundColor: '#fff',
-                minHeight: '297mm',
+                minHeight: 'auto',
                 width: '210mm',
                 margin: '0 auto',
                 boxShadow: 1,
-                fontFamily: '"KoHo", Arial, sans-serif',
+                fontFamily: '"Roboto", Arial, sans-serif',
                 position: 'relative',
+                overflow: 'visible',
                 '& .banner-header': {
                   width: '100%',
                   height: '160px',
                   position: 'relative',
-                  marginBottom: '30px',
+                  marginBottom: '10px',
+                  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
                   '& img': {
                     width: '100%',
                     height: '100%',
@@ -700,19 +804,22 @@ const ContractTemplateEditor: React.FC<Props> = ({
                 },
                 '& .banner-footer': {
                   width: '100%',
-                  height: '100px',
+                  minHeight: '100px',
+                  height: 'auto',
                   position: 'relative',
                   marginTop: '30px',
+                  display: 'block',
                   '& img': {
                     width: '100%',
-                    height: '100%',
-                    objectFit: 'cover'
+                    height: 'auto',
+                    objectFit: 'contain',
+                    display: 'block'
                   }
                 },
                 '& .document-content': {
-                  padding: '30px',
+                  padding: '5px 30px 30px 30px',
                   '& h1, h2, h3, h4, h5, h6': {
-                    fontFamily: '"KoHo", Arial, sans-serif',
+                    fontFamily: '"Roboto", Arial, sans-serif',
                     fontWeight: 700
                   }
                 },
@@ -720,9 +827,10 @@ const ContractTemplateEditor: React.FC<Props> = ({
                   fontSize: '20px',
                   fontWeight: 700,
                   textAlign: 'center',
+                  marginTop: '0',
                   marginBottom: '20px',
                   color: '#000',
-                  fontFamily: '"KoHo", Arial, sans-serif'
+                  fontFamily: '"Roboto", Arial, sans-serif'
                 },
                 '& .section-title': {
                   fontSize: '16px',
@@ -730,22 +838,24 @@ const ContractTemplateEditor: React.FC<Props> = ({
                   marginTop: '16px',
                   marginBottom: '12px',
                   color: '#000',
-                  fontFamily: '"KoHo", Arial, sans-serif'
+                  fontFamily: '"Roboto", Arial, sans-serif'
                 },
                 '& p': {
                   marginBottom: '10px',
                   lineHeight: 1.5,
                   fontSize: '12px',
-                  fontFamily: '"KoHo", Arial, sans-serif'
+                  fontFamily: '"Roboto", Arial, sans-serif'
                 },
                 '& .document-list': {
                   marginLeft: '16px',
-                  marginBottom: '12px',
+                  marginTop: '12px',
+                  marginBottom: '16px',
                   '& li': {
-                    marginBottom: '6px',
-                    lineHeight: 1.5,
+                    marginBottom: '8px',
+                    paddingLeft: '8px',
+                    lineHeight: 1.6,
                     fontSize: '12px',
-                    fontFamily: '"KoHo", Arial, sans-serif'
+                    fontFamily: '"Roboto", Arial, sans-serif'
                   }
                 },
                 '& br': {
@@ -759,9 +869,7 @@ const ContractTemplateEditor: React.FC<Props> = ({
               <div dangerouslySetInnerHTML={{
                 __html: `<div class="document-content">${previewContent}</div>`
               }} />
-              <div className="banner-footer">
-                <img src="/bannerfooter.png" alt="Footer Banner" />
-              </div>
+           
             </Paper>
           </Paper>
         </Grid>
