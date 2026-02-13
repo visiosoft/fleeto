@@ -1074,7 +1074,7 @@ const Dashboard: React.FC = () => {
                 <CardContent sx={{ textAlign: 'center', py: 4 }}>
                   <DescriptionIcon sx={{ fontSize: 48, color: theme.palette.info.main, mb: 2 }} />
                   <Typography variant="h6" gutterBottom>
-                    Contracts
+                   Create Contracts
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     Manage all contracts
@@ -1098,7 +1098,7 @@ const Dashboard: React.FC = () => {
                 <CardContent sx={{ textAlign: 'center', py: 4 }}>
                   <MonetizationOnIcon sx={{ fontSize: 48, color: theme.palette.success.main, mb: 2 }} />
                   <Typography variant="h6" gutterBottom>
-                    Beta Invoices
+                    Create Invoices
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     View and manage invoices
@@ -1106,30 +1106,7 @@ const Dashboard: React.FC = () => {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <Card 
-                sx={{ 
-                  cursor: 'pointer',
-                  height: '100%',
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    transform: 'translateY(-4px)',
-                    boxShadow: 4,
-                  }
-                }}
-                onClick={() => navigate('/letterhead')}
-              >
-                <CardContent sx={{ textAlign: 'center', py: 4 }}>
-                  <ArticleIcon sx={{ fontSize: 48, color: theme.palette.primary.main, mb: 2 }} />
-                  <Typography variant="h6" gutterBottom>
-                    Letterhead Template
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Manage letterheads
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
+          
             <Grid item xs={12} sm={6} md={3}>
               <Card 
                 sx={{ 
@@ -1146,10 +1123,34 @@ const Dashboard: React.FC = () => {
                 <CardContent sx={{ textAlign: 'center', py: 4 }}>
                   <MoneyIcon sx={{ fontSize: 48, color: theme.palette.warning.main, mb: 2 }} />
                   <Typography variant="h6" gutterBottom>
-                    Receipts
+                    Create Receipts
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     Payment receipts
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+              <Card 
+                sx={{ 
+                  cursor: 'pointer',
+                  height: '100%',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: 4,
+                  }
+                }}
+                onClick={() => navigate('/letterheads')}
+              >
+                <CardContent sx={{ textAlign: 'center', py: 4 }}>
+                  <ArticleIcon sx={{ fontSize: 48, color: theme.palette.primary.main, mb: 2 }} />
+                  <Typography variant="h6" gutterBottom>
+                   Create Letterhead
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Manage letterheads
                   </Typography>
                 </CardContent>
               </Card>
