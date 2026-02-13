@@ -1,12 +1,11 @@
-const { getDB } = require('../config/db');
+const db = require('../config/db');
 
 const FuelModel = {
   /**
    * Get the fuel records collection
    */
   async getCollection() {
-    const db = await getDB();
-    return db.collection('fuelRecords');
+    return await db.getCollection('fuel');
   },
 
   /**

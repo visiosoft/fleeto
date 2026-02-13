@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const companyContractController = require('../controllers/companyContractController');
+const { authenticate } = require('../middleware/auth');
+
+// Apply authentication middleware to all routes
+router.use(authenticate);
 
 // GET /api/contracts - Get all contracts
 router.get('/', companyContractController.getAllContracts);

@@ -59,10 +59,14 @@ const vehicleSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
+    companyId: {
+        type: String,
+        required: false
+    },
     company: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Company',
-        required: true
+        required: false
     },
     maintenance: [{
         date: {

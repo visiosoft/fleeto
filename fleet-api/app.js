@@ -21,6 +21,15 @@ const noteRoutes = require('./routes/noteRoutes');
 const receiptRoutes = require('./routes/receiptRoutes');
 const twilioWhatsAppRoutes = require('./routes/twilioWhatsAppRoutes');
 const costRoutes = require('./routes/costRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
+const driverRoutes = require('./routes/driverRoutes');
+const expenseRoutes = require('./routes/expenseRoutes');
+const payrollRoutes = require('./routes/payrollRoutes');
+const companyRoutes = require('./routes/companyRoutes');
+const letterheadRoutes = require('./routes/letterheadRoutes');
+const maintenanceRoutes = require('./routes/maintenanceRoutes');
+const contractRoutes = require('./routes/companyContractRoutes');
+const contractTemplateRoutes = require('./routes/contractTemplateRoutes');
 
 // API Routes
 app.use('/api/auth', authRoutes);
@@ -33,6 +42,15 @@ app.use('/api/notes', noteRoutes);
 app.use('/api/receipts', receiptRoutes);
 app.use('/api/twilio-whatsapp', twilioWhatsAppRoutes);
 app.use('/api/costs', costRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/drivers', driverRoutes);
+app.use('/api/expenses', expenseRoutes);
+app.use('/api/payroll', payrollRoutes);
+app.use('/api/companies', companyRoutes);
+app.use('/api/letterheads', letterheadRoutes);
+app.use('/api/maintenance', maintenanceRoutes);
+app.use('/api/contracts', contractRoutes);
+app.use('/api/contract-templates', contractTemplateRoutes);
 
 // MongoDB connection
 mongoose.connect('mongodb+srv://devxulfiqar:nSISUpLopruL7S8j@mypaperlessoffice.z5g84.mongodb.net/fleet-management?retryWrites=true&w=majority', {

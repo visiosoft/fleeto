@@ -211,6 +211,15 @@ router.get('/current-month', costController.getCurrentMonthExpenses);
  */
 router.get('/current-month/:vehicleId', costController.getCurrentMonthVehicleExpenses);
 
+// Get monthly expenses
+router.get('/monthly', costController.getMonthlyExpenses);
+
+// Get yearly expenses  
+router.get('/yearly', costController.getYearlyExpenses);
+
+// Get expenses by category
+router.get('/by-category', costController.getExpensesByCategory);
+
 // Test endpoint to check collection counts
 router.get('/test-counts', async (req, res) => {
     try {

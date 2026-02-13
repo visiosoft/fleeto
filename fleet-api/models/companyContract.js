@@ -56,6 +56,10 @@ const companyContractSchema = new mongoose.Schema({
     }],
     notes: {
         type: String
+    },
+    companyId: {
+        type: String,
+        required: false
     }
 }, {
     timestamps: true
@@ -82,6 +86,6 @@ companyContractSchema.methods.getRemainingDays = function() {
 
 // Export the contract status enum along with the model
 module.exports = {
-    CompanyContract: mongoose.model('CompanyContract', companyContractSchema),
+    CompanyContract: mongoose.model('CompanyContract', companyContractSchema, 'contracts'),
     CONTRACT_STATUS
 }; 

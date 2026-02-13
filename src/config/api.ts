@@ -1,9 +1,9 @@
 export const API_CONFIG = {
-  BASE_URL: process.env.REACT_APP_API_URL || 'http://localhost:5000',
+  BASE_URL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
   ENDPOINTS: {
     MAINTENANCE: '/maintenance',
     VEHICLES: '/vehicles',
-    FUEL: '/fuel-records',
+    FUEL: '/fuel',
     CONTRACTS: '/contracts',
     TEMPLATE: '/contracts/template',
     DRIVERS: {

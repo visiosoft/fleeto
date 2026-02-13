@@ -388,6 +388,194 @@ const costController = {
             console.error('Error getting current month vehicle expenses:', error);
             res.status(500).json({ message: error.message });
         }
+    },
+
+    /**
+     * Get monthly expenses aggregated by month
+     */
+    async getMonthlyExpenses(req, res) {
+        try {
+            const companyId = req.user?.companyId;
+            
+            if (!companyId) {
+                return res.status(400).json({
+                    status: 'error',
+                    message: 'Company ID not found in user token'
+                });
+            }
+
+            const expenses = await db.getCollection('expenses');
+            
+            // Aggregate expenses by month for the last 12 months
+            const result = await expenses.aggregate([
+                {
+                    $match: {
+                        companyId: companyId.toString()
+                    }
+                },
+                {
+                    $group: {
+                        _id: {
+                            year: { $year: '$date' },
+                            month: { $month: '$date' }
+                        },
+                        totalAmount: { $sum: '$amount' },
+                        count: { $sum: 1 }
+                    }
+                },
+                {
+                    $sort: { '_id.year': -1, '_id.month': -1 }
+                },
+                {
+                    $limit: 12
+                }
+            ]).toArray();
+
+            const monthlyExpenses = result.map(item => ({
+                month: item._id.month,
+                year: item._id.year,
+                totalAmount: item.totalAmount,
+                count: item.count,
+                categories: []
+            }));
+
+            const yearlyTotal = result.reduce((sum, item) => sum + item.totalAmount, 0);
+
+            res.status(200).json({
+                status: 'success',
+                data: {
+                    monthlyExpenses,
+                    yearlyTotal
+                }
+            });
+        } catch (error) {
+            console.error('Error getting monthly expenses:', error);
+            res.status(500).json({
+                status: 'error',
+                message: 'Failed to get monthly expenses',
+                error: error.message
+            });
+        }
+    },
+
+    /**
+     * Get yearly expenses aggregated by year
+     */
+    async getYearlyExpenses(req, res) {
+        try {
+            const companyId = req.user?.companyId;
+            
+            if (!companyId) {
+                return res.status(400).json({
+                    status: 'error',
+                    message: 'Company ID not found in user token'
+                });
+            }
+
+            const expenses = await db.getCollection('expenses');
+            
+            const result = await expenses.aggregate([
+                {
+                    $match: {
+                        companyId: companyId.toString()
+                    }
+                },
+                {
+                    $group: {
+                        _id: { year: { $year: '$date' } },
+                        totalAmount: { $sum: '$amount' },
+                        count: { $sum: 1 }
+                    }
+                },
+                {
+                    $sort: { '_id.year': -1 }
+                }
+            ]).toArray();
+
+            const yearlyExpenses = result.map(item => ({
+                year: item._id.year,
+                totalAmount: item.totalAmount,
+                count: item.count,
+                categories: []
+            }));
+
+            const grandTotal = result.reduce((sum, item) => sum + item.totalAmount, 0);
+
+            res.status(200).json({
+                status: 'success',
+                data: {
+                    yearlyExpenses,
+                    grandTotal
+                }
+            });
+        } catch (error) {
+            console.error('Error getting yearly expenses:', error);
+            res.status(500).json({
+                status: 'error',
+                message: 'Failed to get yearly expenses',
+                error: error.message
+            });
+        }
+    },
+
+    /**
+     * Get expenses by category
+     */
+    async getExpensesByCategory(req, res) {
+        try {
+            const companyId = req.user?.companyId;
+            
+            if (!companyId) {
+                return res.status(400).json({
+                    status: 'error',
+                    message: 'Company ID not found in user token'
+                });
+            }
+
+            const expenses = await db.getCollection('expenses');
+            
+            const result = await expenses.aggregate([
+                {
+                    $match: {
+                        companyId: companyId.toString()
+                    }
+                },
+                {
+                    $group: {
+                        _id: '$expenseType',
+                        totalAmount: { $sum: '$amount' },
+                        count: { $sum: 1 }
+                    }
+                },
+                {
+                    $sort: { totalAmount: -1 }
+                }
+            ]).toArray();
+
+            const total = result.reduce((sum, item) => sum + item.totalAmount, 0);
+
+            const categories = result.map(item => ({
+                category: item._id || 'Uncategorized',
+                totalAmount: item.totalAmount,
+                count: item.count,
+                percentage: total > 0 ? (item.totalAmount / total * 100) : 0
+            }));
+
+            res.status(200).json({
+                status: 'success',
+                data: {
+                    categories,
+                    total
+                }
+            });
+        } catch (error) {
+            console.error('Error getting expenses by category:', error);
+            res.status(500).json({
+                status: 'error',
+                message: 'Failed to get expenses by category',
+                error: error.message
+            });
+        }
     }
 };
 
