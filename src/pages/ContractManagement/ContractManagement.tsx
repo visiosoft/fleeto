@@ -222,7 +222,29 @@ const ContractManagement: React.FC = () => {
   const fetchContracts = async () => {
     try {
       const response = await axios.get(getApiUrl(API_CONFIG.ENDPOINTS.CONTRACTS));
-      setContracts(response.data);
+      const contractsData = response.data;
+      
+      // Sort contracts: Terminated status goes to the end
+      const sortedContracts = contractsData.sort((a: ContractFormData, b: ContractFormData) => {
+        if (a.status === 'Terminated' && b.status !== 'Terminated') return 1;
+        if (a.status !== 'Terminated' && b.status === 'Terminated') return -1;
+        return 0;
+      });
+      
+      setContracts(sortedContracts);
+      
+      // Calculate stats from contracts data
+      const calculatedStats = calculateStats(contractsData);
+      setStats(calculatedStats);
+      
+      // Calculate expiring contracts
+      const now = moment();
+      const thirtyDaysFromNow = moment().add(30, 'days');
+      const expiring = contractsData.filter((contract: ContractFormData) => 
+        contract.status === 'Active' && 
+        moment(contract.endDate).isBetween(now, thirtyDaysFromNow)
+      );
+      setExpiringContracts(expiring);
     } catch (error) {
       console.error('Error fetching contracts:', error);
       setSnackbar({

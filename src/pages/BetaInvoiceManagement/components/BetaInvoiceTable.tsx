@@ -83,11 +83,10 @@ const BetaInvoiceTable: React.FC<BetaInvoiceTableProps> = ({ invoices = [], onRe
 
     return (
         <TableContainer>
-            <Table>
+            <Table sx={{ '& .MuiTableRow-root': { height: '70px' } }}>
                 <TableHead>
                     <TableRow>
                         <TableCell>Invoice Number</TableCell>
-                        <TableCell>Contract ID</TableCell>
                         <TableCell>Issue Date</TableCell>
                         <TableCell>Due Date</TableCell>
                         <TableCell align="right">Total (AED)</TableCell>
@@ -120,7 +119,6 @@ const BetaInvoiceTable: React.FC<BetaInvoiceTableProps> = ({ invoices = [], onRe
                                         {invoice.invoiceNumber || 'N/A'}
                                     </Box>
                                 </TableCell>
-                                <TableCell>{invoice.contractId || 'N/A'}</TableCell>
                                 <TableCell>{invoice.issueDate ? new Date(invoice.issueDate).toLocaleDateString() : 'N/A'}</TableCell>
                                 <TableCell>{invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'N/A'}</TableCell>
                                 <TableCell align="right">
@@ -153,7 +151,7 @@ const BetaInvoiceTable: React.FC<BetaInvoiceTableProps> = ({ invoices = [], onRe
                                     />
                                 </TableCell>
                                 <TableCell>
-                                    <Box>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'nowrap' }}>
                                         <Tooltip title="View">
                                             <IconButton
                                                 size="small"

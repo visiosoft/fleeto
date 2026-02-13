@@ -40,7 +40,7 @@ const BetaInvoiceForm: React.FC = () => {
         invoiceNumber: '',
         issueDate: new Date().toISOString().split('T')[0],
         dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        status: 'draft',
+        status: 'sent',
         items: [],
         subtotal: 0,
         tax: 0,
@@ -62,7 +62,8 @@ const BetaInvoiceForm: React.FC = () => {
         try {
             const response = await api.getContracts();
             if (Array.isArray(response)) {
-                setContracts(response);
+                const activeContracts = response.filter(contract => contract.status === 'Active');
+                setContracts(activeContracts);
             }
         } catch (err: any) {
             setError('Failed to fetch contracts');

@@ -69,8 +69,10 @@ const InvoiceForm: React.FC = () => {
       
       // The response is directly an array of contracts
       if (Array.isArray(response)) {
-        setContracts(response);
-        console.log('Contracts loaded:', response);
+        // Filter to show only active contracts
+        const activeContracts = response.filter(contract => contract.status === 'Active');
+        setContracts(activeContracts);
+        console.log('Active contracts loaded:', activeContracts);
       } else {
         console.error('Invalid contracts data format:', response);
         setError('Failed to fetch contracts: Invalid data format');

@@ -105,7 +105,7 @@ interface Props {
 // Export the default template
 export const defaultTemplate = `
 
-<h1 class="document-title">VEHICLE RENTAL AGREEMENT (WITHOUT DRIVER)</h1>
+<h1 class="document-title">VEHICLE RENTAL AGREEMENT</h1>
 
 <p>This Vehicle Rental Agreement (the "Agreement") is made and entered into on [Start Date] in Dubai, United Arab Emirates.</p>
 
@@ -462,18 +462,7 @@ const ContractTemplateEditor: React.FC<Props> = ({
 
       // Helper to draw header/footer per page
       const drawHeaderFooter = () => {
-        // Draw header with shadow
-        pdf.setFillColor(0, 0, 0);
-        pdf.setGState(new (pdf as any).GState({ opacity: 0.1 }));
-        pdf.rect(0, 4, pageWidth, headerHeight, 'F');
-        pdf.setGState(new (pdf as any).GState({ opacity: 1 }));
         pdf.addImage(headerImg, 'PNG', 0, 0, pageWidth, headerHeight);
-        
-        // Draw footer with shadow
-        pdf.setFillColor(0, 0, 0);
-        pdf.setGState(new (pdf as any).GState({ opacity: 0.1 }));
-        pdf.rect(0, pageHeight - footerHeight - 4, pageWidth, footerHeight, 'F');
-        pdf.setGState(new (pdf as any).GState({ opacity: 1 }));
         pdf.addImage(footerImg, 'PNG', 0, pageHeight - footerHeight, pageWidth, footerHeight);
       };
 
@@ -599,18 +588,7 @@ const ContractTemplateEditor: React.FC<Props> = ({
 
       // Helper to draw header/footer per page
       const drawHeaderFooter = () => {
-        // Draw header with shadow
-        pdf.setFillColor(0, 0, 0);
-        pdf.setGState(new (pdf as any).GState({ opacity: 0.1 }));
-        pdf.rect(0, 4, pageWidth, headerHeight, 'F');
-        pdf.setGState(new (pdf as any).GState({ opacity: 1 }));
         pdf.addImage(headerImg, 'PNG', 0, 0, pageWidth, headerHeight);
-        
-        // Draw footer with shadow
-        pdf.setFillColor(0, 0, 0);
-        pdf.setGState(new (pdf as any).GState({ opacity: 0.1 }));
-        pdf.rect(0, pageHeight - footerHeight - 4, pageWidth, footerHeight, 'F');
-        pdf.setGState(new (pdf as any).GState({ opacity: 1 }));
         pdf.addImage(footerImg, 'PNG', 0, pageHeight - footerHeight, pageWidth, footerHeight);
       };
 
