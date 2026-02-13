@@ -48,6 +48,7 @@ import {
   Security as SecurityIcon,
   ArrowForward as ArrowForwardIcon,
   Refresh as RefreshIcon,
+  Article as ArticleIcon,
 } from '@mui/icons-material';
 import { ResponsivePie } from '@nivo/pie';
 import { ResponsiveLine } from '@nivo/line';
@@ -1051,61 +1052,109 @@ const Dashboard: React.FC = () => {
           />
         </Grid>
 
-        {/* Contract Statistics */}
+        {/* Quick Access Cards */}
         <Grid item xs={12}>
-            <Typography variant="h6" gutterBottom>
-              Contract Management
-            </Typography>
-            <Grid container spacing={3}>
-              <Grid item xs={12} sm={6} md={3}>
-                <StatCard
-                  title="Total Contracts"
-                  value={data.contractStats.totalContracts.toString()}
-                  icon={<DescriptionIcon />}
-                  color={theme.palette.info.main}
-                  onClick={() => {
-              console.log('Navigating to contracts');
-              navigate('/contracts');
-            }}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <StatCard
-                  title="Active Contracts"
-                  value={data.contractStats.activeContracts.toString()}
-                  icon={<CheckCircleIcon />}
-                  color={theme.palette.success.main}
-                  onClick={() => {
-              console.log('Navigating to contracts');
-              navigate('/contracts');
-            }}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <StatCard
-                  title="Expiring Soon"
-                  value={data.contractStats.expiringSoon.toString()}
-                  icon={<WarningIcon />}
-                  color={theme.palette.warning.main}
-                  onClick={() => {
-              console.log('Navigating to contracts');
-              navigate('/contracts');
-            }}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <StatCard
-                  title="Total Value"
-                  value={`AED ${data.contractStats.totalValue.toLocaleString()}`}
-                  icon={<MonetizationOnIcon />}
-                  color={theme.palette.primary.main}
-                  onClick={() => {
-              console.log('Navigating to contracts');
-              navigate('/contracts');
-            }}
-                />
-              </Grid>
+          <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
+            Quick Access
+          </Typography>
+          <Grid container spacing={3}>
+            <Grid item xs={12} sm={6} md={3}>
+              <Card 
+                sx={{ 
+                  cursor: 'pointer',
+                  height: '100%',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: 4,
+                  }
+                }}
+                onClick={() => navigate('/contracts')}
+              >
+                <CardContent sx={{ textAlign: 'center', py: 4 }}>
+                  <DescriptionIcon sx={{ fontSize: 48, color: theme.palette.info.main, mb: 2 }} />
+                  <Typography variant="h6" gutterBottom>
+                    Contracts
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Manage all contracts
+                  </Typography>
+                </CardContent>
+              </Card>
             </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Card 
+                sx={{ 
+                  cursor: 'pointer',
+                  height: '100%',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: 4,
+                  }
+                }}
+                onClick={() => navigate('/beta-invoices')}
+              >
+                <CardContent sx={{ textAlign: 'center', py: 4 }}>
+                  <MonetizationOnIcon sx={{ fontSize: 48, color: theme.palette.success.main, mb: 2 }} />
+                  <Typography variant="h6" gutterBottom>
+                    Beta Invoices
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    View and manage invoices
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Card 
+                sx={{ 
+                  cursor: 'pointer',
+                  height: '100%',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: 4,
+                  }
+                }}
+                onClick={() => navigate('/letterhead')}
+              >
+                <CardContent sx={{ textAlign: 'center', py: 4 }}>
+                  <ArticleIcon sx={{ fontSize: 48, color: theme.palette.primary.main, mb: 2 }} />
+                  <Typography variant="h6" gutterBottom>
+                    Letterhead Template
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Manage letterheads
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Card 
+                sx={{ 
+                  cursor: 'pointer',
+                  height: '100%',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: 4,
+                  }
+                }}
+                onClick={() => navigate('/receipts')}
+              >
+                <CardContent sx={{ textAlign: 'center', py: 4 }}>
+                  <MoneyIcon sx={{ fontSize: 48, color: theme.palette.warning.main, mb: 2 }} />
+                  <Typography variant="h6" gutterBottom>
+                    Receipts
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Payment receipts
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
         </Grid>
 
         {/* Detailed Summaries Section */}
