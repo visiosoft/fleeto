@@ -12,7 +12,7 @@ exports.getAllContracts = async (req, res) => {
             });
         }
         
-        const contracts = await CompanyContract.find({ companyId: companyId });
+        const contracts = await CompanyContract.find({ companyId: companyId }).sort({ startDate: -1 });
         res.status(200).json(contracts);
     } catch (error) {
         res.status(500).json({ message: error.message });

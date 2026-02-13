@@ -28,36 +28,63 @@ const vehicleSchema = new mongoose.Schema({
     },
     type: {
         type: String,
-        required: true,
+        required: false,
         enum: ['car', 'truck', 'van', 'motorcycle', 'other']
     },
     status: {
         type: String,
-        required: true,
-        enum: ['active', 'maintenance', 'out of service'],
+        required: false,
         default: 'active'
     },
     mileage: {
         type: Number,
-        required: true,
+        required: false,
         default: 0
     },
     lastService: {
         type: Date,
-        required: true
+        required: false
+    },
+    lastMaintenance: {
+        type: Date,
+        required: false
     },
     nextServiceDue: {
         type: Date,
-        required: true
+        required: false
+    },
+    nextMaintenance: {
+        type: Date,
+        required: false
     },
     fuelType: {
         type: String,
-        required: true,
-        enum: ['gasoline', 'diesel', 'electric', 'hybrid']
+        required: false
     },
     fuelCapacity: {
         type: Number,
-        required: true
+        required: false
+    },
+    insuranceProvider: {
+        type: String,
+        required: false
+    },
+    insurancePolicyNumber: {
+        type: String,
+        required: false
+    },
+    insuranceExpiryDate: {
+        type: Date,
+        required: false
+    },
+    insuranceInfo: {
+        provider: String,
+        policyNumber: String,
+        expiryDate: Date
+    },
+    notes: {
+        type: String,
+        required: false
     },
     companyId: {
         type: String,
