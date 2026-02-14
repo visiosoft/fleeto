@@ -32,6 +32,13 @@ import {
   CircularProgress,
   InputAdornment,
   Collapse,
+  Avatar,
+  Stack,
+  Tooltip,
+  useTheme,
+  alpha,
+  Card,
+  CardContent,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -47,6 +54,8 @@ import {
   Category as CategoryIcon,
   KeyboardArrowDown as KeyboardArrowDownIcon,
   KeyboardArrowUp as KeyboardArrowUpIcon,
+  CalendarToday as CalendarIcon,
+  Payment as PaymentIcon,
 } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import moment from 'moment';
@@ -142,7 +151,9 @@ const Row: React.FC<{
   onEdit: (expense: ExpenseDetail) => void;
   onDelete: (expenseId: string) => void;
 }> = ({ row, onEdit, onDelete }) => {
+  const theme = useTheme();
   const [open, setOpen] = useState(false);
+  const [hoveredRow, setHoveredRow] = useState<string | null>(null);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString();
@@ -176,79 +187,171 @@ const Row: React.FC<{
 
   return (
     <>
-      <TableRow sx={{ '& > *': { borderBottom: 'unset' } }}>
+      <TableRow 
+        sx={{ 
+          '& > *': { borderBottom: 'unset' },
+          backgroundColor: open ? alpha(theme.palette.primary.main, 0.04) : 'transparent',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          borderLeft: open ? `4px solid ${theme.palette.primary.main}` : '4px solid transparent',
+        }}
+      >
         <TableCell>
           <IconButton
             size="small"
             onClick={() => setOpen(!open)}
             disabled={row.details.length === 0}
+            sx={{
+              backgroundColor: alpha(theme.palette.primary.main, 0.1),
+              '&:hover': {
+                backgroundColor: alpha(theme.palette.primary.main, 0.2),
+              },
+            }}
           >
             {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
           </IconButton>
         </TableCell>
         <TableCell component="th" scope="row">
-          {row.vehicleName}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Avatar 
+              sx={{ 
+                width: 36, 
+                height: 36,
+                background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+                boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.3)}`,
+              }}
+            >
+              <VehicleIcon sx={{ fontSize: 18 }} />
+            </Avatar>
+            <Typography variant="body2" fontWeight={700}>
+              {row.vehicleName}
+            </Typography>
+          </Box>
         </TableCell>
-        <TableCell align="right">AED {row.expenses.toLocaleString()}</TableCell>
-        <TableCell align="right">{row.details.length}</TableCell>
+        <TableCell align="right">
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 0.5 }}>
+            <MoneyIcon sx={{ fontSize: 16, color: theme.palette.success.main }} />
+            <Typography variant="body2" fontWeight={700} color="success.main">
+              AED {row.expenses.toLocaleString()}
+            </Typography>
+          </Box>
+        </TableCell>
+        <TableCell align="right">
+          <Chip 
+            label={row.details.length} 
+            size="small" 
+            color="primary"
+            sx={{ fontWeight: 700 }}
+          />
+        </TableCell>
       </TableRow>
       <TableRow>
         <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={4}>
           <Collapse in={open} timeout="auto" unmountOnExit>
-            <Box sx={{ margin: 1 }}>
-              <Typography variant="h6" gutterBottom component="div">
+            <Box sx={{ margin: 2, p: 2, backgroundColor: alpha(theme.palette.background.default, 0.5), borderRadius: 2 }}>
+              <Typography variant="h6" gutterBottom component="div" sx={{ mb: 2, fontWeight: 700 }}>
                 Expense Details
               </Typography>
               <Table size="small">
                 <TableHead>
-                  <TableRow>
-                    <TableCell>Date</TableCell>
-                    <TableCell>Type</TableCell>
-                    <TableCell>Description</TableCell>
-                    <TableCell align="right">Amount</TableCell>
-                    <TableCell>Payment Method</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Actions</TableCell>
+                  <TableRow sx={{ background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.03)} 0%, ${alpha(theme.palette.secondary.main, 0.03)} 100%)` }}>
+                    <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary }}>Date</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary }}>Type</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary }}>Description</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 700, color: theme.palette.text.secondary }}>Amount</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary }}>Payment</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary }}>Status</TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 700, color: theme.palette.text.secondary }}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {row.details.map((detail) => (
-                    <TableRow key={detail._id}>
-                      <TableCell>{formatDate(detail.date)}</TableCell>
+                    <TableRow 
+                      key={detail._id}
+                      onMouseEnter={() => setHoveredRow(detail._id)}
+                      onMouseLeave={() => setHoveredRow(null)}
+                      sx={{
+                        backgroundColor: hoveredRow === detail._id 
+                          ? alpha(theme.palette.primary.main, 0.04)
+                          : 'transparent',
+                        transition: 'all 0.2s',
+                        '&:hover': {
+                          transform: 'translateX(4px)',
+                        },
+                      }}
+                    >
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <CalendarIcon sx={{ fontSize: 14, color: theme.palette.text.secondary }} />
+                          <Typography variant="body2">{formatDate(detail.date)}</Typography>
+                        </Box>
+                      </TableCell>
                       <TableCell>
                         <Chip
                           label={detail.expenseType}
                           color={getExpenseTypeColor(detail.expenseType)}
                           size="small"
+                          sx={{ fontWeight: 700, fontSize: '0.7rem' }}
                         />
                       </TableCell>
-                      <TableCell>{detail.description}</TableCell>
-                      <TableCell align="right">
-                        AED {detail.amount.toLocaleString()}
+                      <TableCell>
+                        <Typography variant="body2" color="text.secondary">
+                          {detail.description}
+                        </Typography>
                       </TableCell>
-                      <TableCell>{detail.paymentMethod}</TableCell>
+                      <TableCell align="right">
+                        <Typography variant="body2" fontWeight={600}>
+                          AED {detail.amount.toLocaleString()}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <PaymentIcon sx={{ fontSize: 14, color: theme.palette.info.main }} />
+                          <Typography variant="caption">{detail.paymentMethod}</Typography>
+                        </Box>
+                      </TableCell>
                       <TableCell>
                         <Chip
                           label={detail.paymentStatus}
                           color={getPaymentStatusColor(detail.paymentStatus)}
                           size="small"
+                          sx={{ fontWeight: 700, fontSize: '0.7rem' }}
                         />
                       </TableCell>
-                      <TableCell>
-                        <IconButton
-                          size="small"
-                          onClick={() => onEdit(detail)}
-                          color="primary"
-                        >
-                          <EditIcon />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          onClick={() => onDelete(detail._id)}
-                          color="error"
-                        >
-                          <DeleteIcon />
-                        </IconButton>
+                      <TableCell align="center">
+                        <Stack direction="row" spacing={0.5} justifyContent="center">
+                          <Tooltip title="Edit Expense">
+                            <IconButton
+                              size="small"
+                              onClick={() => onEdit(detail)}
+                              sx={{
+                                backgroundColor: alpha(theme.palette.info.main, 0.1),
+                                '&:hover': {
+                                  backgroundColor: alpha(theme.palette.info.main, 0.2),
+                                  transform: 'scale(1.1)',
+                                },
+                                transition: 'all 0.2s',
+                              }}
+                            >
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Delete Expense">
+                            <IconButton
+                              size="small"
+                              onClick={() => onDelete(detail._id)}
+                              sx={{
+                                backgroundColor: alpha(theme.palette.error.main, 0.1),
+                                '&:hover': {
+                                  backgroundColor: alpha(theme.palette.error.main, 0.2),
+                                  transform: 'scale(1.1)',
+                                },
+                                transition: 'all 0.2s',
+                              }}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Stack>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -263,6 +366,7 @@ const Row: React.FC<{
 };
 
 const CostManagement: React.FC = () => {
+  const theme = useTheme();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [costData, setCostData] = useState<CostData | null>(null);
@@ -503,34 +607,260 @@ const CostManagement: React.FC = () => {
 
       <Grid container spacing={3} mb={3}>
         <Grid item xs={12} md={4}>
-          <Paper sx={{ p: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              Total Expenses
-            </Typography>
-            <Typography variant="h4" color="primary">
-              AED {filteredData?.total.toLocaleString()}
-            </Typography>
-          </Paper>
+          <Card 
+            sx={{ 
+              height: '100%',
+              borderRadius: 3,
+              boxShadow: `0 4px 20px ${alpha(theme.palette.primary.main, 0.15)}`,
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+              overflow: 'hidden',
+              position: 'relative',
+              '&:hover': {
+                transform: 'translateY(-8px)',
+                boxShadow: `0 12px 28px ${alpha(theme.palette.primary.main, 0.25)}`,
+              },
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '4px',
+                background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+              },
+            }}
+          >
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                <Box>
+                  <Typography 
+                    variant="body2" 
+                    color="text.secondary" 
+                    sx={{ 
+                      fontWeight: 600,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      fontSize: '0.7rem',
+                      mb: 1,
+                    }}
+                  >
+                    Total Expenses
+                  </Typography>
+                  <Typography 
+                    variant="h5" 
+                    sx={{ 
+                      fontWeight: 700,
+                      color: theme.palette.primary.main,
+                      display: 'flex',
+                      alignItems: 'baseline',
+                      gap: 0.5,
+                    }}
+                  >
+                    <Typography 
+                      component="span" 
+                      variant="body2" 
+                      sx={{ 
+                        fontWeight: 600,
+                        color: theme.palette.text.secondary,
+                      }}
+                    >
+                      AED
+                    </Typography>
+                    {filteredData?.total.toLocaleString()}
+                  </Typography>
+                </Box>
+                <Avatar 
+                  sx={{ 
+                    width: 44, 
+                    height: 44,
+                    background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+                    boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.4)}`,
+                  }}
+                >
+                  <MoneyIcon sx={{ fontSize: 22, color: 'white' }} />
+                </Avatar>
+              </Box>
+              <Box 
+                sx={{ 
+                  height: 6,
+                  borderRadius: 3,
+                  backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                  overflow: 'hidden',
+                }}
+              >
+                <Box 
+                  sx={{ 
+                    height: '100%',
+                    width: '100%',
+                    background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+                  }}
+                />
+              </Box>
+            </CardContent>
+          </Card>
         </Grid>
         <Grid item xs={12} md={4}>
-          <Paper sx={{ p: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              Period
-            </Typography>
-            <Typography>
-              {new Date(filteredData?.period.start || '').toLocaleDateString()} - {new Date(filteredData?.period.end || '').toLocaleDateString()}
-            </Typography>
-          </Paper>
+          <Card 
+            sx={{ 
+              height: '100%',
+              borderRadius: 3,
+              boxShadow: `0 4px 20px ${alpha(theme.palette.info.main, 0.15)}`,
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              border: `1px solid ${alpha(theme.palette.info.main, 0.1)}`,
+              overflow: 'hidden',
+              position: 'relative',
+              '&:hover': {
+                transform: 'translateY(-8px)',
+                boxShadow: `0 12px 28px ${alpha(theme.palette.info.main, 0.25)}`,
+              },
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '4px',
+                background: `linear-gradient(135deg, ${theme.palette.info.main} 0%, ${theme.palette.info.dark} 100%)`,
+              },
+            }}
+          >
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                <Box>
+                  <Typography 
+                    variant="body2" 
+                    color="text.secondary" 
+                    sx={{ 
+                      fontWeight: 600,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      fontSize: '0.7rem',
+                      mb: 1,
+                    }}
+                  >
+                    Period
+                  </Typography>
+                  <Typography 
+                    variant="body2"
+                    sx={{ 
+                      fontWeight: 600,
+                      color: theme.palette.info.main,
+                    }}
+                  >
+                    {new Date(filteredData?.period.start || '').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {new Date(filteredData?.period.end || '').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </Typography>
+                </Box>
+                <Avatar 
+                  sx={{ 
+                    width: 44, 
+                    height: 44,
+                    background: `linear-gradient(135deg, ${theme.palette.info.main} 0%, ${theme.palette.info.dark} 100%)`,
+                    boxShadow: `0 4px 14px ${alpha(theme.palette.info.main, 0.4)}`,
+                  }}
+                >
+                  <CalendarIcon sx={{ fontSize: 22, color: 'white' }} />
+                </Avatar>
+              </Box>
+              <Box 
+                sx={{ 
+                  height: 6,
+                  borderRadius: 3,
+                  backgroundColor: alpha(theme.palette.info.main, 0.1),
+                  overflow: 'hidden',
+                }}
+              >
+                <Box 
+                  sx={{ 
+                    height: '100%',
+                    width: '100%',
+                    background: `linear-gradient(135deg, ${theme.palette.info.main} 0%, ${theme.palette.info.dark} 100%)`,
+                  }}
+                />
+              </Box>
+            </CardContent>
+          </Card>
         </Grid>
         <Grid item xs={12} md={4}>
-          <Paper sx={{ p: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              Number of Vehicles
-            </Typography>
-            <Typography variant="h4" color="primary">
-              {filteredData?.vehicles.length}
-            </Typography>
-          </Paper>
+          <Card 
+            sx={{ 
+              height: '100%',
+              borderRadius: 3,
+              boxShadow: `0 4px 20px ${alpha(theme.palette.secondary.main, 0.15)}`,
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              border: `1px solid ${alpha(theme.palette.secondary.main, 0.1)}`,
+              overflow: 'hidden',
+              position: 'relative',
+              '&:hover': {
+                transform: 'translateY(-8px)',
+                boxShadow: `0 12px 28px ${alpha(theme.palette.secondary.main, 0.25)}`,
+              },
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '4px',
+                background: `linear-gradient(135deg, ${theme.palette.secondary.main} 0%, ${theme.palette.secondary.dark} 100%)`,
+              },
+            }}
+          >
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                <Box>
+                  <Typography 
+                    variant="body2" 
+                    color="text.secondary" 
+                    sx={{ 
+                      fontWeight: 600,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      fontSize: '0.7rem',
+                      mb: 1,
+                    }}
+                  >
+                    Number of Vehicles
+                  </Typography>
+                  <Typography 
+                    variant="h5" 
+                    sx={{ 
+                      fontWeight: 700,
+                      color: theme.palette.secondary.main,
+                    }}
+                  >
+                    {filteredData?.vehicles.length}
+                  </Typography>
+                </Box>
+                <Avatar 
+                  sx={{ 
+                    width: 44, 
+                    height: 44,
+                    background: `linear-gradient(135deg, ${theme.palette.secondary.main} 0%, ${theme.palette.secondary.dark} 100%)`,
+                    boxShadow: `0 4px 14px ${alpha(theme.palette.secondary.main, 0.4)}`,
+                  }}
+                >
+                  <VehicleIcon sx={{ fontSize: 22, color: 'white' }} />
+                </Avatar>
+              </Box>
+              <Box 
+                sx={{ 
+                  height: 6,
+                  borderRadius: 3,
+                  backgroundColor: alpha(theme.palette.secondary.main, 0.1),
+                  overflow: 'hidden',
+                }}
+              >
+                <Box 
+                  sx={{ 
+                    height: '100%',
+                    width: '100%',
+                    background: `linear-gradient(135deg, ${theme.palette.secondary.main} 0%, ${theme.palette.secondary.dark} 100%)`,
+                  }}
+                />
+              </Box>
+            </CardContent>
+          </Card>
         </Grid>
       </Grid>
 
@@ -618,14 +948,18 @@ const CostManagement: React.FC = () => {
             </Box>
           )}
           {activeTab === 0 && (
-            <TableContainer>
+            <TableContainer sx={{ 
+              borderRadius: 3,
+              overflow: 'hidden',
+              boxShadow: `0 1px 3px ${alpha(theme.palette.common.black, 0.1)}`,
+            }}>
               <Table>
                 <TableHead>
-                  <TableRow>
-                    <TableCell />
-                    <TableCell>Vehicle</TableCell>
-                    <TableCell align="right">Total Expenses</TableCell>
-                    <TableCell align="right">Number of Expenses</TableCell>
+                  <TableRow sx={{ background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, ${alpha(theme.palette.secondary.main, 0.05)} 100%)` }}>
+                    <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }} />
+                    <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Vehicle</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Total Expenses</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Number of Expenses</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>

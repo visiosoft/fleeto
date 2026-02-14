@@ -27,6 +27,13 @@ import {
   SelectChangeEvent,
   Snackbar,
   LinearProgress,
+  Avatar,
+  Stack,
+  Tooltip,
+  useTheme,
+  alpha,
+  Card,
+  CardContent,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -35,6 +42,14 @@ import {
   Description as DescriptionIcon,
   Close as CloseIcon,
   Autorenew as AutorenewIcon,
+  Business as BusinessIcon,
+  DirectionsCar as DirectionsCarIcon,
+  CalendarToday as CalendarIcon,
+  MonetizationOn as MoneyIcon,
+  Visibility as ViewIcon,
+  Assignment as ContractIcon,
+  CheckCircle as ActiveIcon,
+  Warning as ExpiringIcon,
 } from '@mui/icons-material';
 import { API_CONFIG, getApiUrl } from '../config/api';
 import axios, { AxiosError } from 'axios';
@@ -102,6 +117,8 @@ const emptyContract: Partial<Contract> = {
 };
 
 const ContractManagement: React.FC = () => {
+  const theme = useTheme();
+  const [hoveredRow, setHoveredRow] = useState<string | null>(null);
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [currentContract, setCurrentContract] = useState<Contract>(emptyContract as Contract);
   const [stats, setStats] = useState<ContractStats | null>(null);
@@ -605,44 +622,78 @@ const ContractManagement: React.FC = () => {
   );
 
   const renderActionsCell = (contract: Contract) => (
-    <TableCell>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        <IconButton 
-          size="small" 
-          onClick={() => handleEditContract(contract)}
-          title="Edit Contract"
-        >
-          <EditIcon />
-        </IconButton>
-        {contract.status === 'Active' && (
+    <TableCell align="center">
+      <Stack direction="row" spacing={0.5} justifyContent="center">
+        <Tooltip title="Edit Contract">
           <IconButton
             size="small"
-            color="secondary"
-            onClick={() => {
-              setCurrentContract(contract);
-              setOpenDialog(true);
+            onClick={() => handleEditContract(contract)}
+            sx={{
+              backgroundColor: alpha(theme.palette.info.main, 0.1),
+              '&:hover': {
+                backgroundColor: alpha(theme.palette.info.main, 0.2),
+                transform: 'scale(1.1)',
+              },
+              transition: 'all 0.2s',
             }}
-            title="Renew Contract"
           >
-            <AutorenewIcon />
+            <EditIcon fontSize="small" />
           </IconButton>
+        </Tooltip>
+        {contract.status === 'Active' && (
+          <Tooltip title="Renew Contract">
+            <IconButton
+              size="small"
+              onClick={() => {
+                setCurrentContract(contract);
+                setOpenDialog(true);
+              }}
+              sx={{
+                backgroundColor: alpha(theme.palette.secondary.main, 0.1),
+                '&:hover': {
+                  backgroundColor: alpha(theme.palette.secondary.main, 0.2),
+                  transform: 'scale(1.1)',
+                },
+                transition: 'all 0.2s',
+              }}
+            >
+              <AutorenewIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
         )}
-        <IconButton 
-          size="small" 
-          onClick={() => handleDeleteConfirm(contract._id || '')}
-          title="Delete Contract"
-        >
-          <DeleteIcon />
-        </IconButton>
-        <Button
-          size="small"
-          variant="outlined"
-          startIcon={<DescriptionIcon />}
-          onClick={() => handleTemplateClick(contract)}
-          title="Edit and Generate Contract Template"
-        >
-Generate        </Button>
-      </Box>
+        <Tooltip title="Edit and Generate Contract Template">
+          <IconButton
+            size="small"
+            onClick={() => handleTemplateClick(contract)}
+            sx={{
+              backgroundColor: alpha(theme.palette.primary.main, 0.1),
+              '&:hover': {
+                backgroundColor: alpha(theme.palette.primary.main, 0.2),
+                transform: 'scale(1.1)',
+              },
+              transition: 'all 0.2s',
+            }}
+          >
+            <DescriptionIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Delete Contract">
+          <IconButton
+            size="small"
+            onClick={() => handleDeleteConfirm(contract._id || '')}
+            sx={{
+              backgroundColor: alpha(theme.palette.error.main, 0.1),
+              '&:hover': {
+                backgroundColor: alpha(theme.palette.error.main, 0.2),
+                transform: 'scale(1.1)',
+              },
+              transition: 'all 0.2s',
+            }}
+          >
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      </Stack>
     </TableCell>
   );
 
@@ -655,28 +706,343 @@ Generate        </Button>
       {/* Statistics Cards */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid item xs={12} md={3}>
-          <Paper sx={{ p: 2 }}>
-            <Typography variant="h6" gutterBottom>Total Contracts</Typography>
-            <Typography variant="h4">{stats?.totalContracts || 0}</Typography>
-          </Paper>
+          <Card 
+            sx={{ 
+              height: '100%',
+              borderRadius: 3,
+              boxShadow: `0 4px 20px ${alpha(theme.palette.info.main, 0.15)}`,
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              border: `1px solid ${alpha(theme.palette.info.main, 0.1)}`,
+              overflow: 'hidden',
+              position: 'relative',
+              '&:hover': {
+                transform: 'translateY(-8px)',
+                boxShadow: `0 12px 28px ${alpha(theme.palette.info.main, 0.25)}`,
+              },
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '4px',
+                background: `linear-gradient(135deg, ${theme.palette.info.main} 0%, ${theme.palette.info.dark} 100%)`,
+              },
+            }}
+          >
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                <Box>
+                  <Typography 
+                    variant="body2" 
+                    color="text.secondary" 
+                    sx={{ 
+                      fontWeight: 600,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      fontSize: '0.7rem',
+                      mb: 1,
+                    }}
+                  >
+                    Total Contracts
+                  </Typography>
+                  <Typography 
+                    variant="h5" 
+                    sx={{ 
+                      fontWeight: 700,
+                      color: theme.palette.info.main,
+                    }}
+                  >
+                    {stats?.totalContracts || 0}
+                  </Typography>
+                </Box>
+                <Avatar 
+                  sx={{ 
+                    width: 44, 
+                    height: 44,
+                    background: `linear-gradient(135deg, ${theme.palette.info.main} 0%, ${theme.palette.info.dark} 100%)`,
+                    boxShadow: `0 4px 14px ${alpha(theme.palette.info.main, 0.4)}`,
+                  }}
+                >
+                  <ContractIcon sx={{ fontSize: 22, color: 'white' }} />
+                </Avatar>
+              </Box>
+              <Box 
+                sx={{ 
+                  height: 6,
+                  borderRadius: 3,
+                  backgroundColor: alpha(theme.palette.info.main, 0.1),
+                  overflow: 'hidden',
+                }}
+              >
+                <Box 
+                  sx={{ 
+                    height: '100%',
+                    width: '100%',
+                    background: `linear-gradient(135deg, ${theme.palette.info.main} 0%, ${theme.palette.info.dark} 100%)`,
+                  }}
+                />
+              </Box>
+            </CardContent>
+          </Card>
         </Grid>
         <Grid item xs={12} md={3}>
-          <Paper sx={{ p: 2 }}>
-            <Typography variant="h6" gutterBottom>Active Contracts</Typography>
-            <Typography variant="h4">{stats?.activeContracts || 0}</Typography>
-          </Paper>
+          <Card 
+            sx={{ 
+              height: '100%',
+              borderRadius: 3,
+              boxShadow: `0 4px 20px ${alpha(theme.palette.success.main, 0.15)}`,
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              border: `1px solid ${alpha(theme.palette.success.main, 0.1)}`,
+              overflow: 'hidden',
+              position: 'relative',
+              '&:hover': {
+                transform: 'translateY(-8px)',
+                boxShadow: `0 12px 28px ${alpha(theme.palette.success.main, 0.25)}`,
+              },
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '4px',
+                background: `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`,
+              },
+            }}
+          >
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                <Box>
+                  <Typography 
+                    variant="body2" 
+                    color="text.secondary" 
+                    sx={{ 
+                      fontWeight: 600,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      fontSize: '0.7rem',
+                      mb: 1,
+                    }}
+                  >
+                    Active Contracts
+                  </Typography>
+                  <Typography 
+                    variant="h5" 
+                    sx={{ 
+                      fontWeight: 700,
+                      color: theme.palette.success.main,
+                    }}
+                  >
+                    {stats?.activeContracts || 0}
+                  </Typography>
+                </Box>
+                <Avatar 
+                  sx={{ 
+                    width: 44, 
+                    height: 44,
+                    background: `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`,
+                    boxShadow: `0 4px 14px ${alpha(theme.palette.success.main, 0.4)}`,
+                  }}
+                >
+                  <ActiveIcon sx={{ fontSize: 22, color: 'white' }} />
+                </Avatar>
+              </Box>
+              <Box 
+                sx={{ 
+                  height: 6,
+                  borderRadius: 3,
+                  backgroundColor: alpha(theme.palette.success.main, 0.1),
+                  overflow: 'hidden',
+                }}
+              >
+                <Box 
+                  sx={{ 
+                    height: '100%',
+                    width: stats?.totalContracts ? `${(stats.activeContracts / stats.totalContracts) * 100}%` : '0%',
+                    background: `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`,
+                    transition: 'width 1s ease-in-out',
+                  }}
+                />
+              </Box>
+            </CardContent>
+          </Card>
         </Grid>
         <Grid item xs={12} md={3}>
-          <Paper sx={{ p: 2 }}>
-            <Typography variant="h6" gutterBottom>Expiring Soon</Typography>
-            <Typography variant="h4">{stats?.expiringContracts || 0}</Typography>
-          </Paper>
+          <Card 
+            sx={{ 
+              height: '100%',
+              borderRadius: 3,
+              boxShadow: `0 4px 20px ${alpha(theme.palette.warning.main, 0.15)}`,
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              border: `1px solid ${alpha(theme.palette.warning.main, 0.1)}`,
+              overflow: 'hidden',
+              position: 'relative',
+              '&:hover': {
+                transform: 'translateY(-8px)',
+                boxShadow: `0 12px 28px ${alpha(theme.palette.warning.main, 0.25)}`,
+              },
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '4px',
+                background: `linear-gradient(135deg, ${theme.palette.warning.main} 0%, ${theme.palette.warning.dark} 100%)`,
+              },
+            }}
+          >
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                <Box>
+                  <Typography 
+                    variant="body2" 
+                    color="text.secondary" 
+                    sx={{ 
+                      fontWeight: 600,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      fontSize: '0.7rem',
+                      mb: 1,
+                    }}
+                  >
+                    Expiring Soon
+                  </Typography>
+                  <Typography 
+                    variant="h5" 
+                    sx={{ 
+                      fontWeight: 700,
+                      color: theme.palette.warning.main,
+                    }}
+                  >
+                    {stats?.expiringContracts || 0}
+                  </Typography>
+                </Box>
+                <Avatar 
+                  sx={{ 
+                    width: 44, 
+                    height: 44,
+                    background: `linear-gradient(135deg, ${theme.palette.warning.main} 0%, ${theme.palette.warning.dark} 100%)`,
+                    boxShadow: `0 4px 14px ${alpha(theme.palette.warning.main, 0.4)}`,
+                  }}
+                >
+                  <ExpiringIcon sx={{ fontSize: 22, color: 'white' }} />
+                </Avatar>
+              </Box>
+              <Box 
+                sx={{ 
+                  height: 6,
+                  borderRadius: 3,
+                  backgroundColor: alpha(theme.palette.warning.main, 0.1),
+                  overflow: 'hidden',
+                }}
+              >
+                <Box 
+                  sx={{ 
+                    height: '100%',
+                    width: stats?.totalContracts ? `${(stats.expiringContracts / stats.totalContracts) * 100}%` : '0%',
+                    background: `linear-gradient(135deg, ${theme.palette.warning.main} 0%, ${theme.palette.warning.dark} 100%)`,
+                    transition: 'width 1s ease-in-out',
+                  }}
+                />
+              </Box>
+            </CardContent>
+          </Card>
         </Grid>
         <Grid item xs={12} md={3}>
-          <Paper sx={{ p: 2 }}>
-            <Typography variant="h6" gutterBottom>Total Value</Typography>
-            <Typography variant="h4">${(stats?.totalValue || 0).toFixed(2)}</Typography>
-          </Paper>
+          <Card 
+            sx={{ 
+              height: '100%',
+              borderRadius: 3,
+              boxShadow: `0 4px 20px ${alpha(theme.palette.primary.main, 0.15)}`,
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+              overflow: 'hidden',
+              position: 'relative',
+              '&:hover': {
+                transform: 'translateY(-8px)',
+                boxShadow: `0 12px 28px ${alpha(theme.palette.primary.main, 0.25)}`,
+              },
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '4px',
+                background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+              },
+            }}
+          >
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                <Box>
+                  <Typography 
+                    variant="body2" 
+                    color="text.secondary" 
+                    sx={{ 
+                      fontWeight: 600,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      fontSize: '0.7rem',
+                      mb: 1,
+                    }}
+                  >
+                    Total Value
+                  </Typography>
+                  <Typography 
+                    variant="h5" 
+                    sx={{ 
+                      fontWeight: 700,
+                      color: theme.palette.primary.main,
+                      display: 'flex',
+                      alignItems: 'baseline',
+                      gap: 0.5,
+                    }}
+                  >
+                    <Typography 
+                      component="span" 
+                      variant="body2" 
+                      sx={{ 
+                        fontWeight: 600,
+                        color: theme.palette.text.secondary,
+                      }}
+                    >
+                      AED
+                    </Typography>
+                    {(stats?.totalValue || 0).toLocaleString()}
+                  </Typography>
+                </Box>
+                <Avatar 
+                  sx={{ 
+                    width: 44, 
+                    height: 44,
+                    background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+                    boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.4)}`,
+                  }}
+                >
+                  <MoneyIcon sx={{ fontSize: 22, color: 'white' }} />
+                </Avatar>
+              </Box>
+              <Box 
+                sx={{ 
+                  height: 6,
+                  borderRadius: 3,
+                  backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                  overflow: 'hidden',
+                }}
+              >
+                <Box 
+                  sx={{ 
+                    height: '100%',
+                    width: '100%',
+                    background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+                  }}
+                />
+              </Box>
+            </CardContent>
+          </Card>
         </Grid>
       </Grid>
 
@@ -727,18 +1093,20 @@ Generate        </Button>
         {isLoading ? (
           <LinearProgress />
         ) : (
-          <TableContainer>
+          <TableContainer sx={{ 
+            borderRadius: 3,
+            overflow: 'hidden',
+            boxShadow: `0 1px 3px ${alpha(theme.palette.common.black, 0.1)}`,
+          }}>
             <Table>
               <TableHead>
-                <TableRow>
-                  <TableCell>Company Name</TableCell>
-                  <TableCell>Vehicle</TableCell>
-                  <TableCell>Type</TableCell>
-                  <TableCell>Start Date</TableCell>
-                  <TableCell>End Date</TableCell>
-                  <TableCell>Value</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Actions</TableCell>
+                <TableRow sx={{ background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, ${alpha(theme.palette.secondary.main, 0.05)} 100%)` }}>
+                  <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Contract Info</TableCell>
+                  <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Vehicle</TableCell>
+                  <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Duration</TableCell>
+                  <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Value</TableCell>
+                  <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Status</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -751,30 +1119,96 @@ Generate        </Button>
                     : 'No vehicle assigned';
                     
                   return (
-                    <TableRow key={contract._id}>
-                      <TableCell>{contract.companyName}</TableCell>
-                      <TableCell>{vehicleDisplay}</TableCell>
-                      <TableCell>{contract.contractType}</TableCell>
+                    <TableRow 
+                      key={contract._id}
+                      onMouseEnter={() => setHoveredRow(contract._id || null)}
+                      onMouseLeave={() => setHoveredRow(null)}
+                      sx={{
+                        backgroundColor: hoveredRow === contract._id 
+                          ? alpha(theme.palette.primary.main, 0.04)
+                          : 'transparent',
+                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                        transform: hoveredRow === contract._id ? 'translateY(-2px)' : 'translateY(0)',
+                        boxShadow: hoveredRow === contract._id 
+                          ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.15)}`
+                          : 'none',
+                        borderLeft: hoveredRow === contract._id 
+                          ? `4px solid ${theme.palette.primary.main}`
+                          : '4px solid transparent',
+                        '& td': {
+                          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+                          py: 2.5,
+                        },
+                        '&:last-child td': {
+                          borderBottom: 'none',
+                        },
+                        cursor: 'pointer',
+                      }}
+                    >
                       <TableCell>
-                        {contract.startDate ? new Date(contract.startDate).toLocaleDateString('en-AE', {
-                          day: 'numeric',
-                          month: 'long',
-                          year: 'numeric'
-                        }) : ''}
+                        <Stack spacing={0.5}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Avatar 
+                              sx={{ 
+                                width: 40, 
+                                height: 40,
+                                background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+                                boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.3)}`,
+                              }}
+                            >
+                              <DescriptionIcon sx={{ fontSize: 20 }} />
+                            </Avatar>
+                            <Box>
+                              <Typography variant="body2" fontWeight={700}>
+                                {contract.companyName}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {contract.contractType}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </Stack>
                       </TableCell>
                       <TableCell>
-                        {contract.endDate ? new Date(contract.endDate).toLocaleDateString('en-AE', {
-                          day: 'numeric',
-                          month: 'long',
-                          year: 'numeric'
-                        }) : ''}
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <DirectionsCarIcon sx={{ fontSize: 16, color: theme.palette.info.main }} />
+                          <Typography variant="body2">{vehicleDisplay}</Typography>
+                        </Box>
                       </TableCell>
-                      <TableCell>{contract.value?.toLocaleString('en-AE') || '0'}</TableCell>
+                      <TableCell>
+                        <Stack spacing={0.5}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            <CalendarIcon sx={{ fontSize: 14, color: theme.palette.text.secondary }} />
+                            <Typography variant="caption" color="text.secondary">
+                              Start: {contract.startDate ? new Date(contract.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
+                            </Typography>
+                          </Box>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            <CalendarIcon sx={{ fontSize: 14, color: theme.palette.error.main }} />
+                            <Typography variant="caption" color="text.secondary">
+                              End: {contract.endDate ? new Date(contract.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
+                            </Typography>
+                          </Box>
+                        </Stack>
+                      </TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <MoneyIcon sx={{ fontSize: 16, color: theme.palette.success.main }} />
+                          <Typography variant="body2" fontWeight={700} color="success.main">
+                            AED {contract.value?.toLocaleString('en-AE') || '0'}
+                          </Typography>
+                        </Box>
+                      </TableCell>
                       <TableCell>
                         <Chip
                           label={contract.status}
                           color={getStatusColor(contract.status)}
                           size="small"
+                          sx={{
+                            fontWeight: 700,
+                            fontSize: '0.75rem',
+                            letterSpacing: '0.5px',
+                          }}
                         />
                       </TableCell>
                       {renderActionsCell(contract)}

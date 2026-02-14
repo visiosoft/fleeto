@@ -25,17 +25,28 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
+  Avatar,
+  Stack,
+  Tooltip,
+  useTheme,
+  alpha,
 } from '@mui/material';
 import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
+  Person as PersonIcon,
+  Email as EmailIcon,
+  Phone as PhoneIcon,
+  AdminPanelSettings as AdminIcon,
 } from '@mui/icons-material';
 import UserService, { CreateUserData, UpdateUserData } from '../../services/UserService';
 import { User } from '../../types/api';
 import { useAuth } from '../../contexts/AuthContext';
 
 const UserManagement: React.FC = () => {
+  const theme = useTheme();
+  const [hoveredRow, setHoveredRow] = useState<string | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -208,29 +219,111 @@ const UserManagement: React.FC = () => {
             <LinearProgress />
           </Box>
         ) : (
-          <TableContainer>
+          <TableContainer sx={{ 
+            borderRadius: 3,
+            overflow: 'hidden',
+            boxShadow: `0 1px 3px ${alpha(theme.palette.common.black, 0.1)}`,
+          }}>
             <Table>
               <TableHead>
-                <TableRow>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Email</TableCell>
-                  <TableCell>Phone</TableCell>
-                  <TableCell>Role</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Actions</TableCell>
+                <TableRow sx={{ background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, ${alpha(theme.palette.secondary.main, 0.05)} 100%)` }}>
+                  <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>User Info</TableCell>
+                  <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Contact</TableCell>
+                  <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Role</TableCell>
+                  <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Status</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {users.map((user) => (
-                  <TableRow key={user._id}>
-                    <TableCell>{`${user.firstName} ${user.lastName}`}</TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>{user.phone}</TableCell>
+                  <TableRow 
+                    key={user._id}
+                    onMouseEnter={() => setHoveredRow(user._id)}
+                    onMouseLeave={() => setHoveredRow(null)}
+                    sx={{
+                      backgroundColor: hoveredRow === user._id 
+                        ? alpha(theme.palette.primary.main, 0.04)
+                        : 'transparent',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      transform: hoveredRow === user._id ? 'translateY(-2px)' : 'translateY(0)',
+                      boxShadow: hoveredRow === user._id 
+                        ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.15)}`
+                        : 'none',
+                      borderLeft: hoveredRow === user._id 
+                        ? `4px solid ${theme.palette.primary.main}`
+                        : '4px solid transparent',
+                      '& td': {
+                        borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+                        py: 2.5,
+                      },
+                      '&:last-child td': {
+                        borderBottom: 'none',
+                      },
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <TableCell>
+                      <Stack spacing={0.5}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Avatar 
+                            sx={{ 
+                              width: 40, 
+                              height: 40,
+                              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+                              boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.3)}`,
+                            }}
+                          >
+                            {user.role === 'admin' ? (
+                              <AdminIcon sx={{ fontSize: 20 }} />
+                            ) : (
+                              <PersonIcon sx={{ fontSize: 20 }} />
+                            )}
+                          </Avatar>
+                          <Box>
+                            <Typography variant="body2" fontWeight={700}>
+                              {`${user.firstName} ${user.lastName}`}
+                            </Typography>
+                            <Chip
+                              label={user.role}
+                              color="primary"
+                              size="small"
+                              sx={{
+                                height: 20,
+                                fontSize: '0.7rem',
+                                fontWeight: 700,
+                                mt: 0.5,
+                              }}
+                            />
+                          </Box>
+                        </Box>
+                      </Stack>
+                    </TableCell>
+                    <TableCell>
+                      <Stack spacing={0.5}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <EmailIcon sx={{ fontSize: 14, color: theme.palette.info.main }} />
+                          <Typography variant="body2" color="text.secondary">
+                            {user.email}
+                          </Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <PhoneIcon sx={{ fontSize: 14, color: theme.palette.success.main }} />
+                          <Typography variant="body2" color="text.secondary">
+                            {user.phone}
+                          </Typography>
+                        </Box>
+                      </Stack>
+                    </TableCell>
                     <TableCell>
                       <Chip
                         label={user.role}
                         color="primary"
                         size="small"
+                        sx={{
+                          fontWeight: 700,
+                          fontSize: '0.75rem',
+                          letterSpacing: '0.5px',
+                        }}
                       />
                     </TableCell>
                     <TableCell>
@@ -238,15 +331,48 @@ const UserManagement: React.FC = () => {
                         label={user.status}
                         color={getStatusColor(user.status)}
                         size="small"
+                        sx={{
+                          fontWeight: 700,
+                          fontSize: '0.75rem',
+                          letterSpacing: '0.5px',
+                        }}
                       />
                     </TableCell>
-                    <TableCell>
-                      <IconButton onClick={() => handleOpenDialog(user)}>
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton onClick={() => handleDelete(user._id)}>
-                        <DeleteIcon />
-                      </IconButton>
+                    <TableCell align="center">
+                      <Stack direction="row" spacing={0.5} justifyContent="center">
+                        <Tooltip title="Edit User">
+                          <IconButton
+                            size="small"
+                            onClick={() => handleOpenDialog(user)}
+                            sx={{
+                              backgroundColor: alpha(theme.palette.info.main, 0.1),
+                              '&:hover': {
+                                backgroundColor: alpha(theme.palette.info.main, 0.2),
+                                transform: 'scale(1.1)',
+                              },
+                              transition: 'all 0.2s',
+                            }}
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Delete User">
+                          <IconButton
+                            size="small"
+                            onClick={() => handleDelete(user._id)}
+                            sx={{
+                              backgroundColor: alpha(theme.palette.error.main, 0.1),
+                              '&:hover': {
+                                backgroundColor: alpha(theme.palette.error.main, 0.2),
+                                transform: 'scale(1.1)',
+                              },
+                              transition: 'all 0.2s',
+                            }}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Stack>
                     </TableCell>
                   </TableRow>
                 ))}

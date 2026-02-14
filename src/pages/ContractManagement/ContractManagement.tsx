@@ -54,6 +54,7 @@ import {
   Person as PersonIcon,
   DirectionsCar as DirectionsCarIcon
 } from '@mui/icons-material';
+import { alpha } from '@mui/material/styles';
 import axios, { AxiosError } from 'axios';
 import { API_CONFIG, getApiUrl } from '../../config/api';
 import moment from 'moment';
@@ -839,49 +840,61 @@ const ContractManagement: React.FC = () => {
                 </Button>
               </Box>
             </Box>
-            <TableContainer>
-              <Table sx={{
-                '& .MuiTableCell-root': {
-                  borderBottom: '1px solid rgba(224, 224, 224, 0.4)',
-                  py: 2,
-                },
-                '& .MuiTableHead-root': {
-                  backgroundColor: theme.palette.primary.light + '15',
-                },
-                '& .MuiTableRow-root': {
-                  '&:hover': {
-                    backgroundColor: theme.palette.action.hover + '40',
-                  },
-                },
-              }}>
+            <TableContainer sx={{ 
+              borderRadius: 3,
+              overflow: 'hidden',
+              boxShadow: `0 1px 3px ${alpha(theme.palette.common.black, 0.1)}`,
+            }}>
+              <Table>
                 <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 'bold', color: theme.palette.primary.main }}>
+                  <TableRow sx={{ background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, ${alpha(theme.palette.secondary.main, 0.05)} 100%)` }}>
+                    <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>
                       Contract Details
                     </TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', color: theme.palette.primary.main }}>
+                    <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>
                       Company
                     </TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', color: theme.palette.primary.main }}>
+                    <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>
                       Vehicle
                     </TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', color: theme.palette.primary.main }}>
+                    <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>
                       Duration
                     </TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', color: theme.palette.primary.main }}>
+                    <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>
                       Value
                     </TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', color: theme.palette.primary.main }}>
+                    <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>
                       Status
                     </TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 'bold', color: theme.palette.primary.main }}>
+                    <TableCell align="right" sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>
                       Actions
                     </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {contracts.map((contract) => (
-                    <TableRow key={contract._id} hover>
+                    <TableRow 
+                      key={contract._id}
+                      sx={{
+                        backgroundColor: 'transparent',
+                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                        borderLeft: '4px solid transparent',
+                        '&:hover': {
+                          backgroundColor: alpha(theme.palette.primary.main, 0.04),
+                          transform: 'translateY(-2px)',
+                          boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.15)}`,
+                          borderLeft: `4px solid ${theme.palette.primary.main}`,
+                        },
+                        '& td': {
+                          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+                          py: 2.5,
+                        },
+                        '&:last-child td': {
+                          borderBottom: 'none',
+                        },
+                        cursor: 'pointer',
+                      }}
+                    >
                       <TableCell>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <Avatar sx={{ 
@@ -960,40 +973,55 @@ const ContractManagement: React.FC = () => {
                         />
                       </TableCell>
                       <TableCell align="right">
-                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-                          <Tooltip title="View Details">
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5 }}>
+                          <Tooltip title="View Details" arrow>
                             <IconButton 
                               size="small" 
                               sx={{ 
                                 color: theme.palette.info.main,
-                                '&:hover': { backgroundColor: theme.palette.info.light + '20' }
+                                backgroundColor: alpha(theme.palette.info.main, 0.1),
+                                '&:hover': { 
+                                  backgroundColor: alpha(theme.palette.info.main, 0.2),
+                                  transform: 'scale(1.1)'
+                                },
+                                transition: 'all 0.2s',
                               }}
                             >
-                              <ViewIcon />
+                              <ViewIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
-                          <Tooltip title="Edit Contract">
+                          <Tooltip title="Edit Contract" arrow>
                             <IconButton 
                               size="small" 
                               onClick={() => handleEditContract(contract)}
                               sx={{ 
                                 color: theme.palette.primary.main,
-                                '&:hover': { backgroundColor: theme.palette.primary.light + '20' }
+                                backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                                '&:hover': { 
+                                  backgroundColor: alpha(theme.palette.primary.main, 0.2),
+                                  transform: 'scale(1.1)'
+                                },
+                                transition: 'all 0.2s',
                               }}
                             >
-                              <EditIcon />
+                              <EditIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
-                          <Tooltip title="Delete Contract">
+                          <Tooltip title="Delete Contract" arrow>
                             <IconButton 
                               size="small" 
                               onClick={() => handleDeleteConfirm(contract._id || '')}
                               sx={{ 
                                 color: theme.palette.error.main,
-                                '&:hover': { backgroundColor: theme.palette.error.light + '20' }
+                                backgroundColor: alpha(theme.palette.error.main, 0.1),
+                                '&:hover': { 
+                                  backgroundColor: alpha(theme.palette.error.main, 0.2),
+                                  transform: 'scale(1.1)'
+                                },
+                                transition: 'all 0.2s',
                               }}
                             >
-                              <DeleteIcon />
+                              <DeleteIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
                         </Box>

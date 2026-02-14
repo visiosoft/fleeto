@@ -36,6 +36,7 @@ const Reports = React.lazy(() => import('./pages/Reports/Reports'));
 const Compliance = React.lazy(() => import('./pages/Compliance/Compliance'));
 const Settings = React.lazy(() => import('./pages/Settings'));
 const CompanySettings = React.lazy(() => import('./pages/CompanySettings/CompanySettings'));
+const FinesSearch = React.lazy(() => import('./pages/FinesSearch/FinesSearch'));
 
 // Beta Invoice Management
 const BetaInvoiceManagement = React.lazy(() => import('./pages/BetaInvoiceManagement/BetaInvoiceManagement'));
@@ -227,6 +228,18 @@ const AppContent: React.FC = () => {
                 handleDrawerToggle={handleDrawerToggle}
               >
                 <Settings />
+              </Navigation>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/fines-search" element={
+            <ProtectedRoute>
+              <Navigation
+                isMobile={isMobile}
+                isDrawerOpen={mobileOpen}
+                handleDrawerToggle={handleDrawerToggle}
+              >
+                <FinesSearch />
               </Navigation>
             </ProtectedRoute>
           } />

@@ -57,11 +57,14 @@ import {
   Timer as TimerIcon,
   LocalHospital as EmergencyIcon,
   WhatsApp as WhatsAppIcon,
+  ChevronLeft as ChevronLeftIcon,
+  ChevronRight as ChevronRightIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 
 const drawerWidth = 240;
+const drawerWidthCollapsed = 65;
 
 interface NavigationProps {
   children: React.ReactNode;
@@ -95,6 +98,7 @@ const MENU_ITEMS: MenuItem[] = [
     path: '/general-notes',
   },
   { text: 'Reports', path: '/reports', icon: <AssessmentIcon /> },
+  { text: 'RTA Fines Search', path: '/fines-search', icon: <GavelIcon /> },
   { text: 'Settings', path: '/settings', icon: <SettingsIcon /> },
 ];
 
@@ -134,6 +138,7 @@ const Navigation: React.FC<NavigationProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [currentTime, setCurrentTime] = useState(new Date());
   const [fleetStatus, setFleetStatus] = useState({ active: 38, total: 50 });
+  const [isCollapsed, setIsCollapsed] = useState(true); // Default collapsed
 
   useEffect(() => {
     // Get company name and logo from localStorage
@@ -181,31 +186,48 @@ const Navigation: React.FC<NavigationProps> = ({
     window.location.href = 'tel:911';
   };
 
+  const handleDrawerCollapse = () => {
+    setIsCollapsed(!isCollapsed);
+  };
+
   const drawer = (
     <div>
-      <Toolbar>
-        <Typography variant="h6" noWrap component="div">
-          {'Fleet Management'}
-        </Typography>
+      <Toolbar sx={{ display: 'flex', justifyContent: isCollapsed ? 'center' : 'space-between', alignItems: 'center' }}>
+        {!isCollapsed && (
+          <Typography variant="h6" noWrap component="div">
+            {'Fleet Management'}
+          </Typography>
+        )}
+        <Tooltip title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"} placement="right">
+          <IconButton onClick={handleDrawerCollapse} size="small">
+            {isCollapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}
+          </IconButton>
+        </Tooltip>
       </Toolbar>
       <Divider />
       <List>
         {MENU_ITEMS.map((item) => (
-          <ListItemButton
-            key={item.text}
-            component={RouterLink}
-            to={item.path}
-            sx={{
-              minHeight: 48,
-              px: 2.5,
-            }}
-            selected={location.pathname === item.path}
-          >
-            <ListItemIcon sx={{ minWidth: 0, mr: 2 }}>
-              {item.icon}
-            </ListItemIcon>
-            <ListItemText primary={item.text} />
-          </ListItemButton>
+          <Tooltip key={item.text} title={isCollapsed ? item.text : ''} placement="right">
+            <ListItemButton
+              component={RouterLink}
+              to={item.path}
+              sx={{
+                minHeight: 48,
+                justifyContent: isCollapsed ? 'center' : 'initial',
+                px: 2.5,
+              }}
+              selected={location.pathname === item.path}
+            >
+              <ListItemIcon sx={{ 
+                minWidth: 0, 
+                mr: isCollapsed ? 0 : 2,
+                justifyContent: 'center'
+              }}>
+                {item.icon}
+              </ListItemIcon>
+              {!isCollapsed && <ListItemText primary={item.text} />}
+            </ListItemButton>
+          </Tooltip>
         ))}
       </List>
     </div>
@@ -470,14 +492,19 @@ const Navigation: React.FC<NavigationProps> = ({
         open={isMobile ? isDrawerOpen : true}
         onClose={handleDrawerToggle}
         sx={{
-          width: drawerWidth,
+          width: isCollapsed ? drawerWidthCollapsed : drawerWidth,
           flexShrink: 0,
           '& .MuiDrawer-paper': {
-            width: drawerWidth,
+            width: isCollapsed ? drawerWidthCollapsed : drawerWidth,
             boxSizing: 'border-box',
             marginTop: '64px',
             height: 'calc(100% - 64px)',
-            border: 'none'
+            border: 'none',
+            transition: (theme) => theme.transitions.create('width', {
+              easing: theme.transitions.easing.sharp,
+              duration: theme.transitions.duration.enteringScreen,
+            }),
+            overflowX: 'hidden',
           },
         }}
       >
@@ -489,11 +516,18 @@ const Navigation: React.FC<NavigationProps> = ({
         sx={{
           flexGrow: 1,
           p: 2,
-          width: { xs: '100%', sm: `calc(100% - ${drawerWidth}px)` },
+          width: { 
+            xs: '100%', 
+            sm: `calc(100% - ${isCollapsed ? drawerWidthCollapsed : drawerWidth}px)` 
+          },
           marginTop: '64px',
           backgroundColor: (theme) => theme.palette.background.default,
           height: 'calc(100vh - 64px)',
           overflow: 'auto',
+          transition: (theme) => theme.transitions.create('width', {
+            easing: theme.transitions.easing.sharp,
+            duration: theme.transitions.duration.enteringScreen,
+          }),
           '& > *': {
             width: '100%',
           }

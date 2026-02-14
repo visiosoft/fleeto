@@ -20,11 +20,21 @@ import {
   TableRow,
   TableCell,
   Paper,
+  Avatar,
+  Stack,
+  Tooltip,
+  Chip,
+  useTheme,
+  alpha,
 } from '@mui/material';
 import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   Add as AddIcon,
+  DirectionsCar as DirectionsCarIcon,
+  Speed as SpeedIcon,
+  Build as MaintenanceIcon,
+  LocalGasStation as FuelIcon,
 } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import moment from 'moment';
@@ -62,6 +72,8 @@ interface VehicleFormValues extends Omit<Vehicle, '_id' | 'lastMaintenance' | 'n
 }
 
 const VehicleManagement: React.FC = () => {
+  const theme = useTheme();
+  const [hoveredRow, setHoveredRow] = useState<string | null>(null);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
@@ -189,37 +201,142 @@ const VehicleManagement: React.FC = () => {
         </Button>
       </Box>
 
-      <TableContainer component={Paper}>
+      <TableContainer component={Paper} sx={{ 
+        borderRadius: 3,
+        overflow: 'hidden',
+        boxShadow: `0 1px 3px ${alpha(theme.palette.common.black, 0.1)}`,
+      }}>
         <Table>
           <TableHead>
-            <TableRow>
-              <TableCell>Make/Model</TableCell>
-              <TableCell>Year</TableCell>
-              <TableCell>License Plate</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Mileage</TableCell>
-              <TableCell>Next Maintenance</TableCell>
-              <TableCell>Actions</TableCell>
+            <TableRow sx={{ background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, ${alpha(theme.palette.secondary.main, 0.05)} 100%)` }}>
+              <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Vehicle Info</TableCell>
+              <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>License Plate</TableCell>
+              <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Status</TableCell>
+              <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Mileage</TableCell>
+              <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Next Maintenance</TableCell>
+              <TableCell align="center" sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {vehicles.map((vehicle) => (
-              <TableRow key={vehicle._id}>
-                <TableCell>{`${vehicle.make} ${vehicle.model}`}</TableCell>
-                <TableCell>{vehicle.year}</TableCell>
-                <TableCell>{vehicle.licensePlate}</TableCell>
-                <TableCell>{vehicle.status}</TableCell>
-                <TableCell>{vehicle.mileage ? vehicle.mileage.toLocaleString() : '0'}</TableCell>
+              <TableRow 
+                key={vehicle._id}
+                onMouseEnter={() => setHoveredRow(vehicle._id)}
+                onMouseLeave={() => setHoveredRow(null)}
+                sx={{
+                  backgroundColor: hoveredRow === vehicle._id 
+                    ? alpha(theme.palette.primary.main, 0.04)
+                    : 'transparent',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  transform: hoveredRow === vehicle._id ? 'translateY(-2px)' : 'translateY(0)',
+                  boxShadow: hoveredRow === vehicle._id 
+                    ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.15)}`
+                    : 'none',
+                  borderLeft: hoveredRow === vehicle._id 
+                    ? `4px solid ${theme.palette.primary.main}`
+                    : '4px solid transparent',
+                  '& td': {
+                    borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+                    py: 2.5,
+                  },
+                  '&:last-child td': {
+                    borderBottom: 'none',
+                  },
+                  cursor: 'pointer',
+                }}
+              >
                 <TableCell>
-                  {vehicle.nextMaintenance ? moment(vehicle.nextMaintenance).format('MM/DD/YYYY') : 'Not scheduled'}
+                  <Stack spacing={0.5}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Avatar 
+                        sx={{ 
+                          width: 40, 
+                          height: 40,
+                          background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+                          boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.3)}`,
+                        }}
+                      >
+                        <DirectionsCarIcon sx={{ fontSize: 20 }} />
+                      </Avatar>
+                      <Box>
+                        <Typography variant="body2" fontWeight={700}>
+                          {`${vehicle.make} ${vehicle.model}`}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {vehicle.year} • {vehicle.fuelType}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Stack>
                 </TableCell>
                 <TableCell>
-                  <IconButton onClick={() => handleEdit(vehicle)} size="small">
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton onClick={() => handleDelete(vehicle._id)} size="small" color="error">
-                    <DeleteIcon />
-                  </IconButton>
+                  <Typography variant="body2" fontWeight={600} sx={{ fontFamily: 'monospace' }}>
+                    {vehicle.licensePlate}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Chip
+                    label={vehicle.status}
+                    color={vehicle.status === 'Active' ? 'success' : vehicle.status === 'Maintenance' ? 'warning' : 'error'}
+                    size="small"
+                    sx={{
+                      fontWeight: 700,
+                      fontSize: '0.75rem',
+                      letterSpacing: '0.5px',
+                    }}
+                  />
+                </TableCell>
+                <TableCell>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <SpeedIcon sx={{ fontSize: 16, color: theme.palette.info.main }} />
+                    <Typography variant="body2">
+                      {vehicle.mileage ? vehicle.mileage.toLocaleString() : '0'} km
+                    </Typography>
+                  </Box>
+                </TableCell>
+                <TableCell>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <MaintenanceIcon sx={{ fontSize: 16, color: vehicle.nextMaintenance ? theme.palette.warning.main : theme.palette.text.disabled }} />
+                    <Typography variant="body2" color={vehicle.nextMaintenance ? 'text.primary' : 'text.secondary'}>
+                      {vehicle.nextMaintenance ? moment(vehicle.nextMaintenance).format('MM/DD/YYYY') : 'Not scheduled'}
+                    </Typography>
+                  </Box>
+                </TableCell>
+                <TableCell align="center">
+                  <Stack direction="row" spacing={0.5} justifyContent="center">
+                    <Tooltip title="Edit Vehicle">
+                      <IconButton
+                        size="small"
+                        onClick={() => handleEdit(vehicle)}
+                        sx={{
+                          backgroundColor: alpha(theme.palette.info.main, 0.1),
+                          '&:hover': {
+                            backgroundColor: alpha(theme.palette.info.main, 0.2),
+                            transform: 'scale(1.1)',
+                          },
+                          transition: 'all 0.2s',
+                        }}
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Delete Vehicle">
+                      <IconButton
+                        size="small"
+                        onClick={() => handleDelete(vehicle._id)}
+                        sx={{
+                          backgroundColor: alpha(theme.palette.error.main, 0.1),
+                          '&:hover': {
+                            backgroundColor: alpha(theme.palette.error.main, 0.2),
+                            transform: 'scale(1.1)',
+                          },
+                          transition: 'all 0.2s',
+                        }}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </Stack>
                 </TableCell>
               </TableRow>
             ))}

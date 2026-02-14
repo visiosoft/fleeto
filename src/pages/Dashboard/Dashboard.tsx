@@ -1142,15 +1142,25 @@ const Dashboard: React.FC = () => {
                     boxShadow: 4,
                   }
                 }}
-                onClick={() => navigate('/letterheads')}
+                onClick={() => window.open('https://ums.rta.ae/violations/public-fines/fines-search', '_blank', 'noopener,noreferrer')}
               >
                 <CardContent sx={{ textAlign: 'center', py: 4 }}>
-                  <ArticleIcon sx={{ fontSize: 48, color: theme.palette.primary.main, mb: 2 }} />
+                  <Box
+                    component="img"
+                    src="/rta_dubai.png"
+                    alt="RTA Dubai"
+                    sx={{ 
+                      width: 64, 
+                      height: 64, 
+                      mb: 2,
+                      objectFit: 'contain'
+                    }}
+                  />
                   <Typography variant="h6" gutterBottom>
-                   Create Letterhead
+                   RTA Fine Search
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Manage letterheads
+                    Manage RTA Fines for (51563245)
                   </Typography>
                 </CardContent>
               </Card>

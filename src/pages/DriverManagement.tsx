@@ -25,11 +25,21 @@ import {
   TableRow,
   TableCell,
   Paper,
+  Avatar,
+  Stack,
+  Tooltip,
+  useTheme,
+  alpha,
 } from '@mui/material';
 import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   Add as AddIcon,
+  Person as PersonIcon,
+  Badge as BadgeIcon,
+  Phone as PhoneIcon,
+  CalendarToday as CalendarIcon,
+  LocationOn as LocationIcon,
 } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -57,6 +67,8 @@ interface DriverFormValues extends Omit<Driver, '_id' | 'licenseExpiry'> {
 }
 
 const DriverManagement: React.FC = () => {
+  const theme = useTheme();
+  const [hoveredRow, setHoveredRow] = useState<string | null>(null);
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDriver, setEditingDriver] = useState<Driver | null>(null);
@@ -181,41 +193,152 @@ const DriverManagement: React.FC = () => {
         </Button>
       </Box>
 
-      <TableContainer component={Paper}>
+      <TableContainer component={Paper} sx={{ 
+        borderRadius: 3,
+        overflow: 'hidden',
+        boxShadow: `0 1px 3px ${alpha(theme.palette.common.black, 0.1)}`,
+      }}>
         <Table>
           <TableHead>
-            <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell>License Number</TableCell>
-              <TableCell>License State</TableCell>
-              <TableCell>License Expiry</TableCell>
-              <TableCell>Contact</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Actions</TableCell>
+            <TableRow sx={{ background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, ${alpha(theme.palette.secondary.main, 0.05)} 100%)` }}>
+              <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Driver Info</TableCell>
+              <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>License Details</TableCell>
+              <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Contact</TableCell>
+              <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Status</TableCell>
+              <TableCell align="center" sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {drivers.map((driver) => (
-              <TableRow key={driver._id}>
-                <TableCell>{`${driver.firstName} ${driver.lastName}`}</TableCell>
-                <TableCell>{driver.licenseNumber}</TableCell>
-                <TableCell>{driver.licenseState}</TableCell>
-                <TableCell>{moment(driver.licenseExpiry).format('YYYY-MM-DD')}</TableCell>
-                <TableCell>{driver.contact}</TableCell>
+              <TableRow 
+                key={driver._id}
+                onMouseEnter={() => setHoveredRow(driver._id)}
+                onMouseLeave={() => setHoveredRow(null)}
+                sx={{
+                  backgroundColor: hoveredRow === driver._id 
+                    ? alpha(theme.palette.primary.main, 0.04)
+                    : 'transparent',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  transform: hoveredRow === driver._id ? 'translateY(-2px)' : 'translateY(0)',
+                  boxShadow: hoveredRow === driver._id 
+                    ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.15)}`
+                    : 'none',
+                  borderLeft: hoveredRow === driver._id 
+                    ? `4px solid ${theme.palette.primary.main}`
+                    : '4px solid transparent',
+                  '& td': {
+                    borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+                    py: 2.5,
+                  },
+                  '&:last-child td': {
+                    borderBottom: 'none',
+                  },
+                  cursor: 'pointer',
+                }}
+              >
+                <TableCell>
+                  <Stack spacing={0.5}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Avatar 
+                        sx={{ 
+                          width: 40, 
+                          height: 40,
+                          background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+                          boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.3)}`,
+                        }}
+                      >
+                        <PersonIcon sx={{ fontSize: 20 }} />
+                      </Avatar>
+                      <Box>
+                        <Typography variant="body2" fontWeight={700}>
+                          {`${driver.firstName} ${driver.lastName}`}
+                        </Typography>
+                        {driver.address && (
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+                            <LocationIcon sx={{ fontSize: 12, color: theme.palette.text.disabled }} />
+                            <Typography variant="caption" color="text.secondary" noWrap sx={{ maxWidth: 200 }}>
+                              {driver.address}
+                            </Typography>
+                          </Box>
+                        )}
+                      </Box>
+                    </Box>
+                  </Stack>
+                </TableCell>
+                <TableCell>
+                  <Stack spacing={0.5}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <BadgeIcon sx={{ fontSize: 14, color: theme.palette.info.main }} />
+                      <Typography variant="body2" fontWeight={600} sx={{ fontFamily: 'monospace' }}>
+                        {driver.licenseNumber}
+                      </Typography>
+                    </Box>
+                    <Typography variant="caption" color="text.secondary">
+                      {driver.licenseState}
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <CalendarIcon sx={{ fontSize: 12, color: theme.palette.text.secondary }} />
+                      <Typography variant="caption" color="text.secondary">
+                        Expires: {moment(driver.licenseExpiry).format('MMM DD, YYYY')}
+                      </Typography>
+                    </Box>
+                  </Stack>
+                </TableCell>
+                <TableCell>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <PhoneIcon sx={{ fontSize: 16, color: theme.palette.success.main }} />
+                    <Typography variant="body2">
+                      {driver.contact}
+                    </Typography>
+                  </Box>
+                </TableCell>
                 <TableCell>
                   <Chip 
                     label={driver.status} 
                     color={driver.status === 'active' ? 'success' : 'default'}
                     size="small"
+                    sx={{
+                      fontWeight: 700,
+                      fontSize: '0.75rem',
+                      letterSpacing: '0.5px',
+                    }}
                   />
                 </TableCell>
-                <TableCell>
-                  <IconButton onClick={() => handleEdit(driver)} color="primary">
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton onClick={() => handleDelete(driver._id)} color="error">
-                    <DeleteIcon />
-                  </IconButton>
+                <TableCell align="center">
+                  <Stack direction="row" spacing={0.5} justifyContent="center">
+                    <Tooltip title="Edit Driver">
+                      <IconButton
+                        size="small"
+                        onClick={() => handleEdit(driver)}
+                        sx={{
+                          backgroundColor: alpha(theme.palette.info.main, 0.1),
+                          '&:hover': {
+                            backgroundColor: alpha(theme.palette.info.main, 0.2),
+                            transform: 'scale(1.1)',
+                          },
+                          transition: 'all 0.2s',
+                        }}
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Delete Driver">
+                      <IconButton
+                        size="small"
+                        onClick={() => handleDelete(driver._id)}
+                        sx={{
+                          backgroundColor: alpha(theme.palette.error.main, 0.1),
+                          '&:hover': {
+                            backgroundColor: alpha(theme.palette.error.main, 0.2),
+                            transform: 'scale(1.1)',
+                          },
+                          transition: 'all 0.2s',
+                        }}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </Stack>
                 </TableCell>
               </TableRow>
             ))}
