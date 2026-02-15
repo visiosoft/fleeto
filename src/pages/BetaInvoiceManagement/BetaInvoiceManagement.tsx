@@ -143,7 +143,7 @@ const BetaInvoiceManagement: React.FC = () => {
                         color: '#111827',
                     }}
                 >
-                    Beta Invoice Management
+                    Invoice Management
                 </Typography>
                 <Button
                     variant="contained"

@@ -178,7 +178,56 @@ router.delete('/:id/documents/:documentId', authorize('admin'), vehicleControlle
 
 // New document upload routes with file handling
 router.post('/:id/upload-document', authorize('admin', 'manager'), upload.single('document'), vehicleController.uploadDocument);
+
+/**
+ * @swagger
+ * /api/vehicles/{id}/get-documents:
+ *   get:
+ *     summary: Get all documents for a vehicle
+ *     tags: [Vehicles]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Vehicle ID
+ *     responses:
+ *       200:
+ *         description: List of vehicle documents
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       _id:
+ *                         type: string
+ *                       name:
+ *                         type: string
+ *                       type:
+ *                         type: string
+ *                       filename:
+ *                         type: string
+ *                       uploadDate:
+ *                         type: string
+ *                         format: date-time
+ *       404:
+ *         description: Vehicle not found
+ *       500:
+ *         description: Server error
+ */
 router.get('/:id/get-documents', vehicleController.getDocuments);
+
 router.delete('/:id/delete-document/:documentId', authorize('admin', 'manager'), vehicleController.deleteDocument);
 // Authenticated file serving
 router.get('/file/:vehicleId/:filename', vehicleController.serveDocument);

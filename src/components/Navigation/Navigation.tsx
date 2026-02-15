@@ -63,6 +63,7 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import Breadcrumbs from '../Breadcrumbs';
 
 const drawerWidth = 240;
 const drawerWidthCollapsed = 65;
@@ -538,7 +539,8 @@ const Navigation: React.FC<NavigationProps> = ({
         component="main"
         sx={{
           flexGrow: 1,
-          p: 2,
+          p: 3,
+          pt: 2,
           width: { 
             xs: '100%', 
             sm: `calc(100% - ${isCollapsed ? drawerWidthCollapsed : drawerWidth}px)` 
@@ -551,12 +553,15 @@ const Navigation: React.FC<NavigationProps> = ({
             easing: theme.transitions.easing.sharp,
             duration: theme.transitions.duration.enteringScreen,
           }),
-          '& > *': {
-            width: '100%',
-          }
         }}
       >
-        {children}
+        {/* Breadcrumbs */}
+        <Breadcrumbs />
+        
+        {/* Page Content */}
+        <Box sx={{ width: '100%' }}>
+          {children}
+        </Box>
       </Box>
     </Box>
   );

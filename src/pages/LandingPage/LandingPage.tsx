@@ -113,7 +113,7 @@ const LandingPage: React.FC = () => {
 
   return (
     <Box sx={{ 
-      bgcolor: '#F5F7FA', 
+      bgcolor: '#fff', 
       overflow: 'hidden',
       width: '100%',
       maxWidth: '100vw',
