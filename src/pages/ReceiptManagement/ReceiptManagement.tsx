@@ -15,6 +15,7 @@ import { useNavigate } from 'react-router-dom';
 import { Receipt } from '../../types/api';
 import ReceiptList from './components/ReceiptList';
 import ReceiptService from '../../services/ReceiptService';
+import TableToolbar from '../../components/TableToolbar';
 
 const ReceiptManagement: React.FC = () => {
   const navigate = useNavigate();
@@ -24,6 +25,8 @@ const ReceiptManagement: React.FC = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [limit] = useState(10);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('paymentDate');
 
   useEffect(() => {
     fetchReceipts();
@@ -69,6 +72,54 @@ const ReceiptManagement: React.FC = () => {
     setPage(value);
   };
 
+  // Sort options
+  const sortOptions = [
+    { value: 'paymentDate', label: 'Payment Date (Newest)' },
+    { value: 'amount', label: 'Amount' },
+    { value: 'referenceNumber', label: 'Reference Number' },
+    { value: 'clientName', label: 'Client Name (A-Z)' },
+    { value: 'status', label: 'Status' },
+    { value: 'paymentMethod', label: 'Payment Method' },
+  ];
+
+  // Filter and sort receipts
+  const filteredAndSortedReceipts = React.useMemo(() => {
+    let filtered = receipts;
+    
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = receipts.filter(receipt =>
+        receipt.referenceNumber?.toLowerCase().includes(query) ||
+        receipt.clientName?.toLowerCase().includes(query) ||
+        receipt.clientEmail?.toLowerCase().includes(query) ||
+        receipt.status?.toLowerCase().includes(query) ||
+        receipt.paymentMethod?.toLowerCase().includes(query) ||
+        receipt.amount?.toString().includes(query) ||
+        receipt.notes?.toLowerCase().includes(query)
+      );
+    }
+    
+    const sorted = [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case 'referenceNumber':
+          return (a.referenceNumber || '').localeCompare(b.referenceNumber || '');
+        case 'clientName':
+          return (a.clientName || '').localeCompare(b.clientName || '');
+        case 'status':
+          return (a.status || '').localeCompare(b.status || '');
+        case 'paymentMethod':
+          return (a.paymentMethod || '').localeCompare(b.paymentMethod || '');
+        case 'amount':
+          return (b.amount || 0) - (a.amount || 0); // Descending
+        case 'paymentDate':
+        default:
+          return new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime(); // Newest first
+      }
+    });
+    
+    return sorted;
+  }, [receipts, searchQuery, sortBy]);
+
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
@@ -91,14 +142,24 @@ const ReceiptManagement: React.FC = () => {
         </Alert>
       )}
 
+      <TableToolbar
+        searchValue={searchQuery}
+        onSearchChange={(value) => setSearchQuery(value)}
+        sortValue={sortBy}
+        onSortChange={(value) => setSortBy(value)}
+        sortOptions={sortOptions}
+        searchPlaceholder="Search receipts..."
+        sortLabel="Sort By"
+      />
+
             {loading ? (
               <Box sx={{ p: 3, textAlign: 'center' }}>
                 <LinearProgress />
               </Box>
             ) : (
               <>
-                <ReceiptList receipts={receipts} onRefresh={fetchReceipts} />
-                {receipts.length > 0 && (
+                <ReceiptList receipts={filteredAndSortedReceipts} onRefresh={fetchReceipts} />
+                {filteredAndSortedReceipts.length > 0 && (
                   <Box display="flex" justifyContent="center" mt={2}>
                     <Pagination
                       count={totalPages}

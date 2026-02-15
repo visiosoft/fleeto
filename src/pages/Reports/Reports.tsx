@@ -23,7 +23,7 @@ import {
   LocalGasStation as FuelIcon,
   Build as MaintenanceIcon,
   MonetizationOn as CostIcon,
-  Description as ContractIcon,
+  Gavel as ContractIcon,
   Download as DownloadIcon,
   Print as PrintIcon,
   PictureAsPdf as PdfIcon,

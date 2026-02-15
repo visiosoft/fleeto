@@ -50,6 +50,7 @@ import type { Moment } from 'moment';
 import axios from 'axios';
 import { API_CONFIG, getApiUrl } from '../config/api';
 import DriverDocuments from '../components/DriverDocuments';
+import TableToolbar from '../components/TableToolbar';
 
 interface Driver {
   _id: string;
@@ -77,6 +78,8 @@ const DriverManagement: React.FC = () => {
   const [formValues, setFormValues] = useState<Partial<DriverFormValues>>({});
   const [documentsDialogOpen, setDocumentsDialogOpen] = useState(false);
   const [selectedDriverId, setSelectedDriverId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('firstName');
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
     open: false,
     message: '',
@@ -184,6 +187,55 @@ const DriverManagement: React.FC = () => {
     setFormValues({});
   };
 
+  // Sort options for drivers
+  const sortOptions = [
+    { value: 'firstName', label: 'First Name (A-Z)' },
+    { value: 'lastName', label: 'Last Name (A-Z)' },
+    { value: 'licenseNumber', label: 'License Number' },
+    { value: 'status', label: 'Status' },
+    { value: 'licenseExpiry', label: 'License Expiry' },
+  ];
+
+  // Filter and sort drivers
+  const filteredAndSortedDrivers = React.useMemo(() => {
+    let filtered = drivers;
+
+    // Apply search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = drivers.filter(driver =>
+        driver.firstName?.toLowerCase().includes(query) ||
+        driver.lastName?.toLowerCase().includes(query) ||
+        driver.licenseNumber?.toLowerCase().includes(query) ||
+        driver.contact?.toLowerCase().includes(query) ||
+        driver.address?.toLowerCase().includes(query) ||
+        driver.status?.toLowerCase().includes(query)
+      );
+    }
+
+    // Apply sorting
+    const sorted = [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case 'firstName':
+          return (a.firstName || '').localeCompare(b.firstName || '');
+        case 'lastName':
+          return (a.lastName || '').localeCompare(b.lastName || '');
+        case 'licenseNumber':
+          return (a.licenseNumber || '').localeCompare(b.licenseNumber || '');
+        case 'status':
+          return (a.status || '').localeCompare(b.status || '');
+        case 'licenseExpiry':
+          const dateA = a.licenseExpiry ? moment(a.licenseExpiry).valueOf() : 0;
+          const dateB = b.licenseExpiry ? moment(b.licenseExpiry).valueOf() : 0;
+          return dateA - dateB;
+        default:
+          return 0;
+      }
+    });
+
+    return sorted;
+  }, [drivers, searchQuery, sortBy]);
+
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
@@ -196,6 +248,15 @@ const DriverManagement: React.FC = () => {
           Add Driver
         </Button>
       </Box>
+
+      <TableToolbar
+        searchValue={searchQuery}
+        onSearchChange={setSearchQuery}
+        searchPlaceholder="Search drivers by name, license, contact..."
+        sortValue={sortBy}
+        onSortChange={setSortBy}
+        sortOptions={sortOptions}
+      />
 
       <TableContainer component={Paper} sx={{ 
         borderRadius: 3,
@@ -213,7 +274,7 @@ const DriverManagement: React.FC = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {drivers.map((driver) => (
+            {filteredAndSortedDrivers.map((driver) => (
               <TableRow 
                 key={driver._id}
                 onMouseEnter={() => setHoveredRow(driver._id)}

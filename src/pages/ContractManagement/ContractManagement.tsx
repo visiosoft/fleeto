@@ -60,6 +60,7 @@ import { API_CONFIG, getApiUrl } from '../../config/api';
 import moment from 'moment';
 import ContractTemplateEditor, { Vehicle as EditorVehicle } from '../../components/ContractTemplate/ContractTemplateEditor';
 import { Contract } from '../../types';
+import TableToolbar from '../../components/TableToolbar';
 
 const CONTRACT_STATUSES = [
   'Active',
@@ -205,6 +206,8 @@ const ContractManagement: React.FC = () => {
     message: '',
     severity: 'success' as 'success' | 'error' | 'info' | 'warning'
   });
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('startDate');
   const [vehicles, setVehicles] = useState<EditorVehicle[]>([]);
   const [templateEditorOpen, setTemplateEditorOpen] = useState(false);
   const [selectedContract, setSelectedContract] = useState<ContractFormData | null>(null);
@@ -732,6 +735,55 @@ const ContractManagement: React.FC = () => {
     </Grid>
   );
 
+  // Sort options
+  const sortOptions = [
+    { value: 'startDate', label: 'Start Date (Newest)' },
+    { value: 'endDate', label: 'End Date' },
+    { value: 'companyName', label: 'Company Name (A-Z)' },
+    { value: 'status', label: 'Status' },
+    { value: 'value', label: 'Contract Value' },
+    { value: 'contractType', label: 'Contract Type' },
+  ];
+
+  // Filter and sort contracts
+  const filteredAndSortedContracts = React.useMemo(() => {
+    let filtered = contracts;
+    
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = contracts.filter(contract =>
+        contract.companyName?.toLowerCase().includes(query) ||
+        contract.contactPerson?.toLowerCase().includes(query) ||
+        contract.contactEmail?.toLowerCase().includes(query) ||
+        contract.contactPhone?.toLowerCase().includes(query) ||
+        contract.status?.toLowerCase().includes(query) ||
+        contract.tradeLicenseNo?.toLowerCase().includes(query) ||
+        contract.contractType?.toLowerCase().includes(query) ||
+        contract.notes?.toLowerCase().includes(query)
+      );
+    }
+    
+    const sorted = [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case 'companyName':
+          return (a.companyName || '').localeCompare(b.companyName || '');
+        case 'contractType':
+          return (a.contractType || '').localeCompare(b.contractType || '');
+        case 'status':
+          return (a.status || '').localeCompare(b.status || '');
+        case 'value':
+          return (b.value || 0) - (a.value || 0); // Descending
+        case 'endDate':
+          return new Date(a.endDate).getTime() - new Date(b.endDate).getTime();
+        case 'startDate':
+        default:
+          return new Date(b.startDate).getTime() - new Date(a.startDate).getTime(); // Newest first
+      }
+    });
+    
+    return sorted;
+  }, [contracts, searchQuery, sortBy]);
+
   if (isLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
@@ -840,6 +892,15 @@ const ContractManagement: React.FC = () => {
                 </Button>
               </Box>
             </Box>
+            <TableToolbar
+              searchValue={searchQuery}
+              onSearchChange={(value) => setSearchQuery(value)}
+              sortValue={sortBy}
+              onSortChange={(value) => setSortBy(value)}
+              sortOptions={sortOptions}
+              searchPlaceholder="Search contracts..."
+              sortLabel="Sort By"
+            />
             <TableContainer sx={{ 
               borderRadius: 3,
               overflow: 'hidden',
@@ -872,7 +933,7 @@ const ContractManagement: React.FC = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {contracts.map((contract) => (
+                  {filteredAndSortedContracts.map((contract) => (
                     <TableRow 
                       key={contract._id}
                       sx={{

@@ -47,7 +47,7 @@ import {
   CalendarToday as CalendarIcon,
   MonetizationOn as MoneyIcon,
   Visibility as ViewIcon,
-  Assignment as ContractIcon,
+  Gavel as ContractIcon,
   CheckCircle as ActiveIcon,
   Warning as ExpiringIcon,
 } from '@mui/icons-material';
@@ -56,6 +56,7 @@ import axios, { AxiosError } from 'axios';
 import moment from 'moment';
 import ContractTemplateEditor, { Vehicle as EditorVehicle } from '../components/ContractTemplate/ContractTemplateEditor';
 import { useNavigate } from 'react-router-dom';
+import TableToolbar from '../components/TableToolbar';
 
 const CONTRACT_STATUSES = [
   'Active',
@@ -145,6 +146,8 @@ const ContractManagement: React.FC = () => {
     content: ''
   });
   const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('startDate');
 
   useEffect(() => {
     fetchContracts();
@@ -697,6 +700,53 @@ const ContractManagement: React.FC = () => {
     </TableCell>
   );
 
+  // Sort options
+  const sortOptions = [
+    { value: 'startDate', label: 'Start Date (Newest)' },
+    { value: 'endDate', label: 'End Date' },
+    { value: 'companyName', label: 'Company Name (A-Z)' },
+    { value: 'status', label: 'Status' },
+    { value: 'value', label: 'Contract Value' },
+    { value: 'contractType', label: 'Contract Type' },
+  ];
+
+  // Filter and sort contracts
+  const filteredAndSortedContracts = React.useMemo(() => {
+    let filtered = contracts;
+    
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = contracts.filter(contract =>
+        contract.companyName?.toLowerCase().includes(query) ||
+        contract.contactPerson?.toLowerCase().includes(query) ||
+        contract.status?.toLowerCase().includes(query) ||
+        contract.contractType?.toLowerCase().includes(query) ||
+        contract.notes?.toLowerCase().includes(query) ||
+        contract.tradeLicenseNo?.toLowerCase().includes(query)
+      );
+    }
+    
+    const sorted = [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case 'companyName':
+          return (a.companyName || '').localeCompare(b.companyName || '');
+        case 'contractType':
+          return (a.contractType || '').localeCompare(b.contractType || '');
+        case 'status':
+          return (a.status || '').localeCompare(b.status || '');
+        case 'value':
+          return (b.value || 0) - (a.value || 0); // Descending
+        case 'endDate':
+          return new Date(a.endDate).getTime() - new Date(b.endDate).getTime();
+        case 'startDate':
+        default:
+          return new Date(b.startDate).getTime() - new Date(a.startDate).getTime(); // Newest first
+      }
+    });
+    
+    return sorted;
+  }, [contracts, searchQuery, sortBy]);
+
   return (
     <Box>
       <Typography variant="h4" gutterBottom>
@@ -1089,6 +1139,16 @@ const ContractManagement: React.FC = () => {
           </Button>
         </Box>
 
+        <TableToolbar
+          searchValue={searchQuery}
+          onSearchChange={(value) => setSearchQuery(value)}
+          sortValue={sortBy}
+          onSortChange={(value) => setSortBy(value)}
+          sortOptions={sortOptions}
+          searchPlaceholder="Search contracts..."
+          sortLabel="Sort By"
+        />
+
         {isLoading ? (
           <LinearProgress />
         ) : (
@@ -1109,7 +1169,7 @@ const ContractManagement: React.FC = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {contracts.map((contract) => {
+                {filteredAndSortedContracts.map((contract) => {
                   const vehicle = vehicles.find(v => v._id === contract.vehicleId);
                   const vehicleDisplay = contract.vehicleId 
                     ? (vehicle 

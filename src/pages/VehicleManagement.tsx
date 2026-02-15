@@ -45,6 +45,7 @@ import type { Moment } from 'moment';
 import axios from 'axios';
 import { API_CONFIG, getApiUrl } from '../config/api';
 import VehicleDocuments from '../components/VehicleDocuments';
+import TableToolbar from '../components/TableToolbar';
 
 interface Vehicle {
   _id: string;
@@ -88,6 +89,8 @@ const VehicleManagement: React.FC = () => {
   const [vehicleToDelete, setVehicleToDelete] = useState<string | null>(null);
   const [documentsDialogOpen, setDocumentsDialogOpen] = useState(false);
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('make');
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
     open: false,
     message: '',
@@ -229,6 +232,58 @@ const VehicleManagement: React.FC = () => {
     setEditingVehicle(null);
   };
 
+  // Sort options for vehicles
+  const sortOptions = [
+    { value: 'make', label: 'Make (A-Z)' },
+    { value: 'model', label: 'Model (A-Z)' },
+    { value: 'year', label: 'Year (Newest)' },
+    { value: 'licensePlate', label: 'License Plate' },
+    { value: 'status', label: 'Status' },
+    { value: 'expiryDate', label: 'Expiry Date' },
+  ];
+
+  // Filter and sort vehicles
+  const filteredAndSortedVehicles = React.useMemo(() => {
+    let filtered = vehicles;
+
+    // Apply search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = vehicles.filter(vehicle =>
+        vehicle.make?.toLowerCase().includes(query) ||
+        vehicle.model?.toLowerCase().includes(query) ||
+        vehicle.licensePlate?.toLowerCase().includes(query) ||
+        vehicle.vin?.toLowerCase().includes(query) ||
+        vehicle.status?.toLowerCase().includes(query) ||
+        vehicle.assignedDriver?.toLowerCase().includes(query)
+      );
+    }
+
+    // Apply sorting
+    const sorted = [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case 'make':
+          return (a.make || '').localeCompare(b.make || '');
+        case 'model':
+          return (a.model || '').localeCompare(b.model || '');
+        case 'year':
+          return (b.year || 0) - (a.year || 0);
+        case 'licensePlate':
+          return (a.licensePlate || '').localeCompare(b.licensePlate || '');
+        case 'status':
+          return (a.status || '').localeCompare(b.status || '');
+        case 'expiryDate':
+          const dateA = a.expiryDate ? moment(a.expiryDate).valueOf() : 0;
+          const dateB = b.expiryDate ? moment(b.expiryDate).valueOf() : 0;
+          return dateA - dateB;
+        default:
+          return 0;
+      }
+    });
+
+    return sorted;
+  }, [vehicles, searchQuery, sortBy]);
+
   return (
     <Box p={3}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
@@ -242,6 +297,15 @@ const VehicleManagement: React.FC = () => {
           Add Vehicle
         </Button>
       </Box>
+
+      <TableToolbar
+        searchValue={searchQuery}
+        onSearchChange={setSearchQuery}
+        searchPlaceholder="Search vehicles by make, model, license plate..."
+        sortValue={sortBy}
+        onSortChange={setSortBy}
+        sortOptions={sortOptions}
+      />
 
       <TableContainer component={Paper} sx={{ 
         borderRadius: 3,
@@ -260,7 +324,7 @@ const VehicleManagement: React.FC = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {vehicles.map((vehicle, index) => {
+            {filteredAndSortedVehicles.map((vehicle, index) => {
               const expiryDate = vehicle.expiryDate ? moment(vehicle.expiryDate).add(1, 'month') : null;
               const daysUntilExpiry = expiryDate ? expiryDate.diff(moment(), 'days') : null;
               const monthsUntilExpiry = expiryDate ? expiryDate.diff(moment(), 'months') : null;
