@@ -40,6 +40,7 @@ import {
   Phone as PhoneIcon,
   CalendarToday as CalendarIcon,
   LocationOn as LocationIcon,
+  AttachFile as AttachFileIcon,
 } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -48,6 +49,7 @@ import moment from 'moment';
 import type { Moment } from 'moment';
 import axios from 'axios';
 import { API_CONFIG, getApiUrl } from '../config/api';
+import DriverDocuments from '../components/DriverDocuments';
 
 interface Driver {
   _id: string;
@@ -73,6 +75,8 @@ const DriverManagement: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDriver, setEditingDriver] = useState<Driver | null>(null);
   const [formValues, setFormValues] = useState<Partial<DriverFormValues>>({});
+  const [documentsDialogOpen, setDocumentsDialogOpen] = useState(false);
+  const [selectedDriverId, setSelectedDriverId] = useState<string | null>(null);
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
     open: false,
     message: '',
@@ -322,6 +326,25 @@ const DriverManagement: React.FC = () => {
                         <EditIcon fontSize="small" />
                       </IconButton>
                     </Tooltip>
+                    <Tooltip title="Documents">
+                      <IconButton
+                        size="small"
+                        onClick={() => {
+                          setSelectedDriverId(driver._id);
+                          setDocumentsDialogOpen(true);
+                        }}
+                        sx={{
+                          backgroundColor: alpha(theme.palette.success.main, 0.1),
+                          '&:hover': {
+                            backgroundColor: alpha(theme.palette.success.main, 0.2),
+                            transform: 'scale(1.1)',
+                          },
+                          transition: 'all 0.2s',
+                        }}
+                      >
+                        <AttachFileIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
                     <Tooltip title="Delete Driver">
                       <IconButton
                         size="small"
@@ -471,6 +494,18 @@ const DriverManagement: React.FC = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
+
+      {/* Driver Documents Dialog */}
+      {selectedDriverId && (
+        <DriverDocuments
+          driverId={selectedDriverId}
+          open={documentsDialogOpen}
+          onClose={() => {
+            setDocumentsDialogOpen(false);
+            setSelectedDriverId(null);
+          }}
+        />
+      )}
     </Box>
   );
 };

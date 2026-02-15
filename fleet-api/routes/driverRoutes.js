@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const driverController = require('../controllers/driverController');
 const { authenticate } = require('../middleware/auth');
+const uploadDriver = require('../middleware/uploadDriver');
 
 /**
  * Driver API Routes
@@ -29,5 +30,12 @@ router.put('/:id', driverController.updateDriver);
 
 // DELETE /api/drivers/:id - Delete a driver
 router.delete('/:id', driverController.deleteDriver);
+
+// Document management routes
+router.post('/:id/upload-document', uploadDriver.single('document'), driverController.uploadDocument);
+router.get('/:id/get-documents', driverController.getDocuments);
+router.delete('/:id/delete-document/:documentId', driverController.deleteDocument);
+// Authenticated file serving
+router.get('/file/:driverId/:filename', driverController.serveDocument);
 
 module.exports = router; 
