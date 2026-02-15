@@ -104,12 +104,22 @@ const VehicleController = {
     const allowedUpdates = [
       'make', 'model', 'year', 'licensePlate', 'vin',
       'type', 'status', 'mileage', 'lastService',
-      'nextServiceDue', 'fuelType', 'fuelCapacity'
+      'nextServiceDue', 'fuelType', 'fuelCapacity',
+      'lastMaintenance', 'nextMaintenance', 'expiryDate',
+      'assignedDriver', 'insuranceInfo', 'notes',
+      'registrationExpiry', 'currentMileage', 'lastServiceDate'
     ];
     const isValidOperation = updates.every(update => allowedUpdates.includes(update));
 
     if (!isValidOperation) {
-      return res.status(400).json({ message: 'Invalid updates' });
+      const invalidFields = updates.filter(update => !allowedUpdates.includes(update));
+      console.error('Invalid update fields:', invalidFields);
+      console.error('Received fields:', updates);
+      return res.status(400).json({ 
+        message: 'Invalid updates',
+        invalidFields: invalidFields,
+        receivedFields: updates
+      });
     }
 
     try {

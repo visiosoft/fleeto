@@ -8,6 +8,7 @@ export interface Vehicle {
   vin: string;
   licensePlate: string;
   registrationExpiry: string;
+  expiryDate?: string;
   status: 'active' | 'maintenance' | 'inactive';
   currentDriver?: string;
   fuelType: string;

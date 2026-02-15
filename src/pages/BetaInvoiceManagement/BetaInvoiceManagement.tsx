@@ -85,14 +85,36 @@ const BetaInvoiceManagement: React.FC = () => {
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
-                <Typography variant="h4" component="h1">
+                <Typography 
+                    variant="h4" 
+                    component="h1"
+                    sx={{
+                        fontSize: '28px',
+                        fontWeight: 600,
+                        color: '#111827',
+                    }}
+                >
                     Beta Invoice Management
                 </Typography>
                 <Button
                     variant="contained"
-                    color="primary"
                     startIcon={<AddIcon />}
                     onClick={handleCreateInvoice}
+                    sx={{
+                        backgroundColor: '#2563EB',
+                        color: '#FFFFFF',
+                        fontWeight: 600,
+                        fontSize: '14px',
+                        borderRadius: '8px',
+                        padding: '10px 20px',
+                        textTransform: 'none',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                        '&:hover': {
+                            backgroundColor: '#1D4ED8',
+                            transform: 'translateY(-1px)',
+                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                        },
+                    }}
                 >
                     Create Invoice
                 </Button>

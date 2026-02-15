@@ -35,6 +35,8 @@ import {
   Speed as SpeedIcon,
   Build as MaintenanceIcon,
   LocalGasStation as FuelIcon,
+  Warning as WarningIcon,
+  CalendarToday as CalendarIcon,
 } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import moment from 'moment';
@@ -49,6 +51,7 @@ interface Vehicle {
   year: number;
   licensePlate: string;
   vin: string;
+  expiryDate?: Moment;
   status: 'Active' | 'Maintenance' | 'Out of Service';
   mileage: number;
   lastMaintenance?: Moment;
@@ -63,9 +66,10 @@ interface Vehicle {
   notes?: string;
 }
 
-interface VehicleFormValues extends Omit<Vehicle, '_id' | 'lastMaintenance' | 'nextMaintenance' | 'insuranceInfo'> {
+interface VehicleFormValues extends Omit<Vehicle, '_id' | 'lastMaintenance' | 'nextMaintenance' | 'expiryDate' | 'insuranceInfo'> {
   lastMaintenance?: Moment | null;
   nextMaintenance?: Moment | null;
+  expiryDate?: Moment | null;
   insuranceProvider?: string;
   insurancePolicyNumber?: string;
   insuranceExpiryDate?: Moment | null;
@@ -78,6 +82,8 @@ const VehicleManagement: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const [formValues, setFormValues] = useState<Partial<VehicleFormValues>>({});
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [vehicleToDelete, setVehicleToDelete] = useState<string | null>(null);
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
     open: false,
     message: '',
@@ -123,6 +129,7 @@ const VehicleManagement: React.FC = () => {
         ...vehicleData,
         lastMaintenance: vehicleData.lastMaintenance ? moment(vehicleData.lastMaintenance) : null,
         nextMaintenance: vehicleData.nextMaintenance ? moment(vehicleData.nextMaintenance) : null,
+        expiryDate: vehicleData.expiryDate ? moment(vehicleData.expiryDate) : null,
         insuranceProvider: vehicleData.insuranceInfo?.provider,
         insurancePolicyNumber: vehicleData.insuranceInfo?.policyNumber,
         insuranceExpiryDate: vehicleData.insuranceInfo?.expiryDate ? moment(vehicleData.insuranceInfo.expiryDate) : null,
@@ -136,32 +143,63 @@ const VehicleManagement: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
+    setVehicleToDelete(id);
+    setDeleteConfirmOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!vehicleToDelete) return;
+    
     try {
-      await axios.delete(getApiUrl(`${API_CONFIG.ENDPOINTS.VEHICLES}/${id}`));
+      await axios.delete(getApiUrl(`${API_CONFIG.ENDPOINTS.VEHICLES}/${vehicleToDelete}`));
       showSnackbar('Vehicle deleted successfully', 'success');
       fetchVehicles();
     } catch (error) {
       console.error('Failed to delete vehicle:', error);
       showSnackbar('Failed to delete vehicle', 'error');
+    } finally {
+      setDeleteConfirmOpen(false);
+      setVehicleToDelete(null);
     }
   };
 
+  const cancelDelete = () => {
+    setDeleteConfirmOpen(false);
+    setVehicleToDelete(null);
+  };
+
   const handleSubmit = async () => {
-    if (!formValues.make || !formValues.model || !formValues.year || !formValues.licensePlate || !formValues.vin) {
-      showSnackbar('Please fill in all required fields', 'error');
+    if (!formValues.make || !formValues.model || !formValues.year || !formValues.licensePlate || !formValues.vin || !formValues.expiryDate) {
+      showSnackbar('Please fill in all required fields (Make, Model, Year, License Plate, VIN, and Expiry Date)', 'error');
       return;
     }
 
     try {
+      // Remove temporary form fields and system fields before sending
+      const { 
+        insuranceProvider, 
+        insurancePolicyNumber, 
+        insuranceExpiryDate,
+        _id,
+        companyId,
+        maintenance,
+        documents,
+        createdAt,
+        updatedAt,
+        __v,
+        ...cleanFormValues 
+      } = formValues as any;
+      
       const vehicleData = {
-        ...formValues,
+        ...cleanFormValues,
         mileage: formValues.mileage || 0,
         lastMaintenance: formValues.lastMaintenance?.format('YYYY-MM-DD'),
         nextMaintenance: formValues.nextMaintenance?.format('YYYY-MM-DD'),
-        insuranceInfo: formValues.insuranceProvider ? {
-          provider: formValues.insuranceProvider,
-          policyNumber: formValues.insurancePolicyNumber,
-          expiryDate: formValues.insuranceExpiryDate?.format('YYYY-MM-DD'),
+        expiryDate: formValues.expiryDate?.format('YYYY-MM-DD'),
+        insuranceInfo: insuranceProvider ? {
+          provider: insuranceProvider,
+          policyNumber: insurancePolicyNumber,
+          expiryDate: insuranceExpiryDate?.format('YYYY-MM-DD'),
         } : undefined,
       };
 
@@ -208,36 +246,42 @@ const VehicleManagement: React.FC = () => {
       }}>
         <Table>
           <TableHead>
-            <TableRow sx={{ background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, ${alpha(theme.palette.secondary.main, 0.05)} 100%)` }}>
-              <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Vehicle Info</TableCell>
-              <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>License Plate</TableCell>
-              <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Status</TableCell>
-              <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Mileage</TableCell>
-              <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Next Maintenance</TableCell>
-              <TableCell align="center" sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Actions</TableCell>
+            <TableRow sx={{ backgroundColor: '#F8FAFC' }}>
+              <TableCell sx={{ fontWeight: 600, color: '#374151', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.025em', borderBottom: '2px solid #E5E7EB', py: 2.5 }}>Vehicle Info</TableCell>
+              <TableCell sx={{ fontWeight: 600, color: '#374151', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.025em', borderBottom: '2px solid #E5E7EB', py: 2.5 }}>License Plate</TableCell>
+              <TableCell sx={{ fontWeight: 600, color: '#374151', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.025em', borderBottom: '2px solid #E5E7EB', py: 2.5 }}>Status</TableCell>
+              <TableCell sx={{ fontWeight: 600, color: '#374151', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.025em', borderBottom: '2px solid #E5E7EB', py: 2.5 }}>Expiry Date</TableCell>
+              <TableCell sx={{ fontWeight: 600, color: '#374151', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.025em', borderBottom: '2px solid #E5E7EB', py: 2.5 }}>Policy Expiry In</TableCell>
+              <TableCell align="center" sx={{ fontWeight: 600, color: '#374151', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.025em', borderBottom: '2px solid #E5E7EB', py: 2.5 }}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {vehicles.map((vehicle) => (
+            {vehicles.map((vehicle, index) => {
+              const expiryDate = vehicle.expiryDate ? moment(vehicle.expiryDate).add(1, 'month') : null;
+              const daysUntilExpiry = expiryDate ? expiryDate.diff(moment(), 'days') : null;
+              const monthsUntilExpiry = expiryDate ? expiryDate.diff(moment(), 'months') : null;
+              const isExpiringSoon = daysUntilExpiry !== null && daysUntilExpiry >= 0 && daysUntilExpiry <= 30;
+              const isExpired = daysUntilExpiry !== null && daysUntilExpiry < 0;
+              
+              return (
               <TableRow 
                 key={vehicle._id}
                 onMouseEnter={() => setHoveredRow(vehicle._id)}
                 onMouseLeave={() => setHoveredRow(null)}
                 sx={{
                   backgroundColor: hoveredRow === vehicle._id 
-                    ? alpha(theme.palette.primary.main, 0.04)
-                    : 'transparent',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  transform: hoveredRow === vehicle._id ? 'translateY(-2px)' : 'translateY(0)',
-                  boxShadow: hoveredRow === vehicle._id 
-                    ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.15)}`
-                    : 'none',
-                  borderLeft: hoveredRow === vehicle._id 
-                    ? `4px solid ${theme.palette.primary.main}`
-                    : '4px solid transparent',
+                    ? '#F1F5F9'
+                    : isExpiringSoon
+                    ? '#FEF3C7'
+                    : isExpired
+                    ? '#FEE2E2'
+                    : index % 2 === 0 ? '#FFFFFF' : '#F9FAFB',
+                  transition: 'background-color 0.2s ease',
                   '& td': {
-                    borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+                    borderBottom: '1px solid #E5E7EB',
                     py: 2.5,
+                    fontSize: '14px',
+                    color: '#111827',
                   },
                   '&:last-child td': {
                     borderBottom: 'none',
@@ -287,20 +331,84 @@ const VehicleManagement: React.FC = () => {
                   />
                 </TableCell>
                 <TableCell>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <SpeedIcon sx={{ fontSize: 16, color: theme.palette.info.main }} />
-                    <Typography variant="body2">
-                      {vehicle.mileage ? vehicle.mileage.toLocaleString() : '0'} km
+                  {expiryDate ? (
+                    <Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <CalendarIcon sx={{ fontSize: 16, color: isExpired ? '#EF4444' : isExpiringSoon ? '#F59E0B' : theme.palette.text.secondary }} />
+                        <Typography 
+                          variant="body2" 
+                          sx={{ 
+                            fontWeight: isExpiringSoon || isExpired ? 600 : 400,
+                            color: isExpired ? '#EF4444' : isExpiringSoon ? '#F59E0B' : '#111827'
+                          }}
+                        >
+                          {expiryDate.format('MM/DD/YYYY')}
+                        </Typography>
+                      </Box>
+                      {isExpired ? (
+                        <Chip
+                          icon={<WarningIcon />}
+                          label="EXPIRED"
+                          size="small"
+                          sx={{
+                            mt: 0.5,
+                            height: '20px',
+                            backgroundColor: '#FEE2E2',
+                            color: '#991B1B',
+                            fontWeight: 600,
+                            fontSize: '0.7rem',
+                            '& .MuiChip-icon': { color: '#991B1B', fontSize: '14px' },
+                          }}
+                        />
+                      ) : isExpiringSoon ? (
+                        <Chip
+                          icon={<WarningIcon />}
+                          label={`Expires in ${daysUntilExpiry} day${daysUntilExpiry !== 1 ? 's' : ''}`}
+                          size="small"
+                          sx={{
+                            mt: 0.5,
+                            height: '20px',
+                            backgroundColor: '#FEF3C7',
+                            color: '#92400E',
+                            fontWeight: 600,
+                            fontSize: '0.7rem',
+                            '& .MuiChip-icon': { color: '#92400E', fontSize: '14px' },
+                          }}
+                        />
+                      ) : null}
+                    </Box>
+                  ) : (
+                    <Typography variant="body2" color="text.secondary">
+                      Not set
                     </Typography>
-                  </Box>
+                  )}  
                 </TableCell>
                 <TableCell>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <MaintenanceIcon sx={{ fontSize: 16, color: vehicle.nextMaintenance ? theme.palette.warning.main : theme.palette.text.disabled }} />
-                    <Typography variant="body2" color={vehicle.nextMaintenance ? 'text.primary' : 'text.secondary'}>
-                      {vehicle.nextMaintenance ? moment(vehicle.nextMaintenance).format('MM/DD/YYYY') : 'Not scheduled'}
+                  {expiryDate ? (
+                    <Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <CalendarIcon sx={{ fontSize: 16, color: isExpired ? '#EF4444' : isExpiringSoon ? '#F59E0B' : '#10B981' }} />
+                        <Typography 
+                          variant="body2" 
+                          sx={{ 
+                            fontWeight: 600,
+                            color: isExpired ? '#EF4444' : isExpiringSoon ? '#F59E0B' : '#10B981'
+                          }}
+                        >
+                          {isExpired 
+                            ? `Expired ${Math.abs(monthsUntilExpiry!)} month${Math.abs(monthsUntilExpiry!) !== 1 ? 's' : ''} ago`
+                            : monthsUntilExpiry === 0
+                            ? `${daysUntilExpiry} day${daysUntilExpiry !== 1 ? 's' : ''}`
+                            : `${monthsUntilExpiry} month${monthsUntilExpiry !== 1 ? 's' : ''}`
+                          }
+                        </Typography>
+                      </Box>
+                    </Box>
+                  ) : (
+                    <Typography variant="body2" color="text.secondary">
+                      Not set
                     </Typography>
-                  </Box>
+                  )}
                 </TableCell>
                 <TableCell align="center">
                   <Stack direction="row" spacing={0.5} justifyContent="center">
@@ -339,7 +447,8 @@ const VehicleManagement: React.FC = () => {
                   </Stack>
                 </TableCell>
               </TableRow>
-            ))}
+              );
+            })}
           </TableBody>
         </Table>
       </TableContainer>
@@ -442,6 +551,14 @@ const VehicleManagement: React.FC = () => {
                 slotProps={{ textField: { fullWidth: true } }}
               />
             </Grid>
+            <Grid item xs={6}>
+              <DatePicker
+                label="Vehicle Expiry Date *"
+                value={formValues.expiryDate || null}
+                onChange={(date) => setFormValues(prev => ({ ...prev, expiryDate: date }))}
+                slotProps={{ textField: { fullWidth: true, required: true } }}
+              />
+            </Grid>
             <Grid item xs={12}>
               <Typography variant="subtitle1" sx={{ mt: 2, mb: 1 }}>Insurance Information</Typography>
             </Grid>
@@ -499,6 +616,31 @@ const VehicleManagement: React.FC = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteConfirmOpen}
+        onClose={cancelDelete}
+        aria-labelledby="delete-dialog-title"
+        aria-describedby="delete-dialog-description"
+      >
+        <DialogTitle id="delete-dialog-title">
+          Confirm Delete
+        </DialogTitle>
+        <DialogContent>
+          <Typography id="delete-dialog-description">
+            Are you sure you want to delete this vehicle? This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={cancelDelete} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={confirmDelete} color="error" variant="contained" autoFocus>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

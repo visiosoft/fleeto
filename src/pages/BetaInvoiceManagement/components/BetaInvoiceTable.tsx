@@ -126,23 +126,64 @@ const BetaInvoiceTable: React.FC<BetaInvoiceTableProps> = ({ invoices = [], onRe
     return (
         <TableContainer 
             sx={{ 
-                borderRadius: 3,
+                borderRadius: '12px',
                 overflow: 'hidden',
-                boxShadow: `0 1px 3px ${alpha(theme.palette.common.black, 0.1)}`,
+                border: '1px solid #E5E7EB',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
             }}
         >
             <Table>
                 <TableHead>
-                    <TableRow sx={{ background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, ${alpha(theme.palette.secondary.main, 0.05)} 100%)` }}>
-                        <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Invoice Info</TableCell>
-                        <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Dates</TableCell>
-                        <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Amounts</TableCell>
-                        <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Status</TableCell>
-                        <TableCell align="center" sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Actions</TableCell>
+                    <TableRow sx={{ backgroundColor: '#F8FAFC' }}>
+                        <TableCell sx={{ 
+                            fontWeight: 600, 
+                            color: '#374151',
+                            fontSize: '13px',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.025em',
+                            borderBottom: '2px solid #E5E7EB',
+                            py: 2.5 
+                        }}>Invoice Info</TableCell>
+                        <TableCell sx={{ 
+                            fontWeight: 600, 
+                            color: '#374151',
+                            fontSize: '13px',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.025em',
+                            borderBottom: '2px solid #E5E7EB',
+                            py: 2.5 
+                        }}>Dates</TableCell>
+                        <TableCell sx={{ 
+                            fontWeight: 600, 
+                            color: '#374151',
+                            fontSize: '13px',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.025em',
+                            borderBottom: '2px solid #E5E7EB',
+                            py: 2.5 
+                        }}>Amounts</TableCell>
+                        <TableCell sx={{ 
+                            fontWeight: 600, 
+                            color: '#374151',
+                            fontSize: '13px',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.025em',
+                            borderBottom: '2px solid #E5E7EB',
+                            py: 2.5 
+                        }}>Status</TableCell>
+                        <TableCell align="center" sx={{ 
+                            fontWeight: 600, 
+                            color: '#374151',
+                            fontSize: '13px',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.025em',
+                            borderBottom: '2px solid #E5E7EB',
+                            py: 2.5 
+                        }}>Actions</TableCell>
                     </TableRow>
                 </TableHead>
                 <TableBody>
-                    {invoices.map((invoice) => {
+                    {invoices.map((invoice, index) => {
                         const totalPaid = invoice.totalPaid || 0;
                         const remainingBalance = invoice.remainingBalance || 0;
 
@@ -153,19 +194,14 @@ const BetaInvoiceTable: React.FC<BetaInvoiceTableProps> = ({ invoices = [], onRe
                                 onMouseLeave={() => setHoveredRow(null)}
                                 sx={{
                                     backgroundColor: hoveredRow === invoice._id 
-                                        ? alpha(theme.palette.primary.main, 0.04)
-                                        : 'transparent',
-                                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                                    transform: hoveredRow === invoice._id ? 'translateY(-2px)' : 'translateY(0)',
-                                    boxShadow: hoveredRow === invoice._id 
-                                        ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.15)}`
-                                        : 'none',
-                                    borderLeft: hoveredRow === invoice._id 
-                                        ? `4px solid ${theme.palette.primary.main}`
-                                        : '4px solid transparent',
+                                        ? '#F1F5F9'
+                                        : index % 2 === 0 ? '#FFFFFF' : '#F9FAFB',
+                                    transition: 'background-color 0.2s ease',
                                     '& td': {
-                                        borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+                                        borderBottom: '1px solid #E5E7EB',
                                         py: 2.5,
+                                        fontSize: '14px',
+                                        color: '#111827',
                                     },
                                     '&:last-child td': {
                                         borderBottom: 'none',

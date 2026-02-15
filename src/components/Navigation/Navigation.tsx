@@ -201,7 +201,7 @@ const Navigation: React.FC<NavigationProps> = ({
         </Tooltip>
       </Toolbar>
       <Divider />
-      <List>
+      <List sx={{ px: 1 }}>
         {MENU_ITEMS.map((item) => (
           <Tooltip key={item.text} title={isCollapsed ? item.text : ''} placement="right">
             <ListItemButton
@@ -210,18 +210,44 @@ const Navigation: React.FC<NavigationProps> = ({
               sx={{
                 minHeight: 48,
                 justifyContent: isCollapsed ? 'center' : 'initial',
-                px: 2.5,
+                px: 2,
+                my: 0.5,
+                borderRadius: '8px',
+                color: '#64748B',
+                fontSize: '14px',
+                fontWeight: 500,
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  backgroundColor: '#F1F5F9',
+                  color: '#111827',
+                },
+                '&.Mui-selected': {
+                  backgroundColor: '#EFF6FF',
+                  color: '#2563EB',
+                  fontWeight: 600,
+                  borderLeft: '3px solid #2563EB',
+                  '&:hover': {
+                    backgroundColor: '#DBEAFE',
+                  },
+                },
               }}
               selected={location.pathname === item.path}
             >
               <ListItemIcon sx={{ 
                 minWidth: 0, 
                 mr: isCollapsed ? 0 : 2,
-                justifyContent: 'center'
+                justifyContent: 'center',
+                color: 'inherit',
               }}>
                 {item.icon}
               </ListItemIcon>
-              {!isCollapsed && <ListItemText primary={item.text} />}
+              {!isCollapsed && <ListItemText 
+                primary={item.text}
+                primaryTypographyProps={{
+                  fontSize: '14px',
+                  fontWeight: 'inherit',
+                }}
+              />}
             </ListItemButton>
           </Tooltip>
         ))}

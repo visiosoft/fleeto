@@ -82,6 +82,14 @@ const vehicleSchema = new mongoose.Schema({
         policyNumber: String,
         expiryDate: Date
     },
+    expiryDate: {
+        type: Date,
+        required: true
+    },
+    assignedDriver: {
+        type: String,
+        required: false
+    },
     notes: {
         type: String,
         required: false

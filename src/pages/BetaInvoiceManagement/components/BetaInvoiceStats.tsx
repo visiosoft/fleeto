@@ -24,32 +24,32 @@ const BetaInvoiceStats: React.FC<BetaInvoiceStatsCardProps> = ({ stats }) => {
             title: 'Total Invoices',
             value: stats.totalInvoices || 0,
             icon: ReceiptIcon,
-            color: theme.palette.info.main,
-            bgGradient: `linear-gradient(135deg, ${theme.palette.info.main} 0%, ${theme.palette.info.dark} 100%)`,
+            color: '#2563EB',
+            bgColor: '#EFF6FF',
             isAmount: false,
         },
         {
             title: 'Total Amount',
             value: (stats.totalAmount || 0).toFixed(2),
             icon: MoneyIcon,
-            color: theme.palette.primary.main,
-            bgGradient: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+            color: '#7C3AED',
+            bgColor: '#F5F3FF',
             isAmount: true,
         },
         {
             title: 'Total Paid',
             value: (stats.totalPaid || 0).toFixed(2),
             icon: PaidIcon,
-            color: theme.palette.success.main,
-            bgGradient: `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`,
+            color: '#10B981',
+            bgColor: '#DCFCE7',
             isAmount: true,
         },
         {
             title: 'Outstanding',
             value: (stats.totalOutstanding || 0).toFixed(2),
             icon: OutstandingIcon,
-            color: theme.palette.error.main,
-            bgGradient: `linear-gradient(135deg, ${theme.palette.error.main} 0%, ${theme.palette.error.dark} 100%)`,
+            color: '#F59E0B',
+            bgColor: '#FEF3C7',
             isAmount: true,
         },
     ];
@@ -63,24 +63,16 @@ const BetaInvoiceStats: React.FC<BetaInvoiceStatsCardProps> = ({ stats }) => {
                         <Card 
                             sx={{ 
                                 height: '100%',
-                                borderRadius: 3,
-                                boxShadow: `0 4px 20px ${alpha(card.color, 0.15)}`,
-                                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                                border: `1px solid ${alpha(card.color, 0.1)}`,
+                                backgroundColor: '#FFFFFF',
+                                border: '1px solid #E5E7EB',
+                                borderRadius: '12px',
+                                boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                                transition: 'all 0.2s ease',
                                 overflow: 'hidden',
                                 position: 'relative',
                                 '&:hover': {
-                                    transform: 'translateY(-8px)',
-                                    boxShadow: `0 12px 28px ${alpha(card.color, 0.25)}`,
-                                },
-                                '&::before': {
-                                    content: '""',
-                                    position: 'absolute',
-                                    top: 0,
-                                    left: 0,
-                                    right: 0,
-                                    height: '4px',
-                                    background: card.bgGradient,
+                                    transform: 'translateY(-2px)',
+                                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)',
                                 },
                             }}
                         >
@@ -89,12 +81,10 @@ const BetaInvoiceStats: React.FC<BetaInvoiceStatsCardProps> = ({ stats }) => {
                                     <Box>
                                         <Typography 
                                             variant="body2" 
-                                            color="text.secondary" 
                                             sx={{ 
                                                 fontWeight: 600,
-                                                textTransform: 'uppercase',
-                                                letterSpacing: '0.5px',
-                                                fontSize: '0.7rem',
+                                                fontSize: '14px',
+                                                color: '#374151',
                                                 mb: 1,
                                             }}
                                         >
@@ -104,7 +94,8 @@ const BetaInvoiceStats: React.FC<BetaInvoiceStatsCardProps> = ({ stats }) => {
                                             variant="h5" 
                                             sx={{ 
                                                 fontWeight: 700,
-                                                color: card.color,
+                                                fontSize: '28px',
+                                                color: '#111827',
                                                 display: 'flex',
                                                 alignItems: 'baseline',
                                                 gap: 0.5,
@@ -115,8 +106,9 @@ const BetaInvoiceStats: React.FC<BetaInvoiceStatsCardProps> = ({ stats }) => {
                                                     component="span" 
                                                     variant="body2" 
                                                     sx={{ 
-                                                        fontWeight: 600,
-                                                        color: theme.palette.text.secondary,
+                                                        fontWeight: 500,
+                                                        fontSize: '13px',
+                                                        color: '#6B7280',
                                                     }}
                                                 >
                                                     AED
@@ -127,20 +119,19 @@ const BetaInvoiceStats: React.FC<BetaInvoiceStatsCardProps> = ({ stats }) => {
                                     </Box>
                                     <Avatar 
                                         sx={{ 
-                                            width: 44, 
-                                            height: 44,
-                                            background: card.bgGradient,
-                                            boxShadow: `0 4px 14px ${alpha(card.color, 0.4)}`,
+                                            width: 48, 
+                                            height: 48,
+                                            backgroundColor: card.bgColor,
                                         }}
                                     >
-                                        <Icon sx={{ fontSize: 22, color: 'white' }} />
+                                        <Icon sx={{ fontSize: 24, color: card.color }} />
                                     </Avatar>
                                 </Box>
                                 <Box 
                                     sx={{ 
                                         height: 6,
-                                        borderRadius: 3,
-                                        backgroundColor: alpha(card.color, 0.1),
+                                        borderRadius: 9999,
+                                        backgroundColor: '#F1F5F9',
                                         overflow: 'hidden',
                                     }}
                                 >
@@ -150,7 +141,8 @@ const BetaInvoiceStats: React.FC<BetaInvoiceStatsCardProps> = ({ stats }) => {
                                             width: card.isAmount 
                                                 ? `${Math.min((parseFloat(card.value.toString()) / (stats.totalAmount || 1)) * 100, 100)}%`
                                                 : '100%',
-                                            background: card.bgGradient,
+                                            backgroundColor: card.color,
+                                            borderRadius: 9999,
                                             transition: 'width 1s ease-in-out',
                                         }}
                                     />

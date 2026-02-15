@@ -274,21 +274,27 @@ const StatCard: React.FC<{
     <Card 
       sx={{ 
         height: '100%',
+        backgroundColor: '#FFFFFF',
+        border: '1px solid #E5E7EB',
+        borderRadius: '12px',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
         cursor: onClick ? 'pointer' : 'default',
+        transition: 'all 0.2s ease',
         '&:hover': onClick ? {
-          transform: 'translateY(-4px)',
-          transition: 'transform 0.2s ease-in-out',
-          boxShadow: 3,
-        } : {},
+          transform: 'translateY(-2px)',
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)',
+        } : {
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)',
+        },
       }}
       onClick={handleClick}
     >
-      <CardContent>
+      <CardContent sx={{ p: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
           <Box
             sx={{
               backgroundColor: `${color}15`,
-              borderRadius: '12px',
+              borderRadius: '8px',
               p: 1,
               mr: 2,
               pointerEvents: 'none',
@@ -296,24 +302,45 @@ const StatCard: React.FC<{
           >
             {icon}
           </Box>
-          <Typography variant="h6" component="div" sx={{ pointerEvents: 'none' }}>
+          <Typography 
+            variant="h6" 
+            component="div" 
+            sx={{ 
+              pointerEvents: 'none',
+              fontSize: '14px',
+              fontWeight: 600,
+              color: '#374151',
+            }}
+          >
             {title}
           </Typography>
         </Box>
-        <Typography variant="h4" component="div" sx={{ mb: 1, pointerEvents: 'none' }}>
+        <Typography 
+          variant="h4" 
+          component="div" 
+          sx={{ 
+            mb: 1, 
+            pointerEvents: 'none',
+            fontSize: '28px',
+            fontWeight: 700,
+            color: '#111827',
+          }}
+        >
           {value}
         </Typography>
         {trend && (
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
             {trend === 'up' ? (
-              <TrendingUpIcon sx={{ color: theme.palette.success.main, fontSize: '1rem', pointerEvents: 'none' }} />
+              <TrendingUpIcon sx={{ color: '#10B981', fontSize: '1rem', pointerEvents: 'none' }} />
             ) : (
-              <TrendingDownIcon sx={{ color: theme.palette.error.main, fontSize: '1rem', pointerEvents: 'none' }} />
+              <TrendingDownIcon sx={{ color: '#EF4444', fontSize: '1rem', pointerEvents: 'none' }} />
             )}
             <Typography
               variant="caption"
               sx={{
-                color: trend === 'up' ? theme.palette.success.main : theme.palette.error.main,
+                color: trend === 'up' ? '#10B981' : '#EF4444',
+                fontSize: '13px',
+                fontWeight: 500,
                 ml: 0.5,
                 pointerEvents: 'none',
               }}
@@ -327,11 +354,12 @@ const StatCard: React.FC<{
           value={70}
           sx={{
             height: 6,
-            borderRadius: 3,
-            backgroundColor: `${color}30`,
+            borderRadius: 9999,
+            backgroundColor: `${color}20`,
             pointerEvents: 'none',
             '& .MuiLinearProgress-bar': {
               backgroundColor: color,
+              borderRadius: 9999,
             },
           }}
         />
