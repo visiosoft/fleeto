@@ -1,0 +1,14 @@
+<svg width="152" height="152" xmlns="http://www.w3.org/2000/svg">
+  <rect width="152" height="152" fill="#000000"/>
+  <g transform="translate(76,76)">
+    <!-- Truck Icon -->
+    <path d="M-34.96,-18.24 L-34.96,18.24 L34.96,18.24 L34.96,-18.24 L24.32,-18.24 L24.32,-24.32 L-24.32,-24.32 L-24.32,-18.24 Z" 
+          fill="none" stroke="#ffffff" stroke-width="2.375"/>
+    <rect x="-34.96" y="6.08" width="47.12" height="12.16" fill="none" stroke="#ffffff" stroke-width="2.375"/>
+    <rect x="12.16" y="-18.24" width="22.8" height="24.32" fill="none" stroke="#ffffff" stroke-width="2.375"/>
+    <circle cx="-24.32" cy="24.32" r="6.08" fill="#ffffff"/>
+    <circle cx="24.32" cy="24.32" r="6.08" fill="#ffffff"/>
+    <line x1="-34.96" y1="6.08" x2="12.16" y2="6.08" stroke="#ffffff" stroke-width="1.1875"/>
+    <text x="0" y="34.96" font-family="Arial, sans-serif" font-size="15.2" fill="#ffffff" text-anchor="middle" font-weight="bold">FLEET</text>
+  </g>
+</svg>

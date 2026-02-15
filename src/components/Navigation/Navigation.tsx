@@ -82,16 +82,16 @@ interface MenuItem {
 // Define menu items outside the component
 const MENU_ITEMS: MenuItem[] = [
   { text: 'Dashboard', path: '/dashboard', icon: <AssessmentIcon /> },
-  { text: 'Vehicle Management', path: '/vehicles', icon: <DirectionsCarIcon /> },
-  { text: 'Driver Management', path: '/drivers', icon: <PeopleIcon /> },
-  { text: 'Cost Management', path: '/costs', icon: <AccountBalanceIcon /> },
+  { text: 'Vehicle', path: '/vehicles', icon: <DirectionsCarIcon /> },
+  { text: 'Driver', path: '/drivers', icon: <PeopleIcon /> },
+  { text: 'Cost', path: '/costs', icon: <AccountBalanceIcon /> },
   { text: 'Contract', path: '/contracts', icon: <DescriptionIcon /> },
   { text: 'Tracking', path: '/tracking', icon: <LocationOnIcon /> },
-  { text: 'Invoice Management', path: '/invoices', icon: <ReceiptIcon /> },
-  { text: 'Beta Invoices', path: '/beta-invoices', icon: <ReceiptIcon /> },
-  { text: 'Receipt Management', path: '/receipts', icon: <ReceiptIcon /> },
-  { text: 'Letterhead Templates', path: '/letterheads', icon: <DescriptionIcon /> },
-  { text: 'User Management', path: '/users', icon: <GroupIcon /> },
+  
+  { text: 'Invoice', path: '/beta-invoices', icon: <ReceiptIcon /> },
+  { text: 'Receipt', path: '/receipts', icon: <ReceiptIcon /> },
+  { text: 'Letterhead', path: '/letterheads', icon: <DescriptionIcon /> },
+  { text: 'User', path: '/users', icon: <GroupIcon /> },
   {
     text: 'General Notes',
     icon: <NoteIcon />,
@@ -193,11 +193,7 @@ const Navigation: React.FC<NavigationProps> = ({
   const drawer = (
     <div>
       <Toolbar sx={{ display: 'flex', justifyContent: isCollapsed ? 'center' : 'space-between', alignItems: 'center' }}>
-        {!isCollapsed && (
-          <Typography variant="h6" noWrap component="div">
-            {'Fleet Management'}
-          </Typography>
-        )}
+        
         <Tooltip title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"} placement="right">
           <IconButton onClick={handleDrawerCollapse} size="small">
             {isCollapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}

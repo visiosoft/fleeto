@@ -48,11 +48,7 @@ const menuItems = [
     path: '/contracts',
     icon: <DescriptionIcon />,
     },
-  {
-    title: 'Invoice Management',
-    path: '/invoices',
-    icon: <ReceiptIcon />,
-  },
+ 
   {
     title: 'Letterhead Templates',
     path: '/letterheads',

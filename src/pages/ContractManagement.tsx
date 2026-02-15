@@ -1075,7 +1075,6 @@ const ContractManagement: React.FC = () => {
       )}
 
       {/* Contracts Table */}
-      <Paper sx={{ p: 2 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <Typography variant="h6">
             Contract List
@@ -1219,7 +1218,6 @@ const ContractManagement: React.FC = () => {
             </Table>
           </TableContainer>
         )}
-      </Paper>
 
       {/* Add/Edit Dialog */}
       <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>

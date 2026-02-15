@@ -91,9 +91,6 @@ const ReceiptManagement: React.FC = () => {
         </Alert>
       )}
 
-      <Grid container spacing={3}>
-        <Grid item xs={12}>
-          <Paper sx={{ p: 2 }}>
             {loading ? (
               <Box sx={{ p: 3, textAlign: 'center' }}>
                 <LinearProgress />
@@ -114,9 +111,6 @@ const ReceiptManagement: React.FC = () => {
                 )}
               </>
             )}
-          </Paper>
-        </Grid>
-      </Grid>
     </Container>
   );
 };

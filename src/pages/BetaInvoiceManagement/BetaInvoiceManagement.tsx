@@ -109,7 +109,6 @@ const BetaInvoiceManagement: React.FC = () => {
                     <BetaInvoiceStats stats={stats} />
                 </Grid>
                 <Grid item xs={12}>
-                    <Paper sx={{ p: 2 }}>
                         {loading ? (
                             <Box sx={{ p: 3, textAlign: 'center' }}>
                                 <LinearProgress />
@@ -130,7 +129,6 @@ const BetaInvoiceManagement: React.FC = () => {
                                 )}
                             </>
                         )}
-                    </Paper>
                 </Grid>
             </Grid>
         </Container>
