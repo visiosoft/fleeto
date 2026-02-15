@@ -114,6 +114,12 @@ export const useDashboardData = (): UseDashboardDataReturn => {
         ? vehiclesResponse.value.totalActiveVehicles 
         : 0;
 
+      console.log('Dashboard data fetch results:');
+      console.log('- Drivers response:', driversResponse.status, driversResponse.status === 'fulfilled' ? driversResponse.value : driversResponse.reason);
+      console.log('- Vehicles response:', vehiclesResponse.status, vehiclesResponse.status === 'fulfilled' ? vehiclesResponse.value : vehiclesResponse.reason);
+      console.log('- Active drivers count:', activeDrivers);
+      console.log('- Active vehicles count:', activeVehicles);
+
       const fuelConsumption = fuelResponse.status === 'fulfilled' 
         ? {
             total: fuelResponse.value.totalCost,

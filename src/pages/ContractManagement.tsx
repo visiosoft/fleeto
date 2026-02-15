@@ -750,7 +750,7 @@ const ContractManagement: React.FC = () => {
   return (
     <Box>
       <Typography variant="h4" gutterBottom>
-        Contract Management
+        Add Company / Contract
       </Typography>
 
       {/* Statistics Cards */}

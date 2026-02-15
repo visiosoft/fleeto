@@ -795,7 +795,7 @@ const ContractManagement: React.FC = () => {
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-        <Typography variant="h4">Contract Management</Typography>
+        <Typography variant="h4">Add Company / Contract</Typography>
         <Button
           variant="contained"
           startIcon={<AddIcon />}

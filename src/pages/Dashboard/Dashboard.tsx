@@ -49,6 +49,7 @@ import {
   ArrowForward as ArrowForwardIcon,
   Refresh as RefreshIcon,
   Article as ArticleIcon,
+  Receipt as ReceiptIcon,
 } from '@mui/icons-material';
 import { ResponsivePie } from '@nivo/pie';
 import { ResponsiveLine } from '@nivo/line';
@@ -56,6 +57,8 @@ import { ResponsiveBar } from '@nivo/bar';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDashboardData } from '../../hooks/useDashboardData';
+import BetaInvoiceService from '../../services/BetaInvoiceService';
+import ReceiptService from '../../services/ReceiptService';
 
 // Define types for our chart data
 interface ChartDataItem {
@@ -947,9 +950,43 @@ const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [tabValue, setTabValue] = useState(0);
+  const [recentInvoices, setRecentInvoices] = useState<any[]>([]);
+  const [recentReceipts, setRecentReceipts] = useState<any[]>([]);
   
   // Use the custom hook for dashboard data
   const { data, isLoading, error, refresh, refreshAll, isRefreshing } = useDashboardData();
+
+  // Fetch recent invoices
+  React.useEffect(() => {
+    const fetchRecentInvoices = async () => {
+      try {
+        const response = await BetaInvoiceService.getInstance().getAllInvoices(1, 5);
+        console.log('Invoices API response:', response);
+        if (response?.data?.status === 'success' && Array.isArray(response.data.data)) {
+          setRecentInvoices(response.data.data.slice(0, 5));
+        }
+      } catch (err) {
+        console.error('Error fetching recent invoices:', err);
+      }
+    };
+    
+    const fetchRecentReceipts = async () => {
+      try {
+        const response = await ReceiptService.getInstance().getAllReceipts(1, 5);
+        console.log('Receipts API response:', response);
+        if (response?.data?.status === 'success') {
+          // Receipts are nested under data.receipts, not data directly
+          const receiptsData = response.data.data?.receipts || [];
+          setRecentReceipts(receiptsData.slice(0, 5));
+        }
+      } catch (err) {
+        console.error('Error fetching recent receipts:', err);
+      }
+    };
+    
+    fetchRecentInvoices();
+    fetchRecentReceipts();
+  }, []);
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
@@ -1036,11 +1073,12 @@ const Dashboard: React.FC = () => {
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             title="Total Vehicles"
-            value={data.activeVehicles.toString()}
+            value={data?.activeVehicles ? data.activeVehicles.toString() : '0'}
             icon={<VehicleIcon />}
             color={theme.palette.primary.main}
             onClick={() => {
-              console.log('Navigating to vehicles');
+              console.log('Dashboard data:', data);
+              console.log('Active vehicles:', data?.activeVehicles);
               navigate('/vehicles');
             }}
           />
@@ -1099,12 +1137,12 @@ const Dashboard: React.FC = () => {
                 }}
                 onClick={() => navigate('/contracts')}
               >
-                <CardContent sx={{ textAlign: 'center', py: 4 }}>
-                  <DescriptionIcon sx={{ fontSize: 48, color: theme.palette.info.main, mb: 2 }} />
-                  <Typography variant="h6" gutterBottom>
+                <CardContent sx={{ textAlign: 'center', py: 2 }}>
+                  <DescriptionIcon sx={{ fontSize: 40, color: theme.palette.info.main, mb: 1.5 }} />
+                  <Typography variant="subtitle1" gutterBottom fontWeight={600}>
                    Create Contracts
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="caption" color="text.secondary">
                     Manage all contracts
                   </Typography>
                 </CardContent>
@@ -1123,12 +1161,12 @@ const Dashboard: React.FC = () => {
                 }}
                 onClick={() => navigate('/beta-invoices')}
               >
-                <CardContent sx={{ textAlign: 'center', py: 4 }}>
-                  <MonetizationOnIcon sx={{ fontSize: 48, color: theme.palette.success.main, mb: 2 }} />
-                  <Typography variant="h6" gutterBottom>
+                <CardContent sx={{ textAlign: 'center', py: 2 }}>
+                  <MonetizationOnIcon sx={{ fontSize: 40, color: theme.palette.success.main, mb: 1.5 }} />
+                  <Typography variant="subtitle1" gutterBottom fontWeight={600}>
                     Create Invoices
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="caption" color="text.secondary">
                     View and manage invoices
                   </Typography>
                 </CardContent>
@@ -1148,12 +1186,12 @@ const Dashboard: React.FC = () => {
                 }}
                 onClick={() => navigate('/receipts')}
               >
-                <CardContent sx={{ textAlign: 'center', py: 4 }}>
-                  <MoneyIcon sx={{ fontSize: 48, color: theme.palette.warning.main, mb: 2 }} />
-                  <Typography variant="h6" gutterBottom>
+                <CardContent sx={{ textAlign: 'center', py: 2 }}>
+                  <MoneyIcon sx={{ fontSize: 40, color: theme.palette.warning.main, mb: 1.5 }} />
+                  <Typography variant="subtitle1" gutterBottom fontWeight={600}>
                     Create Receipts
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="caption" color="text.secondary">
                     Payment receipts
                   </Typography>
                 </CardContent>
@@ -1172,22 +1210,22 @@ const Dashboard: React.FC = () => {
                 }}
                 onClick={() => window.open('https://ums.rta.ae/violations/public-fines/fines-search', '_blank', 'noopener,noreferrer')}
               >
-                <CardContent sx={{ textAlign: 'center', py: 4 }}>
+                <CardContent sx={{ textAlign: 'center', py: 2 }}>
                   <Box
                     component="img"
                     src="/rta_dubai.png"
                     alt="RTA Dubai"
                     sx={{ 
-                      width: 64, 
-                      height: 64, 
-                      mb: 2,
+                      width: 48, 
+                      height: 48, 
+                      mb: 1.5,
                       objectFit: 'contain'
                     }}
                   />
-                  <Typography variant="h6" gutterBottom>
+                  <Typography variant="subtitle1" gutterBottom fontWeight={600}>
                    RTA Fine Search
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="caption" color="text.secondary">
                     Manage RTA Fines for (51563245)
                   </Typography>
                 </CardContent>
@@ -1214,42 +1252,154 @@ const Dashboard: React.FC = () => {
           </Paper>
         </Grid>
 
-        {/* Fleet Health */}
+        {/* Recent Receipts */}
         <Grid item xs={12} md={6}>
-          <HealthCard
-            title="Fleet Health Status"
-            items={[
-              { name: 'Vehicle Maintenance', health: 85 },
-              { name: 'Driver Performance', health: 92 },
-              { name: 'Fuel Efficiency', health: 78 },
-              { name: 'Documentation', health: 95 },
-            ]}
-          />
+          <Card sx={{ height: '100%' }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h6">
+                  Recent Receipts
+                </Typography>
+                <Button
+                  size="small"
+                  onClick={() => navigate('/receipts')}
+                  endIcon={<ArrowForwardIcon />}
+                >
+                  View All
+                </Button>
+              </Box>
+              <Box sx={{ mt: 2 }}>
+                {recentReceipts.length > 0 ? (
+                  recentReceipts.map((receipt, index) => (
+                    <Box
+                      key={receipt._id || index}
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        mb: 2,
+                        p: 2,
+                        backgroundColor: (theme) => theme.palette.grey[50],
+                        borderRadius: 1,
+                        border: '1px solid',
+                        borderColor: (theme) => theme.palette.grey[200],
+                        cursor: 'pointer',
+                        '&:hover': {
+                          backgroundColor: (theme) => theme.palette.grey[100],
+                        },
+                      }}
+                      onClick={() => navigate('/receipts')}
+                    >
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="body2" fontWeight={600}>
+                          {receipt.receiptNumber || receipt.title || `Receipt #${index + 1}`}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {receipt.vendor || receipt.description || receipt.category || receipt.expenseType || 'Expense'}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ textAlign: 'right' }}>
+                        <Typography variant="body2" fontWeight={700} color="primary">
+                          AED {(receipt.amount || receipt.totalAmount || 0).toLocaleString()}
+                        </Typography>
+                        <Chip
+                          label={receipt.status?.toUpperCase() || 'PENDING'}
+                          size="small"
+                          color={
+                            receipt.status === 'received' || receipt.status === 'paid' ? 'success' :
+                            receipt.status === 'pending' ? 'warning' :
+                            receipt.status === 'failed' ? 'error' :
+                            receipt.status === 'refunded' ? 'info' :
+                            'default'
+                          }
+                          sx={{ mt: 0.5, fontSize: '0.7rem', height: 20 }}
+                        />
+                      </Box>
+                    </Box>
+                  ))
+                ) : (
+                  <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 3 }}>
+                    No recent receipts
+                  </Typography>
+                )}
+              </Box>
+            </CardContent>
+          </Card>
         </Grid>
 
-        {/* Alerts */}
+        {/* Recent Invoices */}
         <Grid item xs={12} md={6}>
-          <AlertCard
-            title="Recent Alerts"
-            alerts={[
-              {
-                message: '5 vehicles due for maintenance next week',
-                severity: 'medium',
-              },
-              {
-                message: '3 driver licenses expiring in 30 days',
-                severity: 'high',
-              },
-              {
-                message: 'Fuel consumption above average in 2 vehicles',
-                severity: 'low',
-              },
-              {
-                message: 'Insurance renewal pending for 4 vehicles',
-                severity: 'medium',
-              },
-            ]}
-          />
+          <Card sx={{ height: '100%' }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h6">
+                  Recent Invoices
+                </Typography>
+                <Button
+                  size="small"
+                  onClick={() => navigate('/beta-invoices')}
+                  endIcon={<ArrowForwardIcon />}
+                >
+                  View All
+                </Button>
+              </Box>
+              <Box sx={{ mt: 2 }}>
+                {recentInvoices.length > 0 ? (
+                  recentInvoices.map((invoice, index) => (
+                    <Box
+                      key={invoice._id || index}
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        mb: 2,
+                        p: 2,
+                        backgroundColor: (theme) => theme.palette.grey[50],
+                        borderRadius: 1,
+                        border: '1px solid',
+                        borderColor: (theme) => theme.palette.grey[200],
+                        cursor: 'pointer',
+                        '&:hover': {
+                          backgroundColor: (theme) => theme.palette.grey[100],
+                        },
+                      }}
+                      onClick={() => navigate(`/beta-invoices/${invoice._id}`)}
+                    >
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="body2" fontWeight={600}>
+                          {invoice.invoiceNumber || 'N/A'}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {invoice.contract?.companyName || 'Unknown Company'}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ textAlign: 'right' }}>
+                        <Typography variant="body2" fontWeight={700} color="primary">
+                          AED {invoice.total?.toLocaleString() || '0'}
+                        </Typography>
+                        <Chip
+                          label={(invoice.status || 'draft').toUpperCase()}
+                          size="small"
+                          color={
+                            invoice.status === 'paid' ? 'success' :
+                            invoice.status === 'partial' ? 'warning' :
+                            invoice.status === 'unpaid' || invoice.status === 'overdue' || invoice.status === 'cancelled' ? 'error' :
+                            invoice.status === 'sent' ? 'info' :
+                            'default'
+                          }
+                          sx={{ mt: 0.5, fontSize: '0.7rem', height: 20 }}
+                        />
+                      </Box>
+                    </Box>
+                  ))
+                ) : (
+                  <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 3 }}>
+                    No recent invoices
+                  </Typography>
+                )}
+              </Box>
+            </CardContent>
+          </Card>
         </Grid>
       </Grid>
 

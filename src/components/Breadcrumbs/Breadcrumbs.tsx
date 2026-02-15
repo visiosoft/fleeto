@@ -49,7 +49,7 @@ export const defaultBreadcrumbConfig: BreadcrumbConfig = {
   '/drivers': { label: 'Drivers', parent: '/dashboard' },
   '/tracking': { label: 'Vehicle Tracking', parent: '/dashboard' },
   '/costs': { label: 'Cost Management', parent: '/dashboard' },
-  '/contracts': { label: 'Contracts', parent: '/dashboard' },
+  '/contracts': { label: 'Add Company / Contract', parent: '/dashboard' },
   '/contracts/template': { label: 'Contract Template', parent: '/contracts' },
   '/reports': { label: 'Reports', parent: '/dashboard' },
   '/compliance': { label: 'Compliance', parent: '/dashboard' },

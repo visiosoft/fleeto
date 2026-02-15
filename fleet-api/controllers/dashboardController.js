@@ -1,5 +1,7 @@
 const { ObjectId } = require('mongodb');
 const db = require('../config/db');
+const Vehicle = require('../models/Vehicle');
+// Note: Driver model uses native MongoDB, not Mongoose
 
 const DashboardController = {
   /**
@@ -75,11 +77,11 @@ const DashboardController = {
       
       console.log(`Fetching active vehicles for company ID: ${companyId}`);
       
-      const collection = await db.getCollection('vehicles');
-      const activeVehicles = await collection.find({ 
-        status: 'active',
+      // Use Mongoose model with case-insensitive regex for status
+      const activeVehicles = await Vehicle.find({ 
+        status: { $regex: /^active$/i },
         companyId: companyId.toString()
-      }).toArray();
+      }).lean();
 
       console.log(`Found ${activeVehicles.length} active vehicles for company ${companyId}`);
       
@@ -119,9 +121,10 @@ const DashboardController = {
       
       console.log(`Fetching active drivers for company ID: ${companyId}`);
       
+      // Use native MongoDB collection with case-insensitive regex for status
       const collection = await db.getCollection('drivers');
       const activeDrivers = await collection.find({ 
-        status: 'active',
+        status: { $regex: /^active$/i },
         companyId: companyId.toString()
       }).toArray();
 

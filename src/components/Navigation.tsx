@@ -44,7 +44,7 @@ const menuItems = [
     icon: <PersonIcon />,
   },
   {
-    title: 'Contract Management',
+    title: 'Add Company / Contract',
     path: '/contracts',
     icon: <DescriptionIcon />,
     },

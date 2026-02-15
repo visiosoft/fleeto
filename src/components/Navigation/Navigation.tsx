@@ -87,7 +87,7 @@ const MENU_ITEMS: MenuItem[] = [
   { text: 'Vehicle', path: '/vehicles', icon: <DirectionsCarIcon /> },
   { text: 'Driver', path: '/drivers', icon: <PeopleIcon /> },
   { text: 'Cost', path: '/costs', icon: <AccountBalanceIcon /> },
-  { text: 'Contract', path: '/contracts', icon: <GavelIcon /> },
+  { text: 'Add Company / Contract', path: '/contracts', icon: <GavelIcon /> },
   { text: 'Tracking', path: '/tracking', icon: <LocationOnIcon /> },
   
   { text: 'Invoice', path: '/beta-invoices', icon: <InvoiceIcon /> },
