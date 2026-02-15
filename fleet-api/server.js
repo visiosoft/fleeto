@@ -13,6 +13,12 @@ const swaggerDocs = require('./swagger');
 const { authenticate } = require('./middleware/auth');
 
 // Import routes
+const vehicleRoutes = require('./routes/vehicleRoutes');
+const fuelRoutes = require('./routes/fuelRoutes');
+const companySettingsRoutes = require('./routes/companyProfileRoutes');
+const maintenanceRoutes = require('./routes/maintenanceRoutes');
+const contractRoutes = require('./routes/companyContractRoutes');
+const contractTemplateRoutes = require('./routes/contractTemplateRoutes');
 const driverRoutes = require('./routes/driverRoutes');
 const expenseRoutes = require('./routes/expenseRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
@@ -175,19 +181,25 @@ app.get('/api/health', async (req, res) => {
 
 // Use routes
 app.use('/api/auth', authRoutes);
+app.use('/api/vehicles', vehicleRoutes);
+app.use('/api/fuel', fuelRoutes);
+app.use('/api/company', companySettingsRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/expenses', expenseRoutes);
-app.use('/api/drivers', driverRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/costs', costRoutes);
-app.use('/api/notes', noteRoutes);
-app.use('/api/payroll', payrollRoutes);
 app.use('/api/invoices', invoiceRoutes);
-app.use('/api/companies', companyRoutes);
+app.use('/api/notes', noteRoutes);
 app.use('/api/receipts', receiptRoutes);
-app.use('/api/letterheads', letterheadRoutes);
-app.use('/api/whatsapp', whatsappRoutes);
 app.use('/api/twilio-whatsapp', twilioWhatsAppRoutes);
+app.use('/api/costs', costRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/drivers', driverRoutes);
+app.use('/api/expenses', expenseRoutes);
+app.use('/api/payroll', payrollRoutes);
+app.use('/api/companies', companyRoutes);
+app.use('/api/letterheads', letterheadRoutes);
+app.use('/api/maintenance', maintenanceRoutes);
+app.use('/api/contracts', contractRoutes);
+app.use('/api/contract-templates', contractTemplateRoutes);
+app.use('/api/whatsapp', whatsappRoutes);
 
 // Generic API routes for other collections
 const COLLECTIONS = db.COLLECTIONS;
