@@ -3,13 +3,14 @@
  * Includes fallback to mock data when MongoDB is not available
  */
 const { MongoClient } = require('mongodb');
+const mongoose = require('mongoose');
 require('dotenv').config();
 
 // Import mock data for offline/testing use
 const mockData = require('./mock-data');
 
 // MongoDB Connection
-const MONGODB_URI = "mongodb+srv://devxulfiqar:nSISUpLopruL7S8j@mypaperlessoffice.z5g84.mongodb.net/?retryWrites=true&w=majority&appName=mypaperlessofficet-management" ;
+const MONGODB_URI = "mongodb+srv://devxulfiqar:nSISUpLopruL7S8j@mypaperlessoffice.z5g84.mongodb.net/fleet-management?retryWrites=true&w=majority&appName=mypaperlessoffice" ;
 const DB_NAME = process.env.DB_NAME || 'fleet-management';
 
 // MongoDB connection options
@@ -190,17 +191,27 @@ class MockDatabase {
  */
 const connectToDatabase = async () => {
     try {
-        if (dbInstance) {
+        if (dbInstance && mongoose.connection.readyState === 1) {
             return dbInstance;
         }
 
         console.log('Connecting to MongoDB...');
+        
+        // Connect Mongoose (for models like Vehicle, Driver, etc.)
+        await mongoose.connect(MONGODB_URI, {
+            serverSelectionTimeoutMS: 30000,
+            socketTimeoutMS: 60000,
+            connectTimeoutMS: 30000,
+        });
+        console.log('Mongoose connected to MongoDB successfully');
+        
+        // Connect native MongoDB client (for collections that don't use Mongoose)
         client = await MongoClient.connect(MONGODB_URI, options);
         dbInstance = client.db(DB_NAME);
         
         // Test the connection
         await dbInstance.command({ ping: 1 });
-        console.log('Connected to MongoDB successfully');
+        console.log('Native MongoDB client connected successfully');
         
         // Set up connection error handling
         client.on('error', (error) => {
@@ -210,6 +221,14 @@ const connectToDatabase = async () => {
         client.on('close', () => {
             console.log('MongoDB connection closed');
             dbInstance = null;
+        });
+        
+        mongoose.connection.on('error', (error) => {
+            console.error('Mongoose connection error:', error);
+        });
+        
+        mongoose.connection.on('disconnected', () => {
+            console.log('Mongoose disconnected');
         });
         
         return dbInstance;
@@ -254,10 +273,15 @@ const isUsingMockData = () => {
  * Close the database connection
  */
 const closeConnection = async () => {
+    if (mongoose.connection.readyState === 1) {
+        await mongoose.disconnect();
+        console.log('Mongoose disconnected');
+    }
     if (client) {
         await client.close();
         client = null;
         dbInstance = null;
+        console.log('Native MongoDB client closed');
     }
 };
 

@@ -54,113 +54,354 @@ app.get('/', (req, res) => {
   <title>Fleet Management API</title>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
-    .container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .container { max-width: 1400px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
     h1 { color: #2563EB; margin: 0 0 10px; }
+    h2 { color: #1E293B; font-size: 20px; margin-top: 30px; margin-bottom: 15px; border-bottom: 2px solid #E5E7EB; padding-bottom: 8px; }
     .subtitle { color: #64748B; margin-bottom: 30px; }
     .btn { display: inline-block; padding: 12px 24px; background: #2563EB; color: white; text-decoration: none; border-radius: 6px; margin-right: 10px; font-weight: 600; }
     .btn:hover { background: #1D4ED8; }
-    .section { margin: 30px 0; }
-    .endpoint { background: #f8fafc; padding: 15px; margin: 10px 0; border-radius: 6px; border-left: 4px solid #2563EB; }
-    .method { display: inline-block; padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 12px; margin-right: 10px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(500px, 1fr)); gap: 10px; }
+    .endpoint { background: #f8fafc; padding: 12px 15px; border-radius: 6px; border-left: 4px solid #2563EB; }
+    .method { display: inline-block; padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 11px; margin-right: 10px; min-width: 50px; text-align: center; }
     .get { background: #10B981; color: white; }
     .post { background: #3B82F6; color: white; }
     .put { background: #F59E0B; color: white; }
     .delete { background: #EF4444; color: white; }
-    .path { font-family: monospace; color: #0F172A; font-weight: 600; }
-    .auth { color: #64748B; font-size: 14px; margin-top: 5px; }
+    .path { font-family: 'Courier New', monospace; color: #0F172A; font-weight: 600; font-size: 13px; }
+    .auth { color: #64748B; font-size: 12px; margin-top: 4px; }
     .highlight { background: #FEF3C7; padding: 2px 6px; border-radius: 3px; }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>🚗 Fleet Management API</h1>
-    <p class="subtitle">Version 1.0.0 - Server Running</p>
+    <p class="subtitle">Complete API Reference - Version 1.0.0</p>
     
-    <a href="/api-docs" class="btn">📚 Swagger Documentation</a>
-    <a href="/api-docs.json" class="btn" style="background: #64748B;">📄 JSON Spec</a>
+    <a href="/api-docs" class="btn">📚 Interactive Swagger Docs</a>
+    <a href="/api-docs.json" class="btn" style="background: #64748B;">📄 OpenAPI Spec</a>
     
-    <div class="section">
-      <h2>📁 Vehicle Document Endpoints</h2>
-      
-      <div class="endpoint" style="border-left-color: #10B981;">
-        <span class="method post">POST</span>
-        <span class="path">/api/vehicles/<span class="highlight">:id</span>/upload-document</span>
-        <div class="auth">🔐 Auth required - Upload vehicle document (multipart/form-data)</div>
-      </div>
-      
-      <div class="endpoint" style="border-left-color: #10B981;">
-        <span class="method get">GET</span>
-        <span class="path">/api/vehicles/<span class="highlight">:id</span>/get-documents</span>
-        <div class="auth">🔐 Auth required - Get all vehicle documents</div>
-      </div>
-      
-      <div class="endpoint" style="border-left-color: #10B981;">
-        <span class="method delete">DELETE</span>
-        <span class="path">/api/vehicles/<span class="highlight">:id</span>/delete-document/<span class="highlight">:documentId</span></span>
-        <div class="auth">🔐 Auth required - Delete document</div>
-      </div>
-      
-      <div class="endpoint" style="border-left-color: #10B981;">
-        <span class="method get">GET</span>
-        <span class="path">/api/vehicles/file/<span class="highlight">:vehicleId</span>/<span class="highlight">:filename</span></span>
-        <div class="auth">🔐 Auth required - Download/view document file</div>
-      </div>
-    </div>
-    
-    <div class="section">
-      <h2>🔥 Popular Endpoints</h2>
-      
+    <h2>🔐 Authentication</h2>
+    <div class="grid">
       <div class="endpoint">
         <span class="method post">POST</span>
         <span class="path">/api/auth/login</span>
-        <div class="auth">🔓 No auth - Get JWT token</div>
+        <div class="auth">🔓 Public - Login and get JWT token</div>
       </div>
-      
+      <div class="endpoint">
+        <span class="method post">POST</span>
+        <span class="path">/api/auth/register</span>
+        <div class="auth">🔓 Public - Register new user</div>
+      </div>
+      <div class="endpoint">
+        <span class="method get">GET</span>
+        <span class="path">/api/auth/me</span>
+        <div class="auth">🔐 Protected - Get current user</div>
+      </div>
       <div class="endpoint">
         <span class="method get">GET</span>
         <span class="path">/api/health</span>
-        <div class="auth">🔓 No auth - Health check</div>
+        <div class="auth">🔓 Public - API health check</div>
       </div>
-      
+    </div>
+
+    <h2>🚙 Vehicles</h2>
+    <div class="grid">
       <div class="endpoint">
         <span class="method get">GET</span>
         <span class="path">/api/vehicles</span>
-        <div class="auth">🔐 Auth required - All vehicles</div>
+        <div class="auth">🔐 Get all vehicles</div>
       </div>
-      
+      <div class="endpoint">
+        <span class="method get">GET</span>
+        <span class="path">/api/vehicles/<span class="highlight">:id</span></span>
+        <div class="auth">🔐 Get vehicle by ID</div>
+      </div>
+      <div class="endpoint">
+        <span class="method post">POST</span>
+        <span class="path">/api/vehicles</span>
+        <div class="auth">🔐 Create new vehicle</div>
+      </div>
+      <div class="endpoint">
+        <span class="method put">PUT</span>
+        <span class="path">/api/vehicles/<span class="highlight">:id</span></span>
+        <div class="auth">🔐 Update vehicle</div>
+      </div>
+      <div class="endpoint">
+        <span class="method delete">DELETE</span>
+        <span class="path">/api/vehicles/<span class="highlight">:id</span></span>
+        <div class="auth">🔐 Delete vehicle</div>
+      </div>
+      <div class="endpoint">
+        <span class="method get">GET</span>
+        <span class="path">/api/vehicles/search</span>
+        <div class="auth">🔐 Search vehicles</div>
+      </div>
+    </div>
+
+    <h2>📁 Vehicle Documents</h2>
+    <div class="grid">
+      <div class="endpoint" style="border-left-color: #10B981;">
+        <span class="method post">POST</span>
+        <span class="path">/api/vehicles/<span class="highlight">:id</span>/upload-document</span>
+        <div class="auth">🔐 Upload document (multipart/form-data)</div>
+      </div>
+      <div class="endpoint" style="border-left-color: #10B981;">
+        <span class="method get">GET</span>
+        <span class="path">/api/vehicles/<span class="highlight">:id</span>/get-documents</span>
+        <div class="auth">🔐 Get all vehicle documents</div>
+      </div>
+      <div class="endpoint" style="border-left-color: #10B981;">
+        <span class="method delete">DELETE</span>
+        <span class="path">/api/vehicles/<span class="highlight">:id</span>/delete-document/<span class="highlight">:docId</span></span>
+        <div class="auth">🔐 Delete document</div>
+      </div>
+      <div class="endpoint" style="border-left-color: #10B981;">
+        <span class="method get">GET</span>
+        <span class="path">/api/vehicles/file/<span class="highlight">:vehicleId</span>/<span class="highlight">:filename</span></span>
+        <div class="auth">🔐 Download/view file</div>
+      </div>
+    </div>
+
+    <h2>🔧 Vehicle Maintenance</h2>
+    <div class="grid">
+      <div class="endpoint">
+        <span class="method get">GET</span>
+        <span class="path">/api/maintenance</span>
+        <div class="auth">🔐 Get all maintenance records</div>
+      </div>
+      <div class="endpoint">
+        <span class="method post">POST</span>
+        <span class="path">/api/maintenance</span>
+        <div class="auth">🔐 Create maintenance record</div>
+      </div>
+      <div class="endpoint">
+        <span class="method put">PUT</span>
+        <span class="path">/api/maintenance/<span class="highlight">:id</span></span>
+        <div class="auth">🔐 Update maintenance record</div>
+      </div>
+      <div class="endpoint">
+        <span class="method delete">DELETE</span>
+        <span class="path">/api/maintenance/<span class="highlight">:id</span></span>
+        <div class="auth">🔐 Delete maintenance record</div>
+      </div>
+    </div>
+
+    <h2>👨‍✈️ Drivers</h2>
+    <div class="grid">
       <div class="endpoint">
         <span class="method get">GET</span>
         <span class="path">/api/drivers</span>
-        <div class="auth">🔐 Auth required - All drivers</div>
+        <div class="auth">🔐 Get all drivers</div>
       </div>
-      
+      <div class="endpoint">
+        <span class="method get">GET</span>
+        <span class="path">/api/drivers/<span class="highlight">:id</span></span>
+        <div class="auth">🔐 Get driver by ID</div>
+      </div>
+      <div class="endpoint">
+        <span class="method post">POST</span>
+        <span class="path">/api/drivers</span>
+        <div class="auth">🔐 Create new driver</div>
+      </div>
+      <div class="endpoint">
+        <span class="method put">PUT</span>
+        <span class="path">/api/drivers/<span class="highlight">:id</span></span>
+        <div class="auth">🔐 Update driver</div>
+      </div>
+      <div class="endpoint">
+        <span class="method delete">DELETE</span>
+        <span class="path">/api/drivers/<span class="highlight">:id</span></span>
+        <div class="auth">🔐 Delete driver</div>
+      </div>
+      <div class="endpoint">
+        <span class="method get">GET</span>
+        <span class="path">/api/drivers/search</span>
+        <div class="auth">🔐 Search drivers</div>
+      </div>
+      <div class="endpoint" style="border-left-color: #8B5CF6;">
+        <span class="method post">POST</span>
+        <span class="path">/api/drivers/<span class="highlight">:id</span>/upload-document</span>
+        <div class="auth">🔐 Upload driver document</div>
+      </div>
+      <div class="endpoint" style="border-left-color: #8B5CF6;">
+        <span class="method get">GET</span>
+        <span class="path">/api/drivers/<span class="highlight">:id</span>/get-documents</span>
+        <div class="auth">🔐 Get driver documents</div>
+      </div>
+    </div>
+
+    <h2>📄 Invoices (Beta)</h2>
+    <div class="grid">
       <div class="endpoint">
         <span class="method get">GET</span>
         <span class="path">/api/invoices/beta</span>
-        <div class="auth">🔐 Auth required - All invoices</div>
+        <div class="auth">🔐 Get all invoices</div>
       </div>
-      
+      <div class="endpoint">
+        <span class="method get">GET</span>
+        <span class="path">/api/invoices/beta/stats</span>
+        <div class="auth">🔐 Get invoice statistics</div>
+      </div>
+      <div class="endpoint">
+        <span class="method get">GET</span>
+        <span class="path">/api/invoices/beta/<span class="highlight">:id</span></span>
+        <div class="auth">🔐 Get invoice by ID</div>
+      </div>
+      <div class="endpoint">
+        <span class="method post">POST</span>
+        <span class="path">/api/invoices/beta</span>
+        <div class="auth">🔐 Create invoice</div>
+      </div>
+      <div class="endpoint">
+        <span class="method put">PUT</span>
+        <span class="path">/api/invoices/beta/<span class="highlight">:id</span></span>
+        <div class="auth">🔐 Update invoice</div>
+      </div>
+      <div class="endpoint">
+        <span class="method delete">DELETE</span>
+        <span class="path">/api/invoices/beta/<span class="highlight">:id</span></span>
+        <div class="auth">🔐 Delete invoice</div>
+      </div>
+      <div class="endpoint">
+        <span class="method post">POST</span>
+        <span class="path">/api/invoices/beta/<span class="highlight">:id</span>/payments</span>
+        <div class="auth">🔐 Add payment</div>
+      </div>
+    </div>
+
+    <h2>⛽ Fuel Management</h2>
+    <div class="grid">
+      <div class="endpoint">
+        <span class="method get">GET</span>
+        <span class="path">/api/fuel</span>
+        <div class="auth">🔐 Get all fuel records</div>
+      </div>
+      <div class="endpoint">
+        <span class="method post">POST</span>
+        <span class="path">/api/fuel</span>
+        <div class="auth">🔐 Create fuel record</div>
+      </div>
+      <div class="endpoint">
+        <span class="method put">PUT</span>
+        <span class="path">/api/fuel/<span class="highlight">:id</span></span>
+        <div class="auth">🔐 Update fuel record</div>
+      </div>
+      <div class="endpoint">
+        <span class="method delete">DELETE</span>
+        <span class="path">/api/fuel/<span class="highlight">:id</span></span>
+        <div class="auth">🔐 Delete fuel record</div>
+      </div>
+    </div>
+
+    <h2>💰 Financial</h2>
+    <div class="grid">
+      <div class="endpoint">
+        <span class="method get">GET</span>
+        <span class="path">/api/costs</span>
+        <div class="auth">🔐 Get all costs</div>
+      </div>
+      <div class="endpoint">
+        <span class="method get">GET</span>
+        <span class="path">/api/expenses</span>
+        <div class="auth">🔐 Get all expenses</div>
+      </div>
+      <div class="endpoint">
+        <span class="method get">GET</span>
+        <span class="path">/api/receipts</span>
+        <div class="auth">🔐 Get all receipts</div>
+      </div>
+      <div class="endpoint">
+        <span class="method get">GET</span>
+        <span class="path">/api/payroll</span>
+        <div class="auth">🔐 Get all payroll records</div>
+      </div>
+    </div>
+
+    <h2>📋 Other Resources</h2>
+    <div class="grid">
+      <div class="endpoint">
+        <span class="method get">GET</span>
+        <span class="path">/api/notes</span>
+        <div class="auth">🔐 Get all notes</div>
+      </div>
+      <div class="endpoint">
+        <span class="method get">GET</span>
+        <span class="path">/api/letterheads</span>
+        <div class="auth">🔐 Get all letterheads</div>
+      </div>
+      <div class="endpoint">
+        <span class="method get">GET</span>
+        <span class="path">/api/contracts</span>
+        <div class="auth">🔐 Get all contracts</div>
+      </div>
+      <div class="endpoint">
+        <span class="method get">GET</span>
+        <span class="path">/api/contract-templates</span>
+        <div class="auth">🔐 Get contract templates</div>
+      </div>
+      <div class="endpoint">
+        <span class="method get">GET</span>
+        <span class="path">/api/users</span>
+        <div class="auth">🔐 Get all users</div>
+      </div>
+      <div class="endpoint">
+        <span class="method get">GET</span>
+        <span class="path">/api/companies</span>
+        <div class="auth">🔐 Get all companies</div>
+      </div>
+      <div class="endpoint">
+        <span class="method get">GET</span>
+        <span class="path">/api/company</span>
+        <div class="auth">🔐 Get company profile</div>
+      </div>
+    </div>
+
+    <h2>📊 Dashboard & Analytics</h2>
+    <div class="grid">
       <div class="endpoint">
         <span class="method get">GET</span>
         <span class="path">/api/dashboard/stats</span>
-        <div class="auth">🔐 Auth required - Dashboard statistics</div>
+        <div class="auth">🔐 Get dashboard statistics</div>
+      </div>
+      <div class="endpoint">
+        <span class="method get">GET</span>
+        <span class="path">/api/dashboard/summary</span>
+        <div class="auth">🔐 Get dashboard summary</div>
+      </div>
+    </div>
+
+    <h2>💬 Communication</h2>
+    <div class="grid">
+      <div class="endpoint">
+        <span class="method post">POST</span>
+        <span class="path">/api/twilio-whatsapp/send</span>
+        <div class="auth">🔐 Send WhatsApp message</div>
+      </div>
+      <div class="endpoint">
+        <span class="method post">POST</span>
+        <span class="path">/api/twilio-whatsapp/webhook</span>
+        <div class="auth">🔓 WhatsApp webhook (Twilio)</div>
       </div>
     </div>
     
-    <div class="section" style="background: #FEF3C7; padding: 20px; border-radius: 6px;">
-      <h3 style="margin-top: 0;">🔑 Authentication</h3>
-      <p>Get your token first:</p>
-      <pre style="background: white; padding: 15px; border-radius: 4px; overflow-x: auto;">POST /api/auth/login
+    <div style="background: #EFF6FF; padding: 25px; border-radius: 8px; margin-top: 40px; border-left: 4px solid #2563EB;">
+      <h3 style="margin-top: 0; color: #1E40AF;">🔑 How to Authenticate</h3>
+      <p style="margin: 10px 0;"><strong>1. Login to get token:</strong></p>
+      <pre style="background: white; padding: 15px; border-radius: 4px; overflow-x: auto; border: 1px solid #DBEAFE;">POST /api/auth/login
+Content-Type: application/json
+
 {
-  "email": "user@example.com",
-  "password": "password"
+  "email": "your-email@example.com",
+  "password": "your-password"
 }</pre>
-      <p>Then use it in requests:</p>
-      <pre style="background: white; padding: 15px; border-radius: 4px; overflow-x: auto;">Authorization: Bearer YOUR_JWT_TOKEN</pre>
+      <p style="margin: 15px 0 10px;"><strong>2. Use token in subsequent requests:</strong></p>
+      <pre style="background: white; padding: 15px; border-radius: 4px; overflow-x: auto; border: 1px solid #DBEAFE;">Authorization: Bearer YOUR_JWT_TOKEN_HERE</pre>
     </div>
     
-    <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #E5E7EB; color: #64748B; text-align: center;">
-      <p>Complete documentation: <a href="/api-docs" style="color: #2563EB; font-weight: 600;">/api-docs</a></p>
+    <div style="margin-top: 40px; padding-top: 25px; border-top: 2px solid #E5E7EB; text-align: center;">
+      <p style="color: #64748B; margin-bottom: 15px;">📚 For interactive testing and detailed schemas, visit:</p>
+      <a href="/api-docs" style="color: #2563EB; font-weight: 600; font-size: 18px; text-decoration: none;">Swagger Interactive Documentation →</a>
+      <p style="color: #94A3B8; margin-top: 20px; font-size: 14px;">Total: 80+ endpoints | All require authentication except login & health check</p>
     </div>
   </div>
 </body>
@@ -462,29 +703,67 @@ Object.entries(COLLECTIONS).forEach(([key, collectionName]) => {
   });
 });
 
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ 
+    status: 'error',
+    message: 'Something went wrong!',
+    error: process.env.NODE_ENV === 'development' ? err.message : undefined
+  });
+});
+
+// Handle 404 routes
+app.use((req, res) => {
+  res.status(404).json({
+    status: 'error',
+    message: 'Route not found',
+    documentation: '/api-docs',
+    requestedPath: req.path
+  });
+});
+
 // Initialize Swagger Documentation
 swaggerDocs(app, PORT);
 
-// Start the server with error handling
-const server = app.listen(PORT, async () => {
-  console.log(`Server is running on port ${PORT}`);
-  await db.connectToDatabase();
-}).on('error', (err) => {
-  if (err.code === 'EADDRINUSE') {
-    console.error(`Port ${PORT} is already in use. Trying port ${PORT + 1}...`);
-    server.close();
-    app.listen(PORT + 1, async () => {
-      console.log(`Server is running on port ${PORT + 1}`);
-      await db.connectToDatabase();
+// Connect to database and start server
+const startServer = async () => {
+  try {
+    // Connect to database FIRST
+    await db.connectToDatabase();
+    console.log('Database connection established');
+    
+    // Then start the server
+    const server = app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+      console.log(`API Documentation: http://localhost:${PORT}/api-docs`);
+    }).on('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        console.error(`Port ${PORT} is already in use. Trying port ${PORT + 1}...`);
+        server.close();
+        app.listen(PORT + 1, () => {
+          console.log(`Server is running on port ${PORT + 1}`);
+          console.log(`API Documentation: http://localhost:${PORT + 1}/api-docs`);
+        });
+      } else {
+        console.error('Server error:', err);
+      }
     });
-  } else {
-    console.error('Server error:', err);
+    
+    // Handle server shutdown
+    process.on('SIGINT', async () => {
+      console.log('Server shutting down...');
+      await db.closeConnection();
+      process.exit(0);
+    });
+    
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
   }
-});
+};
 
-// Handle server shutdown
-process.on('SIGINT', async () => {
-  console.log('Server shutting down...');
-  await db.closeConnection();
-  process.exit(0);
-});
+// Start the application
+startServer();
+
+module.exports = app;
