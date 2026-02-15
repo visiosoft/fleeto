@@ -1,4 +1,12 @@
 // Vehicle related interfaces
+export interface VehicleDocument {
+  type: string;
+  title: string;
+  url: string;
+  uploadDate: string;
+  expiryDate?: string;
+}
+
 export interface Vehicle {
   _id?: string;
   id?: string;
@@ -24,6 +32,7 @@ export interface Vehicle {
     expiryDate: string;
   };
   notes?: string;
+  documents?: VehicleDocument[];
 }
 
 export interface FuelRecord {

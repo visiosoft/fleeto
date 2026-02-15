@@ -38,6 +38,7 @@ import {
   Warning as WarningIcon,
   CalendarToday as CalendarIcon,
   AttachFile as AttachFileIcon,
+  Description as DescriptionIcon,
 } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import moment from 'moment';
@@ -46,6 +47,14 @@ import axios from 'axios';
 import { API_CONFIG, getApiUrl } from '../config/api';
 import VehicleDocuments from '../components/VehicleDocuments';
 import TableToolbar from '../components/TableToolbar';
+
+interface VehicleDocument {
+  type: string;
+  title: string;
+  url: string;
+  uploadDate: string;
+  expiryDate?: string;
+}
 
 interface Vehicle {
   _id: string;
@@ -67,6 +76,7 @@ interface Vehicle {
     expiryDate: Moment;
   };
   notes?: string;
+  documents?: VehicleDocument[];
 }
 
 interface VehicleFormValues extends Omit<Vehicle, '_id' | 'lastMaintenance' | 'nextMaintenance' | 'expiryDate' | 'insuranceInfo'> {
@@ -370,10 +380,27 @@ const VehicleManagement: React.FC = () => {
                       >
                         <DirectionsCarIcon sx={{ fontSize: 20 }} />
                       </Avatar>
-                      <Box>
-                        <Typography variant="body2" fontWeight={700}>
-                          {`${vehicle.make} ${vehicle.model}`}
-                        </Typography>
+                      <Box sx={{ flex: 1 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Typography variant="body2" fontWeight={700}>
+                            {`${vehicle.make} ${vehicle.model}`}
+                          </Typography>
+                          {vehicle.documents && vehicle.documents.length > 0 && (
+                            <Chip
+                              icon={<DescriptionIcon sx={{ fontSize: 14 }} />}
+                              label={vehicle.documents.length}
+                              size="small"
+                              color="primary"
+                              variant="outlined"
+                              sx={{ 
+                                height: 20, 
+                                fontSize: '0.7rem',
+                                '& .MuiChip-label': { px: 0.5 },
+                                '& .MuiChip-icon': { ml: 0.5, mr: -0.25 }
+                              }}
+                            />
+                          )}
+                        </Box>
                         <Typography variant="caption" color="text.secondary">
                           {vehicle.year} • {vehicle.fuelType}
                         </Typography>

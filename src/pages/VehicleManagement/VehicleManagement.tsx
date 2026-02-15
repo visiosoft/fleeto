@@ -32,6 +32,7 @@ import {
   Delete,
   Add,
   Close,
+  Description,
 } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import moment from 'moment';
@@ -433,9 +434,21 @@ const VehicleManagement: React.FC = () => {
               <Card>
                 <CardContent>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                    <Typography variant="h6">
-                      {vehicle.make} {vehicle.model} {vehicle.year}
-                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography variant="h6">
+                        {vehicle.make} {vehicle.model} {vehicle.year}
+                      </Typography>
+                      {vehicle.documents && vehicle.documents.length > 0 && (
+                        <Chip
+                          icon={<Description />}
+                          label={vehicle.documents.length}
+                          size="small"
+                          color="primary"
+                          variant="outlined"
+                          title={`${vehicle.documents.length} document${vehicle.documents.length > 1 ? 's' : ''} attached`}
+                        />
+                      )}
+                    </Box>
                     <Box>
                       <IconButton size="small" onClick={() => handleEdit(vehicle)}>
                         <Edit />
