@@ -37,12 +37,14 @@ import {
   LocalGasStation as FuelIcon,
   Warning as WarningIcon,
   CalendarToday as CalendarIcon,
+  AttachFile as AttachFileIcon,
 } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import moment from 'moment';
 import type { Moment } from 'moment';
 import axios from 'axios';
 import { API_CONFIG, getApiUrl } from '../config/api';
+import VehicleDocuments from '../components/VehicleDocuments';
 
 interface Vehicle {
   _id: string;
@@ -84,6 +86,8 @@ const VehicleManagement: React.FC = () => {
   const [formValues, setFormValues] = useState<Partial<VehicleFormValues>>({});
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [vehicleToDelete, setVehicleToDelete] = useState<string | null>(null);
+  const [documentsDialogOpen, setDocumentsDialogOpen] = useState(false);
+  const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
     open: false,
     message: '',
@@ -428,6 +432,25 @@ const VehicleManagement: React.FC = () => {
                         <EditIcon fontSize="small" />
                       </IconButton>
                     </Tooltip>
+                    <Tooltip title="Documents">
+                      <IconButton
+                        size="small"
+                        onClick={() => {
+                          setSelectedVehicleId(vehicle._id);
+                          setDocumentsDialogOpen(true);
+                        }}
+                        sx={{
+                          backgroundColor: alpha(theme.palette.success.main, 0.1),
+                          '&:hover': {
+                            backgroundColor: alpha(theme.palette.success.main, 0.2),
+                            transform: 'scale(1.1)',
+                          },
+                          transition: 'all 0.2s',
+                        }}
+                      >
+                        <AttachFileIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
                     <Tooltip title="Delete Vehicle">
                       <IconButton
                         size="small"
@@ -641,6 +664,18 @@ const VehicleManagement: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Vehicle Documents Dialog */}
+      {selectedVehicleId && (
+        <VehicleDocuments
+          vehicleId={selectedVehicleId}
+          open={documentsDialogOpen}
+          onClose={() => {
+            setDocumentsDialogOpen(false);
+            setSelectedVehicleId(null);
+          }}
+        />
+      )}
     </Box>
   );
 };

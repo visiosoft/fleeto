@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const vehicleController = require('../controllers/vehicleController');
 const { auth, authorize, checkCompanyAccess } = require('../middleware/auth');
+const upload = require('../middleware/upload');
 
 // Apply authentication and company access middleware to all routes
 router.use(auth);
@@ -170,9 +171,16 @@ router.post('/:id/maintenance', authorize('admin', 'manager'), vehicleController
 router.put('/:id/maintenance/:maintenanceId', authorize('admin', 'manager'), vehicleController.updateMaintenanceRecord);
 router.delete('/:id/maintenance/:maintenanceId', authorize('admin'), vehicleController.deleteMaintenanceRecord);
 
-// Vehicle document routes
+// Vehicle document routes (old - keeping for compatibility)
 router.get('/:id/documents', vehicleController.getVehicleDocuments);
 router.post('/:id/documents', authorize('admin', 'manager'), vehicleController.addVehicleDocument);
 router.delete('/:id/documents/:documentId', authorize('admin'), vehicleController.deleteVehicleDocument);
+
+// New document upload routes with file handling
+router.post('/:id/upload-document', authorize('admin', 'manager'), upload.single('document'), vehicleController.uploadDocument);
+router.get('/:id/get-documents', vehicleController.getDocuments);
+router.delete('/:id/delete-document/:documentId', authorize('admin', 'manager'), vehicleController.deleteDocument);
+// Authenticated file serving
+router.get('/file/:vehicleId/:filename', vehicleController.serveDocument);
 
 module.exports = router; 

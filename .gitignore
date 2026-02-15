@@ -11,6 +11,10 @@
 # production
 /build
 
+# uploaded files
+/public/vehicles/**
+!/public/vehicles/.gitkeep
+
 # misc
 .DS_Store
 .env

@@ -476,6 +476,210 @@ const VehicleController = {
         error: error.message 
       });
     }
+  },
+
+  /**
+   * Upload document for a vehicle
+   * @param {Object} req - Express request object (with file from multer)
+   * @param {Object} res - Express response object
+   */
+  async uploadDocument(req, res) {
+    try {
+      const companyId = req.user?.companyId;
+      
+      if (!companyId) {
+        return res.status(400).json({
+          status: 'error',
+          message: 'Company ID not found in user token'
+        });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({
+          status: 'error',
+          message: 'No file uploaded'
+        });
+      }
+
+      const vehicle = await Vehicle.findOne({
+        _id: req.params.id,
+        companyId: companyId
+      });
+
+      if (!vehicle) {
+        return res.status(404).json({ message: 'Vehicle not found' });
+      }
+
+      // Create document object
+      const document = {
+        type: req.body.type || 'other',
+        title: req.body.title || req.file.originalname,
+        url: `/vehicles/${req.params.id}/${req.file.filename}`,
+        uploadDate: new Date(),
+        expiryDate: req.body.expiryDate || null
+      };
+
+      // Add document to vehicle
+      vehicle.documents.push(document);
+      await vehicle.save();
+
+      res.status(200).json({
+        status: 'success',
+        message: 'Document uploaded successfully',
+        document: document
+      });
+    } catch (error) {
+      console.error('Error uploading document:', error);
+      res.status(500).json({
+        status: 'error',
+        message: 'Failed to upload document',
+        error: error.message
+      });
+    }
+  },
+
+  /**
+   * Get all documents for a vehicle
+   * @param {Object} req - Express request object
+   * @param {Object} res - Express response object
+   */
+  async getDocuments(req, res) {
+    try {
+      const companyId = req.user?.companyId;
+      
+      if (!companyId) {
+        return res.status(400).json({
+          status: 'error',
+          message: 'Company ID not found in user token'
+        });
+      }
+
+      const vehicle = await Vehicle.findOne({
+        _id: req.params.id,
+        companyId: companyId
+      });
+
+      if (!vehicle) {
+        return res.status(404).json({ message: 'Vehicle not found' });
+      }
+
+      res.status(200).json({
+        status: 'success',
+        documents: vehicle.documents
+      });
+    } catch (error) {
+      console.error('Error fetching documents:', error);
+      res.status(500).json({
+        status: 'error',
+        message: 'Failed to fetch documents',
+        error: error.message
+      });
+    }
+  },
+
+  /**
+   * Delete a document from a vehicle
+   * @param {Object} req - Express request object
+   * @param {Object} res - Express response object
+   */
+  async deleteDocument(req, res) {
+    try {
+      const companyId = req.user?.companyId;
+      const fs = require('fs');
+      const path = require('path');
+      
+      if (!companyId) {
+        return res.status(400).json({
+          status: 'error',
+          message: 'Company ID not found in user token'
+        });
+      }
+
+      const vehicle = await Vehicle.findOne({
+        _id: req.params.id,
+        companyId: companyId
+      });
+
+      if (!vehicle) {
+        return res.status(404).json({ message: 'Vehicle not found' });
+      }
+
+      // Find the document
+      const document = vehicle.documents.id(req.params.documentId);
+      
+      if (!document) {
+        return res.status(404).json({ message: 'Document not found' });
+      }
+
+      // Delete the physical file
+      const filePath = path.join(__dirname, '../../public', document.url);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+
+      // Remove document from array
+      document.deleteOne();
+      await vehicle.save();
+
+      res.status(200).json({
+        status: 'success',
+        message: 'Document deleted successfully'
+      });
+    } catch (error) {
+      console.error('Error deleting document:', error);
+      res.status(500).json({
+        status: 'error',
+        message: 'Failed to delete document',
+        error: error.message
+      });
+    }
+  },
+
+  /**
+   * Serve a vehicle document file (authenticated)
+   * @param {Object} req - Express request object
+   * @param {Object} res - Express response object
+   */
+  async serveDocument(req, res) {
+    try {
+      const companyId = req.user?.companyId;
+      const fs = require('fs');
+      const path = require('path');
+      
+      if (!companyId) {
+        return res.status(400).json({
+          status: 'error',
+          message: 'Company ID not found in user token'
+        });
+      }
+
+      const vehicle = await Vehicle.findOne({
+        _id: req.params.vehicleId,
+        companyId: companyId
+      });
+
+      if (!vehicle) {
+        return res.status(404).json({ message: 'Vehicle not found' });
+      }
+
+      // Construct file path
+      const filePath = path.join(__dirname, '../../public/vehicles', req.params.vehicleId, req.params.filename);
+      
+      // Check if file exists
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ message: 'File not found' });
+      }
+
+      // Send the file
+      res.sendFile(filePath);
+    } catch (error) {
+      console.error('Error serving document:', error);
+      res.status(500).json({
+        status: 'error',
+        message: 'Failed to serve document',
+        error: error.message
+      });
+    }
   }
 };
 
