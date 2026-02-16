@@ -188,7 +188,17 @@ const ContractManagement: React.FC = () => {
   const fetchStats = async () => {
     try {
       const response = await axios.get(getApiUrl(`/dashboard/contracts/stats`));
-      setStats(response.data);
+      console.log('Stats response:', response.data);
+      // The backend returns data in a nested structure
+      const statsData = response.data.data || response.data;
+      setStats({
+        totalContracts: statsData.totalContracts || 0,
+        activeContracts: statsData.activeContracts || 0,
+        expiringContracts: statsData.expiringSoon || 0,
+        totalValue: statsData.totalValue || 0,
+        averageValue: statsData.averageValue || 0,
+        contractsByStatus: statsData.contractsByStatus || {}
+      });
     } catch (error) {
       console.error('Error fetching stats:', error);
     }

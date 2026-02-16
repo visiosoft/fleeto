@@ -543,9 +543,9 @@ const DashboardController = {
       const collection = await db.getCollection('contracts');
       const now = new Date();
       
-      // Define expiring soon threshold (7 days from now)
+      // Define expiring soon threshold (60 days / 2 months from now)
       const expiringSoonDate = new Date();
-      expiringSoonDate.setDate(expiringSoonDate.getDate() + 7);
+      expiringSoonDate.setDate(expiringSoonDate.getDate() + 60);
 
       // First, let's get all contracts to debug
       const allContracts = await collection.find({
@@ -674,7 +674,7 @@ const DashboardController = {
       const manualCounts = {
         active: validContracts.filter(c => c.isActive).length,
         expiringSoon: validContracts.filter(c => c.isExpiringSoon).length,
-        totalValue: validContracts.reduce((sum, c) => sum + (Number(c.value) || 0), 0)
+        totalValue: validContracts.filter(c => c.isActive).reduce((sum, c) => sum + (Number(c.value) || 0), 0)
       };
 
       // Debug contract values
