@@ -4,7 +4,7 @@ const isDevelopment = process.env.NODE_ENV === 'development';
 // In production, use the full API URL
 export const API_BASE_URL = isDevelopment ? '' : (process.env.REACT_APP_API_URL || 'http://localhost:5000');
 
-const API_PREFIX = '/api';
+const API_PREFIX = '';
 
 export const API_ENDPOINTS = {
   // Auth endpoints
