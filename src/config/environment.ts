@@ -58,6 +58,7 @@ export const API_ENDPOINTS = {
   // Settings endpoints
   settings: `${API_BASE_URL}${API_PREFIX}/settings`,
   companySettings: `${API_BASE_URL}${API_PREFIX}/company`,
+  companies: `${API_BASE_URL}${API_PREFIX}/companies`,
   
   // Notes endpoints
   notes: {
