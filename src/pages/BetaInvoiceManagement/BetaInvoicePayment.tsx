@@ -111,7 +111,7 @@ const BetaInvoicePayment: React.FC = () => {
     }
 
     return (
-        <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+        <Container maxWidth={false} sx={{ mt: 4, mb: 4, px: 3 }}>
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                 <Button
                     startIcon={<ArrowBackIcon />}

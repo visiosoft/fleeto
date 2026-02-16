@@ -27,6 +27,7 @@ import LetterheadManagement from './pages/LetterheadManagement/LetterheadManagem
 import LetterheadPDF from './pages/LetterheadManagement/LetterheadPDF';
 import WhatsAppExpenses from './pages/WhatsAppExpenses/WhatsAppExpenses';
 import { ModernDashboard } from './pages/ModernDashboard/ModernDashboard';
+import { ModernPageLayout } from './components/modern/ModernPageLayout';
 
 // Lazy load all pages
 const VehicleManagement = React.lazy(() => import('./pages/VehicleManagement'));
@@ -100,15 +101,15 @@ const AppContent: React.FC = () => {
           {/* Company selection route */}
           <Route path="/select-company" element={<CompanySelection />} />
 
-          {/* Modern Dashboard Route */}
-          <Route path="/modern-dashboard" element={
+          {/* Main Dashboard - Modern Design */}
+          <Route path="/dashboard" element={
             <ProtectedRoute>
               <ModernDashboard />
             </ProtectedRoute>
           } />
 
-          {/* Protected routes */}
-          <Route path="/dashboard" element={
+          {/* Old Dashboard (kept for reference) */}
+          <Route path="/old-dashboard" element={
             <ProtectedRoute>
               <Navigation
                 isMobile={isMobile}
@@ -122,377 +123,249 @@ const AppContent: React.FC = () => {
 
           <Route path="/users" element={
             <ProtectedRoute>
-              <Navigation
-                isMobile={isMobile}
-                isDrawerOpen={mobileOpen}
-                handleDrawerToggle={handleDrawerToggle}
-              >
+              <ModernPageLayout title="User Management">
                 <UserManagement />
-              </Navigation>
+              </ModernPageLayout>
             </ProtectedRoute>
           } />
 
           <Route path="/vehicles" element={
             <ProtectedRoute>
-              <Navigation
-                isMobile={isMobile}
-                isDrawerOpen={mobileOpen}
-                handleDrawerToggle={handleDrawerToggle}
-              >
+              <ModernPageLayout title="Vehicles">
                 <VehicleManagement />
-              </Navigation>
+              </ModernPageLayout>
             </ProtectedRoute>
           } />
 
           <Route path="/drivers" element={
             <ProtectedRoute>
-              <Navigation
-                isMobile={isMobile}
-                isDrawerOpen={mobileOpen}
-                handleDrawerToggle={handleDrawerToggle}
-              >
+              <ModernPageLayout title="Drivers">
                 <DriverManagement />
-              </Navigation>
+              </ModernPageLayout>
             </ProtectedRoute>
           } />
 
           <Route path="/tracking" element={
             <ProtectedRoute>
-              <Navigation
-                isMobile={isMobile}
-                isDrawerOpen={mobileOpen}
-                handleDrawerToggle={handleDrawerToggle}
-              >
+              <ModernPageLayout title="Tracking">
                 <Tracking />
-              </Navigation>
+              </ModernPageLayout>
             </ProtectedRoute>
           } />
 
           <Route path="/costs" element={
             <ProtectedRoute>
-              <Navigation
-                isMobile={isMobile}
-                isDrawerOpen={mobileOpen}
-                handleDrawerToggle={handleDrawerToggle}
-              >
+              <ModernPageLayout title="Cost Management">
                 <CostManagement />
-              </Navigation>
+              </ModernPageLayout>
             </ProtectedRoute>
           } />
 
           <Route path="/contracts" element={
             <ProtectedRoute>
-              <Navigation
-                isMobile={isMobile}
-                isDrawerOpen={mobileOpen}
-                handleDrawerToggle={handleDrawerToggle}
-              >
+              <ModernPageLayout title="Contracts">
                 <ContractManagement />
-              </Navigation>
+              </ModernPageLayout>
             </ProtectedRoute>
           } />
 
           <Route path="/contracts/template/:id" element={
             <ProtectedRoute>
-              <Navigation
-                isMobile={isMobile}
-                isDrawerOpen={mobileOpen}
-                handleDrawerToggle={handleDrawerToggle}
-              >
+              <ModernPageLayout title="Contract Template">
                 <ContractTemplate />
-              </Navigation>
+              </ModernPageLayout>
             </ProtectedRoute>
           } />
 
           <Route path="/reports" element={
             <ProtectedRoute>
-              <Navigation
-                isMobile={isMobile}
-                isDrawerOpen={mobileOpen}
-                handleDrawerToggle={handleDrawerToggle}
-              >
+              <ModernPageLayout title="Reports">
                 <Reports />
-              </Navigation>
+              </ModernPageLayout>
             </ProtectedRoute>
           } />
 
           <Route path="/compliance" element={
             <ProtectedRoute>
-              <Navigation
-                isMobile={isMobile}
-                isDrawerOpen={mobileOpen}
-                handleDrawerToggle={handleDrawerToggle}
-              >
+              <ModernPageLayout title="Compliance">
                 <Compliance />
-              </Navigation>
+              </ModernPageLayout>
             </ProtectedRoute>
           } />
 
           <Route path="/settings" element={
             <ProtectedRoute>
-              <Navigation
-                isMobile={isMobile}
-                isDrawerOpen={mobileOpen}
-                handleDrawerToggle={handleDrawerToggle}
-              >
+              <ModernPageLayout title="Settings">
                 <Settings />
-              </Navigation>
+              </ModernPageLayout>
             </ProtectedRoute>
           } />
 
           <Route path="/fines-search" element={
             <ProtectedRoute>
-              <Navigation
-                isMobile={isMobile}
-                isDrawerOpen={mobileOpen}
-                handleDrawerToggle={handleDrawerToggle}
-              >
+              <ModernPageLayout title="Fines Search">
                 <FinesSearch />
-              </Navigation>
+              </ModernPageLayout>
             </ProtectedRoute>
           } />
 
           <Route path="/company-settings" element={
             <ProtectedRoute>
-              <Navigation
-                isMobile={isMobile}
-                isDrawerOpen={mobileOpen}
-                handleDrawerToggle={handleDrawerToggle}
-              >
+              <ModernPageLayout title="Company Settings">
                 <CompanySettings />
-              </Navigation>
+              </ModernPageLayout>
             </ProtectedRoute>
           } />
 
           <Route path="/profile" element={
             <ProtectedRoute>
-              <Navigation
-                isMobile={isMobile}
-                isDrawerOpen={mobileOpen}
-                handleDrawerToggle={handleDrawerToggle}
-              >
+              <ModernPageLayout title="Profile">
                 <Profile />
-              </Navigation>
+              </ModernPageLayout>
             </ProtectedRoute>
           } />
 
           <Route path="/cost-management" element={
             <ProtectedRoute>
-              <Navigation
-                isMobile={isMobile}
-                isDrawerOpen={mobileOpen}
-                handleDrawerToggle={handleDrawerToggle}
-              >
+              <ModernPageLayout title="Cost Management">
                 <CostManagement />
-              </Navigation>
+              </ModernPageLayout>
             </ProtectedRoute>
           } />
 
           <Route path="/driver-payroll" element={
             <ProtectedRoute>
-              <Navigation
-                isMobile={isMobile}
-                isDrawerOpen={mobileOpen}
-                handleDrawerToggle={handleDrawerToggle}
-              >
+              <ModernPageLayout title="Driver Payroll">
                 <DriverPayroll />
-              </Navigation>
+              </ModernPageLayout>
             </ProtectedRoute>
           } />
 
           <Route path="/general-notes" element={
             <ProtectedRoute>
-              <Navigation
-                isMobile={isMobile}
-                isDrawerOpen={mobileOpen}
-                handleDrawerToggle={handleDrawerToggle}
-              >
+              <ModernPageLayout title="General Notes">
                 <GeneralNotes />
-              </Navigation>
+              </ModernPageLayout>
             </ProtectedRoute>
           } />
 
           {/* Invoice Management Routes */}
           <Route path="/invoices" element={
             <ProtectedRoute>
-              <Navigation
-                isMobile={isMobile}
-                isDrawerOpen={mobileOpen}
-                handleDrawerToggle={handleDrawerToggle}
-              >
+              <ModernPageLayout title="Invoices">
                 <InvoiceManagement />
-              </Navigation>
+              </ModernPageLayout>
             </ProtectedRoute>
           } />
           <Route path="/invoices/new" element={
             <ProtectedRoute>
-              <Navigation
-                isMobile={isMobile}
-                isDrawerOpen={mobileOpen}
-                handleDrawerToggle={handleDrawerToggle}
-              >
+              <ModernPageLayout title="New Invoice">
                 <InvoiceForm />
-              </Navigation>
+              </ModernPageLayout>
             </ProtectedRoute>
           } />
           <Route path="/invoices/:id/edit" element={
             <ProtectedRoute>
-              <Navigation
-                isMobile={isMobile}
-                isDrawerOpen={mobileOpen}
-                handleDrawerToggle={handleDrawerToggle}
-              >
+              <ModernPageLayout title="Edit Invoice">
                 <InvoiceForm />
-              </Navigation>
+              </ModernPageLayout>
             </ProtectedRoute>
           } />
           <Route path="/invoices/:id/payment" element={
             <ProtectedRoute>
-              <Navigation
-                isMobile={isMobile}
-                isDrawerOpen={mobileOpen}
-                handleDrawerToggle={handleDrawerToggle}
-              >
+              <ModernPageLayout title="Invoice Payment">
                 <InvoicePayment />
-              </Navigation>
+              </ModernPageLayout>
             </ProtectedRoute>
           } />
 
           <Route path="/loading-demo" element={
             <ProtectedRoute>
-              <Navigation
-                isMobile={isMobile}
-                isDrawerOpen={mobileOpen}
-                handleDrawerToggle={handleDrawerToggle}
-              >
+              <ModernPageLayout title="Loading Demo">
                 <LoadingDemo />
-              </Navigation>
+              </ModernPageLayout>
             </ProtectedRoute>
           } />
 
           <Route path="/receipts" element={
             <ProtectedRoute>
-              <Navigation
-                isMobile={isMobile}
-                isDrawerOpen={mobileOpen}
-                handleDrawerToggle={handleDrawerToggle}
-              >
+              <ModernPageLayout title="Receipts">
                 <ReceiptManagement />
-              </Navigation>
+              </ModernPageLayout>
             </ProtectedRoute>
           } />
           <Route path="/receipts/new" element={
             <ProtectedRoute>
-              <Navigation
-                isMobile={isMobile}
-                isDrawerOpen={mobileOpen}
-                handleDrawerToggle={handleDrawerToggle}
-              >
+              <ModernPageLayout title="New Receipt">
                 <ReceiptForm />
-              </Navigation>
+              </ModernPageLayout>
             </ProtectedRoute>
           } />
           <Route path="/receipts/:id/edit" element={
             <ProtectedRoute>
-              <Navigation
-                isMobile={isMobile}
-                isDrawerOpen={mobileOpen}
-                handleDrawerToggle={handleDrawerToggle}
-              >
+              <ModernPageLayout title="Edit Receipt">
                 <ReceiptForm />
-              </Navigation>
+              </ModernPageLayout>
             </ProtectedRoute>
           } />
 
           {/* Letterhead Management Routes */}
           <Route path="/letterheads" element={
             <ProtectedRoute>
-              <Navigation
-                isMobile={isMobile}
-                isDrawerOpen={mobileOpen}
-                handleDrawerToggle={handleDrawerToggle}
-              >
+              <ModernPageLayout title="Letterheads">
                 <LetterheadManagement />
-              </Navigation>
+              </ModernPageLayout>
             </ProtectedRoute>
           } />
           <Route path="/letterheads/:id/pdf" element={
             <ProtectedRoute>
-              <Navigation
-                isMobile={isMobile}
-                isDrawerOpen={mobileOpen}
-                handleDrawerToggle={handleDrawerToggle}
-              >
+              <ModernPageLayout title="Letterhead PDF">
                 <LetterheadPDF />
-              </Navigation>
+              </ModernPageLayout>
             </ProtectedRoute>
           } />
           <Route path="/whatsapp-expenses" element={
             <ProtectedRoute>
-              <Navigation
-                isMobile={isMobile}
-                isDrawerOpen={mobileOpen}
-                handleDrawerToggle={handleDrawerToggle}
-              >
+              <ModernPageLayout title="WhatsApp Expenses">
                 <WhatsAppExpenses />
-              </Navigation>
+              </ModernPageLayout>
             </ProtectedRoute>
           } />
 
           {/* Beta Invoice Management Routes */}
           <Route path="/beta-invoices" element={
             <ProtectedRoute>
-              <Navigation
-                isMobile={isMobile}
-                isDrawerOpen={mobileOpen}
-                handleDrawerToggle={handleDrawerToggle}
-              >
+              <ModernPageLayout title="Invoices">
                 <BetaInvoiceManagement />
-              </Navigation>
+              </ModernPageLayout>
             </ProtectedRoute>
           } />
           <Route path="/beta-invoices/new" element={
             <ProtectedRoute>
-              <Navigation
-                isMobile={isMobile}
-                isDrawerOpen={mobileOpen}
-                handleDrawerToggle={handleDrawerToggle}
-              >
+              <ModernPageLayout title="New Invoice">
                 <BetaInvoiceForm />
-              </Navigation>
+              </ModernPageLayout>
             </ProtectedRoute>
           } />
           <Route path="/beta-invoices/:id" element={
             <ProtectedRoute>
-              <Navigation
-                isMobile={isMobile}
-                isDrawerOpen={mobileOpen}
-                handleDrawerToggle={handleDrawerToggle}
-              >
+              <ModernPageLayout title="View Invoice">
                 <BetaInvoiceView />
-              </Navigation>
+              </ModernPageLayout>
             </ProtectedRoute>
           } />
           <Route path="/beta-invoices/:id/edit" element={
             <ProtectedRoute>
-              <Navigation
-                isMobile={isMobile}
-                isDrawerOpen={mobileOpen}
-                handleDrawerToggle={handleDrawerToggle}
-              >
+              <ModernPageLayout title="Edit Invoice">
                 <BetaInvoiceForm />
-              </Navigation>
+              </ModernPageLayout>
             </ProtectedRoute>
           } />
           <Route path="/beta-invoices/:id/payment" element={
             <ProtectedRoute>
-              <Navigation
-                isMobile={isMobile}
-                isDrawerOpen={mobileOpen}
-                handleDrawerToggle={handleDrawerToggle}
-              >
+              <ModernPageLayout title="Invoice Payment">
                 <BetaInvoicePayment />
-              </Navigation>
+              </ModernPageLayout>
             </ProtectedRoute>
           } />
 

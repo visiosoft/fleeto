@@ -78,7 +78,7 @@ const BetaInvoiceView: React.FC = () => {
     if (!invoice) return <Alert severity="warning">Invoice not found</Alert>;
 
     return (
-        <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+        <Container maxWidth={false} sx={{ mt: 4, mb: 4, px: 3 }}>
             <style>
                 {`
                     @media print {

@@ -10,6 +10,8 @@ import {
   Assessment as ReportsIcon,
   Settings as SettingsIcon,
   Dashboard as DashboardIcon,
+  ReceiptLong as InvoiceIcon,
+  Receipt as ReceiptIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -47,16 +49,28 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, titl
       path: '/contracts',
     },
     {
+      id: 'invoices',
+      label: 'Invoices',
+      icon: <InvoiceIcon />,
+      path: '/beta-invoices',
+    },
+    {
+      id: 'receipts',
+      label: 'Receipts',
+      icon: <ReceiptIcon />,
+      path: '/receipts',
+    },
+    {
       id: 'expenses',
       label: 'Expenses',
       icon: <ExpenseIcon />,
-      path: '/cost-management',
+      path: '/costs',
     },
     {
       id: 'fines',
       label: 'Fines',
       icon: <FineIcon />,
-      path: '/fines',
+      path: '/fines-search',
     },
     {
       id: 'reports',
@@ -89,8 +103,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, titl
           notificationCount={0}
         />
 
-        {/* Page Content */}
-        <main className="p-6">{children}</main>
+        {/* Page Content - No padding, pages handle their own spacing */}
+        <main className="min-h-screen">{children}</main>
       </div>
     </div>
   );
