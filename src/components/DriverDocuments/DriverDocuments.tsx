@@ -65,6 +65,7 @@ const DriverDocuments: React.FC<DriverDocumentsProps> = ({ driverId, open, onClo
   const [documentType, setDocumentType] = useState('other');
   const [documentTitle, setDocumentTitle] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   // Component for authenticated image loading
   const DocumentImage: React.FC<{ doc: Document }> = ({ doc }) => {
@@ -178,6 +179,7 @@ const DriverDocuments: React.FC<DriverDocumentsProps> = ({ driverId, open, onClo
 
     setUploading(true);
     setError(null);
+    setSuccess(null);
 
     const formData = new FormData();
     formData.append('document', selectedFile);
@@ -195,6 +197,9 @@ const DriverDocuments: React.FC<DriverDocumentsProps> = ({ driverId, open, onClo
         }
       );
       
+      // Show success message
+      setSuccess('Document uploaded successfully!');
+      
       // Reset form
       setSelectedFile(null);
       setDocumentTitle('');
@@ -202,6 +207,9 @@ const DriverDocuments: React.FC<DriverDocumentsProps> = ({ driverId, open, onClo
       
       // Refresh documents list
       await fetchDocuments();
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccess(null), 3000);
     } catch (error: any) {
       console.error('Failed to upload document:', error);
       setError(error.response?.data?.message || 'Failed to upload document');
@@ -279,6 +287,11 @@ const DriverDocuments: React.FC<DriverDocumentsProps> = ({ driverId, open, onClo
         {error && (
           <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
             {error}
+          </Alert>
+        )}
+        {success && (
+          <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccess(null)}>
+            {success}
           </Alert>
         )}
 

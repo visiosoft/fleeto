@@ -19,6 +19,7 @@ import {
   Alert,
   Tooltip,
   Stack,
+  Badge,
 } from '@mui/material';
 import {
   Upload as UploadIcon,
@@ -42,22 +43,23 @@ interface Document {
   expiryDate?: string;
 }
 
-interface VehicleDocumentsProps {
-  vehicleId: string;
+interface ContractDocumentsProps {
+  contractId: string;
   open: boolean;
   onClose: () => void;
 }
 
 const documentTypes = [
-  { value: 'registration', label: 'Registration' },
+  { value: 'contract', label: 'Contract Document' },
+  { value: 'amendment', label: 'Amendment' },
+  { value: 'invoice', label: 'Invoice' },
+  { value: 'payment', label: 'Payment Receipt' },
   { value: 'insurance', label: 'Insurance' },
-  { value: 'inspection', label: 'Inspection' },
-  { value: 'maintenance', label: 'Maintenance Record' },
-  { value: 'license', label: 'License' },
+  { value: 'legal', label: 'Legal Document' },
   { value: 'other', label: 'Other' },
 ];
 
-const VehicleDocuments: React.FC<VehicleDocumentsProps> = ({ vehicleId, open, onClose }) => {
+const ContractDocuments: React.FC<ContractDocumentsProps> = ({ contractId, open, onClose }) => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -66,6 +68,16 @@ const VehicleDocuments: React.FC<VehicleDocumentsProps> = ({ vehicleId, open, on
   const [documentTitle, setDocumentTitle] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  // Prevent closing during upload
+  const handleClose = () => {
+    if (uploading) {
+      console.log('Cannot close dialog while uploading');
+      return;
+    }
+    onClose();
+  };
 
   // Component for authenticated image loading
   const DocumentImage: React.FC<{ doc: Document }> = ({ doc }) => {
@@ -77,7 +89,7 @@ const VehicleDocuments: React.FC<VehicleDocumentsProps> = ({ vehicleId, open, on
         try {
           const token = localStorage.getItem('token');
           const response = await axios.get(
-            getApiUrl(doc.url.replace('/vehicles/', '/vehicles/file/')),
+            getApiUrl(doc.url.replace('/contracts/', '/contracts/file/')),
             {
               headers: {
                 Authorization: `Bearer ${token}`
@@ -123,17 +135,23 @@ const VehicleDocuments: React.FC<VehicleDocumentsProps> = ({ vehicleId, open, on
   };
 
   useEffect(() => {
-    if (open && vehicleId) {
+    if (open && contractId) {
       fetchDocuments();
     }
-  }, [open, vehicleId]);
+  }, [open, contractId]);
 
   const fetchDocuments = async () => {
     setLoading(true);
     setError(null);
     try {
+      const token = localStorage.getItem('token');
       const response = await axios.get(
-        getApiUrl(`${API_CONFIG.ENDPOINTS.VEHICLES}/${vehicleId}/get-documents`)
+        getApiUrl(`${API_CONFIG.ENDPOINTS.CONTRACTS}/${contractId}/get-documents`),
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
       );
       setDocuments(response.data.documents || []);
     } catch (error) {
@@ -166,7 +184,16 @@ const VehicleDocuments: React.FC<VehicleDocumentsProps> = ({ vehicleId, open, on
     }
   };
 
-  const handleUpload = async () => {
+  const handleUpload = async (e?: React.MouseEvent) => {
+    e?.preventDefault();
+    e?.stopPropagation();
+    
+    console.log('=== Upload started ===');
+    console.log('Contract ID:', contractId);
+    console.log('Selected File:', selectedFile);
+    console.log('Document Title:', documentTitle);
+    console.log('Document Type:', documentType);
+    
     if (!selectedFile) {
       setError('Please select a file');
       return;
@@ -186,16 +213,26 @@ const VehicleDocuments: React.FC<VehicleDocumentsProps> = ({ vehicleId, open, on
     formData.append('type', documentType);
     formData.append('title', documentTitle);
 
+    console.log('FormData created');
+
     try {
-      await axios.post(
-        getApiUrl(`${API_CONFIG.ENDPOINTS.VEHICLES}/${vehicleId}/upload-document`),
+      const token = localStorage.getItem('token');
+      const url = getApiUrl(`${API_CONFIG.ENDPOINTS.CONTRACTS}/${contractId}/upload-document`);
+      console.log('Upload URL:', url);
+      console.log('Token present:', !!token);
+      
+      const response = await axios.post(
+        url,
         formData,
         {
           headers: {
             'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${token}`
           },
         }
       );
+      
+      console.log('Upload response:', response.data);
       
       // Show success message
       setSuccess('Document uploaded successfully!');
@@ -204,17 +241,26 @@ const VehicleDocuments: React.FC<VehicleDocumentsProps> = ({ vehicleId, open, on
       setSelectedFile(null);
       setDocumentTitle('');
       setDocumentType('other');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
       
+      console.log('Fetching updated documents...');
       // Refresh documents list
       await fetchDocuments();
       
+      console.log('Upload complete!');
       // Clear success message after 3 seconds
       setTimeout(() => setSuccess(null), 3000);
     } catch (error: any) {
-      console.error('Failed to upload document:', error);
+      console.error('=== Upload error ===');
+      console.error('Error details:', error);
+      console.error('Error response:', error.response);
+      console.error('Error message:', error.message);
       setError(error.response?.data?.message || 'Failed to upload document');
     } finally {
       setUploading(false);
+      console.log('=== Upload process ended ===');
     }
   };
 
@@ -224,8 +270,14 @@ const VehicleDocuments: React.FC<VehicleDocumentsProps> = ({ vehicleId, open, on
     }
 
     try {
+      const token = localStorage.getItem('token');
       await axios.delete(
-        getApiUrl(`${API_CONFIG.ENDPOINTS.VEHICLES}/${vehicleId}/delete-document/${documentId}`)
+        getApiUrl(`${API_CONFIG.ENDPOINTS.CONTRACTS}/${contractId}/delete-document/${documentId}`),
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
       );
       await fetchDocuments();
     } catch (error) {
@@ -238,7 +290,7 @@ const VehicleDocuments: React.FC<VehicleDocumentsProps> = ({ vehicleId, open, on
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(
-        getApiUrl(doc.url.replace('/vehicles/', '/vehicles/file/')),
+        getApiUrl(doc.url.replace('/contracts/', '/contracts/file/')),
         {
           headers: {
             Authorization: `Bearer ${token}`
@@ -275,10 +327,19 @@ const VehicleDocuments: React.FC<VehicleDocumentsProps> = ({ vehicleId, open, on
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+    <Dialog 
+      open={open} 
+      onClose={handleClose} 
+      maxWidth="md" 
+      fullWidth
+      disableEscapeKeyDown={uploading}
+    >
       <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h6" sx={{ fontWeight: 600 }}>Vehicle Documents</Typography>
-        <IconButton onClick={onClose} size="small">
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography variant="h6" sx={{ fontWeight: 600 }}>Contract Documents</Typography>
+          <Badge badgeContent={documents.length} color="primary" />
+        </Box>
+        <IconButton onClick={handleClose} size="small" disabled={uploading}>
           <CloseIcon />
         </IconButton>
       </DialogTitle>
@@ -312,6 +373,7 @@ const VehicleDocuments: React.FC<VehicleDocumentsProps> = ({ vehicleId, open, on
               >
                 {selectedFile ? selectedFile.name : 'Choose File'}
                 <input
+                  ref={fileInputRef}
                   type="file"
                   hidden
                   accept="image/*,.pdf"
@@ -344,6 +406,7 @@ const VehicleDocuments: React.FC<VehicleDocumentsProps> = ({ vehicleId, open, on
                   </TextField>
 
                   <Button
+                    type="button"
                     variant="contained"
                     onClick={handleUpload}
                     disabled={uploading}
@@ -426,10 +489,10 @@ const VehicleDocuments: React.FC<VehicleDocumentsProps> = ({ vehicleId, open, on
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={onClose}>Close</Button>
+        <Button onClick={handleClose} disabled={uploading}>Close</Button>
       </DialogActions>
     </Dialog>
   );
 };
 
-export default VehicleDocuments;
+export default ContractDocuments;

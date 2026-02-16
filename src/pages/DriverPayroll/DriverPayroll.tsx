@@ -103,7 +103,7 @@ const DriverPayroll: React.FC = () => {
       setLoading(true);
       const [payrollResponse, driversResponse] = await Promise.all([
         axios.get(getApiUrl(API_CONFIG.ENDPOINTS.PAYROLL.LIST)),
-        axios.get(getApiUrl(API_CONFIG.ENDPOINTS.DRIVERS.LIST)),
+        axios.get(getApiUrl(API_CONFIG.ENDPOINTS.DRIVERS_API.LIST)),
       ]);
 
       // Handle the API response structure

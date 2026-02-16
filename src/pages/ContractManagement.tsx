@@ -34,6 +34,7 @@ import {
   alpha,
   Card,
   CardContent,
+  Badge,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -50,6 +51,7 @@ import {
   Gavel as ContractIcon,
   CheckCircle as ActiveIcon,
   Warning as ExpiringIcon,
+  AttachFile as AttachFileIcon,
 } from '@mui/icons-material';
 import { API_CONFIG, getApiUrl } from '../config/api';
 import axios, { AxiosError } from 'axios';
@@ -57,6 +59,7 @@ import moment from 'moment';
 import ContractTemplateEditor, { Vehicle as EditorVehicle } from '../components/ContractTemplate/ContractTemplateEditor';
 import { useNavigate } from 'react-router-dom';
 import TableToolbar from '../components/TableToolbar';
+import ContractDocuments from '../components/ContractDocuments';
 
 const CONTRACT_STATUSES = [
   'Active',
@@ -91,6 +94,14 @@ interface Contract {
       companyInfo?: string;
     };
   };
+  documents?: Array<{
+    _id: string;
+    type: string;
+    title: string;
+    url: string;
+    uploadDate: string;
+    expiryDate?: string;
+  }>;
 }
 
 interface ContractStats {
@@ -148,6 +159,8 @@ const ContractManagement: React.FC = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('startDate');
+  const [documentsDialogOpen, setDocumentsDialogOpen] = useState(false);
+  const [selectedContractId, setSelectedContractId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchContracts();
@@ -664,6 +677,38 @@ const ContractManagement: React.FC = () => {
             </IconButton>
           </Tooltip>
         )}
+        <Tooltip title="Documents">
+          <IconButton
+            size="small"
+            onClick={() => {
+              setSelectedContractId(contract._id || '');
+              setDocumentsDialogOpen(true);
+            }}
+            sx={{
+              backgroundColor: alpha(theme.palette.success.main, 0.1),
+              '&:hover': {
+                backgroundColor: alpha(theme.palette.success.main, 0.2),
+                transform: 'scale(1.1)',
+              },
+              transition: 'all 0.2s',
+            }}
+          >
+            <Badge 
+              badgeContent={contract.documents?.length || 0} 
+              color="success"
+              sx={{
+                '& .MuiBadge-badge': {
+                  fontSize: '0.65rem',
+                  height: '16px',
+                  minWidth: '16px',
+                  padding: '0 4px',
+                }
+              }}
+            >
+              <AttachFileIcon fontSize="small" />
+            </Badge>
+          </IconButton>
+        </Tooltip>
         <Tooltip title="Edit and Generate Contract Template">
           <IconButton
             size="small"
@@ -1344,6 +1389,18 @@ const ContractManagement: React.FC = () => {
           }}
           allowEdit={false}
           showPreview={true}
+        />
+      )}
+
+      {/* Contract Documents Dialog */}
+      {selectedContractId && (
+        <ContractDocuments
+          contractId={selectedContractId}
+          open={documentsDialogOpen}
+          onClose={() => {
+            setDocumentsDialogOpen(false);
+            setSelectedContractId(null);
+          }}
         />
       )}
     </Box>

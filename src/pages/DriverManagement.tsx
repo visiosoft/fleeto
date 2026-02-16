@@ -96,7 +96,7 @@ const DriverManagement: React.FC = () => {
 
   const fetchDrivers = useCallback(async () => {
     try {
-      const response = await axios.get(getApiUrl(API_CONFIG.ENDPOINTS.DRIVERS.LIST));
+      const response = await axios.get(getApiUrl(API_CONFIG.ENDPOINTS.DRIVERS_API.LIST));
       setDrivers(response.data);
     } catch (error) {
       console.error('Failed to fetch drivers:', error);
@@ -138,7 +138,7 @@ const DriverManagement: React.FC = () => {
     }
 
     try {
-      await axios.delete(getApiUrl(API_CONFIG.ENDPOINTS.DRIVERS.DELETE(id)));
+      await axios.delete(getApiUrl(API_CONFIG.ENDPOINTS.DRIVERS_API.DELETE(id)));
       showSnackbar('Driver deleted successfully', 'success');
       fetchDrivers();
     } catch (error) {
@@ -161,10 +161,10 @@ const DriverManagement: React.FC = () => {
       };
 
       if (editingDriver) {
-        await axios.put(getApiUrl(API_CONFIG.ENDPOINTS.DRIVERS.UPDATE(editingDriver._id)), driverData);
+        await axios.put(getApiUrl(API_CONFIG.ENDPOINTS.DRIVERS_API.UPDATE(editingDriver._id)), driverData);
         showSnackbar('Driver updated successfully', 'success');
       } else {
-        await axios.post(getApiUrl(API_CONFIG.ENDPOINTS.DRIVERS.CREATE), driverData);
+        await axios.post(getApiUrl(API_CONFIG.ENDPOINTS.DRIVERS_API.CREATE), driverData);
         showSnackbar('Driver added successfully', 'success');
       }
       handleCloseDialog();

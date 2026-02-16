@@ -23,8 +23,12 @@ const companyContractSchema = new mongoose.Schema({
     },
     vehicleName: {
         type: String,
-        required: true,
+        required: false,
         trim: true
+    },
+    vehicleId: {
+        type: String,
+        required: false
     },
     startDate: {
         type: Date,
@@ -36,7 +40,12 @@ const companyContractSchema = new mongoose.Schema({
     },
     amount: {
         type: Number,
-        required: true,
+        required: false,
+        min: 0
+    },
+    value: {
+        type: Number,
+        required: false,
         min: 0
     },
     status: {
@@ -46,13 +55,17 @@ const companyContractSchema = new mongoose.Schema({
         default: CONTRACT_STATUS.PENDING
     },
     documents: [{
-        name: String,
-        fileUrl: String,
+        type: {
+            type: String,
+            default: 'other'
+        },
+        title: String,
+        url: String,
         uploadDate: {
             type: Date,
             default: Date.now
         },
-        fileType: String
+        expiryDate: Date
     }],
     notes: {
         type: String

@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const companyContractController = require('../controllers/companyContractController');
 const { authenticate } = require('../middleware/auth');
+const uploadContract = require('../middleware/uploadContract');
 
 // Apply authentication middleware to all routes
 router.use(authenticate);
@@ -44,5 +45,11 @@ router.get('/license/:tradeLicenseNo', companyContractController.getContractByTr
 
 // GET /api/contracts/status/:status - Get contracts by status
 router.get('/status/:status', companyContractController.getContractsByStatus);
+
+// Document management routes
+router.post('/:id/upload-document', uploadContract.single('document'), companyContractController.uploadDocument);
+router.get('/:id/get-documents', companyContractController.getDocuments);
+router.delete('/:id/delete-document/:documentId', companyContractController.deleteDocument);
+router.get('/file/:contractId/:filename', companyContractController.serveDocument);
 
 module.exports = router; 

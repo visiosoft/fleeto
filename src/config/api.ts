@@ -6,7 +6,8 @@ export const API_CONFIG = {
     FUEL: '/fuel',
     CONTRACTS: '/contracts',
     TEMPLATE: '/contracts/template',
-    DRIVERS: {
+    DRIVERS: '/drivers',
+    DRIVERS_API: {
       LIST: '/drivers',
       CREATE: '/drivers',
       UPDATE: (id: string) => `/drivers/${id}`,
