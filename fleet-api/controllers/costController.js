@@ -226,6 +226,80 @@ const costController = {
     },
 
     /**
+     * Get all expenses for all vehicles (no date filter)
+     */
+    async getAllCompanyExpenses(req, res) {
+        try {
+            // Get company ID from authenticated user
+            const companyId = req.user.companyId;
+            
+            if (!companyId) {
+                return res.status(400).json({
+                    status: 'error',
+                    message: 'Company ID not found in user token'
+                });
+            }
+            
+            console.log(`Fetching all expenses for company ID: ${companyId}`);
+            
+            const vehicles = await db.getCollection('vehicles');
+            const expenses = await db.getCollection('expenses');
+
+            // Get all vehicles for this company
+            const vehiclesList = await vehicles.find({
+                companyId: companyId.toString()
+            }).toArray();
+            console.log(`Found ${vehiclesList.length} vehicles for company ${companyId}`);
+            
+            // Get expenses for each vehicle (ALL expenses, no date filter)
+            const vehicleExpenses = await Promise.all(vehiclesList.map(async (vehicle) => {
+                const vehicleId = vehicle._id.toString();
+                console.log(`Processing vehicle: ${vehicleId}`);
+
+                // Get ALL expenses for this vehicle
+                const vehicleExpensesList = await expenses.find({
+                    vehicleId,
+                    companyId: companyId.toString()
+                }).sort({ date: -1 }).toArray();
+
+                console.log(`Found ${vehicleExpensesList.length} total expenses for vehicle ${vehicleId}`);
+
+                const totalExpenses = vehicleExpensesList.reduce((sum, expense) => {
+                    const amount = parseFloat(expense.amount) || 0;
+                    return sum + amount;
+                }, 0);
+
+                return {
+                    vehicleId: vehicle._id,
+                    vehicleName: `${vehicle.make} ${vehicle.model} (${vehicle.licensePlate})`,
+                    expenses: totalExpenses,
+                    details: vehicleExpensesList
+                };
+            }));
+
+            // Calculate overall total
+            const totalExpenses = vehicleExpenses.reduce((sum, vehicle) => sum + vehicle.expenses, 0);
+
+            console.log('All expenses totals:', {
+                totalExpenses,
+                vehicleCount: vehicleExpenses.length
+            });
+
+            res.json({
+                vehicles: vehicleExpenses,
+                total: totalExpenses,
+                period: {
+                    start: null,
+                    end: null
+                }
+            });
+        } catch (error) {
+            console.error('Error getting all company expenses:', error);
+            res.status(500).json({ message: error.message });
+        }
+    },
+
+    /**
      * Get current month's expenses for all vehicles
      */
     async getCurrentMonthExpenses(req, res) {

@@ -56,6 +56,12 @@ import {
   KeyboardArrowUp as KeyboardArrowUpIcon,
   CalendarToday as CalendarIcon,
   Payment as PaymentIcon,
+  AttachFile as AttachFileIcon,
+  OpenInNew as OpenInNewIcon,
+  InsertDriveFile as FileIcon,
+  Search as SearchIcon,
+  Sort as SortIcon,
+  Clear as ClearIcon,
 } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import moment from 'moment';
@@ -65,8 +71,7 @@ import { BarDatum } from '@nivo/bar';
 import costService from '../../services/costService';
 import { Cost } from '../../types';
 import axios from 'axios';
-import { getApiUrl } from '../../utils/apiUtils';
-import { API_CONFIG } from '../../config/apiConfig';
+import { API_ENDPOINTS } from '../../config/environment';
 import { api } from '../../services/api';
 
 // Define Vehicle interface
@@ -83,16 +88,13 @@ type ExpenseType = 'fuel' | 'maintenance' | 'insurance' | 'registration' | 'leas
 type PaymentStatus = 'paid' | 'pending' | 'overdue';
 type PaymentMethod = 'cash' | 'credit' | 'debit' | 'bank transfer' | 'other';
 
-// Omit date from Cost type and create our own version with Moment
+// Simplified Cost form - only essential fields
 interface CostFormValues {
   vehicleId: string;
-  driverId: string;
-  expenseType: string;
   amount: string;
   date: moment.Moment | null;
-  description: string;
-  paymentStatus: string;
-  paymentMethod: string;
+  notes?: string;
+  receipt?: File | null;
 }
 
 interface CostSummary {
@@ -126,6 +128,7 @@ interface ExpenseDetail {
   description: string;
   paymentStatus: string;
   paymentMethod: string;
+  receipts?: Array<{ url: string; fileName: string; uploadedAt: string }>;
   createdAt: string;
   updatedAt: string;
 }
@@ -374,29 +377,47 @@ const CostManagement: React.FC = () => {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState<string>('all');
   const [selectedExpenseType, setSelectedExpenseType] = useState<string>('all');
-  const [dateRange, setDateRange] = useState<[moment.Moment | null, moment.Moment | null]>([null, null]);
+  const [dateRange, setDateRange] = useState<[moment.Moment | null, moment.Moment | null]>([
+    moment().startOf('month'), // Start of current month
+    moment().endOf('month')    // End of current month
+  ]);
   const [activeTab, setActiveTab] = useState(0);
   const [formValues, setFormValues] = useState<CostFormValues>({
     vehicleId: '',
-    driverId: '',
-    expenseType: 'maintenance',
-    amount: '0',
+    amount: '',
     date: moment(),
-    description: '',
-    paymentStatus: 'paid',
-    paymentMethod: 'cash',
+    notes: '',
+    receipt: null,
   });
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [uploading, setUploading] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<ExpenseDetail | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<'date' | 'amount' | 'vehicle'>('date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   const fetchCostData = async () => {
     try {
       setLoading(true);
-      const response = await api.getCurrentMonthCosts();
+      setError(null);
+      const response = await api.getAllCosts(); // Changed from getCurrentMonthCosts to getAllCosts
+      console.log('=== Cost Data Structure ===');
+      console.log('Total vehicles:', response.vehicles?.length || 0);
+      console.log('Total expenses:', response.total);
+      if (response.vehicles) {
+        response.vehicles.forEach((v: VehicleExpense, index: number) => {
+          console.log(`Vehicle ${index + 1}: ${v.vehicleName} - ${v.details?.length || 0} expenses, Total: AED ${v.expenses}`);
+        });
+      }
+      console.log('Full response:', JSON.stringify(response, null, 2));
+      console.log('==========================');
       setCostData(response);
-    } catch (err) {
-      setError('Failed to fetch cost data');
+    } catch (err: any) {
+      const errorMessage = err?.message || 'Failed to fetch cost data';
+      setError(errorMessage);
       console.error('Error fetching cost data:', err);
+      alert(`Error loading cost data: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -454,28 +475,91 @@ const CostManagement: React.FC = () => {
     };
   };
 
-  const getChartData = () => {
-    if (!costData) return null;
-
-    const expenseTypeData = costData.vehicles.reduce((acc: any[], vehicle) => {
-      vehicle.details.forEach(detail => {
-        const existing = acc.find(item => item.id === detail.expenseType);
-        if (existing) {
-          existing.value += detail.amount;
-        } else {
-          acc.push({
-            id: detail.expenseType,
-            label: detail.expenseType,
-            value: detail.amount
+  // Get all expenses as a flat list sorted by date (newest first)
+  const getAllExpenses = () => {
+    const filteredData = getFilteredData();
+    if (!filteredData) return [];
+    
+    let allExpenses: (ExpenseDetail & { vehicleName: string })[] = [];
+    
+    filteredData.vehicles.forEach(vehicle => {
+      if (vehicle.details && Array.isArray(vehicle.details)) {
+        vehicle.details.forEach(expense => {
+          allExpenses.push({
+            ...expense,
+            vehicleName: vehicle.vehicleName
           });
-        }
-      });
+        });
+      }
+    });
+    
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      allExpenses = allExpenses.filter(expense =>
+        expense.vehicleName.toLowerCase().includes(query) ||
+        expense.description?.toLowerCase().includes(query) ||
+        expense.expenseType.toLowerCase().includes(query) ||
+        expense.amount.toString().includes(query) ||
+        expense.paymentMethod?.toLowerCase().includes(query)
+      );
+    }
+    
+    // Apply sorting
+    allExpenses.sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortBy) {
+        case 'date':
+          comparison = new Date(a.date).getTime() - new Date(b.date).getTime();
+          break;
+        case 'amount':
+          comparison = a.amount - b.amount;
+          break;
+        case 'vehicle':
+          comparison = a.vehicleName.localeCompare(b.vehicleName);
+          break;
+        default:
+          comparison = new Date(a.date).getTime() - new Date(b.date).getTime();
+      }
+      
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+    
+    console.log('All expenses count:', allExpenses.length);
+    
+    return allExpenses;
+  };
+
+  const getChartData = () => {
+    const filteredExpenses = getAllExpenses();
+    if (filteredExpenses.length === 0) return null;
+
+    // Group by expense type
+    const expenseTypeData = filteredExpenses.reduce((acc: any[], expense) => {
+      const existing = acc.find(item => item.id === expense.expenseType);
+      if (existing) {
+        existing.value += expense.amount;
+      } else {
+        acc.push({
+          id: expense.expenseType,
+          label: expense.expenseType,
+          value: expense.amount
+        });
+      }
       return acc;
     }, []);
 
-    const vehicleData = costData.vehicles.map(vehicle => ({
-      vehicle: vehicle.vehicleName,
-      total: vehicle.expenses
+    // Group by vehicle
+    const vehicleMap = new Map<string, number>();
+    filteredExpenses.forEach(expense => {
+      const current = vehicleMap.get(expense.vehicleName) || 0;
+      vehicleMap.set(expense.vehicleName, current + expense.amount);
+    });
+
+    const vehicleData = Array.from(vehicleMap.entries()).map(([vehicleName, total]) => ({
+      vehicle: vehicleName,
+      total: total
     }));
 
     return {
@@ -485,27 +569,60 @@ const CostManagement: React.FC = () => {
   };
 
   const handleAddExpense = async () => {
+    if (!formValues.vehicleId || !formValues.amount) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
     try {
-      await api.createCost({
-        ...formValues,
-        amount: formValues.amount.toString(),
-        date: formValues.date?.format('YYYY-MM-DD') || moment().format('YYYY-MM-DD'),
+      setUploading(true);
+      const formData = new FormData();
+      formData.append('vehicleId', formValues.vehicleId);
+      formData.append('amount', formValues.amount);
+      formData.append('date', formValues.date?.format('YYYY-MM-DD') || moment().format('YYYY-MM-DD'));
+      formData.append('expenseType', 'other');
+      formData.append('description', formValues.notes || 'Expense receipt');
+      if (formValues.notes) {
+        formData.append('notes', formValues.notes);
+      }
+      
+      // Append multiple files
+      if (selectedFiles.length > 0) {
+        selectedFiles.forEach((file) => {
+          formData.append('receipts', file);
+        });
+      }
+
+      const token = localStorage.getItem('token');
+      const response = await axios.post(API_ENDPOINTS.costs.create, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${token}`,
+        },
       });
+
+      console.log('Expense created successfully:', response.data);
+      
       setAddDialogOpen(false);
-      fetchCostData();
+      await fetchCostData(); // Wait for data to refresh
+      
+      alert('Expense added successfully!');
+      
       // Reset form values
       setFormValues({
         vehicleId: '',
-        driverId: '',
-        expenseType: 'maintenance',
-        amount: '0',
+        amount: '',
         date: moment(),
-        description: '',
-        paymentStatus: 'paid',
-        paymentMethod: 'cash',
+        notes: '',
+        receipt: null,
       });
-    } catch (error) {
+      setSelectedFiles([]);
+    } catch (error: any) {
       console.error('Error adding expense:', error);
+      const errorMessage = error.response?.data?.message || error.response?.data?.errors?.join(', ') || 'Failed to add expense. Please try again.';
+      alert(errorMessage);
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -513,14 +630,12 @@ const CostManagement: React.FC = () => {
     setSelectedExpense(expense);
     setFormValues({
       vehicleId: expense.vehicleId,
-      driverId: expense.driverId,
-      expenseType: expense.expenseType,
       amount: expense.amount.toString(),
       date: moment(expense.date),
-      description: expense.description,
-      paymentStatus: expense.paymentStatus,
-      paymentMethod: expense.paymentMethod,
+      notes: expense.description || '',
+      receipt: null,
     });
+    setSelectedFiles([]);
     setEditDialogOpen(true);
   };
 
@@ -537,27 +652,58 @@ const CostManagement: React.FC = () => {
 
   const handleUpdateExpense = async () => {
     if (!selectedExpense) return;
+    if (!formValues.vehicleId || !formValues.amount) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
     try {
-      await api.updateCost(selectedExpense._id, {
-        ...formValues,
-        date: formValues.date?.format('YYYY-MM-DD') || moment().format('YYYY-MM-DD'),
-      });
+      setUploading(true);
+      const formData = new FormData();
+      formData.append('vehicleId', formValues.vehicleId);
+      formData.append('amount', formValues.amount);
+      formData.append('date', formValues.date?.format('YYYY-MM-DD') || moment().format('YYYY-MM-DD'));
+      formData.append('description', formValues.notes || 'Expense receipt');
+      if (formValues.notes) {
+        formData.append('notes', formValues.notes);
+      }
+      
+      if (selectedFiles.length > 0) {
+        selectedFiles.forEach((file) => {
+          formData.append('receipts', file);
+        });
+      }
+
+      const token = localStorage.getItem('token');
+      await axios.put(
+        API_ENDPOINTS.costs.update(selectedExpense._id),
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
       setEditDialogOpen(false);
       setSelectedExpense(null);
       fetchCostData();
       // Reset form values
       setFormValues({
         vehicleId: '',
-        driverId: '',
-        expenseType: 'maintenance',
-        amount: '0',
+        amount: '',
         date: moment(),
-        description: '',
-        paymentStatus: 'paid',
-        paymentMethod: 'cash',
+        notes: '',
+        receipt: null,
       });
-    } catch (error) {
+      setSelectedFiles([]);
+    } catch (error: any) {
       console.error('Error updating expense:', error);
+      const errorMessage = error.response?.data?.message || error.response?.data?.errors?.join(', ') || 'Failed to update expense. Please try again.';
+      alert(errorMessage);
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -572,20 +718,76 @@ const CostManagement: React.FC = () => {
   if (error) {
     return (
       <Box m={2}>
-        <Alert severity="error">{error}</Alert>
+        <Alert severity="error">
+          {error}
+          <Button onClick={fetchCostData} sx={{ ml: 2 }}>
+            Retry
+          </Button>
+        </Alert>
+      </Box>
+    );
+  }
+
+  if (!costData) {
+    return (
+      <Box m={2}>
+        <Alert severity="info">No cost data available.</Alert>
       </Box>
     );
   }
 
   const filteredData = getFilteredData();
   const chartData = getChartData();
+  const filteredExpenses = getAllExpenses();
+  const filteredTotal = filteredExpenses.reduce((sum, exp) => sum + exp.amount, 0);
 
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1">
-          Cost Management
-        </Typography>
+        <Box>
+          <Typography variant="h4" component="h1">
+            Cost Management
+          </Typography>
+          {/* Active Filters Display */}
+          <Box sx={{ display: 'flex', gap: 1, mt: 1, flexWrap: 'wrap' }}>
+            {dateRange[0] && dateRange[1] && (
+              <Chip
+                size="small"
+                label={`${dateRange[0].format('MMM D, YYYY')} - ${dateRange[1].format('MMM D, YYYY')}`}
+                icon={<CalendarIcon fontSize="small" />}
+                variant="outlined"
+                color="primary"
+              />
+            )}
+            {selectedVehicle !== 'all' && (
+              <Chip
+                size="small"
+                label={`Vehicle: ${costData?.vehicles.find(v => v.vehicleId === selectedVehicle)?.vehicleName}`}
+                onDelete={() => setSelectedVehicle('all')}
+                variant="outlined"
+                color="secondary"
+              />
+            )}
+            {selectedExpenseType !== 'all' && (
+              <Chip
+                size="small"
+                label={`Type: ${selectedExpenseType}`}
+                onDelete={() => setSelectedExpenseType('all')}
+                variant="outlined"
+                color="secondary"
+              />
+            )}
+            {searchQuery && (
+              <Chip
+                size="small"
+                label={`Search: "${searchQuery}"`}
+                onDelete={() => setSearchQuery('')}
+                variant="outlined"
+                color="secondary"
+              />
+            )}
+          </Box>
+        </Box>
         <Box>
           <Button
             variant="contained"
@@ -667,7 +869,7 @@ const CostManagement: React.FC = () => {
                     >
                       AED
                     </Typography>
-                    {filteredData?.total.toLocaleString()}
+                    {filteredTotal.toLocaleString()}
                   </Typography>
                 </Box>
                 <Avatar 
@@ -748,7 +950,10 @@ const CostManagement: React.FC = () => {
                       color: theme.palette.info.main,
                     }}
                   >
-                    {new Date(filteredData?.period.start || '').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {new Date(filteredData?.period.end || '').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    {dateRange[0] && dateRange[1] 
+                      ? `${dateRange[0].format('MMM D')} - ${dateRange[1].format('MMM D, YYYY')}`
+                      : 'All Time'
+                    }
                   </Typography>
                 </Box>
                 <Avatar 
@@ -866,52 +1071,260 @@ const CostManagement: React.FC = () => {
 
       <Paper sx={{ mb: 3 }}>
         <Tabs value={activeTab} onChange={handleTabChange} sx={{ borderBottom: 1, borderColor: 'divider' }}>
-        <Tab label="Detailed List" />
-        <Tab label="Expense Distribution" />
+          <Tab label="Detailed List & Distribution" />
           <Tab label="Vehicle Comparison" />
         </Tabs>
         <Box sx={{ p: 2 }}>
-          {activeTab === 1 && chartData && (
-            <Box height={400}>
-              <ResponsivePie
-                data={chartData.expenseTypeData}
-                margin={{ top: 40, right: 80, bottom: 80, left: 80 }}
-                innerRadius={0.5}
-                padAngle={0.7}
-                cornerRadius={3}
-                activeOuterRadiusOffset={8}
-                borderWidth={1}
-                borderColor={{ from: 'color', modifiers: [['darker', 0.2]] }}
-                arcLinkLabelsSkipAngle={10}
-                arcLinkLabelsTextColor="#333333"
-                arcLinkLabelsThickness={1}
-                arcLinkLabelsColor={{ from: 'color' }}
-                arcLabelsSkipAngle={10}
-                arcLabelsTextColor={{ from: 'color', modifiers: [['darker', 1.4]] }}
-                legends={[
-                  {
-                    anchor: 'bottom',
-                    direction: 'row',
-                    translateY: 56,
-                    itemWidth: 100,
-                    itemHeight: 18,
-                    itemTextColor: '#999',
-                    symbolSize: 18,
-                    symbolShape: 'circle',
-                    effects: [
-                      {
-                        on: 'hover',
-                        style: {
-                          itemTextColor: '#000',
+          {activeTab === 0 && (
+            <>
+              {/* Search and Sort Controls */}
+              <Box sx={{ mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+                <TextField
+                  placeholder="Search expenses..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  size="small"
+                  sx={{ flexGrow: 1, minWidth: 250 }}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon fontSize="small" />
+                      </InputAdornment>
+                    ),
+                    endAdornment: searchQuery && (
+                      <InputAdornment position="end">
+                        <IconButton
+                          size="small"
+                          onClick={() => setSearchQuery('')}
+                          edge="end"
+                        >
+                          <ClearIcon fontSize="small" />
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+                
+                <FormControl size="small" sx={{ minWidth: 150 }}>
+                  <InputLabel>Sort By</InputLabel>
+                  <Select
+                    value={sortBy}
+                    label="Sort By"
+                    onChange={(e) => setSortBy(e.target.value as 'date' | 'amount' | 'vehicle')}
+                    startAdornment={
+                      <InputAdornment position="start">
+                        <SortIcon fontSize="small" />
+                      </InputAdornment>
+                    }
+                  >
+                    <MenuItem value="date">Date</MenuItem>
+                    <MenuItem value="amount">Amount</MenuItem>
+                    <MenuItem value="vehicle">Vehicle</MenuItem>
+                  </Select>
+                </FormControl>
+
+                <FormControl size="small" sx={{ minWidth: 120 }}>
+                  <InputLabel>Order</InputLabel>
+                  <Select
+                    value={sortOrder}
+                    label="Order"
+                    onChange={(e) => setSortOrder(e.target.value as 'asc' | 'desc')}
+                  >
+                    <MenuItem value="desc">Descending</MenuItem>
+                    <MenuItem value="asc">Ascending</MenuItem>
+                  </Select>
+                </FormControl>
+
+                <Chip 
+                  label={`${filteredExpenses.length} expense${filteredExpenses.length !== 1 ? 's' : ''}`}
+                  color="primary"
+                  variant="outlined"
+                />
+              </Box>
+
+              {/* Two Column Layout: Table (75%) and Chart (25%) */}
+              <Grid container spacing={2}>
+                <Grid item xs={12} lg={9}>
+                  <TableContainer sx={{ 
+                    borderRadius: 3,
+                    overflowX: 'auto',
+                    boxShadow: `0 1px 3px ${alpha(theme.palette.common.black, 0.1)}`,
+                  }}>
+              <Table>
+                <TableHead>
+                  <TableRow sx={{ background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, ${alpha(theme.palette.secondary.main, 0.05)} 100%)` }}>
+                    <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Date</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Vehicle</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Type</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Description</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Amount</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Status</TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {getAllExpenses().map((expense) => (
+                    <TableRow
+                      key={expense._id}
+                      sx={{
+                        '&:hover': {
+                          backgroundColor: alpha(theme.palette.primary.main, 0.04),
                         },
-                      },
-                    ],
-                  },
-                ]}
-              />
-            </Box>
+                        transition: 'background-color 0.2s',
+                      }}
+                    >
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <CalendarIcon sx={{ fontSize: 14, color: theme.palette.text.secondary }} />
+                          <Typography variant="body2">{new Date(expense.date).toLocaleDateString()}</Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" fontWeight={600}>
+                          {expense.vehicleName}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={expense.expenseType}
+                          color={(expense.expenseType === 'fuel' ? 'primary' : expense.expenseType === 'maintenance' ? 'secondary' : 'default') as any}
+                          size="small"
+                          sx={{ fontWeight: 700, fontSize: '0.7rem' }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" color="text.secondary">
+                          {expense.description}
+                        </Typography>
+                      </TableCell>
+                      <TableCell align="right">
+                        <Typography variant="body2" fontWeight={600}>
+                          AED {expense.amount.toLocaleString()}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={expense.paymentStatus}
+                          color={(expense.paymentStatus === 'paid' ? 'success' : expense.paymentStatus === 'pending' ? 'warning' : 'error') as any}
+                          size="small"
+                          sx={{ fontWeight: 700, fontSize: '0.7rem' }}
+                        />
+                      </TableCell>
+                      <TableCell align="center">
+                        <Stack direction="row" spacing={0.5} justifyContent="center">
+                          <Tooltip title="Edit Expense">
+                            <IconButton
+                              size="small"
+                              onClick={() => handleEditClick(expense)}
+                              sx={{
+                                backgroundColor: alpha(theme.palette.info.main, 0.1),
+                                '&:hover': {
+                                  backgroundColor: alpha(theme.palette.info.main, 0.2),
+                                  transform: 'scale(1.1)',
+                                },
+                                transition: 'all 0.2s',
+                              }}
+                            >
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Delete Expense">
+                            <IconButton
+                              size="small"
+                              onClick={() => handleDeleteClick(expense._id)}
+                              sx={{
+                                backgroundColor: alpha(theme.palette.error.main, 0.1),
+                                '&:hover': {
+                                  backgroundColor: alpha(theme.palette.error.main, 0.2),
+                                  transform: 'scale(1.1)',
+                                },
+                                transition: 'all 0.2s',
+                              }}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Stack>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {getAllExpenses().length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                        <Typography variant="body2" color="text.secondary">
+                          No expenses found. Click "Add Expense" to create your first expense.
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+                </Grid>
+                
+                {/* Donut Chart Column (25%) */}
+                <Grid item xs={12} lg={3}>
+                  {chartData && (
+                    <Paper sx={{ 
+                      p: 2, 
+                      height: '100%',
+                      borderRadius: 3,
+                      boxShadow: `0 1px 3px ${alpha(theme.palette.common.black, 0.1)}`,
+                    }}>
+                      <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 2 }}>
+                        Vehicle Distribution
+                      </Typography>
+                      <Box height={400}>
+                        <ResponsivePie
+                          data={chartData.vehicleData.map(v => ({
+                            id: v.vehicle,
+                            label: v.vehicle,
+                            value: v.total
+                          }))}
+                          margin={{ top: 20, right: 20, bottom: 80, left: 20 }}
+                          innerRadius={0.5}
+                          padAngle={0.7}
+                          cornerRadius={3}
+                          activeOuterRadiusOffset={8}
+                          borderWidth={1}
+                          borderColor={{ from: 'color', modifiers: [['darker', 0.2]] }}
+                          arcLinkLabelsSkipAngle={10}
+                          arcLinkLabelsTextColor="#333333"
+                          arcLinkLabelsThickness={1}
+                          arcLinkLabelsColor={{ from: 'color' }}
+                          arcLabelsSkipAngle={10}
+                          arcLabelsTextColor={{ from: 'color', modifiers: [['darker', 1.4]] }}
+                          valueFormat={value => `AED ${value.toLocaleString()}`}
+                          enableArcLinkLabels={false}
+                          legends={[
+                            {
+                              anchor: 'bottom',
+                              direction: 'column',
+                              translateY: 56,
+                              itemWidth: 80,
+                              itemHeight: 18,
+                              itemTextColor: '#999',
+                              symbolSize: 12,
+                              symbolShape: 'circle',
+                              effects: [
+                                {
+                                  on: 'hover',
+                                  style: {
+                                    itemTextColor: '#000',
+                                  },
+                                },
+                              ],
+                            },
+                          ]}
+                        />
+                      </Box>
+                    </Paper>
+                  )}
+                </Grid>
+              </Grid>
+            </>
           )}
-          {activeTab === 2 && chartData && (
+          {activeTab === 1 && chartData && (
             <Box height={400}>
               <ResponsiveBar
                 data={chartData.vehicleData}
@@ -947,41 +1360,57 @@ const CostManagement: React.FC = () => {
               />
             </Box>
           )}
-          {activeTab === 0 && (
-            <TableContainer sx={{ 
-              borderRadius: 3,
-              overflowX: 'auto',
-              boxShadow: `0 1px 3px ${alpha(theme.palette.common.black, 0.1)}`,
-            }}>
-              <Table>
-                <TableHead>
-                  <TableRow sx={{ background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, ${alpha(theme.palette.secondary.main, 0.05)} 100%)` }}>
-                    <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }} />
-                    <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Vehicle</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Total Expenses</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Number of Expenses</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {filteredData?.vehicles.map((row) => (
-                    <Row 
-                      key={row.vehicleId} 
-                      row={row} 
-                      onEdit={handleEditClick}
-                      onDelete={handleDeleteClick}
-                    />
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
         </Box>
       </Paper>
 
-      <Dialog open={filterDialogOpen} onClose={() => setFilterDialogOpen(false)}>
+      <Dialog open={filterDialogOpen} onClose={() => setFilterDialogOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Filter Expenses</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2 }}>
+            {/* Quick Date Filters */}
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle2" gutterBottom sx={{ mb: 1 }}>
+                Quick Filters
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                <Button
+                  size="small"
+                  variant={dateRange[0]?.isSame(moment().startOf('month'), 'day') && dateRange[1]?.isSame(moment().endOf('month'), 'day') ? 'contained' : 'outlined'}
+                  onClick={() => setDateRange([moment().startOf('month'), moment().endOf('month')])}
+                >
+                  This Month
+                </Button>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={() => setDateRange([moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')])}
+                >
+                  Last Month
+                </Button>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={() => setDateRange([moment().startOf('year'), moment().endOf('year')])}
+                >
+                  This Year
+                </Button>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={() => setDateRange([moment().subtract(1, 'year').startOf('year'), moment().subtract(1, 'year').endOf('year')])}
+                >
+                  Last Year
+                </Button>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={() => setDateRange([moment().subtract(90, 'days'), moment()])}
+                >
+                  Last 90 Days
+                </Button>
+              </Box>
+            </Box>
+
             <FormControl fullWidth sx={{ mb: 2 }}>
               <InputLabel>Vehicle</InputLabel>
               <Select
@@ -1039,13 +1468,19 @@ const CostManagement: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setFilterDialogOpen(false)}>Cancel</Button>
-          <Button onClick={() => {
-            setFilterDialogOpen(false);
-            fetchCostData();
-          }} variant="contained">
-            Apply Filters
+          <Button 
+            onClick={() => {
+              setSelectedVehicle('all');
+              setSelectedExpenseType('all');
+              setDateRange([moment().startOf('month'), moment().endOf('month')]);
+              setSearchQuery('');
+            }}
+            color="warning"
+          >
+            Clear All
           </Button>
+          <Box sx={{ flex: 1 }} />
+          <Button onClick={() => setFilterDialogOpen(false)}>Close</Button>
         </DialogActions>
       </Dialog>
 
@@ -1054,10 +1489,10 @@ const CostManagement: React.FC = () => {
         <DialogContent>
           <Box sx={{ pt: 2 }}>
             <FormControl fullWidth sx={{ mb: 2 }}>
-              <InputLabel>Vehicle</InputLabel>
+              <InputLabel>Vehicle *</InputLabel>
               <Select
                 value={formValues.vehicleId}
-                label="Vehicle"
+                label="Vehicle *"
                 onChange={(e) => setFormValues({ ...formValues, vehicleId: e.target.value })}
               >
                 {costData?.vehicles.map((vehicle) => (
@@ -1068,23 +1503,9 @@ const CostManagement: React.FC = () => {
               </Select>
             </FormControl>
 
-            <FormControl fullWidth sx={{ mb: 2 }}>
-              <InputLabel>Expense Type</InputLabel>
-              <Select
-                value={formValues.expenseType}
-                label="Expense Type"
-                onChange={(e) => setFormValues({ ...formValues, expenseType: e.target.value })}
-              >
-                <MenuItem value="fuel">Fuel</MenuItem>
-                <MenuItem value="maintenance">Maintenance</MenuItem>
-                <MenuItem value="insurance">Insurance</MenuItem>
-                <MenuItem value="other">Other</MenuItem>
-              </Select>
-            </FormControl>
-
             <TextField
               fullWidth
-              label="Amount"
+              label="Amount *"
               type="number"
               value={formValues.amount}
               onChange={(e) => setFormValues({ ...formValues, amount: e.target.value })}
@@ -1103,45 +1524,89 @@ const CostManagement: React.FC = () => {
 
             <TextField
               fullWidth
-              label="Description"
-              value={formValues.description}
-              onChange={(e) => setFormValues({ ...formValues, description: e.target.value })}
+              label="Notes"
+              multiline
+              rows={3}
+              value={formValues.notes}
+              onChange={(e) => setFormValues({ ...formValues, notes: e.target.value })}
+              placeholder="Add any notes or comments about this expense..."
               sx={{ mb: 2 }}
             />
 
-            <FormControl fullWidth sx={{ mb: 2 }}>
-              <InputLabel>Payment Status</InputLabel>
-              <Select
-                value={formValues.paymentStatus}
-                label="Payment Status"
-                onChange={(e) => setFormValues({ ...formValues, paymentStatus: e.target.value })}
+            <Box sx={{ mb: 2 }}>
+              <Button
+                variant="outlined"
+                component="label"
+                fullWidth
+                startIcon={<AttachFileIcon />}
+                sx={{ mb: 1 }}
               >
-                <MenuItem value="paid">Paid</MenuItem>
-                <MenuItem value="pending">Pending</MenuItem>
-                <MenuItem value="cancelled">Cancelled</MenuItem>
-              </Select>
-            </FormControl>
-
-            <FormControl fullWidth>
-              <InputLabel>Payment Method</InputLabel>
-              <Select
-                value={formValues.paymentMethod}
-                label="Payment Method"
-                onChange={(e) => setFormValues({ ...formValues, paymentMethod: e.target.value })}
-              >
-                <MenuItem value="cash">Cash</MenuItem>
-                <MenuItem value="credit">Credit Card</MenuItem>
-                <MenuItem value="debit">Debit Card</MenuItem>
-                <MenuItem value="bank transfer">Bank Transfer</MenuItem>
-                <MenuItem value="other">Other</MenuItem>
-              </Select>
-            </FormControl>
+                Upload Receipts/Invoices (Multiple)
+                <input
+                  type="file"
+                  hidden
+                  multiple
+                  accept="image/*,application/pdf"
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files || []);
+                    if (files.length > 0) {
+                      setSelectedFiles([...selectedFiles, ...files]);
+                    }
+                  }}
+                />
+              </Button>
+              {selectedFiles.length > 0 && (
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+                    New Files to Upload ({selectedFiles.length})
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    {selectedFiles.map((file, index) => (
+                      <Box 
+                        key={index} 
+                        sx={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: 1,
+                          p: 1,
+                          border: '1px solid',
+                          borderColor: 'primary.main',
+                          borderRadius: 1,
+                          backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.05)
+                        }}
+                      >
+                        <FileIcon fontSize="small" color="primary" />
+                        <Typography variant="body2" sx={{ flex: 1 }}>
+                          {file.name}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {(file.size / 1024).toFixed(1)} KB
+                        </Typography>
+                        <IconButton
+                          size="small"
+                          onClick={() => setSelectedFiles(selectedFiles.filter((_, i) => i !== index))}
+                          color="error"
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Box>
+                    ))}
+                  </Box>
+                </Box>
+              )}
+            </Box>
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setAddDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleAddExpense} variant="contained">
-            Add Expense
+          <Button onClick={() => setAddDialogOpen(false)} disabled={uploading}>
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleAddExpense} 
+            variant="contained" 
+            disabled={uploading || !formValues.vehicleId || !formValues.amount}
+          >
+            {uploading ? <CircularProgress size={24} /> : 'Add Expense'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1151,10 +1616,10 @@ const CostManagement: React.FC = () => {
         <DialogContent>
           <Box sx={{ pt: 2 }}>
             <FormControl fullWidth sx={{ mb: 2 }}>
-              <InputLabel>Vehicle</InputLabel>
+              <InputLabel>Vehicle *</InputLabel>
               <Select
                 value={formValues.vehicleId}
-                label="Vehicle"
+                label="Vehicle *"
                 onChange={(e) => setFormValues({ ...formValues, vehicleId: e.target.value })}
               >
                 {costData?.vehicles.map((vehicle) => (
@@ -1165,23 +1630,9 @@ const CostManagement: React.FC = () => {
               </Select>
             </FormControl>
 
-            <FormControl fullWidth sx={{ mb: 2 }}>
-              <InputLabel>Expense Type</InputLabel>
-              <Select
-                value={formValues.expenseType}
-                label="Expense Type"
-                onChange={(e) => setFormValues({ ...formValues, expenseType: e.target.value })}
-              >
-                <MenuItem value="fuel">Fuel</MenuItem>
-                <MenuItem value="maintenance">Maintenance</MenuItem>
-                <MenuItem value="insurance">Insurance</MenuItem>
-                <MenuItem value="other">Other</MenuItem>
-              </Select>
-            </FormControl>
-
             <TextField
               fullWidth
-              label="Amount"
+              label="Amount *"
               type="number"
               value={formValues.amount}
               onChange={(e) => setFormValues({ ...formValues, amount: e.target.value })}
@@ -1200,45 +1651,131 @@ const CostManagement: React.FC = () => {
 
             <TextField
               fullWidth
-              label="Description"
-              value={formValues.description}
-              onChange={(e) => setFormValues({ ...formValues, description: e.target.value })}
+              label="Notes"
+              multiline
+              rows={3}
+              value={formValues.notes}
+              onChange={(e) => setFormValues({ ...formValues, notes: e.target.value })}
+              placeholder="Add any notes or comments about this expense..."
               sx={{ mb: 2 }}
             />
 
-            <FormControl fullWidth sx={{ mb: 2 }}>
-              <InputLabel>Payment Status</InputLabel>
-              <Select
-                value={formValues.paymentStatus}
-                label="Payment Status"
-                onChange={(e) => setFormValues({ ...formValues, paymentStatus: e.target.value })}
-              >
-                <MenuItem value="paid">Paid</MenuItem>
-                <MenuItem value="pending">Pending</MenuItem>
-                <MenuItem value="cancelled">Cancelled</MenuItem>
-              </Select>
-            </FormControl>
+            <Box sx={{ mb: 2 }}>
+              {/* Display existing receipts */}
+              {selectedExpense?.receipts && selectedExpense.receipts.length > 0 && (
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+                    Existing Receipts/Invoices
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    {selectedExpense.receipts.map((receipt, index) => (
+                      <Box 
+                        key={index} 
+                        sx={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: 1,
+                          p: 1,
+                          border: '1px solid',
+                          borderColor: 'divider',
+                          borderRadius: 1,
+                          backgroundColor: 'action.hover'
+                        }}
+                      >
+                        <FileIcon fontSize="small" color="primary" />
+                        <Typography variant="body2" sx={{ flex: 1 }}>
+                          {receipt.fileName}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {moment(receipt.uploadedAt).format('MMM DD, YYYY')}
+                        </Typography>
+                        <IconButton
+                          size="small"
+                          onClick={() => window.open(receipt.url, '_blank')}
+                          color="primary"
+                        >
+                          <OpenInNewIcon fontSize="small" />
+                        </IconButton>
+                      </Box>
+                    ))}
+                  </Box>
+                  <Divider sx={{ my: 2 }} />
+                </Box>
+              )}
 
-            <FormControl fullWidth>
-              <InputLabel>Payment Method</InputLabel>
-              <Select
-                value={formValues.paymentMethod}
-                label="Payment Method"
-                onChange={(e) => setFormValues({ ...formValues, paymentMethod: e.target.value })}
+              <Button
+                variant="outlined"
+                component="label"
+                fullWidth
+                startIcon={<AttachFileIcon />}
+                sx={{ mb: 1 }}
               >
-                <MenuItem value="cash">Cash</MenuItem>
-                <MenuItem value="credit">Credit Card</MenuItem>
-                <MenuItem value="debit">Debit Card</MenuItem>
-                <MenuItem value="bank transfer">Bank Transfer</MenuItem>
-                <MenuItem value="other">Other</MenuItem>
-              </Select>
-            </FormControl>
+                Upload New Receipts/Invoices (Multiple)
+                <input
+                  type="file"
+                  hidden
+                  multiple
+                  accept="image/*,application/pdf"
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files || []);
+                    if (files.length > 0) {
+                      setSelectedFiles([...selectedFiles, ...files]);
+                    }
+                  }}
+                />
+              </Button>
+              {selectedFiles.length > 0 && (
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+                    New Files to Upload ({selectedFiles.length})
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    {selectedFiles.map((file, index) => (
+                      <Box 
+                        key={index} 
+                        sx={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: 1,
+                          p: 1,
+                          border: '1px solid',
+                          borderColor: 'primary.main',
+                          borderRadius: 1,
+                          backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.05)
+                        }}
+                      >
+                        <FileIcon fontSize="small" color="primary" />
+                        <Typography variant="body2" sx={{ flex: 1 }}>
+                          {file.name}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {(file.size / 1024).toFixed(1)} KB
+                        </Typography>
+                        <IconButton
+                          size="small"
+                          onClick={() => setSelectedFiles(selectedFiles.filter((_, i) => i !== index))}
+                          color="error"
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Box>
+                    ))}
+                  </Box>
+                </Box>
+              )}
+            </Box>
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleUpdateExpense} variant="contained">
-            Update Expense
+          <Button onClick={() => setEditDialogOpen(false)} disabled={uploading}>
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleUpdateExpense} 
+            variant="contained" 
+            disabled={uploading || !formValues.vehicleId || !formValues.amount}
+          >
+            {uploading ? <CircularProgress size={24} /> : 'Update Expense'}
           </Button>
         </DialogActions>
       </Dialog>

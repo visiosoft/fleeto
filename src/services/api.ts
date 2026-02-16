@@ -218,6 +218,10 @@ class ApiService {
   };
 
   // Cost Management
+  getAllCosts = async () => {
+    return this.fetchWithAuth(API_ENDPOINTS.costs.all);
+  };
+
   getCurrentMonthCosts = async () => {
     return this.fetchWithAuth(API_ENDPOINTS.costs.currentMonth);
   };

@@ -1,7 +1,7 @@
 export const API_CONFIG = {
     ENDPOINTS: {
-        COSTS: '/expenses/',
-        EXPENSES: '/expenses/',
+        COSTS: '/api/expenses',
+        EXPENSES: '/api/expenses',
         VEHICLES: '/vehicles',
         FUEL_RECORDS: '/fuel-records',
         MAINTENANCE_RECORDS: '/maintenance-records',

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Grid,
@@ -817,6 +817,60 @@ const MaintenanceSummary: React.FC<{ maintenanceData: any }> = ({ maintenanceDat
 };
 
 const CostSummary: React.FC<{ costData: any }> = ({ costData }) => {
+  const [vehicleExpenses, setVehicleExpenses] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const theme = useTheme();
+
+  useEffect(() => {
+    const fetchVehicleExpenses = async () => {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/costs/all', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+        const data = await response.json();
+        
+        // Filter for current month and group by vehicle
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        
+        const vehicleMap = new Map<string, number>();
+        
+        data.vehicles?.forEach((vehicle: any) => {
+          let vehicleTotal = 0;
+          vehicle.details?.forEach((expense: any) => {
+            const expenseDate = new Date(expense.date);
+            if (expenseDate >= startOfMonth && expenseDate <= endOfMonth) {
+              vehicleTotal += expense.amount;
+            }
+          });
+          if (vehicleTotal > 0) {
+            vehicleMap.set(vehicle.vehicleName, vehicleTotal);
+          }
+        });
+        
+        const chartData = Array.from(vehicleMap.entries()).map(([vehicleName, total]) => ({
+          id: vehicleName,
+          label: vehicleName,
+          value: total
+        }));
+        
+        setVehicleExpenses(chartData);
+      } catch (error) {
+        console.error('Error fetching vehicle expenses:', error);
+        setVehicleExpenses([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchVehicleExpenses();
+  }, []);
+
   if (!costData) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
@@ -832,21 +886,25 @@ const CostSummary: React.FC<{ costData: any }> = ({ costData }) => {
         <Card sx={{ height: '100%' }}>
           <CardContent>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6">Expenses by Category</Typography>
+              <Typography variant="h6">Current Month - Expenses by Vehicle</Typography>
               <IconButton size="small">
                 <MoreVertIcon />
               </IconButton>
             </Box>
             <Box sx={{ height: 300 }}>
-              {costData.byCategory.length === 0 ? (
+              {loading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                  <CircularProgress />
+                </Box>
+              ) : vehicleExpenses.length === 0 ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
                   <Typography variant="body2" color="textSecondary">
-                    No data available
+                    No expenses for current month
                   </Typography>
                 </Box>
               ) : (
                 <ResponsivePie
-                  data={costData.byCategory}
+                  data={vehicleExpenses}
                   margin={{ top: 20, right: 80, bottom: 80, left: 80 }}
                   innerRadius={0.5}
                   padAngle={0.7}
@@ -860,6 +918,7 @@ const CostSummary: React.FC<{ costData: any }> = ({ costData }) => {
                   arcLinkLabelsColor={{ from: 'color' }}
                   arcLabelsSkipAngle={10}
                   arcLabelsTextColor={{ from: 'color', modifiers: [['darker', 2]] }}
+                  valueFormat={value => `AED ${value.toLocaleString()}`}
                   legends={[
                     {
                       anchor: 'bottom',
@@ -880,7 +939,7 @@ const CostSummary: React.FC<{ costData: any }> = ({ costData }) => {
                   tooltip={({ datum }) => (
                     <Box sx={{ bgcolor: 'white', p: 1, border: '1px solid #ccc', borderRadius: 1 }}>
                       <Typography variant="body2">
-                        {datum.label}: AED {datum.value.toFixed(2)}
+                        {datum.label}: AED {datum.value.toLocaleString()}
                       </Typography>
                     </Box>
                   )}
@@ -992,11 +1051,11 @@ const Dashboard: React.FC = () => {
     setTabValue(newValue);
   };
 
-  // Format fuel consumption with currency symbol
-  const totalFuelConsumption = data ? `AED ${data.fuelConsumption.total.toLocaleString()}` : 'AED 0';
+  // Format total expenses with currency symbol
+  const totalExpenses = data ? `AED ${data.costData.monthlyCost.toLocaleString()}` : 'AED 0';
   
-  // Format maintenance cost with currency symbol
-  const totalMaintenanceCost = data ? `AED ${data.maintenanceCost.total.toLocaleString()}` : 'AED 0';
+  // Format expected income from active contracts
+  const expectedIncome = data ? `AED ${data.contractStats.totalValue.toLocaleString()}` : 'AED 0';
 
   if (isLoading) {
     return (
@@ -1097,24 +1156,24 @@ const Dashboard: React.FC = () => {
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
-            title="Fuel Consumption"
-            value={totalFuelConsumption}
-            icon={<FuelIcon />}
-            trend={data.fuelConsumption.trend < 0 ? "down" : "up"}
-            trendValue={`${Math.abs(data.fuelConsumption.trend)}% this month`}
+            title="Total Expenses"
+            value={totalExpenses}
+            icon={<ReceiptIcon />}
+            trend={data.costData.trendPercentage < 0 ? "down" : "up"}
+            trendValue={`${Math.abs(data.costData.trendPercentage)}% this month`}
             color={theme.palette.warning.main}
             onClick={() => navigate('/cost-management')}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
-            title="Maintenance Cost"
-            value={totalMaintenanceCost}
-            icon={<MaintenanceIcon />}
-            trend={data.maintenanceCost.trend < 0 ? "down" : "up"}
-            trendValue={`${Math.abs(data.maintenanceCost.trend)}% this month`}
-            color={theme.palette.error.main}
-            onClick={() => navigate('/cost-management')}
+            title="Expected Income"
+            value={expectedIncome}
+            icon={<MonetizationOnIcon />}
+            trend="up"
+            trendValue={`${data.contractStats.activeContracts} active contracts`}
+            color={theme.palette.success.main}
+            onClick={() => navigate('/contracts')}
           />
         </Grid>
 

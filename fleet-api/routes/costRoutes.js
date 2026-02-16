@@ -121,6 +121,20 @@ router.get('/vehicles/:vehicleId', costController.getVehicleCostBreakdown);
 
 /**
  * @swagger
+ * /api/costs/all:
+ *   get:
+ *     summary: Get all expenses for all vehicles (no date filter)
+ *     tags: [Costs]
+ *     responses:
+ *       200:
+ *         description: All expenses retrieved successfully
+ *       500:
+ *         description: Server error
+ */
+router.get('/all', costController.getAllCompanyExpenses);
+
+/**
+ * @swagger
  * /api/costs/current-month:
  *   get:
  *     summary: Get current month's expenses for all vehicles

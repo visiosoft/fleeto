@@ -72,6 +72,41 @@ const ExpenseController = {
     try {
       const expenseData = req.body;
       
+      // Add companyId from authenticated user
+      if (req.user && req.user.companyId) {
+        expenseData.companyId = req.user.companyId.toString();
+      }
+      
+      // Set defaults for optional fields BEFORE validation
+      if (!expenseData.description) {
+        expenseData.description = 'Expense receipt';
+      }
+      if (!expenseData.expenseType) {
+        expenseData.expenseType = 'other';
+      }
+      if (!expenseData.paymentStatus) {
+        expenseData.paymentStatus = 'paid';
+      }
+      if (!expenseData.paymentMethod) {
+        expenseData.paymentMethod = 'other';
+      }
+      
+      // Handle multiple file uploads if present
+      if (req.files && req.files.length > 0) {
+        expenseData.receipts = req.files.map(file => ({
+          url: `/expenses/${file.filename}`,
+          fileName: file.originalname,
+          uploadedAt: new Date()
+        }));
+      }
+      
+      console.log('Creating expense with data:', {
+        vehicleId: expenseData.vehicleId,
+        companyId: expenseData.companyId,
+        amount: expenseData.amount,
+        date: expenseData.date
+      });
+      
       // Validate expense data
       const validation = ExpenseModel.validate(expenseData);
       if (!validation.isValid) {
@@ -121,6 +156,21 @@ const ExpenseController = {
         });
       }
       
+      // Handle multiple file uploads if present
+      if (req.files && req.files.length > 0) {
+        const newReceipts = req.files.map(file => ({
+          url: `/expenses/${file.filename}`,
+          fileName: file.originalname,
+          uploadedAt: new Date()
+        }));
+        
+        // Merge with existing receipts
+        updateData.receipts = [
+          ...(updateData.receipts || []),
+          ...newReceipts
+        ];
+      }
+      
       // Check if expense exists
       const collection = await ExpenseModel.getCollection();
       const existingExpense = await collection.findOne({ _id: new ObjectId(id) });
@@ -132,13 +182,7 @@ const ExpenseController = {
         });
       }
       
-      // Only allow updates if status is pending
-      if (existingExpense.paymentStatus !== 'pending') {
-        return res.status(400).json({ 
-          status: 'error', 
-          message: 'Cannot update expense that is not in pending status' 
-        });
-      }
+      // Removed status check - allow updates regardless of status
       
       // Prepare data for update
       const preparedData = ExpenseModel.prepareData({

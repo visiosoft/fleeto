@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const ExpenseController = require('../controllers/expenseController');
 const { authenticate } = require('../middleware/auth');
+const upload = require('../middleware/uploadExpense');
 
 // Apply authentication middleware to all expense routes
 router.use(authenticate);
@@ -36,11 +37,11 @@ router.get('/driver/:driverId', ExpenseController.getExpensesByDriver);
 // Get specific expense
 router.get('/:id', ExpenseController.getExpenseById);
 
-// Create new expense
-router.post('/', ExpenseController.createExpense);
+// Create new expense (with multiple file uploads)
+router.post('/', upload.array('receipts', 10), ExpenseController.createExpense);
 
-// Update expense
-router.put('/:id', ExpenseController.updateExpense);
+// Update expense (with multiple file uploads)
+router.put('/:id', upload.array('receipts', 10), ExpenseController.updateExpense);
 
 // Update expense status
 router.patch('/:id/status', ExpenseController.updateExpenseStatus);
