@@ -608,7 +608,7 @@ const Maintenance: React.FC = () => {
               </Typography>
             )}
           </Box>
-          <TableContainer component={Paper}>
+          <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
             <Table>
               <TableHead>
                 <TableRow>

@@ -319,7 +319,7 @@ const VehicleManagement: React.FC = () => {
 
       <TableContainer component={Paper} sx={{ 
         borderRadius: 3,
-        overflow: 'hidden',
+        overflowX: 'auto',
         boxShadow: `0 1px 3px ${alpha(theme.palette.common.black, 0.1)}`,
       }}>
         <Table>

@@ -102,7 +102,7 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ invoices = [], onRefresh }) =
 
   return (
     <>
-      <TableContainer>
+      <TableContainer sx={{ overflowX: 'auto' }}>
         <Table>
           <TableHead>
             <TableRow>

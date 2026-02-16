@@ -181,7 +181,7 @@ const CompanyUsers: React.FC = () => {
             <LinearProgress />
           </Box>
         ) : (
-          <TableContainer>
+          <TableContainer sx={{ overflowX: 'auto' }}>
             <Table>
               <TableHead>
                 <TableRow>

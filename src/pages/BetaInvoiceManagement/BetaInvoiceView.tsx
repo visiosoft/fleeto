@@ -277,7 +277,7 @@ const BetaInvoiceView: React.FC = () => {
                     </Grid>
 
                     {/* Line Items */}
-                    <TableContainer sx={{ mb: 2, '@media print': { mb: 1 } }}>
+                    <TableContainer sx={{ mb: 2, overflowX: 'auto', '@media print': { mb: 1 } }}>
                         <Table>
                             <TableHead>
                                 <TableRow sx={{ bgcolor: 'grey.100' }}>
@@ -335,7 +335,7 @@ const BetaInvoiceView: React.FC = () => {
                             <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                                 PAYMENT HISTORY
                             </Typography>
-                            <TableContainer>
+                            <TableContainer sx={{ overflowX: 'auto' }}>
                                 <Table size="small">
                                     <TableHead>
                                         <TableRow sx={{ bgcolor: 'grey.100' }}>

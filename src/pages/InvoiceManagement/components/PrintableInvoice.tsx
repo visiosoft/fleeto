@@ -163,7 +163,7 @@ const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({ invoice }) => {
             </Box>
           </Box>
 
-          <TableContainer component={Paper} sx={{ mb: 2 }}>
+          <TableContainer component={Paper} sx={{ mb: 2, overflowX: 'auto' }}>
             <Table size="small">
               <TableHead>
                 <TableRow>

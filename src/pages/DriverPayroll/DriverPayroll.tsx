@@ -416,7 +416,7 @@ const DriverPayroll: React.FC = () => {
       </Grid>
 
       {/* Payroll Table */}
-      <TableContainer component={Paper}>
+      <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
         <Table>
           <TableHead>
             <TableRow>

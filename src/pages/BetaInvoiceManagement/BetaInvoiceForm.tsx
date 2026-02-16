@@ -312,7 +312,7 @@ const BetaInvoiceForm: React.FC = () => {
                                 </Button>
                             </Box>
 
-                            <TableContainer>
+                            <TableContainer sx={{ overflowX: 'auto' }}>
                                 <Table>
                                     <TableHead>
                                         <TableRow>

@@ -369,7 +369,7 @@ const InvoiceForm: React.FC = () => {
                 </Button>
               </Box>
 
-              <TableContainer>
+              <TableContainer sx={{ overflowX: 'auto' }}>
                 <Table>
                   <TableHead>
                     <TableRow>

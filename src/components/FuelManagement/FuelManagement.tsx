@@ -73,7 +73,7 @@ const FuelManagement: React.FC = () => {
 
       <Grid container spacing={3}>
         <Grid item xs={12} lg={8}>
-          <TableContainer component={Paper}>
+          <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
             <Table>
               <TableHead>
                 <TableRow>

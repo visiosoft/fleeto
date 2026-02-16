@@ -533,7 +533,7 @@ const ExpensesTable: React.FC<ExpensesTableProps> = ({ expenses, onAction, onVie
   };
 
   return (
-    <TableContainer>
+    <TableContainer sx={{ overflowX: 'auto' }}>
       <Table>
         <TableHead>
           <TableRow>

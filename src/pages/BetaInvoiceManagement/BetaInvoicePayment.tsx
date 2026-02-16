@@ -248,7 +248,7 @@ const BetaInvoicePayment: React.FC = () => {
                         <Typography variant="h6" gutterBottom>
                             Payment History
                         </Typography>
-                        <TableContainer>
+                        <TableContainer sx={{ overflowX: 'auto' }}>
                             <Table>
                                 <TableHead>
                                     <TableRow>
