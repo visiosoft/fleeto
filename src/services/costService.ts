@@ -3,7 +3,7 @@ import { Cost } from '../types';
 import { API_CONFIG, getApiUrl } from '../config/api';
 
 /**
- * Cost Management API Service
+ * Expense Management API Service
  */
 export const costService = {
   /**

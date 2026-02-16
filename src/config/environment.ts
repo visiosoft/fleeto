@@ -31,7 +31,7 @@ export const API_ENDPOINTS = {
   contractDetails: (id: string) => `${API_BASE_URL}${API_PREFIX}/contracts/${id}`,
   contractTemplates: `${API_BASE_URL}${API_PREFIX}/contract-templates`,
   
-  // Cost Management endpoints
+  // Expense Management endpoints
   costs: {
     all: `${API_BASE_URL}${API_PREFIX}/costs/all`,
     currentMonth: `${API_BASE_URL}${API_PREFIX}/costs/current-month`,

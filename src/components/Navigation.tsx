@@ -55,7 +55,7 @@ const menuItems = [
     icon: <DescriptionIcon />,
   },
   {
-    title: 'Cost Management',
+    title: 'Expense Management',
     path: '/costs',
     icon: <AccountBalanceWalletIcon />,
   },

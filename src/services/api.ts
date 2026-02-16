@@ -217,7 +217,7 @@ class ApiService {
     });
   };
 
-  // Cost Management
+  // Expense Management
   getAllCosts = async () => {
     return this.fetchWithAuth(API_ENDPOINTS.costs.all);
   };

@@ -26,6 +26,7 @@ import ReceiptForm from './pages/ReceiptManagement/ReceiptForm';
 import LetterheadManagement from './pages/LetterheadManagement/LetterheadManagement';
 import LetterheadPDF from './pages/LetterheadManagement/LetterheadPDF';
 import WhatsAppExpenses from './pages/WhatsAppExpenses/WhatsAppExpenses';
+import { ModernDashboard } from './pages/ModernDashboard/ModernDashboard';
 
 // Lazy load all pages
 const VehicleManagement = React.lazy(() => import('./pages/VehicleManagement'));
@@ -98,6 +99,13 @@ const AppContent: React.FC = () => {
 
           {/* Company selection route */}
           <Route path="/select-company" element={<CompanySelection />} />
+
+          {/* Modern Dashboard Route */}
+          <Route path="/modern-dashboard" element={
+            <ProtectedRoute>
+              <ModernDashboard />
+            </ProtectedRoute>
+          } />
 
           {/* Protected routes */}
           <Route path="/dashboard" element={

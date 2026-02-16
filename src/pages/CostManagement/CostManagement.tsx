@@ -746,7 +746,7 @@ const CostManagement: React.FC = () => {
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Box>
           <Typography variant="h4" component="h1">
-            Cost Management
+            Expense Management
           </Typography>
           {/* Active Filters Display */}
           <Box sx={{ display: 'flex', gap: 1, mt: 1, flexWrap: 'wrap' }}>

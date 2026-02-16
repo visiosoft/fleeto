@@ -48,7 +48,7 @@ export const defaultBreadcrumbConfig: BreadcrumbConfig = {
   '/vehicles': { label: 'Vehicles', parent: '/dashboard' },
   '/drivers': { label: 'Drivers', parent: '/dashboard' },
   '/tracking': { label: 'Vehicle Tracking', parent: '/dashboard' },
-  '/costs': { label: 'Cost Management', parent: '/dashboard' },
+  '/costs': { label: 'Expense Management', parent: '/dashboard' },
   '/contracts': { label: 'Add Company / Contract', parent: '/dashboard' },
   '/contracts/template': { label: 'Contract Template', parent: '/contracts' },
   '/reports': { label: 'Reports', parent: '/dashboard' },
@@ -58,7 +58,7 @@ export const defaultBreadcrumbConfig: BreadcrumbConfig = {
   '/company-settings': { label: 'Company Settings', parent: '/settings' },
   '/profile': { label: 'Profile', parent: '/settings' },
   '/users': { label: 'User Management', parent: '/settings' },
-  '/cost-management': { label: 'Cost Management', parent: '/dashboard' },
+  '/cost-management': { label: 'Expense Management', parent: '/dashboard' },
   '/driver-payroll': { label: 'Driver Payroll', parent: '/drivers' },
   '/general-notes': { label: 'General Notes', parent: '/dashboard' },
   
