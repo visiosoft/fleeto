@@ -73,6 +73,7 @@ export const API_ENDPOINTS = {
     total: `${API_BASE_URL}/rta-fines/total`,
     all: `${API_BASE_URL}/rta-fines/all`,
     byVehicle: (vehicleInfo: string) => `${API_BASE_URL}/rta-fines/vehicle/${vehicleInfo}`,
+    delete: (id: string) => `${API_BASE_URL}/rta-fines/${id}`,
   },
 };
 

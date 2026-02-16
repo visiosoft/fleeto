@@ -36,7 +36,10 @@ export const ModernDashboard: React.FC = () => {
     monthlyProfit: 0,
     pendingFines: 0,
     finesAmount: 'AED 0',
+    finesLastUpdated: '',
   });
+
+  const [finesLoading, setFinesLoading] = useState(true);
 
   const [vehicleExpenses, setVehicleExpenses] = useState<any[]>([]);
   const [vehicleContracts, setVehicleContracts] = useState<any[]>([]);
@@ -225,6 +228,7 @@ export const ModernDashboard: React.FC = () => {
   useEffect(() => {
     const fetchFinesData = async () => {
       try {
+        setFinesLoading(true);
         const token = localStorage.getItem('token');
         const response = await axios.get(API_ENDPOINTS.rtaFines.total, {
           headers: { Authorization: `Bearer ${token}` }
@@ -234,20 +238,42 @@ export const ModernDashboard: React.FC = () => {
 
         if (response.data?.status === 'success' && response.data.data) {
           const totalAmount = response.data.data.total_amount || 'AED 0';
+          const lastUpdated = response.data.data.last_updated;
           
           // Extract just the amount from string like "Pay all AED 2,000"
           const match = totalAmount.match(/AED\s*([\d,]+)/);
           const numericAmount = match ? parseInt(match[1].replace(/,/g, '')) : 0;
           const formattedAmount = match ? `AED ${match[1]}` : 'AED 0';
           
+          // Parse and format the last updated date
+          let formattedDate = '';
+          if (lastUpdated) {
+            const dateObj = lastUpdated.$date ? new Date(lastUpdated.$date) : new Date(lastUpdated);
+            if (!isNaN(dateObj.getTime())) {
+              const dateStr = dateObj.toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+              });
+              const timeStr = dateObj.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+              });
+              formattedDate = `${dateStr} ${timeStr}`;
+            }
+          }
+          
           setKpiData(prev => ({
             ...prev,
             pendingFines: numericAmount,
-            finesAmount: formattedAmount
+            finesAmount: formattedAmount,
+            finesLastUpdated: formattedDate
           }));
         }
       } catch (error) {
         console.error('Error fetching fines data:', error);
+      } finally {
+        setFinesLoading(false);
       }
     };
 
@@ -268,6 +294,7 @@ export const ModernDashboard: React.FC = () => {
         monthlyProfit: profit,
         pendingFines: kpiData.pendingFines, // Keep existing fines data
         finesAmount: kpiData.finesAmount,
+        finesLastUpdated: kpiData.finesLastUpdated,
       });
     }
   }, [data]);
@@ -402,8 +429,10 @@ export const ModernDashboard: React.FC = () => {
           trend={{ value: 12, direction: 'up' }}
         />
         <KPICard
-          label="Pending Fines"
+          label="RTA Fines"
           value={kpiData.finesAmount}
+          subtitle={kpiData.finesLastUpdated ? `Updated: ${kpiData.finesLastUpdated}` : ''}
+          isLoading={finesLoading}
           icon={<FineIcon className="w-6 h-6" />}
           onClick={() => navigate('/rta-fines')}
           valueColor="#EF4444"

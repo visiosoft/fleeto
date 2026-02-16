@@ -18,6 +18,13 @@ import {
   useTheme,
   Button,
   Stack,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Snackbar,
 } from '@mui/material';
 import {
   Warning as WarningIcon,
@@ -26,6 +33,7 @@ import {
   MonetizationOn as MoneyIcon,
   OpenInNew as OpenInNewIcon,
   Gavel as GavelIcon,
+  Delete as DeleteIcon,
 } from '@mui/icons-material';
 import axios from 'axios';
 import { API_ENDPOINTS } from '../../config/environment';
@@ -56,6 +64,11 @@ const FinesSearch: React.FC = () => {
   const [totalFines, setTotalFines] = useState<RtaTotal | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [fineToDelete, setFineToDelete] = useState<RtaFine | null>(null);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
 
   const rtaFinesUrl = 'https://ums.rta.ae/violations/public-fines/fines-search';
   const trafficCode = '51563245';
@@ -106,8 +119,65 @@ const FinesSearch: React.FC = () => {
     return parseFloat(numStr) || 0;
   };
 
+  const parseDate = (dateObj: any): Date | null => {
+    if (!dateObj) return null;
+    
+    // Handle MongoDB date format {$date: string}
+    if (dateObj.$date) {
+      const date = new Date(dateObj.$date);
+      return isNaN(date.getTime()) ? null : date;
+    }
+    
+    // Handle direct string or Date object
+    const date = new Date(dateObj);
+    return isNaN(date.getTime()) ? null : date;
+  };
+
   const handleOpenRTAPortal = () => {
     window.open(rtaFinesUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleDeleteClick = (fine: RtaFine) => {
+    setFineToDelete(fine);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!fineToDelete?._id) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      const headers = {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      };
+
+      await axios.delete(`${API_ENDPOINTS.rtaFines.delete(fineToDelete._id)}`, { headers });
+      
+      setSnackbarMessage('Fine deleted successfully');
+      setSnackbarSeverity('success');
+      setSnackbarOpen(true);
+      
+      // Refresh the data
+      fetchFinesData();
+    } catch (err: any) {
+      console.error('Error deleting fine:', err);
+      setSnackbarMessage(err.response?.data?.message || 'Failed to delete fine');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    } finally {
+      setDeleteDialogOpen(false);
+      setFineToDelete(null);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false);
+    setFineToDelete(null);
+  };
+
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false);
   };
 
   if (loading) {
@@ -247,21 +317,27 @@ const FinesSearch: React.FC = () => {
                 </Typography>
               </Box>
               <Typography variant="h6" sx={{ fontSize: '16px', fontWeight: 600, color: '#111827', mb: 1 }}>
-                {totalFines?.last_updated
-                  ? new Date(totalFines.last_updated.$date).toLocaleDateString('en-GB', {
-                      day: '2-digit',
-                      month: 'short',
-                      year: 'numeric',
-                    })
-                  : 'N/A'}
+                {(() => {
+                  const date = parseDate(totalFines?.last_updated);
+                  return date
+                    ? date.toLocaleDateString('en-GB', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric',
+                      })
+                    : 'N/A';
+                })()}
               </Typography>
               <Typography variant="body2" sx={{ fontSize: '13px', fontWeight: 500, color: '#6B7280' }}>
-                {totalFines?.last_updated
-                  ? new Date(totalFines.last_updated.$date).toLocaleTimeString('en-US', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })
-                  : ''}
+                {(() => {
+                  const date = parseDate(totalFines?.last_updated);
+                  return date
+                    ? date.toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })
+                    : '';
+                })()}
               </Typography>
             </CardContent>
           </Card>
@@ -308,6 +384,9 @@ const FinesSearch: React.FC = () => {
                     </TableCell>
                     <TableCell sx={{ fontWeight: 600, color: '#374151', fontSize: '13px' }}>
                       Black Points
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: '#374151', fontSize: '13px' }}>
+                      Actions
                     </TableCell>
                   </TableRow>
                 </TableHead>
@@ -359,6 +438,20 @@ const FinesSearch: React.FC = () => {
                           </Typography>
                         )}
                       </TableCell>
+                      <TableCell>
+                        <IconButton
+                          onClick={() => handleDeleteClick(fine)}
+                          size="small"
+                          sx={{
+                            color: theme.palette.error.main,
+                            '&:hover': {
+                              backgroundColor: `${theme.palette.error.main}15`,
+                            },
+                          }}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -367,6 +460,51 @@ const FinesSearch: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={handleDeleteCancel}
+        aria-labelledby="delete-dialog-title"
+        aria-describedby="delete-dialog-description"
+      >
+        <DialogTitle id="delete-dialog-title">
+          Confirm Delete
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="delete-dialog-description">
+            Are you sure you want to delete this fine for vehicle <strong>{fineToDelete?.vehicle_info}</strong>?
+            <br />
+            <br />
+            Amount: <strong>{fineToDelete?.amount}</strong>
+            <br />
+            Date: <strong>{fineToDelete?.date_time}</strong>
+            <br />
+            <br />
+            This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDeleteCancel} color="inherit">
+            Cancel
+          </Button>
+          <Button onClick={handleDeleteConfirm} color="error" variant="contained" autoFocus>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

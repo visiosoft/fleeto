@@ -15,4 +15,7 @@ router.get('/all', RtaFinesController.getAllFines);
 // Get fines by vehicle
 router.get('/vehicle/:vehicleInfo', RtaFinesController.getFinesByVehicle);
 
+// Delete a fine
+router.delete('/:id', RtaFinesController.deleteFine);
+
 module.exports = router;

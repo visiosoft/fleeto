@@ -30,9 +30,20 @@ const RtaFinesController = {
           data: {
             type: 'total_fines',
             total_amount: 'Pay all AED 0',
-            last_updated: new Date()
+            last_updated: {
+              $date: new Date().toISOString()
+            }
           }
         });
+      }
+
+      // Ensure consistent date format
+      if (totalFines.last_updated && !(totalFines.last_updated.$date)) {
+        totalFines.last_updated = {
+          $date: totalFines.last_updated instanceof Date 
+            ? totalFines.last_updated.toISOString() 
+            : new Date(totalFines.last_updated).toISOString()
+        };
       }
 
       res.status(200).json({
@@ -127,6 +138,53 @@ const RtaFinesController = {
       res.status(500).json({ 
         status: 'error', 
         message: 'Failed to retrieve fines by vehicle', 
+        error: error.message 
+      });
+    }
+  },
+
+  /**
+   * Delete a fine from rta_fines collection
+   * @param {Object} req - Express request object
+   * @param {Object} res - Express response object
+   */
+  async deleteFine(req, res) {
+    try {
+      const companyId = req.user.companyId;
+      const { id } = req.params;
+      
+      if (!companyId) {
+        return res.status(400).json({
+          status: 'error',
+          message: 'Company ID not found in user token'
+        });
+      }
+
+      console.log(`Deleting fine with ID: ${id}`);
+      
+      const rtaFinesCollection = await db.getCollection('rta_fines');
+      const { ObjectId } = require('mongodb');
+      
+      const result = await rtaFinesCollection.deleteOne({ 
+        _id: new ObjectId(id)
+      });
+
+      if (result.deletedCount === 0) {
+        return res.status(404).json({
+          status: 'error',
+          message: 'Fine not found'
+        });
+      }
+
+      res.status(200).json({
+        status: 'success',
+        message: 'Fine deleted successfully'
+      });
+    } catch (error) {
+      console.error('Error deleting fine:', error);
+      res.status(500).json({ 
+        status: 'error', 
+        message: 'Failed to delete fine', 
         error: error.message 
       });
     }

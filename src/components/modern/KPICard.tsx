@@ -11,6 +11,8 @@ interface KPICardProps {
   progress?: number;
   onClick?: () => void;
   valueColor?: string;
+  subtitle?: string;
+  isLoading?: boolean;
 }
 
 export const KPICard: React.FC<KPICardProps> = ({
@@ -21,6 +23,8 @@ export const KPICard: React.FC<KPICardProps> = ({
   progress,
   onClick,
   valueColor,
+  subtitle,
+  isLoading = false,
 }) => {
   return (
     <div
@@ -32,12 +36,24 @@ export const KPICard: React.FC<KPICardProps> = ({
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
           <p className="text-sm font-medium text-gray-500 mb-2">{label}</p>
-          <h3 
-            className="text-4xl font-bold"
-            style={{ color: valueColor || '#111827' }}
-          >
-            {value}
-          </h3>
+          {isLoading ? (
+            <>
+              <div className="h-10 w-32 bg-gray-200 animate-pulse rounded mb-2"></div>
+              {subtitle && <div className="h-3 w-40 bg-gray-200 animate-pulse rounded"></div>}
+            </>
+          ) : (
+            <>
+              <h3 
+                className="text-4xl font-bold"
+                style={{ color: valueColor || '#111827' }}
+              >
+                {value}
+              </h3>
+              {subtitle && (
+                <p className="text-xs text-gray-500 mt-1">{subtitle}</p>
+              )}
+            </>
+          )}
         </div>
         {icon && (
           <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
