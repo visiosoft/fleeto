@@ -1011,6 +1011,7 @@ const Dashboard: React.FC = () => {
   const [tabValue, setTabValue] = useState(0);
   const [recentInvoices, setRecentInvoices] = useState<any[]>([]);
   const [recentReceipts, setRecentReceipts] = useState<any[]>([]);
+  const [totalFines, setTotalFines] = useState<{ total_amount: string } | null>(null);
   
   // Use the custom hook for dashboard data
   const { data, isLoading, error, refresh, refreshAll, isRefreshing } = useDashboardData();
@@ -1043,8 +1044,28 @@ const Dashboard: React.FC = () => {
       }
     };
     
+    const fetchTotalFines = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/rta-fines/total', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+        const result = await response.json();
+        console.log('Total Fines API Response:', result);
+        if (result?.status === 'success') {
+          console.log('Total Fines Data:', result.data);
+          setTotalFines(result.data);
+        }
+      } catch (err) {
+        console.error('Error fetching total fines:', err);
+      }
+    };
+    
     fetchRecentInvoices();
     fetchRecentReceipts();
+    fetchTotalFines();
   }, []);
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
@@ -1167,13 +1188,11 @@ const Dashboard: React.FC = () => {
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
-            title="Expected Income"
-            value={expectedIncome}
-            icon={<MonetizationOnIcon />}
-            trend="up"
-            trendValue={`${data.contractStats.activeContracts} active contracts`}
-            color={theme.palette.success.main}
-            onClick={() => navigate('/contracts')}
+            title="RTA Fines"
+            value={totalFines?.total_amount || 'AED 0'}
+            icon={<WarningIcon />}
+            color={theme.palette.error.main}
+            onClick={() => navigate('/rta-fines')}
           />
         </Grid>
 

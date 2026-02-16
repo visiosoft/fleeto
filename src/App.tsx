@@ -39,6 +39,7 @@ const Compliance = React.lazy(() => import('./pages/Compliance/Compliance'));
 const Settings = React.lazy(() => import('./pages/Settings'));
 const CompanySettings = React.lazy(() => import('./pages/CompanySettings/CompanySettings'));
 const FinesSearch = React.lazy(() => import('./pages/FinesSearch/FinesSearch'));
+const RtaFines = React.lazy(() => import('./pages/RtaFines/RtaFines'));
 
 // Beta Invoice Management
 const BetaInvoiceManagement = React.lazy(() => import('./pages/BetaInvoiceManagement/BetaInvoiceManagement'));
@@ -205,6 +206,14 @@ const AppContent: React.FC = () => {
             <ProtectedRoute>
               <ModernPageLayout title="Fines Search">
                 <FinesSearch />
+              </ModernPageLayout>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/rta-fines" element={
+            <ProtectedRoute>
+              <ModernPageLayout title="RTA Fines">
+                <RtaFines />
               </ModernPageLayout>
             </ProtectedRoute>
           } />

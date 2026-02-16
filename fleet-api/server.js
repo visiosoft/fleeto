@@ -33,6 +33,7 @@ const receiptRoutes = require('./routes/receiptRoutes');
 const letterheadRoutes = require('./routes/letterheadRoutes');
 const whatsappRoutes = require('./routes/whatsappRoutes');
 const twilioWhatsAppRoutes = require('./routes/twilioWhatsAppRoutes');
+const rtaFinesRoutes = require('./routes/rtaFinesRoutes');
 
 // Initialize Express app
 const app = express();
@@ -441,6 +442,7 @@ app.use('/api/maintenance', maintenanceRoutes);
 app.use('/api/contracts', contractRoutes);
 app.use('/api/contract-templates', contractTemplateRoutes);
 app.use('/api/whatsapp', whatsappRoutes);
+app.use('/api/rta-fines', rtaFinesRoutes);
 
 // Generic API routes for other collections
 const COLLECTIONS = db.COLLECTIONS;

@@ -2,7 +2,7 @@ const isDevelopment = process.env.NODE_ENV === 'development';
 
 // In development, use relative paths because of proxy in package.json
 // In production, use the full API URL
-export const API_BASE_URL = isDevelopment ? '' : (process.env.REACT_APP_API_URL || 'http://localhost:5000/api');
+export const API_BASE_URL = isDevelopment ? '/api' : (process.env.REACT_APP_API_URL || 'http://localhost:5000/api');
 
 // Add /api prefix only in development (proxy handles it), production URL already includes /api
 
@@ -66,6 +66,13 @@ export const API_ENDPOINTS = {
     create: `${API_BASE_URL}/notes`,
     update: (id: string) => `${API_BASE_URL}/notes/${id}`,
     delete: (id: string) => `${API_BASE_URL}/notes/${id}`,
+  },
+  
+  // RTA Fines endpoints
+  rtaFines: {
+    total: `${API_BASE_URL}/rta-fines/total`,
+    all: `${API_BASE_URL}/rta-fines/all`,
+    byVehicle: (vehicleInfo: string) => `${API_BASE_URL}/rta-fines/vehicle/${vehicleInfo}`,
   },
 };
 

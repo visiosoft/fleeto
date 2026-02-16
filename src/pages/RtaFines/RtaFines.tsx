@@ -16,16 +16,12 @@ import {
   Chip,
   Grid,
   useTheme,
-  Button,
-  Stack,
 } from '@mui/material';
 import {
   Warning as WarningIcon,
   DirectionsCar as CarIcon,
   CalendarToday as CalendarIcon,
   MonetizationOn as MoneyIcon,
-  OpenInNew as OpenInNewIcon,
-  Gavel as GavelIcon,
 } from '@mui/icons-material';
 import axios from 'axios';
 import { API_ENDPOINTS } from '../../config/environment';
@@ -50,15 +46,12 @@ interface RtaTotal {
   total_amount: string;
 }
 
-const FinesSearch: React.FC = () => {
+const RtaFines: React.FC = () => {
   const theme = useTheme();
   const [fines, setFines] = useState<RtaFine[]>([]);
   const [totalFines, setTotalFines] = useState<RtaTotal | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const rtaFinesUrl = 'https://ums.rta.ae/violations/public-fines/fines-search';
-  const trafficCode = '51563245';
 
   useEffect(() => {
     fetchFinesData();
@@ -97,6 +90,7 @@ const FinesSearch: React.FC = () => {
   };
 
   const extractAmount = (amountString: string): string => {
+    // Extract number from strings like "Pay all AED 2,000" or "AED 100"
     const match = amountString.match(/AED\s*([\d,]+)/);
     return match ? match[1] : '0';
   };
@@ -104,10 +98,6 @@ const FinesSearch: React.FC = () => {
   const parseAmount = (amountString: string): number => {
     const numStr = extractAmount(amountString).replace(/,/g, '');
     return parseFloat(numStr) || 0;
-  };
-
-  const handleOpenRTAPortal = () => {
-    window.open(rtaFinesUrl, '_blank', 'noopener,noreferrer');
   };
 
   if (loading) {
@@ -135,19 +125,9 @@ const FinesSearch: React.FC = () => {
 
   return (
     <Box sx={{ p: 3 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" gutterBottom>
-          RTA Fines & Violations
-        </Typography>
-        <Button
-          variant="outlined"
-          startIcon={<OpenInNewIcon />}
-          onClick={handleOpenRTAPortal}
-          sx={{ textTransform: 'none' }}
-        >
-          Open RTA Portal
-        </Button>
-      </Box>
+      <Typography variant="h4" gutterBottom>
+        RTA Fines & Violations
+      </Typography>
 
       {/* Summary Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
@@ -371,4 +351,4 @@ const FinesSearch: React.FC = () => {
   );
 };
 
-export default FinesSearch;
+export default RtaFines;

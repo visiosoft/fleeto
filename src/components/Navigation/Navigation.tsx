@@ -100,6 +100,7 @@ const MENU_ITEMS: MenuItem[] = [
     path: '/general-notes',
   },
   { text: 'Reports', path: '/reports', icon: <AssessmentIcon /> },
+  { text: 'RTA Fines', path: '/rta-fines', icon: <GavelIcon /> },
   { text: 'RTA Fines Search', path: '/fines-search', icon: <GavelIcon /> },
   { text: 'Settings', path: '/settings', icon: <SettingsIcon /> },
 ];

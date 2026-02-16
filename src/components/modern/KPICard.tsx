@@ -10,6 +10,7 @@ interface KPICardProps {
   icon?: React.ReactNode;
   progress?: number;
   onClick?: () => void;
+  valueColor?: string;
 }
 
 export const KPICard: React.FC<KPICardProps> = ({
@@ -19,6 +20,7 @@ export const KPICard: React.FC<KPICardProps> = ({
   icon,
   progress,
   onClick,
+  valueColor,
 }) => {
   return (
     <div
@@ -30,7 +32,12 @@ export const KPICard: React.FC<KPICardProps> = ({
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
           <p className="text-sm font-medium text-gray-500 mb-2">{label}</p>
-          <h3 className="text-4xl font-bold text-gray-900">{value}</h3>
+          <h3 
+            className="text-4xl font-bold"
+            style={{ color: valueColor || '#111827' }}
+          >
+            {value}
+          </h3>
         </div>
         {icon && (
           <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">

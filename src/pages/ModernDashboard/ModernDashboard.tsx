@@ -35,6 +35,7 @@ export const ModernDashboard: React.FC = () => {
     monthlyExpenses: 0,
     monthlyProfit: 0,
     pendingFines: 0,
+    finesAmount: 'AED 0',
   });
 
   const [vehicleExpenses, setVehicleExpenses] = useState<any[]>([]);
@@ -220,6 +221,39 @@ export const ModernDashboard: React.FC = () => {
     fetchYearlyData();
   }, []);
 
+  // Fetch RTA fines data
+  useEffect(() => {
+    const fetchFinesData = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get(API_ENDPOINTS.rtaFines.total, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        console.log('RTA Fines Response (ModernDashboard):', response.data);
+
+        if (response.data?.status === 'success' && response.data.data) {
+          const totalAmount = response.data.data.total_amount || 'AED 0';
+          
+          // Extract just the amount from string like "Pay all AED 2,000"
+          const match = totalAmount.match(/AED\s*([\d,]+)/);
+          const numericAmount = match ? parseInt(match[1].replace(/,/g, '')) : 0;
+          const formattedAmount = match ? `AED ${match[1]}` : 'AED 0';
+          
+          setKpiData(prev => ({
+            ...prev,
+            pendingFines: numericAmount,
+            finesAmount: formattedAmount
+          }));
+        }
+      } catch (error) {
+        console.error('Error fetching fines data:', error);
+      }
+    };
+
+    fetchFinesData();
+  }, []);
+
   useEffect(() => {
     if (data) {
       const income = data.contractStats?.totalValue || 0;
@@ -232,7 +266,8 @@ export const ModernDashboard: React.FC = () => {
         monthlyIncome: income,
         monthlyExpenses: expenses,
         monthlyProfit: profit,
-        pendingFines: 0, // You can add fines data when available
+        pendingFines: kpiData.pendingFines, // Keep existing fines data
+        finesAmount: kpiData.finesAmount,
       });
     }
   }, [data]);
@@ -368,9 +403,10 @@ export const ModernDashboard: React.FC = () => {
         />
         <KPICard
           label="Pending Fines"
-          value={kpiData.pendingFines}
+          value={kpiData.finesAmount}
           icon={<FineIcon className="w-6 h-6" />}
-          onClick={() => navigate('/fines')}
+          onClick={() => navigate('/rta-fines')}
+          valueColor="#EF4444"
         />
       </div>
 
