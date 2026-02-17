@@ -244,6 +244,21 @@ const DriverManagement: React.FC = () => {
           variant="contained"
           startIcon={<AddIcon />}
           onClick={handleAdd}
+          sx={{
+            backgroundColor: '#2563EB !important',
+            color: '#FFFFFF !important',
+            fontWeight: 600,
+            fontSize: '14px',
+            borderRadius: '8px',
+            padding: '10px 20px',
+            textTransform: 'none',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+            '&:hover': {
+              backgroundColor: '#1D4ED8 !important',
+              transform: 'translateY(-1px)',
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+            },
+          }}
         >
           Add Driver
         </Button>
@@ -538,8 +553,39 @@ const DriverManagement: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button onClick={handleSubmit} variant="contained">
+          <Button 
+            onClick={handleCloseDialog}
+            sx={{
+              color: '#6B7280',
+              fontWeight: 500,
+              fontSize: '14px',
+              textTransform: 'none',
+              '&:hover': {
+                backgroundColor: '#F3F4F6',
+              },
+            }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleSubmit} 
+            variant="contained"
+            sx={{
+              backgroundColor: '#2563EB !important',
+              color: '#FFFFFF !important',
+              fontWeight: 600,
+              fontSize: '14px',
+              borderRadius: '8px',
+              padding: '8px 20px',
+              textTransform: 'none',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+              '&:hover': {
+                backgroundColor: '#1D4ED8 !important',
+                transform: 'translateY(-1px)',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+              },
+            }}
+          >
             {editingDriver ? 'Update' : 'Add'}
           </Button>
         </DialogActions>

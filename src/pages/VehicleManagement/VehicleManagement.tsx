@@ -420,9 +420,23 @@ const VehicleManagement: React.FC = () => {
           <Typography variant="h5">Vehicle List</Typography>
           <Button
             variant="contained"
-            color="primary"
             startIcon={<Add />}
             onClick={handleAdd}
+            sx={{
+              backgroundColor: '#2563EB !important',
+              color: '#FFFFFF !important',
+              fontWeight: 600,
+              fontSize: '14px',
+              borderRadius: '8px',
+              padding: '10px 20px',
+              textTransform: 'none',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+              '&:hover': {
+                backgroundColor: '#1D4ED8 !important',
+                transform: 'translateY(-1px)',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+              },
+            }}
           >
             Add Vehicle
           </Button>
@@ -520,8 +534,38 @@ const VehicleManagement: React.FC = () => {
           {renderVehicleForm()}
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClose}>Cancel</Button>
-          <Button onClick={handleSubmit} variant="contained" color="primary">
+          <Button 
+            onClick={handleClose}
+            sx={{
+              color: '#6B7280',
+              fontWeight: 600,
+              fontSize: '14px',
+              textTransform: 'none',
+              '&:hover': {
+                backgroundColor: '#F3F4F6',
+              },
+            }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleSubmit} 
+            variant="contained"
+            sx={{
+              backgroundColor: '#2563EB !important',
+              color: '#FFFFFF !important',
+              fontWeight: 600,
+              fontSize: '14px',
+              borderRadius: '8px',
+              padding: '8px 16px',
+              textTransform: 'none',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+              '&:hover': {
+                backgroundColor: '#1D4ED8 !important',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+              },
+            }}
+          >
             {editingVehicle ? 'Save' : 'Add'}
           </Button>
         </DialogActions>
@@ -534,8 +578,38 @@ const VehicleManagement: React.FC = () => {
           <Typography>Are you sure you want to delete this vehicle?</Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteConfirmOpen(false)}>Cancel</Button>
-          <Button onClick={handleDelete} color="error" variant="contained">
+          <Button 
+            onClick={() => setDeleteConfirmOpen(false)}
+            sx={{
+              color: '#6B7280',
+              fontWeight: 600,
+              fontSize: '14px',
+              textTransform: 'none',
+              '&:hover': {
+                backgroundColor: '#F3F4F6',
+              },
+            }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleDelete} 
+            variant="contained"
+            sx={{
+              backgroundColor: '#EF4444 !important',
+              color: '#FFFFFF !important',
+              fontWeight: 600,
+              fontSize: '14px',
+              borderRadius: '8px',
+              padding: '8px 16px',
+              textTransform: 'none',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+              '&:hover': {
+                backgroundColor: '#DC2626 !important',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+              },
+            }}
+          >
             Delete
           </Button>
         </DialogActions>

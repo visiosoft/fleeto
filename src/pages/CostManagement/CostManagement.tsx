@@ -793,7 +793,22 @@ const CostManagement: React.FC = () => {
             variant="contained"
             startIcon={<AddIcon />}
             onClick={() => setAddDialogOpen(true)}
-            sx={{ mr: 2 }}
+            sx={{
+              backgroundColor: '#2563EB',
+              color: '#FFFFFF',
+              fontWeight: 600,
+              fontSize: '14px',
+              borderRadius: '8px',
+              padding: '10px 20px',
+              textTransform: 'none',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+              mr: 2,
+              '&:hover': {
+                backgroundColor: '#1D4ED8',
+                transform: 'translateY(-1px)',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+              },
+            }}
           >
             Add Expense
           </Button>
@@ -801,6 +816,20 @@ const CostManagement: React.FC = () => {
             variant="outlined"
             startIcon={<FilterIcon />}
             onClick={() => setFilterDialogOpen(true)}
+            sx={{
+              borderColor: '#E5E7EB',
+              color: '#374151',
+              fontWeight: 600,
+              fontSize: '14px',
+              borderRadius: '8px',
+              padding: '10px 20px',
+              textTransform: 'none',
+              '&:hover': {
+                borderColor: '#2563EB',
+                backgroundColor: '#EFF6FF',
+                transform: 'translateY(-1px)',
+              },
+            }}
           >
             Filters
           </Button>
@@ -809,265 +838,180 @@ const CostManagement: React.FC = () => {
 
       <Grid container spacing={3} mb={3}>
         <Grid item xs={12} md={4}>
-          <Card 
-            sx={{ 
-              height: '100%',
-              borderRadius: 3,
-              boxShadow: `0 4px 20px ${alpha(theme.palette.primary.main, 0.15)}`,
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
-              overflow: 'hidden',
-              position: 'relative',
+          <Box
+            sx={{
+              background: 'white',
+              borderRadius: '16px',
+              padding: '24px',
+              border: '1px solid #E5E7EB',
+              transition: 'all 0.3s ease',
               '&:hover': {
-                transform: 'translateY(-8px)',
-                boxShadow: `0 12px 28px ${alpha(theme.palette.primary.main, 0.25)}`,
-              },
-              '&::before': {
-                content: '""',
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                height: '4px',
-                background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+                transform: 'translateY(-4px)',
+                boxShadow: '0 12px 24px rgba(0, 0, 0, 0.1)',
               },
             }}
           >
-            <CardContent sx={{ p: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                <Box>
-                  <Typography 
-                    variant="body2" 
-                    color="text.secondary" 
-                    sx={{ 
-                      fontWeight: 600,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                      fontSize: '0.7rem',
-                      mb: 1,
-                    }}
-                  >
-                    Total Expenses
-                  </Typography>
-                  <Typography 
-                    variant="h5" 
-                    sx={{ 
-                      fontWeight: 700,
-                      color: theme.palette.primary.main,
-                      display: 'flex',
-                      alignItems: 'baseline',
-                      gap: 0.5,
-                    }}
-                  >
-                    <Typography 
-                      component="span" 
-                      variant="body2" 
-                      sx={{ 
-                        fontWeight: 600,
-                        color: theme.palette.text.secondary,
-                      }}
-                    >
-                      AED
-                    </Typography>
-                    {filteredTotal.toLocaleString()}
-                  </Typography>
-                </Box>
-                <Avatar 
-                  sx={{ 
-                    width: 44, 
-                    height: 44,
-                    background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-                    boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.4)}`,
-                  }}
-                >
-                  <MoneyIcon sx={{ fontSize: 22, color: 'white' }} />
-                </Avatar>
-              </Box>
-              <Box 
-                sx={{ 
-                  height: 6,
-                  borderRadius: 3,
-                  backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                  overflow: 'hidden',
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+              <Box
+                sx={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 4px 14px rgba(239, 68, 68, 0.3)',
                 }}
               >
-                <Box 
-                  sx={{ 
-                    height: '100%',
-                    width: '100%',
-                    background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-                  }}
-                />
+                <MoneyIcon sx={{ fontSize: 24, color: 'white' }} />
               </Box>
-            </CardContent>
-          </Card>
+              <Box sx={{ flex: 1 }}>
+                <Typography
+                  sx={{
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color: '#6B7280',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    mb: 0.5,
+                  }}
+                >
+                  Total Expenses
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: '28px',
+                    fontWeight: 700,
+                    color: '#1F2937',
+                    lineHeight: 1,
+                  }}
+                >
+                  {filteredTotal.toLocaleString('en-AE', { style: 'currency', currency: 'AED' })}
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
         </Grid>
+
         <Grid item xs={12} md={4}>
-          <Card 
-            sx={{ 
-              height: '100%',
-              borderRadius: 3,
-              boxShadow: `0 4px 20px ${alpha(theme.palette.info.main, 0.15)}`,
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              border: `1px solid ${alpha(theme.palette.info.main, 0.1)}`,
-              overflow: 'hidden',
-              position: 'relative',
+          <Box
+            sx={{
+              background: 'white',
+              borderRadius: '16px',
+              padding: '24px',
+              border: '1px solid #E5E7EB',
+              transition: 'all 0.3s ease',
               '&:hover': {
-                transform: 'translateY(-8px)',
-                boxShadow: `0 12px 28px ${alpha(theme.palette.info.main, 0.25)}`,
-              },
-              '&::before': {
-                content: '""',
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                height: '4px',
-                background: `linear-gradient(135deg, ${theme.palette.info.main} 0%, ${theme.palette.info.dark} 100%)`,
+                transform: 'translateY(-4px)',
+                boxShadow: '0 12px 24px rgba(0, 0, 0, 0.1)',
               },
             }}
           >
-            <CardContent sx={{ p: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                <Box>
-                  <Typography 
-                    variant="body2" 
-                    color="text.secondary" 
-                    sx={{ 
-                      fontWeight: 600,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                      fontSize: '0.7rem',
-                      mb: 1,
-                    }}
-                  >
-                    Period
-                  </Typography>
-                  <Typography 
-                    variant="body2"
-                    sx={{ 
-                      fontWeight: 600,
-                      color: theme.palette.info.main,
-                    }}
-                  >
-                    {dateRange[0] && dateRange[1] 
-                      ? `${dateRange[0].format('MMM D')} - ${dateRange[1].format('MMM D, YYYY')}`
-                      : 'All Time'
-                    }
-                  </Typography>
-                </Box>
-                <Avatar 
-                  sx={{ 
-                    width: 44, 
-                    height: 44,
-                    background: `linear-gradient(135deg, ${theme.palette.info.main} 0%, ${theme.palette.info.dark} 100%)`,
-                    boxShadow: `0 4px 14px ${alpha(theme.palette.info.main, 0.4)}`,
-                  }}
-                >
-                  <CalendarIcon sx={{ fontSize: 22, color: 'white' }} />
-                </Avatar>
-              </Box>
-              <Box 
-                sx={{ 
-                  height: 6,
-                  borderRadius: 3,
-                  backgroundColor: alpha(theme.palette.info.main, 0.1),
-                  overflow: 'hidden',
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+              <Box
+                sx={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 4px 14px rgba(59, 130, 246, 0.3)',
                 }}
               >
-                <Box 
-                  sx={{ 
-                    height: '100%',
-                    width: '100%',
-                    background: `linear-gradient(135deg, ${theme.palette.info.main} 0%, ${theme.palette.info.dark} 100%)`,
-                  }}
-                />
+                <CalendarIcon sx={{ fontSize: 24, color: 'white' }} />
               </Box>
-            </CardContent>
-          </Card>
+              <Box sx={{ flex: 1 }}>
+                <Typography
+                  sx={{
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color: '#6B7280',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    mb: 0.5,
+                  }}
+                >
+                  Period
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    color: '#1F2937',
+                    lineHeight: 1.3,
+                  }}
+                >
+                  {dateRange[0] && dateRange[1]
+                    ? `${dateRange[0].format('MMM D')} - ${dateRange[1].format('MMM D, YYYY')}`
+                    : 'All Time'}
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
         </Grid>
+
         <Grid item xs={12} md={4}>
-          <Card 
-            sx={{ 
-              height: '100%',
-              borderRadius: 3,
-              boxShadow: `0 4px 20px ${alpha(theme.palette.secondary.main, 0.15)}`,
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              border: `1px solid ${alpha(theme.palette.secondary.main, 0.1)}`,
-              overflow: 'hidden',
-              position: 'relative',
+          <Box
+            sx={{
+              background: 'white',
+              borderRadius: '16px',
+              padding: '24px',
+              border: '1px solid #E5E7EB',
+              transition: 'all 0.3s ease',
               '&:hover': {
-                transform: 'translateY(-8px)',
-                boxShadow: `0 12px 28px ${alpha(theme.palette.secondary.main, 0.25)}`,
-              },
-              '&::before': {
-                content: '""',
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                height: '4px',
-                background: `linear-gradient(135deg, ${theme.palette.secondary.main} 0%, ${theme.palette.secondary.dark} 100%)`,
+                transform: 'translateY(-4px)',
+                boxShadow: '0 12px 24px rgba(0, 0, 0, 0.1)',
               },
             }}
           >
-            <CardContent sx={{ p: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                <Box>
-                  <Typography 
-                    variant="body2" 
-                    color="text.secondary" 
-                    sx={{ 
-                      fontWeight: 600,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                      fontSize: '0.7rem',
-                      mb: 1,
-                    }}
-                  >
-                    Number of Vehicles
-                  </Typography>
-                  <Typography 
-                    variant="h5" 
-                    sx={{ 
-                      fontWeight: 700,
-                      color: theme.palette.secondary.main,
-                    }}
-                  >
-                    {filteredData?.vehicles.length}
-                  </Typography>
-                </Box>
-                <Avatar 
-                  sx={{ 
-                    width: 44, 
-                    height: 44,
-                    background: `linear-gradient(135deg, ${theme.palette.secondary.main} 0%, ${theme.palette.secondary.dark} 100%)`,
-                    boxShadow: `0 4px 14px ${alpha(theme.palette.secondary.main, 0.4)}`,
-                  }}
-                >
-                  <VehicleIcon sx={{ fontSize: 22, color: 'white' }} />
-                </Avatar>
-              </Box>
-              <Box 
-                sx={{ 
-                  height: 6,
-                  borderRadius: 3,
-                  backgroundColor: alpha(theme.palette.secondary.main, 0.1),
-                  overflow: 'hidden',
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+              <Box
+                sx={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 4px 14px rgba(16, 185, 129, 0.3)',
                 }}
               >
-                <Box 
-                  sx={{ 
-                    height: '100%',
-                    width: '100%',
-                    background: `linear-gradient(135deg, ${theme.palette.secondary.main} 0%, ${theme.palette.secondary.dark} 100%)`,
-                  }}
-                />
+                <VehicleIcon sx={{ fontSize: 24, color: 'white' }} />
               </Box>
-            </CardContent>
-          </Card>
+              <Box sx={{ flex: 1 }}>
+                <Typography
+                  sx={{
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color: '#6B7280',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    mb: 0.5,
+                  }}
+                >
+                  Vehicles
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: '28px',
+                    fontWeight: 700,
+                    color: '#1F2937',
+                    lineHeight: 1,
+                  }}
+                >
+                  {filteredData?.vehicles.length || 0}
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
         </Grid>
       </Grid>
+
+      {/* Expenses Table */}
 
       <Paper sx={{ mb: 3 }}>
         <Tabs value={activeTab} onChange={handleTabChange} sx={{ borderBottom: 1, borderColor: 'divider' }}>

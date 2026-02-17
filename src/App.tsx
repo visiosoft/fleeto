@@ -92,8 +92,12 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     );
   }
 
+  // Check both state and localStorage to handle logout timing
+  const hasToken = token || localStorage.getItem('token');
+  const hasCompany = selectedCompany || localStorage.getItem('selectedCompanyId');
+
   // If user is logged in and has selected a company, redirect to dashboard
-  if (token && selectedCompany) {
+  if (hasToken && hasCompany) {
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -251,7 +255,7 @@ const AppContent: React.FC = () => {
 
           <Route path="/cost-management" element={
             <ProtectedRoute>
-              <ModernPageLayout title="Cost Management">
+              <ModernPageLayout title="Expense Management">
                 <CostManagement />
               </ModernPageLayout>
             </ProtectedRoute>

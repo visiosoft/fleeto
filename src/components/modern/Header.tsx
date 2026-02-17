@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Menu as MenuIcon } from '@mui/icons-material';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface HeaderProps {
   title: string;
@@ -22,6 +23,15 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const { logout } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
 
   return (
     <header className="h-16 bg-white border-b border-border flex items-center justify-between px-4 md:px-6 sticky top-0 z-10">
@@ -134,12 +144,12 @@ export const Header: React.FC<HeaderProps> = ({
                 Settings
               </a>
               <hr className="my-1 border-gray-200" />
-              <a
-                href="/logout"
-                className="block px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+              <button
+                onClick={handleLogout}
+                className="w-full text-left block px-4 py-2 text-sm text-red-600 hover:bg-red-50"
               >
                 Sign out
-              </a>
+              </button>
             </div>
           )}
         </div>

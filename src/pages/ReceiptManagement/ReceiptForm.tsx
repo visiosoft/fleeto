@@ -298,14 +298,45 @@ const ReceiptForm: React.FC = () => {
                 <Button
                   variant="outlined"
                   onClick={() => navigate('/receipts')}
+                  sx={{
+                    color: '#6B7280',
+                    borderColor: '#D1D5DB',
+                    fontWeight: 500,
+                    fontSize: '14px',
+                    borderRadius: '8px',
+                    padding: '8px 20px',
+                    textTransform: 'none',
+                    '&:hover': {
+                      backgroundColor: '#F3F4F6',
+                      borderColor: '#9CA3AF',
+                    },
+                  }}
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
                   variant="contained"
-                  color="primary"
                   disabled={loading}
+                  sx={{
+                    backgroundColor: '#2563EB !important',
+                    color: '#FFFFFF !important',
+                    fontWeight: 600,
+                    fontSize: '14px',
+                    borderRadius: '8px',
+                    padding: '8px 20px',
+                    textTransform: 'none',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                    '&:hover': {
+                      backgroundColor: '#1D4ED8 !important',
+                      transform: 'translateY(-1px)',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                    },
+                    '&:disabled': {
+                      backgroundColor: '#9CA3AF !important',
+                      color: '#FFFFFF !important',
+                    },
+                  }}
                 >
                   {loading ? 'Saving...' : 'Save Receipt'}
                 </Button>

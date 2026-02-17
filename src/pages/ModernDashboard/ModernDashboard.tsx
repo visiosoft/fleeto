@@ -24,7 +24,9 @@ import {
   LocalGasStation as GasIcon,
   ReceiptLong as ReceiptIcon,
   Assessment as ReportsIcon,
+  FilterList as FilterIcon,
 } from '@mui/icons-material';
+import { FormControl, Select, MenuItem, Box, Typography } from '@mui/material';
 
 export const ModernDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -47,6 +49,30 @@ export const ModernDashboard: React.FC = () => {
   const [vehicleExpenses, setVehicleExpenses] = useState<any[]>([]);
   const [vehicleContracts, setVehicleContracts] = useState<any[]>([]);
   const [yearlyIncomeExpense, setYearlyIncomeExpense] = useState<any[]>([]);
+  
+  // Vehicle filter state
+  const [vehicles, setVehicles] = useState<any[]>([]);
+  const [selectedVehicle, setSelectedVehicle] = useState<string>('all');
+
+  // Fetch vehicles list
+  useEffect(() => {
+    const fetchVehicles = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get(API_ENDPOINTS.vehicles, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        if (response.data) {
+          setVehicles(response.data);
+        }
+      } catch (error) {
+        console.error('Error fetching vehicles:', error);
+      }
+    };
+    
+    fetchVehicles();
+  }, []);
 
   // Fetch vehicle expenses for pie chart (current month only)
   useEffect(() => {
@@ -319,6 +345,112 @@ export const ModernDashboard: React.FC = () => {
     }
   }, [data]);
 
+  // Filter data based on selected vehicle
+  useEffect(() => {
+    const filterDataByVehicle = async () => {
+      console.log('🔍 Filtering data for vehicle:', selectedVehicle);
+      
+      if (selectedVehicle === 'all') {
+        // Show all data - refetch original data
+        if (data) {
+          const income = data.contractStats?.totalValue || 0;
+          const expenses = data.costData?.monthlyCost || 0;
+          const profit = income - expenses;
+
+          console.log('📊 All vehicles data:', { income, expenses, profit });
+
+          setKpiData(prev => ({
+            ...prev,
+            monthlyIncome: income,
+            monthlyExpenses: expenses,
+            monthlyProfit: profit,
+          }));
+        }
+      } else {
+        // Filter data for selected vehicle
+        try {
+          const token = localStorage.getItem('token');
+          
+          console.log('🚗 Fetching data for vehicle ID:', selectedVehicle);
+          
+          // Fetch vehicle-specific current month expenses
+          const expensesResponse = await axios.get(`${API_ENDPOINTS.costs.all.replace('/all', '')}/current-month/${selectedVehicle}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          
+          console.log('💰 Expenses response:', expensesResponse.data);
+          
+          // The API already returns current month expenses, so just use the total
+          const monthlyExpenses = expensesResponse.data?.expenses || 0;
+          
+          console.log('💸 Monthly expenses for vehicle:', monthlyExpenses);
+          
+          // Fetch vehicle contracts to get income
+          const contractsResponse = await axios.get(API_ENDPOINTS.contracts, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          
+          console.log('📋 Contracts response:', contractsResponse.data);
+          
+          let monthlyIncome = 0;
+          const contractsData = contractsResponse.data?.data || contractsResponse.data;
+          
+          if (contractsData) {
+            console.log('📝 All contracts:', contractsData);
+            console.log('🔑 Looking for vehicle ID:', selectedVehicle);
+            
+            const vehicleContracts = (Array.isArray(contractsData) ? contractsData : []).filter(
+              (contract: any) => {
+                const contractVehicleId = contract.vehicleId || contract.vehicle?._id || contract.vehicle;
+                const vehicleIdStr = typeof contractVehicleId === 'object' ? contractVehicleId?.toString() : contractVehicleId;
+                const selectedVehicleStr = selectedVehicle;
+                
+                // Status can be 'Active' (capitalized) or 'active' (lowercase)
+                const isActive = contract.status?.toLowerCase() === 'active';
+                
+                console.log('🔍 Comparing:', { 
+                  contractVehicleId: vehicleIdStr, 
+                  selectedVehicle: selectedVehicleStr,
+                  status: contract.status,
+                  isActive,
+                  matches: vehicleIdStr === selectedVehicleStr && isActive
+                });
+                
+                return vehicleIdStr === selectedVehicleStr && isActive;
+              }
+            );
+            
+            console.log('🚙 Vehicle contracts found:', vehicleContracts);
+            
+            // Use 'amount' or 'value' field (company contracts use these instead of monthlyRate)
+            monthlyIncome = vehicleContracts.reduce((sum: number, contract: any) => {
+              const contractValue = contract.amount || contract.value || contract.monthlyRate || 0;
+              return sum + contractValue;
+            }, 0);
+          }
+          
+          console.log('💵 Monthly income for vehicle:', monthlyIncome);
+          
+          const profit = monthlyIncome - monthlyExpenses;
+          
+          console.log('✅ Setting KPI data:', { monthlyIncome, monthlyExpenses, monthlyProfit: profit });
+          
+          setKpiData(prev => ({
+            ...prev,
+            monthlyIncome,
+            monthlyExpenses,
+            monthlyProfit: profit,
+          }));
+          
+        } catch (error) {
+          console.error('❌ Error filtering vehicle data:', error);
+        }
+      }
+    };
+    
+    filterDataByVehicle();
+  }, [selectedVehicle, data]);
+
   const quickActions = [
     {
       id: 'add-vehicle',
@@ -433,6 +565,46 @@ export const ModernDashboard: React.FC = () => {
 
   return (
     <DashboardLayout title="Dashboard">
+      {/* Vehicle Filter */}
+      <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
+        <FilterIcon sx={{ color: 'text.secondary' }} />
+        <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary' }}>
+          Filter by Vehicle:
+        </Typography>
+        <FormControl size="small" sx={{ minWidth: 250 }}>
+          <Select
+            value={selectedVehicle}
+            onChange={(e) => setSelectedVehicle(e.target.value)}
+            sx={{
+              backgroundColor: 'white',
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'divider',
+              },
+              '&:hover .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'primary.main',
+              },
+            }}
+          >
+            <MenuItem value="all">
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <VehicleIcon fontSize="small" />
+                <Typography>All Vehicles</Typography>
+              </Box>
+            </MenuItem>
+            {vehicles.map((vehicle) => (
+              <MenuItem key={vehicle._id} value={vehicle._id}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <VehicleIcon fontSize="small" color="primary" />
+                  <Typography>
+                    {vehicle.make} {vehicle.model} ({vehicle.licensePlate})
+                  </Typography>
+                </Box>
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Box>
+
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 md:gap-6 mb-4 md:mb-6">
         <KPICard

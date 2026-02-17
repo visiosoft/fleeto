@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box,
+  Container,
   Typography,
   Grid,
   Paper,
@@ -152,35 +153,6 @@ const calculateStats = (contracts: ContractFormData[]): ContractStats => {
 
   stats.averageValue = stats.totalContracts > 0 ? stats.totalValue / stats.totalContracts : 0;
   return stats;
-};
-
-const StatCard: React.FC<{
-  title: string;
-  value: string | number;
-  icon: React.ReactNode;
-  color?: string;
-}> = ({ title, value, icon, color }) => {
-  const theme = useTheme();
-  
-  return (
-    <Card sx={{ height: '100%' }}>
-      <CardContent>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <Box>
-            <Typography variant="subtitle2" color="textSecondary">
-              {title}
-            </Typography>
-            <Typography variant="h4" sx={{ my: 1, color: color }}>
-              {value}
-            </Typography>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: color + '15', p: 1, borderRadius: 2 }}>
-            {React.cloneElement(icon as React.ReactElement, { sx: { color: color } })}
-          </Box>
-        </Box>
-      </CardContent>
-    </Card>
-  );
 };
 
 const ContractManagement: React.FC = () => {
@@ -581,6 +553,18 @@ const ContractManagement: React.FC = () => {
             setSelectedContract(contract);
             setTemplateEditorOpen(true);
           }}
+          sx={{
+            color: '#2563EB !important',
+            borderColor: '#2563EB !important',
+            fontWeight: 500,
+            fontSize: '13px',
+            borderRadius: '6px',
+            textTransform: 'none',
+            '&:hover': {
+              backgroundColor: '#EFF6FF',
+              borderColor: '#1D4ED8 !important',
+            },
+          }}
         >
           Generate PDF
         </Button>
@@ -793,114 +777,293 @@ const ContractManagement: React.FC = () => {
   }
 
   return (
-    <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-        <Typography variant="h4">Add Company / Contract</Typography>
+    <Container maxWidth={false} sx={{ mt: 4, mb: 4, px: 3 }}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
+        <Typography 
+          variant="h4" 
+          component="h1"
+          sx={{
+            fontSize: '28px',
+            fontWeight: 600,
+            color: '#111827',
+          }}
+        >
+          Contract Management
+        </Typography>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => handleAddContract()}
+          sx={{
+            backgroundColor: '#2563EB !important',
+            color: '#FFFFFF !important',
+            fontWeight: 600,
+            fontSize: '14px',
+            borderRadius: '8px',
+            padding: '10px 20px',
+            textTransform: 'none',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+            '&:hover': {
+              backgroundColor: '#1D4ED8 !important',
+              transform: 'translateY(-1px)',
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+            },
+          }}
         >
-          Add Contract
+          Create Contract
         </Button>
       </Box>
 
       <Grid container spacing={3}>
         {/* Contract Statistics */}
         <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Total Contracts"
-            value={isLoading ? "..." : stats.totalContracts}
-            icon={<DescriptionIcon />}
-            color={theme.palette.info.main}
-          />
+          <Box
+            sx={{
+              background: 'white',
+              borderRadius: '16px',
+              padding: '24px',
+              border: '1px solid #E5E7EB',
+              transition: 'all 0.3s ease',
+              overflow: 'hidden',
+              '&:hover': {
+                transform: 'translateY(-4px)',
+                boxShadow: '0 12px 24px rgba(0, 0, 0, 0.1)',
+              },
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+              <Box
+                sx={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 4px 14px rgba(59, 130, 246, 0.3)',
+                }}
+              >
+                <DescriptionIcon sx={{ fontSize: 24, color: 'white' }} />
+              </Box>
+              <Box sx={{ flex: 1 }}>
+                <Typography
+                  sx={{
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color: '#6B7280',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    mb: 0.5,
+                  }}
+                >
+                  Total Contracts
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: '28px',
+                    fontWeight: 700,
+                    color: '#1F2937',
+                    lineHeight: 1,
+                  }}
+                >
+                  {isLoading ? "..." : stats.totalContracts}
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Active Contracts"
-            value={isLoading ? "..." : stats.activeContracts}
-            icon={<CheckCircleIcon />}
-            color={theme.palette.success.main}
-          />
+          <Box
+            sx={{
+              background: 'white',
+              borderRadius: '16px',
+              padding: '24px',
+              border: '1px solid #E5E7EB',
+              transition: 'all 0.3s ease',
+              overflow: 'hidden',
+              position: 'relative',
+              '&:hover': {
+                transform: 'translateY(-4px)',
+                boxShadow: '0 12px 24px rgba(0, 0, 0, 0.1)',
+              },
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+              <Box
+                sx={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 4px 14px rgba(16, 185, 129, 0.3)',
+                }}
+              >
+                <CheckCircleIcon sx={{ fontSize: 24, color: 'white' }} />
+              </Box>
+              <Box sx={{ flex: 1 }}>
+                <Typography
+                  sx={{
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color: '#6B7280',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    mb: 0.5,
+                  }}
+                >
+                  Active Contracts
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: '28px',
+                    fontWeight: 700,
+                    color: '#1F2937',
+                    lineHeight: 1,
+                  }}
+                >
+                  {isLoading ? "..." : stats.activeContracts}
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Expiring Soon"
-            value={isLoading ? "..." : stats.expiringContracts}
-            icon={<WarningIcon />}
-            color={theme.palette.warning.main}
-          />
+          <Box
+            sx={{
+              background: 'white',
+              borderRadius: '16px',
+              padding: '24px',
+              border: '1px solid #E5E7EB',
+              transition: 'all 0.3s ease',
+              overflow: 'hidden',
+              position: 'relative',
+              '&:hover': {
+                transform: 'translateY(-4px)',
+                boxShadow: '0 12px 24px rgba(0, 0, 0, 0.1)',
+              },
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+              <Box
+                sx={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 4px 14px rgba(245, 158, 11, 0.3)',
+                }}
+              >
+                <WarningIcon sx={{ fontSize: 24, color: 'white' }} />
+              </Box>
+              <Box sx={{ flex: 1 }}>
+                <Typography
+                  sx={{
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color: '#6B7280',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    mb: 0.5,
+                  }}
+                >
+                  Expiring Soon
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: '28px',
+                    fontWeight: 700,
+                    color: '#1F2937',
+                    lineHeight: 1,
+                  }}
+                >
+                  {isLoading ? "..." : stats.expiringContracts}
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Total Value"
-            value={isLoading ? "..." : `AED ${stats.totalValue.toLocaleString()}`}
-            icon={<MonetizationOnIcon />}
-            color={theme.palette.primary.main}
-          />
+          <Box
+            sx={{
+              background: 'white',
+              borderRadius: '16px',
+              padding: '24px',
+              border: '1px solid #E5E7EB',
+              transition: 'all 0.3s ease',
+              overflow: 'hidden',
+              position: 'relative',
+              '&:hover': {
+                transform: 'translateY(-4px)',
+                boxShadow: '0 12px 24px rgba(0, 0, 0, 0.1)',
+              },
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+              <Box
+                sx={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 4px 14px rgba(139, 92, 246, 0.3)',
+                }}
+              >
+                <MonetizationOnIcon sx={{ fontSize: 24, color: 'white' }} />
+              </Box>
+              <Box sx={{ flex: 1 }}>
+                <Typography
+                  sx={{
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color: '#6B7280',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    mb: 0.5,
+                  }}
+                >
+                  Total Value
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: '28px',
+                    fontWeight: 700,
+                    color: '#1F2937',
+                    lineHeight: 1,
+                  }}
+                >
+                  {isLoading ? "..." : `${stats.totalValue.toLocaleString('en-AE', { style: 'currency', currency: 'AED' })}`}
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
         </Grid>
 
-        {/* Expiring Contracts Section */}
-        {expiringContracts.length > 0 && (
-          <Grid item xs={12}>
-            <Paper sx={{ p: 2, mb: 3 }}>
-              <Typography variant="h6" gutterBottom>
-                Contracts Expiring in 30 Days
-              </Typography>
-              <Grid container spacing={2}>
-                {expiringContracts.map((contract) => (
-                  <Grid item xs={12} sm={6} md={4} key={contract._id}>
-                    <Paper sx={{ p: 2 }}>
-                      <Typography variant="subtitle1">{contract.companyName}</Typography>
-                      <Typography variant="body2" color="textSecondary">
-                        Expires: {moment(contract.endDate).format('MMMM D, YYYY')}
-                      </Typography>
-                      <Box sx={{ mt: 1 }}>
-                        <Chip
-                          label={contract.status}
-                          color={getStatusColor(contract.status)}
-                          size="small"
-                        />
-                      </Box>
-                    </Paper>
-                  </Grid>
-                ))}
-              </Grid>
-            </Paper>
-          </Grid>
-        )}
+        {/* TableToolbar for search and sort */}
+        <Grid item xs={12}>
+          <TableToolbar
+            searchValue={searchQuery}
+            onSearchChange={(value) => setSearchQuery(value)}
+            sortValue={sortBy}
+            onSortChange={(value) => setSortBy(value)}
+            sortOptions={sortOptions}
+            searchPlaceholder="Search contracts..."
+            sortLabel="Sort By"
+          />
+        </Grid>
 
         {/* Contracts Table */}
         <Grid item xs={12}>
           <Paper sx={{ overflow: 'hidden' }}>
-            <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: 1, borderColor: 'divider' }}>
-              <Typography variant="h6">Recent Contracts</Typography>
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <Button
-                  variant="outlined"
-                  startIcon={<FileCopyIcon />}
-                  onClick={() => setIsTemplateListOpen(true)}
-                >
-                  Templates
-                </Button>
-                <Button
-                  variant="contained"
-                  startIcon={<AddIcon />}
-                  onClick={() => handleAddContract()}
-                >
-                  New Contract
-                </Button>
-              </Box>
-            </Box>
-            <TableToolbar
-              searchValue={searchQuery}
-              onSearchChange={(value) => setSearchQuery(value)}
-              sortValue={sortBy}
-              onSortChange={(value) => setSortBy(value)}
-              sortOptions={sortOptions}
-              searchPlaceholder="Search contracts..."
-              sortLabel="Sort By"
-            />
             <TableContainer sx={{ 
               borderRadius: 3,
               overflowX: 'auto',
@@ -1117,8 +1280,39 @@ const ContractManagement: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button variant="contained" onClick={handleCloseDialog}>
+          <Button 
+            onClick={handleCloseDialog}
+            sx={{
+              color: '#6B7280',
+              fontWeight: 500,
+              fontSize: '14px',
+              textTransform: 'none',
+              '&:hover': {
+                backgroundColor: '#F3F4F6',
+              },
+            }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            variant="contained" 
+            onClick={handleCloseDialog}
+            sx={{
+              backgroundColor: '#2563EB !important',
+              color: '#FFFFFF !important',
+              fontWeight: 600,
+              fontSize: '14px',
+              borderRadius: '8px',
+              padding: '8px 20px',
+              textTransform: 'none',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+              '&:hover': {
+                backgroundColor: '#1D4ED8 !important',
+                transform: 'translateY(-1px)',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+              },
+            }}
+          >
             {selectedContract ? 'Update' : 'Add'}
           </Button>
         </DialogActions>
@@ -1133,8 +1327,39 @@ const ContractManagement: React.FC = () => {
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteConfirmOpen(false)}>Cancel</Button>
-          <Button onClick={handleDeleteContract} color="error" variant="contained">
+          <Button 
+            onClick={() => setDeleteConfirmOpen(false)}
+            sx={{
+              color: '#6B7280',
+              fontWeight: 500,
+              fontSize: '14px',
+              textTransform: 'none',
+              '&:hover': {
+                backgroundColor: '#F3F4F6',
+              },
+            }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleDeleteContract} 
+            variant="contained"
+            sx={{
+              backgroundColor: '#EF4444 !important',
+              color: '#FFFFFF !important',
+              fontWeight: 600,
+              fontSize: '14px',
+              borderRadius: '8px',
+              padding: '8px 20px',
+              textTransform: 'none',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+              '&:hover': {
+                backgroundColor: '#DC2626 !important',
+                transform: 'translateY(-1px)',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+              },
+            }}
+          >
             Delete
           </Button>
         </DialogActions>
@@ -1160,9 +1385,23 @@ const ContractManagement: React.FC = () => {
           <Box sx={{ mb: 2 }}>
             <Button
               variant="contained"
-              color="primary"
               startIcon={<AddIcon />}
               onClick={() => setIsNewTemplateDialogOpen(true)}
+              sx={{
+                backgroundColor: '#2563EB !important',
+                color: '#FFFFFF !important',
+                fontWeight: 600,
+                fontSize: '14px',
+                borderRadius: '8px',
+                padding: '8px 16px',
+                textTransform: 'none',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                '&:hover': {
+                  backgroundColor: '#1D4ED8 !important',
+                  transform: 'translateY(-1px)',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                },
+              }}
             >
               New Template
             </Button>
@@ -1232,8 +1471,39 @@ const ContractManagement: React.FC = () => {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setIsNewTemplateDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleCreateTemplate} variant="contained" color="primary">
+          <Button 
+            onClick={() => setIsNewTemplateDialogOpen(false)}
+            sx={{
+              color: '#6B7280',
+              fontWeight: 500,
+              fontSize: '14px',
+              textTransform: 'none',
+              '&:hover': {
+                backgroundColor: '#F3F4F6',
+              },
+            }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleCreateTemplate} 
+            variant="contained"
+            sx={{
+              backgroundColor: '#2563EB !important',
+              color: '#FFFFFF !important',
+              fontWeight: 600,
+              fontSize: '14px',
+              borderRadius: '8px',
+              padding: '8px 20px',
+              textTransform: 'none',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+              '&:hover': {
+                backgroundColor: '#1D4ED8 !important',
+                transform: 'translateY(-1px)',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+              },
+            }}
+          >
             Create
           </Button>
         </DialogActions>
@@ -1285,7 +1555,7 @@ const ContractManagement: React.FC = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </Box>
+    </Container>
   );
 };
 

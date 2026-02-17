@@ -8,7 +8,7 @@ A comprehensive fleet management system that helps businesses track and manage t
 - Driver Management
 - Maintenance Tracking
 - Fuel Management
-- Cost Management
+- Expense Management
 - Contract Management
 - Reports and Analytics
 - Compliance Tracking
