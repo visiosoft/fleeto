@@ -1668,36 +1668,87 @@ const CostManagement: React.FC = () => {
                     Existing Receipts/Invoices
                   </Typography>
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                    {selectedExpense.receipts.map((receipt, index) => (
-                      <Box 
-                        key={index} 
-                        sx={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          gap: 1,
-                          p: 1,
-                          border: '1px solid',
-                          borderColor: 'divider',
-                          borderRadius: 1,
-                          backgroundColor: 'action.hover'
-                        }}
-                      >
-                        <FileIcon fontSize="small" color="primary" />
-                        <Typography variant="body2" sx={{ flex: 1 }}>
-                          {receipt.fileName}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {moment(receipt.uploadedAt).format('MMM DD, YYYY')}
-                        </Typography>
-                        <IconButton
-                          size="small"
-                          onClick={() => window.open(receipt.url, '_blank')}
-                          color="primary"
+                    {selectedExpense.receipts.map((receipt, index) => {
+                      const isImage = receipt.fileName?.match(/\.(jpg|jpeg|png|gif|webp|bmp)$/i) || 
+                                      receipt.url?.match(/\.(jpg|jpeg|png|gif|webp|bmp)$/i);
+                      
+                      return (
+                        <Box 
+                          key={index} 
+                          sx={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: 1,
+                            p: 1,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            borderRadius: 1,
+                            backgroundColor: 'action.hover'
+                          }}
                         >
-                          <OpenInNewIcon fontSize="small" />
-                        </IconButton>
-                      </Box>
-                    ))}
+                          {isImage ? (
+                            <Box
+                              component="img"
+                              src={receipt.url}
+                              alt={receipt.fileName}
+                              sx={{
+                                width: 60,
+                                height: 60,
+                                objectFit: 'cover',
+                                borderRadius: 1,
+                                border: '1px solid',
+                                borderColor: 'divider',
+                                cursor: 'pointer'
+                              }}
+                              onClick={() => window.open(receipt.url, '_blank')}
+                            />
+                          ) : (
+                            <FileIcon fontSize="large" color="primary" />
+                          )}
+                          <Box sx={{ flex: 1, minWidth: 0 }}>
+                            <Typography variant="body2" noWrap>
+                              {receipt.fileName}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {moment(receipt.uploadedAt).format('MMM DD, YYYY')}
+                            </Typography>
+                          </Box>
+                          <IconButton
+                            size="small"
+                            onClick={() => window.open(receipt.url, '_blank')}
+                            color="primary"
+                            title="View attachment"
+                          >
+                            <OpenInNewIcon fontSize="small" />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            onClick={async () => {
+                              if (window.confirm('Are you sure you want to delete this attachment?')) {
+                                try {
+                                  // Remove from local state
+                                  const updatedReceipts = selectedExpense.receipts?.filter((_, i) => i !== index) || [];
+                                  setSelectedExpense({
+                                    ...selectedExpense,
+                                    receipts: updatedReceipts
+                                  });
+                                  
+                                  // TODO: Add API call to delete from server
+                                  // For now, it will be removed when the expense is saved
+                                } catch (error) {
+                                  console.error('Error deleting attachment:', error);
+                                  alert('Failed to delete attachment');
+                                }
+                              }
+                            }}
+                            color="error"
+                            title="Delete attachment"
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Box>
+                      );
+                    })}
                   </Box>
                   <Divider sx={{ my: 2 }} />
                 </Box>
@@ -1730,36 +1781,63 @@ const CostManagement: React.FC = () => {
                     New Files to Upload ({selectedFiles.length})
                   </Typography>
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                    {selectedFiles.map((file, index) => (
-                      <Box 
-                        key={index} 
-                        sx={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          gap: 1,
-                          p: 1,
-                          border: '1px solid',
-                          borderColor: 'primary.main',
-                          borderRadius: 1,
-                          backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.05)
-                        }}
-                      >
-                        <FileIcon fontSize="small" color="primary" />
-                        <Typography variant="body2" sx={{ flex: 1 }}>
-                          {file.name}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {(file.size / 1024).toFixed(1)} KB
-                        </Typography>
-                        <IconButton
-                          size="small"
-                          onClick={() => setSelectedFiles(selectedFiles.filter((_, i) => i !== index))}
-                          color="error"
+                    {selectedFiles.map((file, index) => {
+                      const isImage = file.type.startsWith('image/');
+                      const imageUrl = isImage ? URL.createObjectURL(file) : null;
+                      
+                      return (
+                        <Box 
+                          key={index} 
+                          sx={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: 1,
+                            p: 1,
+                            border: '1px solid',
+                            borderColor: 'primary.main',
+                            borderRadius: 1,
+                            backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.05)
+                          }}
                         >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </Box>
-                    ))}
+                          {isImage && imageUrl ? (
+                            <Box
+                              component="img"
+                              src={imageUrl}
+                              alt={file.name}
+                              sx={{
+                                width: 60,
+                                height: 60,
+                                objectFit: 'cover',
+                                borderRadius: 1,
+                                border: '1px solid',
+                                borderColor: 'primary.main',
+                              }}
+                            />
+                          ) : (
+                            <FileIcon fontSize="large" color="primary" />
+                          )}
+                          <Box sx={{ flex: 1, minWidth: 0 }}>
+                            <Typography variant="body2" noWrap>
+                              {file.name}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {(file.size / 1024).toFixed(1)} KB
+                            </Typography>
+                          </Box>
+                          <IconButton
+                            size="small"
+                            onClick={() => {
+                              // Revoke object URL to prevent memory leaks
+                              if (imageUrl) URL.revokeObjectURL(imageUrl);
+                              setSelectedFiles(selectedFiles.filter((_, i) => i !== index));
+                            }}
+                            color="error"
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Box>
+                      );
+                    })}
                   </Box>
                 </Box>
               )}

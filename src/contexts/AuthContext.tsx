@@ -108,8 +108,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, navigate }
         localStorage.setItem('companies', JSON.stringify(companies));
         localStorage.setItem('selectedCompanyId', companies[0]._id);
 
-        // Navigate to dashboard
-        navigate('/dashboard');
+        // Don't navigate here - let the calling component handle navigation
+        // This allows for more flexible routing (e.g., redirect to intended page)
       } else {
         throw new Error(response.message || 'Login failed');
       }

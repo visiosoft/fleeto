@@ -22,6 +22,8 @@ import {
   Article as DocumentIcon,
   Person as PersonIcon,
   LocalGasStation as GasIcon,
+  ReceiptLong as ReceiptIcon,
+  Assessment as ReportsIcon,
 } from '@mui/icons-material';
 
 export const ModernDashboard: React.FC = () => {
@@ -344,6 +346,20 @@ export const ModernDashboard: React.FC = () => {
       label: 'Add Driver',
       icon: <PersonIcon className="w-5 h-5" />,
       onClick: () => navigate('/drivers'),
+      variant: 'secondary' as const,
+    },
+    {
+      id: 'view-receipts',
+      label: 'Receipts',
+      icon: <ReceiptIcon className="w-5 h-5" />,
+      onClick: () => navigate('/receipts'),
+      variant: 'secondary' as const,
+    },
+    {
+      id: 'view-reports',
+      label: 'Reports',
+      icon: <ReportsIcon className="w-5 h-5" />,
+      onClick: () => navigate('/reports'),
       variant: 'secondary' as const,
     },
   ];

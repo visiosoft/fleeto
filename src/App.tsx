@@ -79,6 +79,27 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <>{children}</>;
 };
 
+// Public Route component - Redirects to dashboard if already logged in
+const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { token, selectedCompany, isLoading } = useAuth();
+
+  // Show loading while auth state is being restored
+  if (isLoading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  // If user is logged in and has selected a company, redirect to dashboard
+  if (token && selectedCompany) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <>{children}</>;
+};
+
 // App content component
 const AppContent: React.FC = () => {
   const theme = useTheme();
@@ -95,8 +116,16 @@ const AppContent: React.FC = () => {
         <Routes>
           {/* Public routes */}
           <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+          <Route path="/login" element={
+            <PublicRoute>
+              <Login />
+            </PublicRoute>
+          } />
+          <Route path="/register" element={
+            <PublicRoute>
+              <Register />
+            </PublicRoute>
+          } />
 
           {/* Company selection route */}
           <Route path="/select-company" element={<CompanySelection />} />
