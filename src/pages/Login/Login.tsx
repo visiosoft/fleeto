@@ -2,28 +2,29 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Box,
-  Paper,
   Typography,
   TextField,
   Button,
   CircularProgress,
   Alert,
-  Container,
-  useTheme
+  InputAdornment,
+  IconButton,
 } from '@mui/material';
 import {
   DirectionsCar as DirectionsCarIcon,
   Lock as LockIcon,
-  Email as EmailIcon
+  Email as EmailIcon,
+  Visibility as VisibilityIcon,
+  VisibilityOff as VisibilityOffIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 
 const Login: React.FC = () => {
-  const theme = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const { login } = useAuth();
@@ -58,162 +59,251 @@ const Login: React.FC = () => {
   return (
     <Box
       sx={{
-        minHeight: '100vh',
+        height: '100vh',
+        width: '100vw',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+        bgcolor: '#ffffff',
+        fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
         position: 'fixed',
         top: 0,
         left: 0,
-        right: 0,
-        bottom: 0
+        overflow: 'auto',
       }}
     >
-      <Container 
-        maxWidth="sm" 
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '100%'
-        }}
-      >
+      <Box sx={{ width: '100%', maxWidth: '500px', px: 2 }}>
         <Box
           sx={{
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            mb: 4,
-            width: '100%'
           }}
         >
+          {/* Logo */}
           <Box
             sx={{
-              width: 80,
-              height: 80,
-              borderRadius: '50%',
-              bgcolor: 'white',
+              mb: 4,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              mb: 2,
-              boxShadow: 3
             }}
           >
-            <DirectionsCarIcon sx={{ fontSize: 40, color: theme.palette.primary.main }} />
-          </Box>
-          <Typography
-            variant="h4"
-            component="h1"
-            sx={{
-              color: 'white',
-              fontWeight: 600,
-              mb: 1
-            }}
-          >
-            Fleet Management
-          </Typography>
-          <Typography
-            variant="subtitle1"
-            sx={{
-              color: 'white',
-              opacity: 0.8
-            }}
-          >
-            Sign in to your account
-          </Typography>
-        </Box>
-
-        <Paper
-          elevation={8}
-          sx={{
-            p: 4,
-            borderRadius: 2,
-            background: 'rgba(255, 255, 255, 0.95)',
-            backdropFilter: 'blur(10px)',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
-          }}
-        >
-          {error && (
-            <Alert severity="error" sx={{ mb: 3 }}>
-              {error}
-            </Alert>
-          )}
-
-          <Box component="form" onSubmit={handleSubmit}>
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              id="email"
-              label="Email Address"
-              name="email"
-              autoComplete="email"
-              autoFocus
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <EmailIcon sx={{ mr: 1, color: theme.palette.primary.main }} />
-                ),
-              }}
-            />
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              name="password"
-              label="Password"
-              type="password"
-              id="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <LockIcon sx={{ mr: 1, color: theme.palette.primary.main }} />
-                ),
-              }}
-            />
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              size="large"
+            <DirectionsCarIcon sx={{ fontSize: 48, color: '#0071e3', mr: 1 }} />
+            <Typography
+              variant="h4"
               sx={{
-                mt: 3,
-                mb: 2,
-                py: 1.5,
-                borderRadius: 2,
-                textTransform: 'none',
-                fontSize: '1.1rem',
+                fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
                 fontWeight: 600,
-                boxShadow: 2,
-                '&:hover': {
-                  boxShadow: 4,
-                }
+                color: '#1d1d1f',
+                letterSpacing: '-0.015em',
               }}
-              disabled={loading}
             >
-              {loading ? (
-                <CircularProgress size={24} color="inherit" />
-              ) : (
-                'Sign In'
-              )}
-            </Button>
+              fleeto
+            </Typography>
           </Box>
 
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            align="center"
-            sx={{ mt: 2 }}
+          <Box
+            sx={{
+              width: '100%',
+              maxWidth: 440,
+              p: 5,
+              border: '1px solid #e5e5e7',
+              borderRadius: '18px',
+              bgcolor: '#ffffff',
+            }}
           >
-          </Typography>
-        </Paper>
-      </Container>
+            <Typography
+              variant="h4"
+              align="center"
+              sx={{
+                mb: 1,
+                fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
+                fontWeight: 600,
+                color: '#1d1d1f',
+                fontSize: { xs: '28px', sm: '32px' },
+                letterSpacing: '-0.015em',
+              }}
+            >
+              welcome back
+            </Typography>
+
+            <Typography
+              variant="body1"
+              align="center"
+              sx={{
+                mb: 4,
+                fontFamily: "'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
+                color: '#6e6e73',
+                fontSize: '17px',
+              }}
+            >
+              sign in to your fleet management account
+            </Typography>
+
+            {error && (
+              <Alert 
+                severity="error" 
+                sx={{ 
+                  mb: 3,
+                  borderRadius: '12px',
+                  fontFamily: "'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
+                }}
+              >
+                {error}
+              </Alert>
+            )}
+
+            <Box component="form" onSubmit={handleSubmit}>
+              <TextField
+                fullWidth
+                placeholder="Email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                margin="normal"
+                required
+                autoComplete="email"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '12px',
+                    fontFamily: "'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
+                    fontSize: '17px',
+                    '& fieldset': {
+                      borderColor: '#e5e5e7',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: '#0071e3',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#0071e3',
+                      borderWidth: '2px',
+                    },
+                  },
+                }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <EmailIcon sx={{ color: '#6e6e73' }} />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+
+              <TextField
+                fullWidth
+                placeholder="Password"
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                margin="normal"
+                required
+                autoComplete="current-password"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '12px',
+                    fontFamily: "'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
+                    fontSize: '17px',
+                    '& fieldset': {
+                      borderColor: '#e5e5e7',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: '#0071e3',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#0071e3',
+                      borderWidth: '2px',
+                    },
+                  },
+                }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <LockIcon sx={{ color: '#6e6e73' }} />
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setShowPassword(!showPassword)}
+                        edge="end"
+                        sx={{ color: '#6e6e73' }}
+                      >
+                        {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                disabled={loading}
+                sx={{
+                  mt: 3,
+                  py: 1.75,
+                  borderRadius: '980px',
+                  textTransform: 'none',
+                  fontSize: '17px',
+                  fontWeight: 500,
+                  fontFamily: "'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
+                  bgcolor: '#0071e3',
+                  color: '#ffffff',
+                  boxShadow: 'none',
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    bgcolor: '#0077ed',
+                    boxShadow: 'none',
+                    transform: 'translateY(-1px)',
+                  },
+                  '&:active': {
+                    transform: 'translateY(0)',
+                  },
+                  '&.Mui-disabled': {
+                    bgcolor: '#e5e5e7',
+                    color: '#6e6e73',
+                  },
+                }}
+              >
+                {loading ? <CircularProgress size={24} sx={{ color: '#6e6e73' }} /> : 'sign in'}
+              </Button>
+
+              <Box sx={{ mt: 3, textAlign: 'center' }}>
+                <Typography 
+                  variant="body2" 
+                  sx={{ 
+                    fontFamily: "'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
+                    color: '#6e6e73',
+                    fontSize: '15px',
+                  }}
+                >
+                  don't have an account?{' '}
+                  <Button
+                    onClick={() => navigate('/register')}
+                    sx={{ 
+                      textTransform: 'none', 
+                      fontWeight: 500, 
+                      p: 0, 
+                      minWidth: 0,
+                      color: '#0071e3',
+                      fontFamily: "'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
+                      fontSize: '15px',
+                      '&:hover': {
+                        bgcolor: 'transparent',
+                        textDecoration: 'underline',
+                      },
+                    }}
+                  >
+                    sign up
+                  </Button>
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
     </Box>
   );
 };

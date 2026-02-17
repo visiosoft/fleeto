@@ -25,7 +25,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ items }) => {
     <div className="w-64 h-screen bg-white border-r border-border flex flex-col fixed left-0 top-0">
       {/* Logo */}
       <div className="h-16 flex items-center px-6 border-b border-border">
-        <h1 className="text-xl font-bold text-gray-900">FleetO</h1>
+        <button
+          onClick={() => navigate('/dashboard')}
+          className="flex items-center gap-2 hover:opacity-80 transition-opacity group"
+        >
+          <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg flex items-center justify-center transform group-hover:scale-105 transition-transform">
+            <span className="text-white font-bold text-lg">F</span>
+          </div>
+          <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+            Fleetoz
+          </h1>
+        </button>
       </div>
 
       {/* Navigation */}
@@ -65,7 +75,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ items }) => {
 
       {/* Footer */}
       <div className="p-4 border-t border-border">
-        <p className="text-xs text-gray-500 text-center">© 2026 FleetO</p>
+        <p className="text-xs text-gray-500 text-center">© 2026 Fleetoz</p>
       </div>
     </div>
   );

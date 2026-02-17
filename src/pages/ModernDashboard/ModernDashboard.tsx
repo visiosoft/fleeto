@@ -40,6 +40,7 @@ export const ModernDashboard: React.FC = () => {
   });
 
   const [finesLoading, setFinesLoading] = useState(true);
+  const [recentFines, setRecentFines] = useState<any[]>([]);
 
   const [vehicleExpenses, setVehicleExpenses] = useState<any[]>([]);
   const [vehicleContracts, setVehicleContracts] = useState<any[]>([]);
@@ -277,7 +278,24 @@ export const ModernDashboard: React.FC = () => {
       }
     };
 
+    const fetchRecentFines = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get(API_ENDPOINTS.rtaFines.all, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        if (response.data?.status === 'success' && response.data.data?.fines) {
+          // Get last 3 fines
+          setRecentFines(response.data.data.fines.slice(0, 3));
+        }
+      } catch (error) {
+        console.error('Error fetching recent fines:', error);
+      }
+    };
+
     fetchFinesData();
+    fetchRecentFines();
   }, []);
 
   useEffect(() => {
@@ -304,7 +322,7 @@ export const ModernDashboard: React.FC = () => {
       id: 'add-vehicle',
       label: 'Add Vehicle',
       icon: <VehicleIcon className="w-5 h-5" />,
-      onClick: () => navigate('/vehicles/add'),
+      onClick: () => navigate('/vehicles'),
       variant: 'primary' as const,
     },
     {
@@ -315,37 +333,37 @@ export const ModernDashboard: React.FC = () => {
       variant: 'secondary' as const,
     },
     {
-      id: 'create-contract',
-      label: 'Create Contract',
+      id: 'create-invoice',
+      label: 'Create Invoice',
       icon: <DocumentIcon className="w-5 h-5" />,
-      onClick: () => navigate('/contracts/add'),
+      onClick: () => navigate('/invoices/new'),
       variant: 'secondary' as const,
     },
     {
       id: 'add-driver',
       label: 'Add Driver',
       icon: <PersonIcon className="w-5 h-5" />,
-      onClick: () => navigate('/drivers/add'),
+      onClick: () => navigate('/drivers'),
       variant: 'secondary' as const,
     },
   ];
 
-  const alerts = [
+  // Map recent fines to alerts format
+  const alerts = recentFines.length > 0 ? recentFines.map((fine, index) => ({
+    id: fine._id || `fine-${index}`,
+    type: 'error' as const,
+    title: `RTA Fine - ${fine.violation_details || fine.description || 'Traffic Violation'}`,
+    description: `${fine.vehicle_info ? `${fine.vehicle_info} • ` : ''}${fine.plate_no ? `Plate: ${fine.plate_no} • ` : ''}Amount: AED ${fine.amount || fine.fine_amount || '0'}${fine.date ? ` • Date: ${new Date(fine.date).toLocaleDateString()}` : ''}`,
+    action: () => navigate('/rta-fines'),
+    actionLabel: 'View All Fines',
+  })) : [
     {
       id: '1',
-      type: 'warning' as const,
-      title: 'Vehicles with Expiring Registration',
-      description: '3 vehicles have registration expiring within 30 days',
-      action: () => navigate('/vehicles'),
-      actionLabel: 'View Vehicles',
-    },
-    {
-      id: '2',
       type: 'info' as const,
-      title: 'Maintenance Due',
-      description: '5 vehicles are due for scheduled maintenance',
-      action: () => navigate('/vehicles'),
-      actionLabel: 'View Details',
+      title: 'No Recent RTA Fines',
+      description: 'You have no recent traffic fines',
+      action: () => navigate('/rta-fines'),
+      actionLabel: 'View Fines',
     },
   ];
 
@@ -402,6 +420,15 @@ export const ModernDashboard: React.FC = () => {
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-6">
         <KPICard
+          label="RTA Fines"
+          value={kpiData.finesAmount}
+          subtitle={kpiData.finesLastUpdated ? `Updated: ${kpiData.finesLastUpdated}` : ''}
+          isLoading={finesLoading}
+          icon={<FineIcon className="w-6 h-6" />}
+          onClick={() => navigate('/rta-fines')}
+          valueColor="#EF4444"
+        />
+        <KPICard
           label="Active Vehicles"
           value={kpiData.activeVehicles}
           icon={<ActiveIcon className="w-6 h-6" />}
@@ -427,15 +454,6 @@ export const ModernDashboard: React.FC = () => {
           value={`AED ${kpiData.monthlyProfit.toLocaleString()}`}
           icon={<ProfitIcon className="w-6 h-6" />}
           trend={{ value: 12, direction: 'up' }}
-        />
-        <KPICard
-          label="RTA Fines"
-          value={kpiData.finesAmount}
-          subtitle={kpiData.finesLastUpdated ? `Updated: ${kpiData.finesLastUpdated}` : ''}
-          isLoading={finesLoading}
-          icon={<FineIcon className="w-6 h-6" />}
-          onClick={() => navigate('/rta-fines')}
-          valueColor="#EF4444"
         />
       </div>
 

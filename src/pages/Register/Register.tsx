@@ -2,25 +2,17 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
-  Paper,
   Typography,
   TextField,
   Button,
   CircularProgress,
   Alert,
-  Container,
-  useTheme,
   Grid,
-  Divider,
-  Card,
-  CardContent,
   Stepper,
   Step,
   StepLabel,
-  useMediaQuery,
   IconButton,
   InputAdornment,
-  Tooltip,
 } from '@mui/material';
 import {
   DirectionsCar as DirectionsCarIcon,
@@ -29,10 +21,6 @@ import {
   LocationOn as LocationIcon,
   Visibility as VisibilityIcon,
   VisibilityOff as VisibilityOffIcon,
-  CheckCircle as CheckCircleIcon,
-  Security as SecurityIcon,
-  Speed as SpeedIcon,
-  Support as SupportIcon,
 } from '@mui/icons-material';
 import { api } from '../../services/api';
 
@@ -59,27 +47,9 @@ interface AdminData {
 
 const steps = ['Company Details', 'Address Information', 'Admin Account'];
 
-const features = [
-  {
-    icon: <SecurityIcon sx={{ fontSize: 40 }} />,
-    title: 'Zero Risk',
-    description: 'No trials, no surprises. Keep free features forever.'
-  },
-  {
-    icon: <SpeedIcon sx={{ fontSize: 40 }} />,
-    title: 'Full Access, No Paywall',
-    description: 'Use core features without limits. No hidden costs.'
-  },
-  {
-    icon: <SupportIcon sx={{ fontSize: 40 }} />,
-    title: 'Upgrade on Your Terms',
-    description: 'Need more? Upgrade seamlessly when you are ready.'
-  }
-];
+
 
 const Register: React.FC = () => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
   const [activeStep, setActiveStep] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -171,6 +141,28 @@ const Register: React.FC = () => {
   };
 
   const getStepContent = (step: number) => {
+    const textFieldStyles = {
+      '& .MuiOutlinedInput-root': {
+        borderRadius: '12px',
+        fontFamily: "'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
+        fontSize: '17px',
+        '& fieldset': {
+          borderColor: '#e5e5e7',
+        },
+        '&:hover fieldset': {
+          borderColor: '#0071e3',
+        },
+        '&.Mui-focused fieldset': {
+          borderColor: '#0071e3',
+          borderWidth: '2px',
+        },
+      },
+      '& .MuiInputLabel-root': {
+        fontFamily: "'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
+        fontSize: '17px',
+      },
+    };
+
     switch (step) {
       case 0:
         return (
@@ -180,12 +172,14 @@ const Register: React.FC = () => {
                 required
                 fullWidth
                 label="Company Name"
+                placeholder="Enter your company name"
                 value={companyData.name}
                 onChange={(e) => handleCompanyChange('name', e.target.value)}
+                sx={textFieldStyles}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <BusinessIcon color="primary" />
+                      <BusinessIcon sx={{ color: '#6e6e73' }} />
                     </InputAdornment>
                   ),
                 }}
@@ -196,8 +190,10 @@ const Register: React.FC = () => {
                 required
                 fullWidth
                 label="Registration Number"
+                placeholder="Enter registration number"
                 value={companyData.registrationNumber}
                 onChange={(e) => handleCompanyChange('registrationNumber', e.target.value)}
+                sx={textFieldStyles}
               />
             </Grid>
             <Grid item xs={12} md={6}>
@@ -205,9 +201,11 @@ const Register: React.FC = () => {
                 required
                 fullWidth
                 label="Company Email"
+                placeholder="company@example.com"
                 type="email"
                 value={companyData.email}
                 onChange={(e) => handleCompanyChange('email', e.target.value)}
+                sx={textFieldStyles}
               />
             </Grid>
             <Grid item xs={12}>
@@ -215,8 +213,10 @@ const Register: React.FC = () => {
                 required
                 fullWidth
                 label="Phone Number"
+                placeholder="+971 XX XXX XXXX"
                 value={companyData.phone}
                 onChange={(e) => handleCompanyChange('phone', e.target.value)}
+                sx={textFieldStyles}
               />
             </Grid>
           </Grid>
@@ -229,12 +229,14 @@ const Register: React.FC = () => {
                 required
                 fullWidth
                 label="Street Address"
+                placeholder="Enter street address"
                 value={companyData.address.street}
                 onChange={(e) => handleAddressChange('street', e.target.value)}
+                sx={textFieldStyles}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <LocationIcon color="primary" />
+                      <LocationIcon sx={{ color: '#6e6e73' }} />
                     </InputAdornment>
                   ),
                 }}
@@ -245,8 +247,10 @@ const Register: React.FC = () => {
                 required
                 fullWidth
                 label="City"
+                placeholder="Enter city"
                 value={companyData.address.city}
                 onChange={(e) => handleAddressChange('city', e.target.value)}
+                sx={textFieldStyles}
               />
             </Grid>
             <Grid item xs={12} md={6}>
@@ -254,8 +258,10 @@ const Register: React.FC = () => {
                 required
                 fullWidth
                 label="State"
+                placeholder="Enter state/emirate"
                 value={companyData.address.state}
                 onChange={(e) => handleAddressChange('state', e.target.value)}
+                sx={textFieldStyles}
               />
             </Grid>
             <Grid item xs={12} md={6}>
@@ -263,8 +269,10 @@ const Register: React.FC = () => {
                 required
                 fullWidth
                 label="Country"
+                placeholder="Enter country"
                 value={companyData.address.country}
                 onChange={(e) => handleAddressChange('country', e.target.value)}
+                sx={textFieldStyles}
               />
             </Grid>
             <Grid item xs={12} md={6}>
@@ -272,8 +280,10 @@ const Register: React.FC = () => {
                 required
                 fullWidth
                 label="Postal Code"
+                placeholder="Enter postal code"
                 value={companyData.address.postalCode}
                 onChange={(e) => handleAddressChange('postalCode', e.target.value)}
+                sx={textFieldStyles}
               />
             </Grid>
           </Grid>
@@ -286,12 +296,14 @@ const Register: React.FC = () => {
                 required
                 fullWidth
                 label="First Name"
+                placeholder="Enter first name"
                 value={adminData.firstName}
                 onChange={(e) => handleAdminChange('firstName', e.target.value)}
+                sx={textFieldStyles}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <PersonIcon color="primary" />
+                      <PersonIcon sx={{ color: '#6e6e73' }} />
                     </InputAdornment>
                   ),
                 }}
@@ -302,8 +314,10 @@ const Register: React.FC = () => {
                 required
                 fullWidth
                 label="Last Name"
+                placeholder="Enter last name"
                 value={adminData.lastName}
                 onChange={(e) => handleAdminChange('lastName', e.target.value)}
+                sx={textFieldStyles}
               />
             </Grid>
             <Grid item xs={12}>
@@ -311,9 +325,11 @@ const Register: React.FC = () => {
                 required
                 fullWidth
                 label="Email"
+                placeholder="admin@example.com"
                 type="email"
                 value={adminData.email}
                 onChange={(e) => handleAdminChange('email', e.target.value)}
+                sx={textFieldStyles}
               />
             </Grid>
             <Grid item xs={12}>
@@ -321,15 +337,18 @@ const Register: React.FC = () => {
                 required
                 fullWidth
                 label="Password"
+                placeholder="Create a strong password"
                 type={showPassword ? 'text' : 'password'}
                 value={adminData.password}
                 onChange={(e) => handleAdminChange('password', e.target.value)}
+                sx={textFieldStyles}
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
                       <IconButton
                         onClick={() => setShowPassword(!showPassword)}
                         edge="end"
+                        sx={{ color: '#6e6e73' }}
                       >
                         {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
                       </IconButton>
@@ -348,253 +367,273 @@ const Register: React.FC = () => {
   return (
     <Box
       sx={{
-        minHeight: '100vh',
+        height: '100vh',
+        width: '100vw',
         display: 'flex',
-        flexDirection: 'column',
-        background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+        alignItems: 'center',
+        justifyContent: 'center',
+        bgcolor: '#ffffff',
+        fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
         position: 'fixed',
         top: 0,
         left: 0,
-        right: 0,
-        bottom: 0,
-        overflow: 'auto'
+        overflow: 'auto',
       }}
     >
-      {/* Hero Section */}
-      <Box
-        sx={{
-          py: 6,
-          textAlign: 'center',
-          color: 'white',
-        }}
-      >
-        <Container maxWidth="md">
+      <Box sx={{ width: '100%', maxWidth: '900px', px: 2, py: 4 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+          }}
+        >
+          {/* Logo */}
           <Box
             sx={{
+              mb: 3,
               display: 'flex',
-              flexDirection: 'column',
               alignItems: 'center',
-              mb: 4
+              justifyContent: 'center',
             }}
           >
-            <Box
-              sx={{
-                width: 80,
-                height: 80,
-                borderRadius: '50%',
-                bgcolor: 'white',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                mb: 2,
-                boxShadow: 3
-              }}
-            >
-              <DirectionsCarIcon sx={{ fontSize: 40, color: theme.palette.primary.main }} />
-            </Box>
-            <Typography
-              variant="h2"
-              component="h1"
-              sx={{
-                fontWeight: 700,
-                mb: 2,
-                fontSize: { xs: '2rem', md: '3rem' }
-              }}
-            >
-              Forever Free – No Expiry, No Hidden Costs!
-            </Typography>
+            <DirectionsCarIcon sx={{ fontSize: 48, color: '#0071e3', mr: 1 }} />
             <Typography
               variant="h4"
               sx={{
-                opacity: 0.9,
-                maxWidth: '800px',
-                mb: 2,
-                fontSize: { xs: '1.25rem', md: '1.5rem' }
+                fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
+                fontWeight: 600,
+                color: '#1d1d1f',
+                letterSpacing: '-0.015em',
               }}
             >
-              Get Started Free – Upgrade Only If You Want To!
-            </Typography>
-            <Typography
-              variant="h5"
-              sx={{
-                opacity: 0.9,
-                maxWidth: '600px',
-                mb: 4,
-                fontSize: { xs: '1.1rem', md: '1.25rem' }
-              }}
-            >
-              Join 100,000+ businesses thriving with our free plan.
-            </Typography>
-            <Typography
-              variant="subtitle1"
-              sx={{
-                opacity: 0.8,
-                maxWidth: '600px',
-                mb: 4,
-                fontStyle: 'italic'
-              }}
-            >
-              No credit card required. Cancel anytime—but you won't need to.
+              fleeto
             </Typography>
           </Box>
 
-          {/* Features Section */}
-          <Grid container spacing={4} sx={{ mb: 6 }}>
-            {features.map((feature, index) => (
-              <Grid item xs={12} md={4} key={index}>
-                <Card
-                  sx={{
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    textAlign: 'center',
-                    p: 3,
-                    bgcolor: 'rgba(255, 255, 255, 0.1)',
-                    backdropFilter: 'blur(10px)',
-                    color: 'white',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    transition: 'transform 0.2s ease-in-out',
-                    '&:hover': {
-                      transform: 'translateY(-4px)',
-                      bgcolor: 'rgba(255, 255, 255, 0.15)',
-                    }
-                  }}
-                >
-                  <Box sx={{ color: 'white', mb: 2 }}>{feature.icon}</Box>
-                  <Typography variant="h6" gutterBottom>
-                    {feature.title}
-                  </Typography>
-                  <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                    {feature.description}
-                  </Typography>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
-        </Container>
-      </Box>
-
-      {/* Registration Form */}
-      <Container maxWidth="md" sx={{ mb: 4 }}>
-        <Paper
-          elevation={8}
-          sx={{
-            p: 4,
-            borderRadius: 2,
-            background: 'rgba(255, 255, 255, 0.95)',
-            backdropFilter: 'blur(10px)',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
-          }}
-        >
           <Typography
-            variant="h4"
+            variant="h3"
             align="center"
-            sx={{ mb: 3, color: theme.palette.primary.main }}
+            sx={{
+              mb: 1,
+              fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
+              fontWeight: 600,
+              color: '#1d1d1f',
+              fontSize: { xs: '32px', sm: '44px' },
+              letterSpacing: '-0.015em',
+            }}
           >
-            Unlock Premium Features for $0
-          </Typography>
-          <Typography
-            variant="subtitle1"
-            align="center"
-            sx={{ mb: 4, color: theme.palette.text.secondary }}
-          >
-            Free today. Free tomorrow. Free for life.
+            get started for free
           </Typography>
 
-          {error && (
-            <Alert severity="error" sx={{ mb: 3 }}>
-              {error}
-            </Alert>
-          )}
+          <Typography
+            variant="h6"
+            align="center"
+            sx={{
+              mb: 5,
+              fontFamily: "'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
+              color: '#6e6e73',
+              fontSize: '19px',
+              fontWeight: 400,
+            }}
+          >
+            no credit card required · cancel anytime
+          </Typography>
 
-          {success && (
-            <Alert severity="success" sx={{ mb: 3 }}>
-              Registration successful! Redirecting to dashboard...
-            </Alert>
-          )}
-
-          <Box component="form" onSubmit={handleSubmit}>
-            <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: 4 }}>
-              {steps.map((label) => (
-                <Step key={label}>
-                  <StepLabel>{label}</StepLabel>
-                </Step>
-              ))}
-            </Stepper>
-
-            {getStepContent(activeStep)}
-
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
-              <Button
-                disabled={activeStep === 0}
-                onClick={handleBack}
-                sx={{ mr: 1 }}
+          <Box
+            sx={{
+              width: '100%',
+              p: 5,
+              border: '1px solid #e5e5e7',
+              borderRadius: '18px',
+              bgcolor: '#ffffff',
+            }}
+          >
+            {error && (
+              <Alert 
+                severity="error" 
+                sx={{ 
+                  mb: 3,
+                  borderRadius: '12px',
+                  fontFamily: "'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
+                }}
               >
-                Back
-              </Button>
-              {activeStep === steps.length - 1 ? (
+                {error}
+              </Alert>
+            )}
+
+            {success && (
+              <Alert 
+                severity="success" 
+                sx={{ 
+                  mb: 3,
+                  borderRadius: '12px',
+                  fontFamily: "'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
+                }}
+              >
+                registration successful! redirecting...
+              </Alert>
+            )}
+
+            <Box component="form" onSubmit={handleSubmit}>
+              <Stepper 
+                activeStep={activeStep} 
+                sx={{ 
+                  mb: 5,
+                  '& .MuiStepLabel-label': {
+                    fontFamily: "'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
+                    fontSize: '15px',
+                  },
+                  '& .MuiStepIcon-root': {
+                    color: '#e5e5e7',
+                    '&.Mui-active': {
+                      color: '#0071e3',
+                    },
+                    '&.Mui-completed': {
+                      color: '#0071e3',
+                    },
+                  },
+                }}
+              >
+                {steps.map((label) => (
+                  <Step key={label}>
+                    <StepLabel>{label}</StepLabel>
+                  </Step>
+                ))}
+              </Stepper>
+
+              {getStepContent(activeStep)}
+
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4, gap: 2 }}>
                 <Button
-                  type="submit"
-                  variant="contained"
-                  disabled={loading}
+                  disabled={activeStep === 0}
+                  onClick={handleBack}
                   sx={{
-                    minWidth: 200,
                     py: 1.5,
-                    borderRadius: 2,
+                    px: 4,
+                    borderRadius: '980px',
                     textTransform: 'none',
-                    fontSize: '1.1rem',
-                    fontWeight: 600,
+                    fontSize: '17px',
+                    fontWeight: 500,
+                    fontFamily: "'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
+                    color: '#0071e3',
+                    bgcolor: 'transparent',
+                    border: '1px solid #e5e5e7',
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      bgcolor: '#f5f5f7',
+                      border: '1px solid #0071e3',
+                    },
+                    '&.Mui-disabled': {
+                      color: '#6e6e73',
+                      border: '1px solid #e5e5e7',
+                    },
                   }}
                 >
-                  {loading ? (
-                    <CircularProgress size={24} color="inherit" />
-                  ) : (
-                    'Complete Registration'
-                  )}
+                  back
                 </Button>
-              ) : (
-                <Button
-                  variant="contained"
-                  onClick={handleNext}
-                  sx={{
-                    minWidth: 200,
-                    py: 1.5,
-                    borderRadius: 2,
-                    textTransform: 'none',
-                    fontSize: '1.1rem',
-                    fontWeight: 600,
-                  }}
-                >
-                  Next
-                </Button>
-              )}
+                
+                {activeStep === steps.length - 1 ? (
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    disabled={loading}
+                    sx={{
+                      py: 1.5,
+                      px: 5,
+                      borderRadius: '980px',
+                      textTransform: 'none',
+                      fontSize: '17px',
+                      fontWeight: 500,
+                      fontFamily: "'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
+                      bgcolor: '#0071e3',
+                      color: '#ffffff',
+                      boxShadow: 'none',
+                      transition: 'all 0.2s ease',
+                      '&:hover': {
+                        bgcolor: '#0077ed',
+                        boxShadow: 'none',
+                        transform: 'translateY(-1px)',
+                      },
+                      '&:active': {
+                        transform: 'translateY(0)',
+                      },
+                      '&.Mui-disabled': {
+                        bgcolor: '#e5e5e7',
+                        color: '#6e6e73',
+                      },
+                    }}
+                  >
+                    {loading ? (
+                      <CircularProgress size={24} sx={{ color: '#6e6e73' }} />
+                    ) : (
+                      'complete registration'
+                    )}
+                  </Button>
+                ) : (
+                  <Button
+                    variant="contained"
+                    onClick={handleNext}
+                    sx={{
+                      py: 1.5,
+                      px: 5,
+                      borderRadius: '980px',
+                      textTransform: 'none',
+                      fontSize: '17px',
+                      fontWeight: 500,
+                      fontFamily: "'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
+                      bgcolor: '#0071e3',
+                      color: '#ffffff',
+                      boxShadow: 'none',
+                      transition: 'all 0.2s ease',
+                      '&:hover': {
+                        bgcolor: '#0077ed',
+                        boxShadow: 'none',
+                        transform: 'translateY(-1px)',
+                      },
+                      '&:active': {
+                        transform: 'translateY(0)',
+                      },
+                    }}
+                  >
+                    next
+                  </Button>
+                )}
+              </Box>
             </Box>
           </Box>
-        </Paper>
-      </Container>
 
-      {/* Footer */}
-      <Box
-        sx={{
-          py: 3,
-          textAlign: 'center',
-          color: 'white',
-          mt: 'auto'
-        }}
-      >
-        <Container maxWidth="md">
-          <Typography variant="body2" sx={{ opacity: 0.8 }}>
-            Already have an account?{' '}
-            <Button
-              color="inherit"
-              onClick={() => navigate('/login')}
-              sx={{ textTransform: 'none', fontWeight: 600 }}
+          <Box sx={{ mt: 4, textAlign: 'center' }}>
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                fontFamily: "'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
+                color: '#6e6e73',
+                fontSize: '15px',
+              }}
             >
-              Sign in
-            </Button>
-          </Typography>
-        </Container>
+              already have an account?{' '}
+              <Button
+                onClick={() => navigate('/login')}
+                sx={{ 
+                  textTransform: 'none', 
+                  fontWeight: 500, 
+                  p: 0, 
+                  minWidth: 0,
+                  color: '#0071e3',
+                  fontFamily: "'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
+                  fontSize: '15px',
+                  '&:hover': {
+                    bgcolor: 'transparent',
+                    textDecoration: 'underline',
+                  },
+                }}
+              >
+                sign in
+              </Button>
+            </Typography>
+          </Box>
+        </Box>
       </Box>
     </Box>
   );

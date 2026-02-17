@@ -97,14 +97,18 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, titl
         <Header
           title={title}
           user={{
-            name: user ? `${user.firstName} ${user.lastName}` : 'User',
+            name: user 
+              ? (user.firstName && user.lastName 
+                  ? `${user.firstName} ${user.lastName}` 
+                  : user.email?.split('@')[0] || 'User')
+              : 'User',
             email: user?.email || '',
           }}
           notificationCount={0}
         />
 
-        {/* Page Content - No padding, pages handle their own spacing */}
-        <main className="min-h-screen">{children}</main>
+        {/* Page Content */}
+        <main className="min-h-screen p-6">{children}</main>
       </div>
     </div>
   );
