@@ -418,7 +418,7 @@ export const ModernDashboard: React.FC = () => {
   return (
     <DashboardLayout title="Dashboard">
       {/* KPI Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 md:gap-6 mb-4 md:mb-6">
         <KPICard
           label="RTA Fines"
           value={kpiData.finesAmount}
@@ -458,7 +458,7 @@ export const ModernDashboard: React.FC = () => {
       </div>
 
       {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mb-4 md:mb-6">
         {/* Income vs Expense Line Chart - 2 columns */}
         <div className="lg:col-span-2">
           <ChartCard title="Income vs Expense" subtitle="Monthly trend comparison">
@@ -532,7 +532,7 @@ export const ModernDashboard: React.FC = () => {
       </div>
 
       {/* Vehicle Utilization Bar Chart - Full Width */}
-      <div className="grid grid-cols-1 mb-6">
+      <div className="grid grid-cols-1 mb-4 md:mb-6">
         <ChartCard title="Contract Income" subtitle="Expected income per vehicle">
           <div className="h-80">
             <ResponsiveBar
@@ -561,7 +561,7 @@ export const ModernDashboard: React.FC = () => {
       </div>
 
       {/* Alerts and Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
         {/* Alerts Panel - 2 columns */}
         <div className="lg:col-span-2">
           <AlertsPanel alerts={alerts} />

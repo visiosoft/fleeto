@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import {
@@ -22,6 +22,7 @@ interface DashboardLayoutProps {
 
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, title }) => {
   const { user } = useAuth();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const sidebarItems = [
     {
@@ -89,10 +90,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, titl
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Sidebar */}
-      <Sidebar items={sidebarItems} />
+      <Sidebar items={sidebarItems} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
       {/* Main Content */}
-      <div className="ml-64">
+      <div className="md:ml-64">
         {/* Header */}
         <Header
           title={title}
@@ -105,10 +106,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, titl
             email: user?.email || '',
           }}
           notificationCount={0}
+          onMenuClick={() => setIsSidebarOpen(true)}
         />
 
         {/* Page Content */}
-        <main className="min-h-screen p-6">{children}</main>
+        <main className="min-h-screen p-4 md:p-6">{children}</main>
       </div>
     </div>
   );

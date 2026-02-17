@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Menu as MenuIcon } from '@mui/icons-material';
 
 interface HeaderProps {
   title: string;
@@ -9,6 +10,7 @@ interface HeaderProps {
   };
   onNotificationClick?: () => void;
   notificationCount?: number;
+  onMenuClick?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -16,19 +18,31 @@ export const Header: React.FC<HeaderProps> = ({
   user,
   onNotificationClick,
   notificationCount = 0,
+  onMenuClick,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showUserMenu, setShowUserMenu] = useState(false);
 
   return (
-    <header className="h-16 bg-white border-b border-border flex items-center justify-between px-6 sticky top-0 z-10">
-      {/* Page Title */}
-      <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
+    <header className="h-16 bg-white border-b border-border flex items-center justify-between px-4 md:px-6 sticky top-0 z-10">
+      {/* Left Section - Menu + Title */}
+      <div className="flex items-center gap-3">
+        {/* Hamburger Menu for Mobile */}
+        <button
+          onClick={onMenuClick}
+          className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
+        >
+          <MenuIcon className="w-6 h-6 text-gray-600" />
+        </button>
+        
+        {/* Page Title */}
+        <h1 className="text-lg md:text-2xl font-bold text-gray-900">{title}</h1>
+      </div>
 
       {/* Right Section */}
-      <div className="flex items-center gap-4">
-        {/* Search Bar */}
-        <div className="relative">
+      <div className="flex items-center gap-2 md:gap-4">
+        {/* Search Bar - Hidden on mobile */}
+        <div className="relative hidden lg:block">
           <input
             type="text"
             placeholder="Search..."
