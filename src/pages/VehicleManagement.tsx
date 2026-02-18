@@ -26,6 +26,11 @@ import {
   Chip,
   useTheme,
   alpha,
+  ToggleButtonGroup,
+  ToggleButton,
+  Card,
+  CardContent,
+  CircularProgress,
 } from '@mui/material';
 import {
   Edit as EditIcon,
@@ -39,6 +44,9 @@ import {
   CalendarToday as CalendarIcon,
   AttachFile as AttachFileIcon,
   Description as DescriptionIcon,
+  ViewModule as ViewModuleIcon,
+  ViewList as ViewListIcon,
+  Event as EventIcon,
 } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import moment from 'moment';
@@ -47,6 +55,105 @@ import axios from 'axios';
 import { API_CONFIG, getApiUrl } from '../config/api';
 import VehicleDocuments from '../components/VehicleDocuments';
 import TableToolbar from '../components/TableToolbar';
+
+// Component for authenticated vehicle image loading
+const VehicleImage: React.FC<{ imageUrl?: string; size?: number }> = ({ imageUrl, size = 56 }) => {
+  const [imageSrc, setImageSrc] = React.useState<string>('');
+  const [imageLoading, setImageLoading] = React.useState(true);
+  const theme = useTheme();
+
+  React.useEffect(() => {
+    const loadImage = async () => {
+      if (!imageUrl) {
+        setImageLoading(false);
+        return;
+      }
+
+      try {
+        // If it's an external URL, use it directly
+        if (imageUrl.startsWith('http')) {
+          setImageSrc(imageUrl);
+          setImageLoading(false);
+          return;
+        }
+
+        // For backend uploaded images, load with authentication
+        const token = localStorage.getItem('token');
+        const response = await axios.get(getApiUrl(imageUrl), {
+          headers: { Authorization: `Bearer ${token}` },
+          responseType: 'blob',
+        });
+        const imageObjectUrl = URL.createObjectURL(response.data);
+        setImageSrc(imageObjectUrl);
+        setImageLoading(false);
+      } catch (error) {
+        console.error('Failed to load vehicle image:', error);
+        setImageLoading(false);
+      }
+    };
+
+    loadImage();
+
+    return () => {
+      if (imageSrc && !imageSrc.startsWith('http')) {
+        URL.revokeObjectURL(imageSrc);
+      }
+    };
+  }, [imageUrl]);
+
+  if (!imageUrl || (!imageLoading && !imageSrc)) {
+    return (
+      <Box
+        sx={{
+          width: size,
+          height: size,
+          borderRadius: '50%',
+          background: `linear-gradient(135deg, #E5E7EB 0%, #D1D5DB 100%)`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          border: '2px solid #9CA3AF',
+          boxShadow: `0 2px 8px ${alpha(theme.palette.common.black, 0.1)}`,
+        }}
+      >
+        <DirectionsCarIcon sx={{ fontSize: size * 0.5, color: '#6B7280' }} />
+      </Box>
+    );
+  }
+
+  if (imageLoading) {
+    return (
+      <Box
+        sx={{
+          width: size,
+          height: size,
+          borderRadius: '50%',
+          bgcolor: '#F3F4F6',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          border: '2px dashed #D1D5DB',
+        }}
+      >
+        <CircularProgress size={size * 0.4} thickness={2} />
+      </Box>
+    );
+  }
+
+  return (
+    <Avatar 
+      src={imageSrc} 
+      sx={{ 
+        width: size, 
+        height: size,
+        boxShadow: `0 2px 8px ${alpha(theme.palette.common.black, 0.2)}`,
+      }}
+    >
+      <DirectionsCarIcon sx={{ fontSize: size * 0.5 }} />
+    </Avatar>
+  );
+};
+
 
 interface VehicleDocument {
   type: string;
@@ -77,6 +184,7 @@ interface Vehicle {
   };
   notes?: string;
   documents?: VehicleDocument[];
+  image?: string;
 }
 
 interface VehicleFormValues extends Omit<Vehicle, '_id' | 'lastMaintenance' | 'nextMaintenance' | 'expiryDate' | 'insuranceInfo'> {
@@ -101,6 +209,12 @@ const VehicleManagement: React.FC = () => {
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('make');
+  const [viewMode, setViewMode] = useState<'card' | 'table'>('table');
+  const [expiringVehicles, setExpiringVehicles] = useState<Array<{
+    vehicle: Vehicle;
+    daysLeft: number;
+    expiryDate: string;
+  }>>([]);
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
     open: false,
     message: '',
@@ -111,6 +225,26 @@ const VehicleManagement: React.FC = () => {
     try {
       const response = await axios.get(getApiUrl(API_CONFIG.ENDPOINTS.VEHICLES));
       setVehicles(response.data);
+      
+      // Calculate expiring vehicles (within 30 days)
+      // Note: Adding 1 month to match the table display logic
+      const today = moment();
+      const expiring = response.data
+        .filter((vehicle: Vehicle) => vehicle.expiryDate)
+        .map((vehicle: Vehicle) => {
+          const expiryDate = moment(vehicle.expiryDate).add(1, 'month');
+          const daysLeft = expiryDate.diff(today, 'days');
+          return {
+            vehicle,
+            daysLeft,
+            expiryDate: expiryDate.format('YYYY-MM-DD')
+          };
+        })
+        .filter((item: any) => item.daysLeft >= 0 && item.daysLeft <= 30)
+        .sort((a: any, b: any) => a.daysLeft - b.daysLeft)
+        .slice(0, 3); // Show top 3 expiring vehicles
+      
+      setExpiringVehicles(expiring);
     } catch (error) {
       console.error('Failed to fetch vehicles:', error);
       showSnackbar('Failed to fetch vehicles', 'error');
@@ -295,17 +429,34 @@ const VehicleManagement: React.FC = () => {
   }, [vehicles, searchQuery, sortBy]);
 
   return (
-    <Box p={3}>
+    <Box sx={{ width: '100%', maxWidth: '100%', height: '100%', p: 3, overflow: 'hidden' }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Typography variant="h4">Vehicle Management</Typography>
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<AddIcon />}
-          onClick={handleAdd}
-        >
-          Add Vehicle
-        </Button>
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+          <ToggleButtonGroup
+            value={viewMode}
+            exclusive
+            onChange={(e, newValue) => newValue && setViewMode(newValue)}
+            size="small"
+          >
+            <ToggleButton value="card">
+              <ViewModuleIcon sx={{ mr: 0.5 }} />
+              Cards
+            </ToggleButton>
+            <ToggleButton value="table">
+              <ViewListIcon sx={{ mr: 0.5 }} />
+              Table
+            </ToggleButton>
+          </ToggleButtonGroup>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<AddIcon />}
+            onClick={handleAdd}
+          >
+            Add Vehicle
+          </Button>
+        </Box>
       </Box>
 
       <TableToolbar
@@ -317,7 +468,12 @@ const VehicleManagement: React.FC = () => {
         sortOptions={sortOptions}
       />
 
-      <TableContainer component={Paper} sx={{ 
+      {/* Two Column Layout: Table and KPI Cards */}
+      <Grid container spacing={2} sx={{ width: '100%', m: 0 }}>
+        {/* Left Column: Vehicle Table/Cards */}
+        <Grid item xs={12} lg={expiringVehicles.length > 0 ? 10 : 12} sx={{ pl: 0 }}>
+          {viewMode === 'table' ? (
+        <TableContainer component={Paper} sx={{ 
         borderRadius: 3,
         overflowX: 'auto',
         boxShadow: `0 1px 3px ${alpha(theme.palette.common.black, 0.1)}`,
@@ -370,16 +526,7 @@ const VehicleManagement: React.FC = () => {
                 <TableCell>
                   <Stack spacing={0.5}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Avatar 
-                        sx={{ 
-                          width: 40, 
-                          height: 40,
-                          background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-                          boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.3)}`,
-                        }}
-                      >
-                        <DirectionsCarIcon sx={{ fontSize: 20 }} />
-                      </Avatar>
+                      <VehicleImage imageUrl={vehicle.image} size={40} />
                       <Box sx={{ flex: 1 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <Typography variant="body2" fontWeight={700}>
@@ -566,6 +713,237 @@ const VehicleManagement: React.FC = () => {
           </TableBody>
         </Table>
       </TableContainer>
+      ) : (
+        <Grid container spacing={3}>
+          {filteredAndSortedVehicles.map((vehicle) => {
+            const expiryDate = vehicle.expiryDate ? moment(vehicle.expiryDate).add(1, 'month') : null;
+            const daysUntilExpiry = expiryDate ? expiryDate.diff(moment(), 'days') : null;
+            const isExpiringSoon = daysUntilExpiry !== null && daysUntilExpiry >= 0 && daysUntilExpiry <= 30;
+            const isExpired = daysUntilExpiry !== null && daysUntilExpiry < 0;
+            
+            return (
+              <Grid item xs={12} sm={6} md={4} key={vehicle._id}>
+                <Card 
+                  sx={{ 
+                    borderRadius: 3,
+                    boxShadow: `0 1px 3px ${alpha(theme.palette.common.black, 0.1)}`,
+                    transition: 'all 0.3s ease',
+                    border: isExpired ? '2px solid #EF4444' : isExpiringSoon ? '2px solid #F59E0B' : '1px solid #E5E7EB',
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                      boxShadow: `0 8px 16px ${alpha(theme.palette.common.black, 0.15)}`,
+                    },
+                  }}
+                >
+                  <CardContent>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                      <VehicleImage imageUrl={vehicle.image} size={56} />
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="h6" fontWeight={700} gutterBottom>
+                          {`${vehicle.make} ${vehicle.model}`}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {vehicle.year} • {vehicle.fuelType}
+                        </Typography>
+                      </Box>
+                      <Chip
+                        label={vehicle.status}
+                        color={vehicle.status === 'Active' ? 'success' : vehicle.status === 'Maintenance' ? 'warning' : 'error'}
+                        size="small"
+                        sx={{ fontWeight: 700 }}
+                      />
+                    </Box>
+
+                    <Stack spacing={1.5}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Typography variant="body2" color="text.secondary">
+                          License Plate
+                        </Typography>
+                        <Typography variant="body2" fontWeight={700} sx={{ fontFamily: 'monospace' }}>
+                          {vehicle.licensePlate}
+                        </Typography>
+                      </Box>
+
+                      {vehicle.expiryDate && (
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Typography variant="body2" color="text.secondary">
+                            Expiry
+                          </Typography>
+                          <Typography 
+                            variant="body2" 
+                            fontWeight={600}
+                            sx={{ color: isExpired ? '#EF4444' : isExpiringSoon ? '#F59E0B' : '#10B981' }}
+                          >
+                            {moment(vehicle.expiryDate).format('MMM DD, YYYY')}
+                          </Typography>
+                        </Box>
+                      )}
+
+                      {vehicle.documents && vehicle.documents.length > 0 && (
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Typography variant="body2" color="text.secondary">
+                            Documents
+                          </Typography>
+                          <Chip
+                            icon={<DescriptionIcon sx={{ fontSize: 14 }} />}
+                            label={vehicle.documents.length}
+                            size="small"
+                            color="primary"
+                            variant="outlined"
+                          />
+                        </Box>
+                      )}
+                    </Stack>
+
+                    <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
+                      <Tooltip title="Edit Vehicle">
+                        <IconButton
+                          size="small"
+                          onClick={() => handleEdit(vehicle)}
+                          sx={{
+                            flex: 1,
+                            backgroundColor: alpha(theme.palette.info.main, 0.1),
+                            borderRadius: 2,
+                            '&:hover': {
+                              backgroundColor: alpha(theme.palette.info.main, 0.2),
+                            },
+                          }}
+                        >
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Documents">
+                        <IconButton
+                          size="small"
+                          onClick={() => {
+                            setSelectedVehicleId(vehicle._id);
+                            setDocumentsDialogOpen(true);
+                          }}
+                          sx={{
+                            flex: 1,
+                            backgroundColor: alpha(theme.palette.success.main, 0.1),
+                            borderRadius: 2,
+                            '&:hover': {
+                              backgroundColor: alpha(theme.palette.success.main, 0.2),
+                            },
+                          }}
+                        >
+                          <AttachFileIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Delete Vehicle">
+                        <IconButton
+                          size="small"
+                          onClick={() => handleDelete(vehicle._id)}
+                          sx={{
+                            flex: 1,
+                            backgroundColor: alpha(theme.palette.error.main, 0.1),
+                            borderRadius: 2,
+                            '&:hover': {
+                              backgroundColor: alpha(theme.palette.error.main, 0.2),
+                            },
+                          }}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+            );
+          })}
+        </Grid>
+      )}
+        </Grid>
+
+        {/* Right Column: Expiring Vehicles KPI Cards */}
+        {expiringVehicles.length > 0 && (
+          <Grid item xs={12} lg={2}>
+            <Box sx={{ position: 'sticky', top: 16 }}>
+              <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 1.5 }}>
+                Expiring Soon
+              </Typography>
+              {/* Show only the first (soonest) expiring vehicle */}
+              {expiringVehicles.slice(0, 1).map((item) => (
+                <Card
+                  key={item.vehicle._id}
+                  sx={{
+                    background: 'white',
+                    border: `1px solid ${item.daysLeft <= 7 ? '#EF4444' : item.daysLeft <= 15 ? '#F59E0B' : '#E5E7EB'}`,
+                    borderRadius: 2,
+                    padding: 2,
+                    transition: 'all 0.2s',
+                    '&:hover': {
+                      boxShadow: `0 4px 6px -1px ${alpha(theme.palette.common.black, 0.1)}`,
+                      transform: 'translateY(-2px)',
+                    },
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'start', justifyContent: 'space-between', mb: 1.5 }}>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="caption" sx={{ textTransform: 'uppercase', color: '#6B7280', fontWeight: 600, letterSpacing: 0.5, fontSize: '0.65rem' }}>
+                        Registration Expiring
+                      </Typography>
+                      <Typography variant="subtitle2" fontWeight={700} sx={{ mt: 0.5, color: '#111827' }}>
+                        {item.vehicle.make} {item.vehicle.model}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                        {item.vehicle.licensePlate}
+                      </Typography>
+                    </Box>
+                    <Box
+                      sx={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: 1.5,
+                        backgroundColor: item.daysLeft <= 7 
+                          ? alpha('#EF4444', 0.1)
+                          : item.daysLeft <= 15
+                          ? alpha('#F59E0B', 0.1)
+                          : alpha('#3B82F6', 0.1),
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <WarningIcon 
+                        sx={{ 
+                          fontSize: 20,
+                          color: item.daysLeft <= 7 ? '#EF4444' : item.daysLeft <= 15 ? '#F59E0B' : '#3B82F6'
+                        }} 
+                      />
+                    </Box>
+                  </Box>
+
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1.5 }}>
+                    <EventIcon sx={{ fontSize: 14, color: '#6B7280' }} />
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                      {moment(item.expiryDate).format('MMM DD, YYYY')}
+                    </Typography>
+                  </Box>
+
+                  <Box>
+                    <Typography 
+                      variant="h4" 
+                      fontWeight={700}
+                      sx={{ 
+                        color: item.daysLeft <= 7 ? '#EF4444' : item.daysLeft <= 15 ? '#F59E0B' : '#3B82F6',
+                        lineHeight: 1,
+                      }}
+                    >
+                      {item.daysLeft}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: '#6B7280', fontWeight: 600, textTransform: 'uppercase', fontSize: '0.65rem' }}>
+                      {item.daysLeft === 1 ? 'Day Left' : 'Days Left'}
+                    </Typography>
+                  </Box>
+                </Card>
+              ))}
+            </Box>
+          </Grid>
+        )}
+      </Grid>
 
       <Dialog open={isModalOpen} onClose={handleClose} maxWidth="md" fullWidth>
         <DialogTitle>
@@ -764,6 +1142,7 @@ const VehicleManagement: React.FC = () => {
           onClose={() => {
             setDocumentsDialogOpen(false);
             setSelectedVehicleId(null);
+            fetchVehicles(); // Refresh vehicles to show updated image
           }}
         />
       )}

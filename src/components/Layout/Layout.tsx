@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { useTheme, useMediaQuery } from '@mui/material';
 import Navigation from '../Navigation/Navigation';
-import VehicleManagement from '../../pages/VehicleManagement/VehicleManagement';
+import VehicleManagement from '../../pages/VehicleManagement';
 import DriverManagement from '../../pages/DriverManagement';
 import Reports from '../../pages/Reports';
 import Settings from '../../pages/Settings';

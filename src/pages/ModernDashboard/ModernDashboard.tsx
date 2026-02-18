@@ -577,8 +577,10 @@ export const ModernDashboard: React.FC = () => {
             onChange={(e) => setSelectedVehicle(e.target.value)}
             sx={{
               backgroundColor: 'white',
+              borderRadius: '12px',
               '& .MuiOutlinedInput-notchedOutline': {
                 borderColor: 'divider',
+                borderRadius: '12px',
               },
               '&:hover .MuiOutlinedInput-notchedOutline': {
                 borderColor: 'primary.main',

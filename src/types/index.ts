@@ -33,6 +33,7 @@ export interface Vehicle {
   };
   notes?: string;
   documents?: VehicleDocument[];
+  image?: string;
 }
 
 export interface FuelRecord {

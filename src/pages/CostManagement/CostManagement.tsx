@@ -376,6 +376,8 @@ const CostManagement: React.FC = () => {
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState<string>('all');
+  const [selectedVehicles, setSelectedVehicles] = useState<string[]>([]);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [selectedExpenseType, setSelectedExpenseType] = useState<string>('all');
   const [dateRange, setDateRange] = useState<[moment.Moment | null, moment.Moment | null]>([
     moment().startOf('month'), // Start of current month
@@ -396,6 +398,7 @@ const CostManagement: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'date' | 'amount' | 'vehicle'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [contractIncome, setContractIncome] = useState<number>(0);
 
   const fetchCostData = async () => {
     try {
@@ -422,6 +425,61 @@ const CostManagement: React.FC = () => {
       setLoading(false);
     }
   };
+
+  // Fetch vehicles list
+  useEffect(() => {
+    const fetchVehicles = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get(API_ENDPOINTS.vehicles, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        if (response.data) {
+          setVehicles(response.data);
+        }
+      } catch (error) {
+        console.error('Error fetching vehicles:', error);
+      }
+    };
+    
+    fetchVehicles();
+  }, []);
+
+  // Fetch contract income for selected vehicles
+  useEffect(() => {
+    const fetchContractIncome = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get(API_ENDPOINTS.contracts, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        if (response.data) {
+          let contracts = response.data;
+          
+          // Filter by selected vehicles if any
+          if (selectedVehicles.length > 0) {
+            contracts = contracts.filter((contract: any) => 
+              selectedVehicles.includes(contract.vehicleId)
+            );
+          }
+          
+          // Calculate total income from active contracts
+          const totalIncome = contracts
+            .filter((contract: any) => contract.status === 'Active')
+            .reduce((sum: number, contract: any) => sum + Number(contract.value || 0), 0);
+          
+          setContractIncome(totalIncome);
+        }
+      } catch (error) {
+        console.error('Error fetching contract income:', error);
+        setContractIncome(0);
+      }
+    };
+    
+    fetchContractIncome();
+  }, [selectedVehicles]);
 
   useEffect(() => {
     fetchCostData();
@@ -450,6 +508,11 @@ const CostManagement: React.FC = () => {
 
     if (selectedVehicle !== 'all') {
       filteredVehicles = filteredVehicles.filter(v => v.vehicleId === selectedVehicle);
+    }
+
+    // Filter by multiple vehicles if any selected
+    if (selectedVehicles.length > 0) {
+      filteredVehicles = filteredVehicles.filter(v => selectedVehicles.includes(v.vehicleId));
     }
 
     if (selectedExpenseType !== 'all') {
@@ -768,6 +831,15 @@ const CostManagement: React.FC = () => {
                 color="secondary"
               />
             )}
+            {selectedVehicles.length > 0 && (
+              <Chip
+                size="small"
+                label={`${selectedVehicles.length} vehicle${selectedVehicles.length > 1 ? 's' : ''} selected`}
+                onDelete={() => setSelectedVehicles([])}
+                variant="outlined"
+                color="primary"
+              />
+            )}
             {selectedExpenseType !== 'all' && (
               <Chip
                 size="small"
@@ -837,7 +909,8 @@ const CostManagement: React.FC = () => {
       </Box>
 
       <Grid container spacing={3} mb={3}>
-        <Grid item xs={12} md={4}>
+        {/* Card 1: Total Expenses */}
+        <Grid item xs={12} md={3}>
           <Box
             sx={{
               background: 'white',
@@ -894,7 +967,128 @@ const CostManagement: React.FC = () => {
           </Box>
         </Grid>
 
-        <Grid item xs={12} md={4}>
+        {/* Card 2: Contract Income */}
+        <Grid item xs={12} md={3}>
+          <Box
+            sx={{
+              background: 'white',
+              borderRadius: '16px',
+              padding: '24px',
+              border: '1px solid #E5E7EB',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'translateY(-4px)',
+                boxShadow: '0 12px 24px rgba(0, 0, 0, 0.1)',
+              },
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+              <Box
+                sx={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 4px 14px rgba(139, 92, 246, 0.3)',
+                }}
+              >
+                <MoneyIcon sx={{ fontSize: 24, color: 'white' }} />
+              </Box>
+              <Box sx={{ flex: 1 }}>
+                <Typography
+                  sx={{
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color: '#6B7280',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    mb: 0.5,
+                  }}
+                >
+                  Contract Income
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: '28px',
+                    fontWeight: 700,
+                    color: '#1F2937',
+                    lineHeight: 1,
+                  }}
+                >
+                  {contractIncome.toLocaleString('en-AE', { style: 'currency', currency: 'AED' })}
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+        </Grid>
+
+        {/* Card 3: Total Profit */}
+        <Grid item xs={12} md={3}>
+          <Box
+            sx={{
+              background: 'white',
+              borderRadius: '16px',
+              padding: '24px',
+              border: '1px solid #E5E7EB',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'translateY(-4px)',
+                boxShadow: '0 12px 24px rgba(0, 0, 0, 0.1)',
+              },
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+              <Box
+                sx={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: '12px',
+                  background: contractIncome - filteredTotal >= 0 
+                    ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)' 
+                    : 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: contractIncome - filteredTotal >= 0
+                    ? '0 4px 14px rgba(16, 185, 129, 0.3)'
+                    : '0 4px 14px rgba(239, 68, 68, 0.3)',
+                }}
+              >
+                <MoneyIcon sx={{ fontSize: 24, color: 'white' }} />
+              </Box>
+              <Box sx={{ flex: 1 }}>
+                <Typography
+                  sx={{
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color: '#6B7280',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    mb: 0.5,
+                  }}
+                >
+                  Total Profit
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: '28px',
+                    fontWeight: 700,
+                    color: contractIncome - filteredTotal >= 0 ? '#059669' : '#DC2626',
+                    lineHeight: 1,
+                  }}
+                >
+                  {(contractIncome - filteredTotal).toLocaleString('en-AE', { style: 'currency', currency: 'AED' })}
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+        </Grid>
+
+        {/* Card 4: Vehicles */}
+        <Grid item xs={12} md={3}>
           <Box
             sx={{
               background: 'white',
@@ -919,65 +1113,6 @@ const CostManagement: React.FC = () => {
                   alignItems: 'center',
                   justifyContent: 'center',
                   boxShadow: '0 4px 14px rgba(59, 130, 246, 0.3)',
-                }}
-              >
-                <CalendarIcon sx={{ fontSize: 24, color: 'white' }} />
-              </Box>
-              <Box sx={{ flex: 1 }}>
-                <Typography
-                  sx={{
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    color: '#6B7280',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px',
-                    mb: 0.5,
-                  }}
-                >
-                  Period
-                </Typography>
-                <Typography
-                  sx={{
-                    fontSize: '16px',
-                    fontWeight: 600,
-                    color: '#1F2937',
-                    lineHeight: 1.3,
-                  }}
-                >
-                  {dateRange[0] && dateRange[1]
-                    ? `${dateRange[0].format('MMM D')} - ${dateRange[1].format('MMM D, YYYY')}`
-                    : 'All Time'}
-                </Typography>
-              </Box>
-            </Box>
-          </Box>
-        </Grid>
-
-        <Grid item xs={12} md={4}>
-          <Box
-            sx={{
-              background: 'white',
-              borderRadius: '16px',
-              padding: '24px',
-              border: '1px solid #E5E7EB',
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                transform: 'translateY(-4px)',
-                boxShadow: '0 12px 24px rgba(0, 0, 0, 0.1)',
-              },
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-              <Box
-                sx={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: '12px',
-                  background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: '0 4px 14px rgba(16, 185, 129, 0.3)',
                 }}
               >
                 <VehicleIcon sx={{ fontSize: 24, color: 'white' }} />
@@ -1076,6 +1211,47 @@ const CostManagement: React.FC = () => {
                   >
                     <MenuItem value="desc">Descending</MenuItem>
                     <MenuItem value="asc">Ascending</MenuItem>
+                  </Select>
+                </FormControl>
+
+                {/* Vehicle Filter Dropdown - Multiple Select */}
+                <FormControl size="small" sx={{ minWidth: 250, maxWidth: 400 }}>
+                  <InputLabel>Vehicle Filter</InputLabel>
+                  <Select
+                    multiple
+                    value={selectedVehicles}
+                    label="Vehicle Filter"
+                    onChange={(e) => setSelectedVehicles(e.target.value as string[])}
+                    renderValue={(selected) => (
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {selected.length === 0 ? (
+                          <Typography variant="body2" color="text.secondary">All Vehicles</Typography>
+                        ) : (
+                          selected.map((value) => {
+                            const vehicle = vehicles.find(v => v._id === value);
+                            return vehicle ? (
+                              <Chip
+                                key={value}
+                                label={`${vehicle.make} ${vehicle.model}`}
+                                size="small"
+                                sx={{ height: 20, fontSize: '0.7rem' }}
+                              />
+                            ) : null;
+                          })
+                        )}
+                      </Box>
+                    )}
+                  >
+                    {vehicles.map((vehicle) => (
+                      <MenuItem key={vehicle._id} value={vehicle._id}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <VehicleIcon fontSize="small" />
+                          <Typography>
+                            {vehicle.make} {vehicle.model} - {vehicle.licensePlate}
+                          </Typography>
+                        </Box>
+                      </MenuItem>
+                    ))}
                   </Select>
                 </FormControl>
 

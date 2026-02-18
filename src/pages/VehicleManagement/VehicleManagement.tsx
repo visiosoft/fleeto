@@ -22,6 +22,17 @@ import {
   Snackbar,
   Alert,
   SelectChangeEvent,
+  CircularProgress,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Avatar,
+  ToggleButtonGroup,
+  ToggleButton,
 } from '@mui/material';
 import {
   DirectionsCar,
@@ -33,6 +44,10 @@ import {
   Add,
   Close,
   Description,
+  ViewModule as ViewModuleIcon,
+  ViewList as ViewListIcon,
+  Warning as WarningIcon,
+  Event as EventIcon,
 } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import moment from 'moment';
@@ -88,16 +103,157 @@ const VehicleManagement: React.FC = () => {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [vehicleToDelete, setVehicleToDelete] = useState<string>('');
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
+  const [expiringVehicles, setExpiringVehicles] = useState<Array<{
+    vehicle: Vehicle;
+    daysLeft: number;
+    expiryDate: string;
+  }>>([]);
+
+  console.log('VehicleManagement rendering, viewMode:', viewMode, 'tabValue:', tabValue);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
     severity: 'success' as 'success' | 'error' | 'info' | 'warning',
   });
 
+  // Component for authenticated vehicle image loading
+  const VehicleImage: React.FC<{ vehicle: Vehicle }> = ({ vehicle }) => {
+    const [imageSrc, setImageSrc] = useState<string>('');
+    const [imageLoading, setImageLoading] = useState(true);
+
+    useEffect(() => {
+      const loadImage = async () => {
+        if (!vehicle.image) {
+          setImageLoading(false);
+          return;
+        }
+
+        try {
+          // If it's a full URL (external image), use it directly
+          if (vehicle.image.startsWith('http')) {
+            setImageSrc(vehicle.image);
+            setImageLoading(false);
+            return;
+          }
+
+          // Otherwise, load from backend with auth
+          const token = localStorage.getItem('token');
+          const imageUrl = vehicle.image.replace('/vehicles/', '/vehicles/file/');
+          const response = await axios.get(getApiUrl(imageUrl), {
+            headers: {
+              Authorization: `Bearer ${token}`
+            },
+            responseType: 'blob'
+          });
+          const url = window.URL.createObjectURL(response.data);
+          setImageSrc(url);
+        } catch (error) {
+          console.error('Failed to load vehicle image:', error);
+        } finally {
+          setImageLoading(false);
+        }
+      };
+      loadImage();
+      
+      // Cleanup
+      return () => {
+        if (imageSrc && !vehicle.image?.startsWith('http')) {
+          window.URL.revokeObjectURL(imageSrc);
+        }
+      };
+    }, [vehicle.image]);
+
+    if (imageLoading) {
+      return (
+        <Box
+          sx={{
+            position: 'relative',
+            width: '100%',
+            height: '200px',
+            backgroundColor: '#F3F4F6',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <CircularProgress />
+        </Box>
+      );
+    }
+
+    if (!vehicle.image || !imageSrc) {
+      return (
+        <Box
+          sx={{
+            position: 'relative',
+            width: '100%',
+            height: '200px',
+            backgroundColor: '#F3F4F6',
+            overflow: 'hidden',
+          }}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '100%',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            }}
+          >
+            <DirectionsCar sx={{ fontSize: 80, color: 'white', opacity: 0.5 }} />
+          </Box>
+        </Box>
+      );
+    }
+
+    return (
+      <Box
+        sx={{
+          position: 'relative',
+          width: '100%',
+          height: '200px',
+          backgroundColor: '#F3F4F6',
+          overflow: 'hidden',
+        }}
+      >
+        <img
+          src={imageSrc}
+          alt={`${vehicle.make} ${vehicle.model}`}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+          }}
+        />
+      </Box>
+    );
+  };
+
   const fetchVehicles = useCallback(async () => {
     try {
       const response = await axios.get(getApiUrl(API_CONFIG.ENDPOINTS.VEHICLES));
       setVehicles(response.data);
+      
+      // Calculate expiring vehicles (within 30 days)
+      const today = moment();
+      const expiring = response.data
+        .filter((vehicle: Vehicle) => vehicle.registrationExpiry)
+        .map((vehicle: Vehicle) => {
+          const expiryDate = moment(vehicle.registrationExpiry);
+          const daysLeft = expiryDate.diff(today, 'days');
+          return {
+            vehicle,
+            daysLeft,
+            expiryDate: vehicle.registrationExpiry
+          };
+        })
+        .filter((item: any) => item.daysLeft >= 0 && item.daysLeft <= 30)
+        .sort((a: any, b: any) => a.daysLeft - b.daysLeft)
+        .slice(0, 3); // Show top 3 expiring vehicles
+      
+      setExpiringVehicles(expiring);
     } catch (error) {
       console.error('Failed to fetch vehicles:', error);
       setSnackbar({
@@ -416,41 +572,270 @@ const VehicleManagement: React.FC = () => {
       </Box>
 
       <TabPanel value={tabValue} index={0}>
-        <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between' }}>
-          <Typography variant="h5">Vehicle List</Typography>
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            onClick={handleAdd}
-            sx={{
-              backgroundColor: '#2563EB !important',
-              color: '#FFFFFF !important',
-              fontWeight: 600,
-              fontSize: '14px',
-              borderRadius: '8px',
-              padding: '10px 20px',
-              textTransform: 'none',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-              '&:hover': {
-                backgroundColor: '#1D4ED8 !important',
-                transform: 'translateY(-1px)',
-                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-              },
-            }}
-          >
-            Add Vehicle
-          </Button>
+        {/* Expiring Vehicles KPI Cards */}
+        {expiringVehicles.length > 0 && (
+          <Grid container spacing={2} sx={{ mb: 3 }}>
+            {expiringVehicles.map((item, index) => (
+              <Grid item xs={12} sm={6} md={4} key={item.vehicle.id}>
+                <Card
+                  sx={{
+                    borderRadius: '16px',
+                    background: item.daysLeft <= 7 
+                      ? 'linear-gradient(135deg, #FEE2E2 0%, #FCA5A5 100%)'
+                      : item.daysLeft <= 15
+                      ? 'linear-gradient(135deg, #FEF3C7 0%, #FCD34D 100%)'
+                      : 'linear-gradient(135deg, #E0E7FF 0%, #C7D2FE 100%)',
+                    border: item.daysLeft <= 7 ? '2px solid #EF4444' : item.daysLeft <= 15 ? '2px solid #F59E0B' : '2px solid #3B82F6',
+                    padding: '20px',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                      boxShadow: '0 12px 24px rgba(0, 0, 0, 0.15)',
+                    },
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <Box
+                      sx={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: '12px',
+                        background: item.daysLeft <= 7 
+                          ? 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)'
+                          : item.daysLeft <= 15
+                          ? 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)'
+                          : 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: item.daysLeft <= 7
+                          ? '0 4px 14px rgba(239, 68, 68, 0.4)'
+                          : item.daysLeft <= 15
+                          ? '0 4px 14px rgba(245, 158, 11, 0.4)'
+                          : '0 4px 14px rgba(59, 130, 246, 0.4)',
+                      }}
+                    >
+                      <WarningIcon sx={{ fontSize: 24, color: 'white' }} />
+                    </Box>
+                    <Box sx={{ ml: 2, flex: 1 }}>
+                      <Typography
+                        sx={{
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          color: '#6B7280',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px',
+                        }}
+                      >
+                        Registration Expiring
+                      </Typography>
+                    </Box>
+                  </Box>
+                  
+                  <Typography
+                    sx={{
+                      fontSize: '18px',
+                      fontWeight: 700,
+                      color: '#1F2937',
+                      mb: 1,
+                    }}
+                  >
+                    {item.vehicle.make} {item.vehicle.model}
+                  </Typography>
+                  
+                  <Typography
+                    sx={{
+                      fontSize: '14px',
+                      color: '#6B7280',
+                      mb: 1,
+                    }}
+                  >
+                    {item.vehicle.licensePlate}
+                  </Typography>
+                  
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                    <EventIcon sx={{ fontSize: 16, color: '#6B7280' }} />
+                    <Typography
+                      sx={{
+                        fontSize: '14px',
+                        color: '#6B7280',
+                      }}
+                    >
+                      Expires: {moment(item.expiryDate).format('MMM DD, YYYY')}
+                    </Typography>
+                  </Box>
+                  
+                  <Box
+                    sx={{
+                      mt: 2,
+                      p: 2,
+                      borderRadius: '8px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                      textAlign: 'center',
+                    }}
+                  >
+                    <Typography
+                      sx={{
+                        fontSize: '32px',
+                        fontWeight: 700,
+                        color: item.daysLeft <= 7 ? '#DC2626' : item.daysLeft <= 15 ? '#D97706' : '#2563EB',
+                      }}
+                    >
+                      {item.daysLeft}
+                    </Typography>
+                    <Typography
+                      sx={{
+                        fontSize: '14px',
+                        fontWeight: 600,
+                        color: '#6B7280',
+                      }}
+                    >
+                      {item.daysLeft === 1 ? 'Day Left' : 'Days Left'}
+                    </Typography>
+                  </Box>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        )}
+
+        <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f0f0f0', p: 2, borderRadius: '8px' }}>
+          <Typography variant="h5" sx={{ fontWeight: 700, color: '#1976d2' }}>Vehicle List</Typography>
+          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+            <ToggleButtonGroup
+              value={viewMode}
+              exclusive
+              onChange={(e, newValue) => newValue && setViewMode(newValue)}
+              size="small"
+            >
+              <ToggleButton value="card">
+                <ViewModuleIcon sx={{ mr: 0.5 }} />
+                Cards
+              </ToggleButton>
+              <ToggleButton value="table">
+                <ViewListIcon sx={{ mr: 0.5 }} />
+                Table
+              </ToggleButton>
+            </ToggleButtonGroup>
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={handleAdd}
+              sx={{
+                backgroundColor: '#2563EB !important',
+                color: '#FFFFFF !important',
+                fontWeight: 600,
+                fontSize: '14px',
+                borderRadius: '8px',
+                padding: '10px 20px',
+                textTransform: 'none',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                '&:hover': {
+                  backgroundColor: '#1D4ED8 !important',
+                  transform: 'translateY(-1px)',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                },
+              }}
+            >
+              Add Vehicle
+            </Button>
+          </Box>
         </Box>
 
-        <Grid container spacing={2}>
+        {viewMode === 'card' ? (
+          <Grid container spacing={2}>
           {vehicles.map((vehicle) => (
             <Grid item xs={12} sm={6} md={4} key={vehicle.id}>
-              <Card>
-                <CardContent>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography variant="h6">
-                        {vehicle.make} {vehicle.model} {vehicle.year}
+              <Card 
+                sx={{ 
+                  borderRadius: '16px',
+                  overflow: 'hidden',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: '0 12px 24px rgba(0, 0, 0, 0.15)',
+                  },
+                }}
+              >
+                <CardContent sx={{ p: 0 }}>
+                  {/* Vehicle Image */}
+                  <VehicleImage vehicle={vehicle} />
+                  
+                  {/* Status Badge and Action Buttons Overlay */}
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      p: 1.5,
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'flex-start',
+                    }}
+                  >
+                    {/* Status Badge */}
+                    <Chip
+                      label={vehicle.status}
+                      color={getStatusColor(vehicle.status)}
+                      size="small"
+                      sx={{
+                        fontWeight: 600,
+                        textTransform: 'capitalize',
+                      }}
+                    />
+
+                    {/* Action Buttons */}
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <IconButton 
+                        size="small" 
+                        onClick={() => handleEdit(vehicle)}
+                        sx={{
+                          backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                          '&:hover': {
+                            backgroundColor: 'white',
+                          },
+                        }}
+                      >
+                        <Edit fontSize="small" />
+                      </IconButton>
+                      <IconButton 
+                        size="small" 
+                        onClick={() => handleDeleteConfirm(vehicle.id || vehicle._id || '')}
+                        sx={{
+                          backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                          color: '#EF4444',
+                          '&:hover': {
+                            backgroundColor: 'white',
+                          },
+                        }}
+                      >
+                        <Delete fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  </Box>
+
+                  {/* Vehicle Details */}
+                  <Box sx={{ p: 2.5 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                      <Typography 
+                        variant="h6" 
+                        sx={{ 
+                          fontWeight: 700,
+                          fontSize: '18px',
+                          color: '#111827',
+                        }}
+                      >
+                        {vehicle.make} {vehicle.model}
+                      </Typography>
+                      <Typography 
+                        sx={{ 
+                          fontSize: '14px',
+                          color: '#6B7280',
+                          fontWeight: 500,
+                        }}
+                      >
+                        {vehicle.year}
                       </Typography>
                       {vehicle.documents && vehicle.documents.length > 0 && (
                         <Chip
@@ -459,47 +844,214 @@ const VehicleManagement: React.FC = () => {
                           size="small"
                           color="primary"
                           variant="outlined"
+                          sx={{ ml: 'auto' }}
                           title={`${vehicle.documents.length} document${vehicle.documents.length > 1 ? 's' : ''} attached`}
                         />
                       )}
                     </Box>
-                    <Box>
-                      <IconButton size="small" onClick={() => handleEdit(vehicle)}>
-                        <Edit />
-                      </IconButton>
-                      <IconButton 
-                        size="small" 
-                        color="error" 
-                        onClick={() => handleDeleteConfirm(vehicle.id || vehicle._id || '')}
-                      >
-                        <Delete />
-                      </IconButton>
+                    
+                    <Box sx={{ mb: 2 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                        <Typography 
+                          sx={{ 
+                            fontSize: '13px',
+                            color: '#6B7280',
+                            fontWeight: 500,
+                          }}
+                        >
+                          License:
+                        </Typography>
+                        <Typography 
+                          sx={{ 
+                            fontSize: '13px',
+                            color: '#111827',
+                            fontWeight: 600,
+                          }}
+                        >
+                          {vehicle.licensePlate}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography 
+                          sx={{ 
+                            fontSize: '13px',
+                            color: '#6B7280',
+                            fontWeight: 500,
+                          }}
+                        >
+                          VIN:
+                        </Typography>
+                        <Typography 
+                          sx={{ 
+                            fontSize: '13px',
+                            color: '#111827',
+                            fontWeight: 600,
+                          }}
+                        >
+                          {vehicle.vin}
+                        </Typography>
+                      </Box>
                     </Box>
-                  </Box>
-                  <Typography color="textSecondary" gutterBottom>
-                    License Plate: {vehicle.licensePlate}
-                  </Typography>
-                  <Typography color="textSecondary" gutterBottom>
-                    VIN: {vehicle.vin}
-                  </Typography>
-                  <Box sx={{ mt: 1 }}>
-                    <Chip
-                      label={vehicle.status}
-                      color={getStatusColor(vehicle.status)}
-                      size="small"
-                      sx={{ mr: 1 }}
-                    />
-                    <Chip
-                      label={`${vehicle.currentMileage.toLocaleString()} miles`}
-                      variant="outlined"
-                      size="small"
-                    />
+                    
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Chip
+                        icon={<LocalGasStation />}
+                        label={`${vehicle.currentMileage.toLocaleString()} mi`}
+                        size="small"
+                        sx={{
+                          backgroundColor: '#EFF6FF',
+                          color: '#2563EB',
+                          fontWeight: 600,
+                          '& .MuiChip-icon': {
+                            color: '#2563EB',
+                          },
+                        }}
+                      />
+                    </Box>
                   </Box>
                 </CardContent>
               </Card>
             </Grid>
           ))}
         </Grid>
+        ) : (
+          <TableContainer component={Paper} sx={{ borderRadius: '12px', overflow: 'hidden' }}>
+            <Table>
+              <TableHead>
+                <TableRow sx={{ backgroundColor: '#F9FAFB' }}>
+                  <TableCell sx={{ fontWeight: 600, fontSize: '14px' }}>Image</TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: '14px' }}>Vehicle</TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: '14px' }}>License Plate</TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: '14px' }}>VIN</TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: '14px' }}>Status</TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: '14px' }}>Mileage</TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: '14px' }}>Documents</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 600, fontSize: '14px' }}>Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {vehicles.map((vehicle) => {
+                  const TableVehicleImage = () => {
+                    const [imageSrc, setImageSrc] = useState<string>('');
+                    
+                    useEffect(() => {
+                      const loadImage = async () => {
+                        if (!vehicle.image) return;
+                        
+                        try {
+                          if (vehicle.image.startsWith('http')) {
+                            setImageSrc(vehicle.image);
+                            return;
+                          }
+                          
+                          const token = localStorage.getItem('token');
+                          const imageUrl = vehicle.image.replace('/vehicles/', '/vehicles/file/');
+                          const response = await axios.get(getApiUrl(imageUrl), {
+                            headers: { Authorization: `Bearer ${token}` },
+                            responseType: 'blob'
+                          });
+                          const url = window.URL.createObjectURL(response.data);
+                          setImageSrc(url);
+                        } catch (error) {
+                          console.error('Failed to load image:', error);
+                        }
+                      };
+                      loadImage();
+                    }, []);
+                    
+                    if (vehicle.image && imageSrc) {
+                      return (
+                        <img
+                          src={imageSrc}
+                          alt={`${vehicle.make} ${vehicle.model}`}
+                          style={{
+                            width: '60px',
+                            height: '60px',
+                            objectFit: 'cover',
+                            borderRadius: '8px',
+                          }}
+                        />
+                      );
+                    }
+                    
+                    return <DirectionsCar sx={{ fontSize: 30, color: 'white' }} />;
+                  };
+                  
+                  return (
+                    <TableRow key={vehicle.id} hover>
+                      <TableCell>
+                        <Box
+                          sx={{
+                            width: 60,
+                            height: 60,
+                            borderRadius: '8px',
+                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            overflow: 'hidden',
+                          }}
+                        >
+                          <TableVehicleImage />
+                        </Box>
+                      </TableCell>
+                    <TableCell>
+                      <Typography sx={{ fontWeight: 600, fontSize: '14px' }}>
+                        {vehicle.make} {vehicle.model}
+                      </Typography>
+                      <Typography sx={{ fontSize: '12px', color: '#6B7280' }}>
+                        {vehicle.year}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography sx={{ fontSize: '14px' }}>{vehicle.licensePlate}</Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography sx={{ fontSize: '14px', color: '#6B7280' }}>{vehicle.vin}</Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={vehicle.status}
+                        color={getStatusColor(vehicle.status)}
+                        size="small"
+                        sx={{ textTransform: 'capitalize' }}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Typography sx={{ fontSize: '14px' }}>
+                        {vehicle.currentMileage.toLocaleString()} mi
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      {vehicle.documents && vehicle.documents.length > 0 && (
+                        <Chip
+                          icon={<Description />}
+                          label={vehicle.documents.length}
+                          size="small"
+                          variant="outlined"
+                          color="primary"
+                        />
+                      )}
+                    </TableCell>
+                    <TableCell align="right">
+                      <IconButton size="small" onClick={() => handleEdit(vehicle)}>
+                        <Edit fontSize="small" />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        color="error"
+                        onClick={() => handleDeleteConfirm(vehicle.id || vehicle._id || '')}
+                      >
+                        <Delete fontSize="small" />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                );
+                })}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
       </TabPanel>
 
       <TabPanel value={tabValue} index={1}>

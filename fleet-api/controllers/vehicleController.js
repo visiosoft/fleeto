@@ -680,6 +680,47 @@ const VehicleController = {
         error: error.message
       });
     }
+  },
+
+  // Set vehicle image from uploaded document
+  setVehicleImage: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { imageUrl } = req.body;
+
+      if (!imageUrl) {
+        return res.status(400).json({
+          status: 'error',
+          message: 'Image URL is required'
+        });
+      }
+
+      const vehicle = await Vehicle.findByIdAndUpdate(
+        id,
+        { image: imageUrl },
+        { new: true, runValidators: true }
+      );
+
+      if (!vehicle) {
+        return res.status(404).json({
+          status: 'error',
+          message: 'Vehicle not found'
+        });
+      }
+
+      res.json({
+        status: 'success',
+        message: 'Vehicle image updated successfully',
+        data: vehicle
+      });
+    } catch (error) {
+      console.error('Error setting vehicle image:', error);
+      res.status(500).json({
+        status: 'error',
+        message: 'Failed to set vehicle image',
+        error: error.message
+      });
+    }
   }
 };
 

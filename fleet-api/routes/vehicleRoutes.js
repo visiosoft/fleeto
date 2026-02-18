@@ -140,7 +140,7 @@ router.post('/', authorize('admin', 'manager'), vehicleController.createVehicle)
  *       500:
  *         description: Server error
  */
-router.put('/:id', authorize('admin', 'manager'), vehicleController.updateVehicle);
+router.put('/:id', vehicleController.updateVehicle);
 
 /**
  * @swagger
@@ -173,11 +173,11 @@ router.delete('/:id/maintenance/:maintenanceId', authorize('admin'), vehicleCont
 
 // Vehicle document routes (old - keeping for compatibility)
 router.get('/:id/documents', vehicleController.getVehicleDocuments);
-router.post('/:id/documents', authorize('admin', 'manager'), vehicleController.addVehicleDocument);
-router.delete('/:id/documents/:documentId', authorize('admin'), vehicleController.deleteVehicleDocument);
+router.post('/:id/documents', vehicleController.addVehicleDocument);
+router.delete('/:id/documents/:documentId', vehicleController.deleteVehicleDocument);
 
 // New document upload routes with file handling
-router.post('/:id/upload-document', authorize('admin', 'manager'), upload.single('document'), vehicleController.uploadDocument);
+router.post('/:id/upload-document', upload.single('document'), vehicleController.uploadDocument);
 
 /**
  * @swagger
@@ -228,7 +228,11 @@ router.post('/:id/upload-document', authorize('admin', 'manager'), upload.single
  */
 router.get('/:id/get-documents', vehicleController.getDocuments);
 
-router.delete('/:id/delete-document/:documentId', authorize('admin', 'manager'), vehicleController.deleteDocument);
+router.delete('/:id/delete-document/:documentId', vehicleController.deleteDocument);
+
+// Set vehicle image from uploaded document
+router.patch('/:id/set-image', vehicleController.setVehicleImage);
+
 // Authenticated file serving
 router.get('/file/:vehicleId/:filename', vehicleController.serveDocument);
 
