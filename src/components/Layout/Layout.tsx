@@ -10,6 +10,7 @@ import Tracking from '../../pages/Tracking/Tracking';
 import CostManagement from '../../pages/CostManagement/CostManagement';
 import Compliance from '../../pages/Compliance/Compliance';
 import ContractManagement from '../../pages/ContractManagement/ContractManagement';
+import MonthlyReport from '../../pages/MonthlyReport/MonthlyReport';
 import DatabaseTest from '../../pages/DatabaseTest';
 
 const Layout: React.FC = () => {
@@ -33,6 +34,7 @@ const Layout: React.FC = () => {
         <Route path="/tracking" element={<Tracking />} />
         <Route path="/costs" element={<CostManagement />} />
         <Route path="/contracts" element={<ContractManagement />} />
+        <Route path="/monthly-report" element={<MonthlyReport />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/compliance" element={<Compliance />} />
         <Route path="/settings" element={<Settings />} />

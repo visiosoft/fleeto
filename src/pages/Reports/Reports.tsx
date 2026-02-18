@@ -14,7 +14,10 @@ import {
   Divider,
   Tabs,
   Tab,
-  CircularProgress
+  CircularProgress,
+  alpha,
+  Chip,
+  Stack
 } from '@mui/material';
 import {
   Assessment as AssessmentIcon,
@@ -30,8 +33,12 @@ import {
   TableChart as TableIcon,
   BarChart as BarChartIcon,
   PieChart as PieChartIcon,
-  Timeline as TimelineIcon
+  Timeline as TimelineIcon,
+  TrendingUp as TrendingUpIcon,
+  ArrowForward as ArrowForwardIcon,
+  InsertDriveFile as FileIcon
 } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 import moment from 'moment';
 
 interface ReportCardProps {
@@ -39,44 +46,161 @@ interface ReportCardProps {
   description: string;
   icon: React.ReactNode;
   color: string;
-  onGenerate: () => void;
+  onGenerate?: () => void;
+  linkTo?: string;
+  badge?: string;
 }
 
-const ReportCard: React.FC<ReportCardProps> = ({ title, description, icon, color, onGenerate }) => {
+const ReportCard: React.FC<ReportCardProps> = ({ title, description, icon, color, onGenerate, linkTo, badge }) => {
   const theme = useTheme();
+  const navigate = useNavigate();
+  
+  const handleClick = () => {
+    if (linkTo) {
+      navigate(linkTo);
+    } else if (onGenerate) {
+      onGenerate();
+    }
+  };
   
   return (
-    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <CardContent sx={{ flexGrow: 1 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <Box sx={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center', 
-            bgcolor: color + '15', 
-            p: 1, 
-            borderRadius: 2,
-            mr: 2
-          }}>
-            {React.cloneElement(icon as React.ReactElement, { sx: { color: color } })}
+    <Card 
+      sx={{ 
+        height: '100%', 
+        display: 'flex', 
+        flexDirection: 'column',
+        cursor: linkTo || onGenerate ? 'pointer' : 'default',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        backgroundColor: '#FFFFFF',
+        border: '1px solid #E5E7EB',
+        borderRadius: '16px',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+        overflow: 'hidden',
+        position: 'relative',
+        '&:hover': (linkTo || onGenerate) ? {
+          transform: 'translateY(-8px)',
+          boxShadow: '0 12px 24px rgba(0, 0, 0, 0.12)',
+          borderColor: color,
+        } : {},
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '4px',
+          background: `linear-gradient(90deg, ${color}, ${alpha(color, 0.6)})`,
+          opacity: 0,
+          transition: 'opacity 0.3s ease',
+        },
+        '&:hover::before': {
+          opacity: 1,
+        }
+      }}
+      onClick={linkTo ? handleClick : undefined}
+    >
+      <CardContent sx={{ flexGrow: 1, p: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2 }}>
+          <Box
+            sx={{
+              width: 56,
+              height: 56,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '14px',
+              background: `linear-gradient(135deg, ${alpha(color, 0.1)}, ${alpha(color, 0.05)})`,
+              border: `1px solid ${alpha(color, 0.2)}`,
+              transition: 'all 0.3s ease',
+            }}
+          >
+            {React.cloneElement(icon as React.ReactElement, { 
+              sx: { 
+                color: color,
+                fontSize: 28
+              } 
+            })}
           </Box>
-          <Typography variant="h6" component="h2">
-            {title}
-          </Typography>
+          {badge && (
+            <Chip 
+              label={badge} 
+              size="small" 
+              sx={{ 
+                bgcolor: alpha(color, 0.1),
+                color: color,
+                fontWeight: 600,
+                fontSize: '11px',
+                height: '24px',
+              }} 
+            />
+          )}
         </Box>
-        <Typography variant="body2" color="textSecondary">
+        
+        <Typography 
+          variant="h6" 
+          component="h2"
+          sx={{
+            fontWeight: 700,
+            fontSize: '18px',
+            color: '#111827',
+            mb: 1,
+            lineHeight: 1.3,
+          }}
+        >
+          {title}
+        </Typography>
+        
+        <Typography 
+          variant="body2" 
+          sx={{
+            color: '#6B7280',
+            fontSize: '14px',
+            lineHeight: 1.6,
+          }}
+        >
           {description}
         </Typography>
       </CardContent>
-      <CardActions>
-        <Button 
-          size="small" 
-          startIcon={<DownloadIcon />}
-          onClick={onGenerate}
-          sx={{ color: color }}
-        >
-          Generate Report
-        </Button>
+      
+      <Divider />
+      
+      <CardActions sx={{ p: 2, pt: 1.5 }}>
+        {linkTo ? (
+          <Button 
+            fullWidth
+            size="medium"
+            endIcon={<ArrowForwardIcon />}
+            sx={{ 
+              color: color,
+              fontWeight: 600,
+              fontSize: '14px',
+              textTransform: 'none',
+              '&:hover': {
+                bgcolor: alpha(color, 0.08),
+              }
+            }}
+          >
+            View Report
+          </Button>
+        ) : (
+          <Button 
+            fullWidth
+            size="medium"
+            startIcon={<DownloadIcon />}
+            onClick={onGenerate}
+            sx={{ 
+              color: color,
+              fontWeight: 600,
+              fontSize: '14px',
+              textTransform: 'none',
+              '&:hover': {
+                bgcolor: alpha(color, 0.08),
+              }
+            }}
+          >
+            Generate Report
+          </Button>
+        )}
       </CardActions>
     </Card>
   );
@@ -84,6 +208,7 @@ const ReportCard: React.FC<ReportCardProps> = ({ title, description, icon, color
 
 const Reports: React.FC = () => {
   const theme = useTheme();
+  const navigate = useNavigate();
   const [selectedTab, setSelectedTab] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -104,7 +229,30 @@ const Reports: React.FC = () => {
     }
   };
 
-  const reportCategories = [
+  const reportCategories: Array<{
+    title: string;
+    reports: Array<{
+      title: string;
+      description: string;
+      icon: React.ReactNode;
+      color: string;
+      linkTo?: string;
+      badge?: string;
+    }>;
+  }> = [
+    {
+      title: 'Profit & Loss',
+      reports: [
+        {
+          title: 'Monthly Financial Report',
+          description: 'Comprehensive analysis of contract revenue, expenses, and profitability by month',
+          icon: <TrendingUpIcon />,
+          color: theme.palette.success.main,
+          linkTo: '/monthly-report',
+          badge: 'New'
+        }
+      ]
+    },
     {
       title: 'Vehicle Reports',
       reports: [
@@ -177,29 +325,86 @@ const Reports: React.FC = () => {
   ];
 
   return (
-    <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-        <Typography variant="h4">Reports</Typography>
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <Tooltip title="Export as PDF">
-            <IconButton>
-              <PdfIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Export as Excel">
-            <IconButton>
-              <TableIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Print Report">
-            <IconButton>
-              <PrintIcon />
-            </IconButton>
-          </Tooltip>
+    <Box sx={{ width: '100%', maxWidth: '100%', p: 3 }}>
+      {/* Header Section */}
+      <Box sx={{ mb: 5 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+          <Box>
+            <Typography
+              variant="h4"
+              sx={{
+                fontWeight: 700,
+                color: '#111827',
+                mb: 1,
+                fontSize: '32px',
+              }}
+            >
+              Reports & Analytics
+            </Typography>
+            <Typography 
+              variant="body1" 
+              sx={{ 
+                color: '#6B7280',
+                fontSize: '15px',
+              }}
+            >
+              Generate comprehensive reports and insights for your fleet operations
+            </Typography>
+          </Box>
+          <Stack direction="row" spacing={1}>
+            <Tooltip title="Export as PDF">
+              <IconButton
+                sx={{
+                  bgcolor: alpha(theme.palette.error.main, 0.1),
+                  color: theme.palette.error.main,
+                  '&:hover': {
+                    bgcolor: alpha(theme.palette.error.main, 0.2),
+                  }
+                }}
+              >
+                <PdfIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Export as Excel">
+              <IconButton
+                sx={{
+                  bgcolor: alpha(theme.palette.success.main, 0.1),
+                  color: theme.palette.success.main,
+                  '&:hover': {
+                    bgcolor: alpha(theme.palette.success.main, 0.2),
+                  }
+                }}
+              >
+                <TableIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Print Report">
+              <IconButton
+                sx={{
+                  bgcolor: alpha(theme.palette.primary.main, 0.1),
+                  color: theme.palette.primary.main,
+                  '&:hover': {
+                    bgcolor: alpha(theme.palette.primary.main, 0.2),
+                  }
+                }}
+              >
+                <PrintIcon />
+              </IconButton>
+            </Tooltip>
+          </Stack>
         </Box>
       </Box>
 
-      <Paper sx={{ mb: 3 }}>
+      {/* Tabs Section */}
+      <Paper 
+        sx={{ 
+          mb: 4,
+          borderRadius: '16px',
+          overflow: 'hidden',
+          border: '1px solid #E5E7EB',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+        }}
+      >
         <Tabs
           value={selectedTab}
           onChange={handleTabChange}
@@ -207,9 +412,28 @@ const Reports: React.FC = () => {
           textColor="primary"
           variant="scrollable"
           scrollButtons="auto"
+          sx={{
+            px: 2,
+            '& .MuiTab-root': {
+              fontWeight: 600,
+              fontSize: '15px',
+              textTransform: 'none',
+              minHeight: '64px',
+              px: 3,
+            },
+            '& .MuiTabs-indicator': {
+              height: '3px',
+              borderRadius: '3px 3px 0 0',
+            }
+          }}
         >
           {reportCategories.map((category, index) => (
-            <Tab key={index} label={category.title} />
+            <Tab 
+              key={index} 
+              label={category.title}
+              icon={index === 0 ? <TrendingUpIcon sx={{ fontSize: 20 }} /> : undefined}
+              iconPosition="start"
+            />
           ))}
         </Tabs>
       </Paper>
@@ -222,28 +446,48 @@ const Reports: React.FC = () => {
               description={report.description}
               icon={report.icon}
               color={report.color}
-              onGenerate={() => handleGenerateReport(report.title)}
+              onGenerate={report.linkTo ? undefined : () => handleGenerateReport(report.title)}
+              linkTo={report.linkTo}
+              badge={report.badge}
             />
           </Grid>
         ))}
       </Grid>
 
+      {/* Loading Overlay */}
       {isGenerating && (
-        <Box sx={{ 
-          position: 'fixed', 
-          top: 0, 
-          left: 0, 
-          right: 0, 
-          bottom: 0, 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center',
-          bgcolor: 'rgba(0,0,0,0.5)',
-          zIndex: 9999
-        }}>
-          <Paper sx={{ p: 3, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <CircularProgress />
-            <Typography sx={{ mt: 2 }}>Generating Report...</Typography>
+        <Box 
+          sx={{ 
+            position: 'fixed', 
+            top: 0, 
+            left: 0, 
+            right: 0, 
+            bottom: 0, 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            bgcolor: 'rgba(0,0,0,0.6)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 9999
+          }}
+        >
+          <Paper 
+            sx={{ 
+              p: 4, 
+              display: 'flex', 
+              flexDirection: 'column', 
+              alignItems: 'center',
+              borderRadius: '16px',
+              minWidth: '280px',
+            }}
+          >
+            <CircularProgress size={48} />
+            <Typography sx={{ mt: 3, fontWeight: 600, fontSize: '16px' }}>
+              Generating Report...
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              Please wait while we prepare your data
+            </Typography>
           </Paper>
         </Box>
       )}

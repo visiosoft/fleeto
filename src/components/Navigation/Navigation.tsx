@@ -89,7 +89,7 @@ const MENU_ITEMS: MenuItem[] = [
   { text: 'Cost', path: '/costs', icon: <AccountBalanceIcon /> },
   { text: 'Add Company / Contract', path: '/contracts', icon: <GavelIcon /> },
   { text: 'Tracking', path: '/tracking', icon: <LocationOnIcon /> },
-  
+  { text: 'Monthly Report', path: '/monthly-report', icon: <AssessmentIcon /> },
   { text: 'Invoice', path: '/beta-invoices', icon: <InvoiceIcon /> },
   { text: 'Receipt', path: '/receipts', icon: <ReceiptIcon /> },
   { text: 'Letterhead', path: '/letterheads', icon: <DescriptionIcon /> },
