@@ -81,7 +81,7 @@ const RtaFinesController = {
       const rtaFinesCollection = await db.getCollection('rta_fines');
       const fines = await rtaFinesCollection
         .find({})
-        .sort({ created_at: -1 })
+        .sort({ date_time: -1 })
         .toArray();
 
       res.status(200).json({

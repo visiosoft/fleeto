@@ -38,7 +38,6 @@ const Compliance = React.lazy(() => import('./pages/Compliance/Compliance'));
 const Settings = React.lazy(() => import('./pages/Settings'));
 const CompanySettings = React.lazy(() => import('./pages/CompanySettings/CompanySettings'));
 const FinesSearch = React.lazy(() => import('./pages/FinesSearch/FinesSearch'));
-const RtaFines = React.lazy(() => import('./pages/RtaFines/RtaFines'));
 const MonthlyReport = React.lazy(() => import('./pages/MonthlyReport/MonthlyReport'));
 
 // Beta Invoice Management
@@ -238,13 +237,7 @@ const AppContent: React.FC = () => {
             </ProtectedRoute>
           } />
 
-          <Route path="/rta-fines" element={
-            <ProtectedRoute>
-              <ModernPageLayout title="RTA Fines">
-                <RtaFines />
-              </ModernPageLayout>
-            </ProtectedRoute>
-          } />
+          {/* RTA Fines route removed */}
 
           <Route path="/company-settings" element={
             <ProtectedRoute>

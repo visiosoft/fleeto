@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { parse } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/modern/DashboardLayout';
 import { KPICard } from '../../components/modern/KPICard';
@@ -314,8 +315,13 @@ export const ModernDashboard: React.FC = () => {
         });
         
         if (response.data?.status === 'success' && response.data.data?.fines) {
-          // Get last 3 fines
-          setRecentFines(response.data.data.fines.slice(0, 3));
+         const fines = response.data.data.fines || [];
+
+  const latestThree = [...fines] // prevent mutation
+    .sort((a, b) => new Date(b.date_time).getTime() - new Date(a.date_time).getTime())
+    .slice(0, 3);
+    
+          setRecentFines(latestThree);
         }
       } catch (error) {
         console.error('Error fetching recent fines:', error);
@@ -497,13 +503,22 @@ export const ModernDashboard: React.FC = () => {
   ];
 
   // Map recent fines to alerts format
-  const alerts = recentFines.length > 0 ? recentFines.map((fine, index) => ({
+  // Helper to parse date_time string (e.g. '19 Feb 2026, 9:57 am')
+  // Robust date parser for 'dd MMM yyyy, h:mm a' format
+  const parseDateTime = (dt: string): number => {
+    if (!dt) return 0;
+    const parsed = parse(dt, 'dd MMM yyyy, h:mm a', new Date());
+    return isNaN(parsed.getTime()) ? 0 : parsed.getTime();
+  };
+  const sortedFines = recentFines;
+  console.log(recentFines)
+  const alerts = sortedFines.length > 0 ? sortedFines.map((fine, index) => ({
     id: fine._id || `fine-${index}`,
     type: 'error' as const,
     title: `RTA Fine - ${fine.violation_details || fine.description || 'Traffic Violation'}`,
-    description: `${fine.vehicle_info ? `${fine.vehicle_info} • ` : ''}${fine.plate_no ? `Plate: ${fine.plate_no} • ` : ''}Amount: AED ${fine.amount || fine.fine_amount || '0'}${fine.date ? ` • Date: ${new Date(fine.date).toLocaleDateString()}` : ''}`,
-    action: () => navigate('/rta-fines'),
-    actionLabel: 'View All Fines',
+    description: `Plate: ${fine.number_plate || fine.plate_no} • ${fine.vehicle_info ? fine.vehicle_info + ' • ' : ''}Amount: ${fine.amount?.replace(/^AED\s*/i, '') || fine.fine_amount?.replace(/^AED\s*/i, '') || '0'}`,
+    action: () => navigate('/fines-search'),
+    actionLabel: fine.date_time || '',
   })) : [
     {
       id: '1',
@@ -615,7 +630,7 @@ export const ModernDashboard: React.FC = () => {
           subtitle={kpiData.finesLastUpdated ? `Updated: ${kpiData.finesLastUpdated}` : ''}
           isLoading={finesLoading}
           icon={<FineIcon className="w-6 h-6" />}
-          onClick={() => navigate('/rta-fines')}
+          onClick={() => navigate('/fines-search')}
           valueColor="#EF4444"
         />
         <KPICard

@@ -41,6 +41,7 @@ import { API_ENDPOINTS } from '../../config/environment';
 interface RtaFine {
   _id?: string;
   vehicle_info: string;
+  number_plate?: string;
   date_time: string;
   amount: string;
   source: string;
@@ -374,6 +375,9 @@ const FinesSearch: React.FC = () => {
                       Vehicle Info
                     </TableCell>
                     <TableCell sx={{ fontWeight: 600, color: '#374151', fontSize: '13px' }}>
+                      Number Plate
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: '#374151', fontSize: '13px' }}>
                       Date & Time
                     </TableCell>
                     <TableCell sx={{ fontWeight: 600, color: '#374151', fontSize: '13px' }}>
@@ -391,7 +395,13 @@ const FinesSearch: React.FC = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {fines.map((fine, index) => (
+                  {[...fines]
+                    .sort((a, b) => {
+                      const dateA = a.date_time ? new Date(a.date_time).getTime() : 0;
+                      const dateB = b.date_time ? new Date(b.date_time).getTime() : 0;
+                      return dateB - dateA;
+                    })
+                    .map((fine, index) => (
                     <TableRow
                       key={fine._id || index}
                       sx={{
@@ -407,6 +417,11 @@ const FinesSearch: React.FC = () => {
                             {fine.vehicle_info}
                           </Typography>
                         </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                          {fine.number_plate || '-'}
+                        </Typography>
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2">{fine.date_time}</Typography>
