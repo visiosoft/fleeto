@@ -149,13 +149,14 @@ with Trade License No. 1383686, having its registered office at Dubai, UAE
 
 <li><b>PAYMENT DEFAULT</b>
    <p>In case of cheque dishonor or delayed payment, the Company reserves the right to immediately repossess the Vehicle without prior notice and pursue legal remedies under UAE law.</p>
-</li>
+
+   </li>
 
 <li><b>CLIENT RESPONSIBILITIES</b>
    <ul class="document-list">
    <li>Fuel and petrol costs</li>
    <li>Salik (toll) charges</li>
-   <li>Traffic fines, black points, parking violations, and impound charges</li>
+   <li>Traffic fines, black points, parking violations, and impound charges. It must be paid within 3 days of fines violation.</li>
    <li>Compliance with all UAE traffic laws and regulations</li>
    </ul>
    <p>The Client shall ensure that only legally licensed drivers operate the Vehicle.</p>
