@@ -237,6 +237,13 @@ const BetaInvoiceTable: React.FC<BetaInvoiceTableProps> = ({ invoices = [], onRe
                                                 >
                                                     {invoice.invoiceNumber || 'N/A'}
                                                 </Typography>
+                                                {invoice.contract && (
+                                                    <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+                                                        {invoice.contract.companyName}
+                                                        {invoice.contract.address ? ` • ${invoice.contract.address}` : ''}
+                                                        {invoice.contract.trn ? ` • TRN: ${invoice.contract.trn}` : ''}
+                                                    </Typography>
+                                                )}
                                             </Box>
                                         </Box>
                                     </Stack>

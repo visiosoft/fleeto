@@ -32,7 +32,7 @@ import { FormControl, Select, MenuItem, Box, Typography } from '@mui/material';
 export const ModernDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { data, isLoading } = useDashboardData();
-  
+
   const [kpiData, setKpiData] = useState({
     totalVehicles: 0,
     activeVehicles: 0,
@@ -50,7 +50,7 @@ export const ModernDashboard: React.FC = () => {
   const [vehicleExpenses, setVehicleExpenses] = useState<any[]>([]);
   const [vehicleContracts, setVehicleContracts] = useState<any[]>([]);
   const [yearlyIncomeExpense, setYearlyIncomeExpense] = useState<any[]>([]);
-  
+
   // Vehicle filter state
   const [vehicles, setVehicles] = useState<any[]>([]);
   const [selectedVehicle, setSelectedVehicle] = useState<string>('all');
@@ -63,7 +63,7 @@ export const ModernDashboard: React.FC = () => {
         const response = await axios.get(API_ENDPOINTS.vehicles, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        
+
         if (response.data) {
           setVehicles(response.data);
         }
@@ -71,7 +71,7 @@ export const ModernDashboard: React.FC = () => {
         console.error('Error fetching vehicles:', error);
       }
     };
-    
+
     fetchVehicles();
   }, []);
 
@@ -92,7 +92,7 @@ export const ModernDashboard: React.FC = () => {
 
           // Group expenses by vehicle for current month
           const vehicleMap = new Map();
-          
+
           response.data.vehicles.forEach((vehicle: any) => {
             let vehicleTotal = 0;
             vehicle.details?.forEach((expense: any) => {
@@ -127,7 +127,7 @@ export const ModernDashboard: React.FC = () => {
     const fetchVehicleUtilization = async () => {
       try {
         const token = localStorage.getItem('token');
-        
+
         // Fetch contracts
         const response = await axios.get(API_ENDPOINTS.contracts, {
           headers: { Authorization: `Bearer ${token}` }
@@ -136,12 +136,12 @@ export const ModernDashboard: React.FC = () => {
         console.log('Contracts Response:', response.data);
 
         // Get all contracts (directly an array)
-        const contracts = Array.isArray(response.data) 
-          ? response.data 
+        const contracts = Array.isArray(response.data)
+          ? response.data
           : [];
 
         // Filter for active contracts and create data for each
-        const activeContracts = contracts.filter((contract: any) => 
+        const activeContracts = contracts.filter((contract: any) =>
           contract.status === 'Active' && contract.value
         );
 
@@ -150,10 +150,10 @@ export const ModernDashboard: React.FC = () => {
         // Create a unique entry for each contract
         const contractData = activeContracts.map((contract: any, index: number) => {
           // Use company name if available, otherwise use contract ID
-          const displayName = contract.companyName 
+          const displayName = contract.companyName
             ? `${contract.companyName.substring(0, 30)}${contract.companyName.length > 30 ? '...' : ''}`
             : `Contract ${index + 1}`;
-          
+
           return {
             vehicle: displayName,
             income: contract.value
@@ -176,7 +176,7 @@ export const ModernDashboard: React.FC = () => {
     const fetchYearlyData = async () => {
       try {
         const token = localStorage.getItem('token');
-        
+
         // Fetch all expenses and contracts
         const [expensesRes, contractsRes] = await Promise.all([
           axios.get(API_ENDPOINTS.costs.all, {
@@ -195,7 +195,7 @@ export const ModernDashboard: React.FC = () => {
           income: number;
           expenses: number;
         }
-        
+
         const months: MonthData[] = [];
         const now = new Date();
         for (let i = 11; i >= 0; i--) {
@@ -214,8 +214,8 @@ export const ModernDashboard: React.FC = () => {
           expensesRes.data.vehicles.forEach((vehicle: any) => {
             vehicle.details?.forEach((expense: any) => {
               const expenseDate = new Date(expense.date);
-              const monthData = months.find(m => 
-                m.monthIndex === expenseDate.getMonth() && 
+              const monthData = months.find(m =>
+                m.monthIndex === expenseDate.getMonth() &&
                 m.year === expenseDate.getFullYear()
               );
               if (monthData) {
@@ -231,11 +231,11 @@ export const ModernDashboard: React.FC = () => {
             if (contract.status === 'Active' && contract.value) {
               const startDate = new Date(contract.startDate);
               const endDate = contract.endDate ? new Date(contract.endDate) : now;
-              
+
               months.forEach(monthData => {
                 const monthStart = new Date(monthData.year, monthData.monthIndex, 1);
                 const monthEnd = new Date(monthData.year, monthData.monthIndex + 1, 0);
-                
+
                 // If contract was active during this month
                 if (startDate <= monthEnd && endDate >= monthStart) {
                   monthData.income += contract.value || 0;
@@ -269,12 +269,12 @@ export const ModernDashboard: React.FC = () => {
         if (response.data?.status === 'success' && response.data.data) {
           const totalAmount = response.data.data.total_amount || 'AED 0';
           const lastUpdated = response.data.data.last_updated;
-          
+
           // Extract just the amount from string like "Pay all AED 2,000"
           const match = totalAmount.match(/AED\s*([\d,]+)/);
           const numericAmount = match ? parseInt(match[1].replace(/,/g, '')) : 0;
           const formattedAmount = match ? `AED ${match[1]}` : 'AED 0';
-          
+
           // Parse and format the last updated date
           let formattedDate = '';
           if (lastUpdated) {
@@ -292,7 +292,7 @@ export const ModernDashboard: React.FC = () => {
               formattedDate = `${dateStr} ${timeStr}`;
             }
           }
-          
+
           setKpiData(prev => ({
             ...prev,
             pendingFines: numericAmount,
@@ -313,14 +313,14 @@ export const ModernDashboard: React.FC = () => {
         const response = await axios.get(API_ENDPOINTS.rtaFines.all, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        
-        if (response.data?.status === 'success' && response.data.data?.fines) {
-         const fines = response.data.data.fines || [];
 
-  const latestThree = [...fines] // prevent mutation
-    .sort((a, b) => new Date(b.date_time).getTime() - new Date(a.date_time).getTime())
-    .slice(0, 3);
-    
+        if (response.data?.status === 'success' && response.data.data?.fines) {
+          const fines = response.data.data.fines || [];
+
+          const latestThree = [...fines] // prevent mutation
+            .sort((a, b) => new Date(b.date_time).getTime() - new Date(a.date_time).getTime())
+            .slice(0, 3);
+
           setRecentFines(latestThree);
         }
       } catch (error) {
@@ -355,7 +355,7 @@ export const ModernDashboard: React.FC = () => {
   useEffect(() => {
     const filterDataByVehicle = async () => {
       console.log('🔍 Filtering data for vehicle:', selectedVehicle);
-      
+
       if (selectedVehicle === 'all') {
         // Show all data - refetch original data
         if (data) {
@@ -376,84 +376,84 @@ export const ModernDashboard: React.FC = () => {
         // Filter data for selected vehicle
         try {
           const token = localStorage.getItem('token');
-          
+
           console.log('🚗 Fetching data for vehicle ID:', selectedVehicle);
-          
+
           // Fetch vehicle-specific current month expenses
           const expensesResponse = await axios.get(`${API_ENDPOINTS.costs.all.replace('/all', '')}/current-month/${selectedVehicle}`, {
             headers: { Authorization: `Bearer ${token}` }
           });
-          
+
           console.log('💰 Expenses response:', expensesResponse.data);
-          
+
           // The API already returns current month expenses, so just use the total
           const monthlyExpenses = expensesResponse.data?.expenses || 0;
-          
+
           console.log('💸 Monthly expenses for vehicle:', monthlyExpenses);
-          
+
           // Fetch vehicle contracts to get income
           const contractsResponse = await axios.get(API_ENDPOINTS.contracts, {
             headers: { Authorization: `Bearer ${token}` }
           });
-          
+
           console.log('📋 Contracts response:', contractsResponse.data);
-          
+
           let monthlyIncome = 0;
           const contractsData = contractsResponse.data?.data || contractsResponse.data;
-          
+
           if (contractsData) {
             console.log('📝 All contracts:', contractsData);
             console.log('🔑 Looking for vehicle ID:', selectedVehicle);
-            
+
             const vehicleContracts = (Array.isArray(contractsData) ? contractsData : []).filter(
               (contract: any) => {
                 const contractVehicleId = contract.vehicleId || contract.vehicle?._id || contract.vehicle;
                 const vehicleIdStr = typeof contractVehicleId === 'object' ? contractVehicleId?.toString() : contractVehicleId;
                 const selectedVehicleStr = selectedVehicle;
-                
+
                 // Status can be 'Active' (capitalized) or 'active' (lowercase)
                 const isActive = contract.status?.toLowerCase() === 'active';
-                
-                console.log('🔍 Comparing:', { 
-                  contractVehicleId: vehicleIdStr, 
+
+                console.log('🔍 Comparing:', {
+                  contractVehicleId: vehicleIdStr,
                   selectedVehicle: selectedVehicleStr,
                   status: contract.status,
                   isActive,
                   matches: vehicleIdStr === selectedVehicleStr && isActive
                 });
-                
+
                 return vehicleIdStr === selectedVehicleStr && isActive;
               }
             );
-            
+
             console.log('🚙 Vehicle contracts found:', vehicleContracts);
-            
+
             // Use 'amount' or 'value' field (company contracts use these instead of monthlyRate)
             monthlyIncome = vehicleContracts.reduce((sum: number, contract: any) => {
               const contractValue = contract.amount || contract.value || contract.monthlyRate || 0;
               return sum + contractValue;
             }, 0);
           }
-          
+
           console.log('💵 Monthly income for vehicle:', monthlyIncome);
-          
+
           const profit = monthlyIncome - monthlyExpenses;
-          
+
           console.log('✅ Setting KPI data:', { monthlyIncome, monthlyExpenses, monthlyProfit: profit });
-          
+
           setKpiData(prev => ({
             ...prev,
             monthlyIncome,
             monthlyExpenses,
             monthlyProfit: profit,
           }));
-          
+
         } catch (error) {
           console.error('❌ Error filtering vehicle data:', error);
         }
       }
     };
-    
+
     filterDataByVehicle();
   }, [selectedVehicle, data]);
 
@@ -516,7 +516,8 @@ export const ModernDashboard: React.FC = () => {
     id: fine._id || `fine-${index}`,
     type: 'error' as const,
     title: `RTA Fine - ${fine.violation_details || fine.description || 'Traffic Violation'}`,
-    description: `Plate: ${fine.number_plate || fine.plate_no} • ${fine.vehicle_info ? fine.vehicle_info + ' • ' : ''}Amount: ${fine.amount?.replace(/^AED\s*/i, '') || fine.fine_amount?.replace(/^AED\s*/i, '') || '0'}`,
+    description: `${fine.vehicle_info ? fine.vehicle_info + ' • ' : ''}Amount: ${fine.amount?.replace(/^AED\s*/i, '') || fine.fine_amount?.replace(/^AED\s*/i, '') || '0'}`,
+    platenumber: fine.number_plate || fine.plate_no || '',
     action: () => navigate('/fines-search'),
     actionLabel: fine.date_time || '',
   })) : [
@@ -525,6 +526,7 @@ export const ModernDashboard: React.FC = () => {
       type: 'info' as const,
       title: 'No Recent RTA Fines',
       description: 'You have no recent traffic fines',
+      platenumber: 'N/A',
       action: () => navigate('/rta-fines'),
       actionLabel: 'View Fines',
     },

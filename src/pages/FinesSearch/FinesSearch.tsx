@@ -82,7 +82,7 @@ const FinesSearch: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const token = localStorage.getItem('token');
       const headers = {
         'Authorization': `Bearer ${token}`,
@@ -122,13 +122,13 @@ const FinesSearch: React.FC = () => {
 
   const parseDate = (dateObj: any): Date | null => {
     if (!dateObj) return null;
-    
+
     // Handle MongoDB date format {$date: string}
     if (dateObj.$date) {
       const date = new Date(dateObj.$date);
       return isNaN(date.getTime()) ? null : date;
     }
-    
+
     // Handle direct string or Date object
     const date = new Date(dateObj);
     return isNaN(date.getTime()) ? null : date;
@@ -154,11 +154,11 @@ const FinesSearch: React.FC = () => {
       };
 
       await axios.delete(`${API_ENDPOINTS.rtaFines.delete(fineToDelete._id)}`, { headers });
-      
+
       setSnackbarMessage('Fine deleted successfully');
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
-      
+
       // Refresh the data
       fetchFinesData();
     } catch (err: any) {
@@ -322,10 +322,10 @@ const FinesSearch: React.FC = () => {
                   const date = parseDate(totalFines?.last_updated);
                   return date
                     ? date.toLocaleDateString('en-GB', {
-                        day: '2-digit',
-                        month: 'short',
-                        year: 'numeric',
-                      })
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric',
+                    })
                     : 'N/A';
                 })()}
               </Typography>
@@ -334,9 +334,9 @@ const FinesSearch: React.FC = () => {
                   const date = parseDate(totalFines?.last_updated);
                   return date
                     ? date.toLocaleTimeString('en-US', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })
                     : '';
                 })()}
               </Typography>
@@ -358,7 +358,7 @@ const FinesSearch: React.FC = () => {
           <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
             All Fines & Violations
           </Typography>
-          
+
           {fines.length === 0 ? (
             <Box sx={{ p: 3, textAlign: 'center' }}>
               <WarningIcon sx={{ fontSize: 64, color: theme.palette.text.disabled, mb: 2 }} />
@@ -371,11 +371,12 @@ const FinesSearch: React.FC = () => {
               <Table>
                 <TableHead>
                   <TableRow sx={{ backgroundColor: '#F9FAFB' }}>
-                    <TableCell sx={{ fontWeight: 600, color: '#374151', fontSize: '13px' }}>
-                      Vehicle Info
-                    </TableCell>
+
                     <TableCell sx={{ fontWeight: 600, color: '#374151', fontSize: '13px' }}>
                       Number Plate
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: '#374151', fontSize: '13px' }}>
+                      Vehicle Info
                     </TableCell>
                     <TableCell sx={{ fontWeight: 600, color: '#374151', fontSize: '13px' }}>
                       Date & Time
@@ -402,73 +403,140 @@ const FinesSearch: React.FC = () => {
                       return dateB - dateA;
                     })
                     .map((fine, index) => (
-                    <TableRow
-                      key={fine._id || index}
-                      sx={{
-                        '&:nth-of-type(even)': { backgroundColor: '#F9FAFB' },
-                        '&:hover': { backgroundColor: '#F1F5F9' },
-                        transition: 'background-color 0.2s',
-                      }}
-                    >
-                      <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <CarIcon sx={{ color: theme.palette.primary.main, fontSize: '20px' }} />
-                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                            {fine.vehicle_info}
-                          </Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                          {fine.number_plate || '-'}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2">{fine.date_time}</Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={fine.amount}
-                          color="error"
-                          size="small"
-                          sx={{ fontWeight: 600, fontSize: '12px' }}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2" sx={{ fontSize: '13px' }}>
-                          {fine.source}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        {fine.black_points !== '-' ? (
+                      <TableRow
+                        key={fine._id || index}
+                        sx={{
+                          '&:nth-of-type(even)': { backgroundColor: '#F9FAFB' },
+                          '&:hover': { backgroundColor: '#F1F5F9' },
+                          transition: 'background-color 0.2s',
+                        }}
+                      ><TableCell>
+                          {fine.number_plate ? (
+                            (() => {
+                              const [region, plate] = fine.number_plate.split('\n');
+                              return (
+                                <Box
+                                  sx={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    borderRadius: '10px',
+                                    background: '#fff',
+                                    border: '2px solid #222',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                                    minWidth: '120px',
+                                    maxWidth: '180px',
+                                    px: 1.5,
+                                    py: 0.6,   // 🔥 reduced height
+                                    gap: 1.2,
+                                  }}
+                                >
+                                  {/* SVG on LEFT */}
+                                  <Box
+                                    component="img"
+                                    src="/dubai.svg"
+                                    alt="Dubai"
+                                    sx={{
+                                      width: 24,
+                                      height: 24,   // 🔥 smaller
+                                      objectFit: 'contain',
+                                    }}
+                                  />
+
+                                  {/* Region */}
+                                  <Box
+                                    sx={{
+                                      background: '#222',
+                                      color: '#fff',
+                                      fontWeight: 700,
+                                      fontSize: '14px',
+                                      borderRadius: '6px',
+                                      px: 1.2,
+                                      py: 0.4,
+                                      minWidth: '28px',
+                                      textAlign: 'center',
+                                      letterSpacing: '1px',
+                                    }}
+                                  >
+                                    {region}
+                                  </Box>
+
+                                  {/* Plate Number */}
+                                  <Box
+                                    sx={{
+                                      color: '#222',
+                                      fontWeight: 700,
+                                      fontSize: '18px',  // slightly reduced
+                                      letterSpacing: '2px',
+                                      textAlign: 'center',
+                                      minWidth: '50px',
+                                    }}
+                                  >
+                                    {plate}
+                                  </Box>
+                                </Box>
+                              );
+                            })()
+                          ) : (
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                              -
+                            </Typography>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <CarIcon sx={{ color: theme.palette.primary.main, fontSize: '20px' }} />
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                              {fine.vehicle_info}
+                            </Typography>
+                          </Box>
+                        </TableCell>
+
+                        <TableCell>
+                          <Typography variant="body2">{fine.date_time}</Typography>
+                        </TableCell>
+                        <TableCell>
                           <Chip
-                            label={fine.black_points}
-                            color="warning"
+                            label={fine.amount}
+                            color="error"
                             size="small"
                             sx={{ fontWeight: 600, fontSize: '12px' }}
                           />
-                        ) : (
-                          <Typography variant="body2" sx={{ fontSize: '13px', color: '#6B7280' }}>
-                            -
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" sx={{ fontSize: '13px' }}>
+                            {fine.source}
                           </Typography>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <IconButton
-                          onClick={() => handleDeleteClick(fine)}
-                          size="small"
-                          sx={{
-                            color: theme.palette.error.main,
-                            '&:hover': {
-                              backgroundColor: `${theme.palette.error.main}15`,
-                            },
-                          }}
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        </TableCell>
+                        <TableCell>
+                          {fine.black_points !== '-' ? (
+                            <Chip
+                              label={fine.black_points}
+                              color="warning"
+                              size="small"
+                              sx={{ fontWeight: 600, fontSize: '12px' }}
+                            />
+                          ) : (
+                            <Typography variant="body2" sx={{ fontSize: '13px', color: '#6B7280' }}>
+                              -
+                            </Typography>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <IconButton
+                            onClick={() => handleDeleteClick(fine)}
+                            size="small"
+                            sx={{
+                              color: theme.palette.error.main,
+                              '&:hover': {
+                                backgroundColor: `${theme.palette.error.main}15`,
+                              },
+                            }}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))}
                 </TableBody>
               </Table>
             </TableContainer>

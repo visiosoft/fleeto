@@ -265,17 +265,17 @@ const StatCard: React.FC<{
   onClick?: () => void;
 }> = ({ title, value, icon, trend, trendValue, color, onClick }) => {
   const theme = useTheme();
-  
+
   const handleClick = () => {
     console.log('StatCard clicked:', title);
     if (onClick) {
       onClick();
     }
   };
-  
+
   return (
-    <Card 
-      sx={{ 
+    <Card
+      sx={{
         height: '100%',
         backgroundColor: '#FFFFFF',
         border: '1px solid #E5E7EB',
@@ -305,10 +305,10 @@ const StatCard: React.FC<{
           >
             {icon}
           </Box>
-          <Typography 
-            variant="h6" 
-            component="div" 
-            sx={{ 
+          <Typography
+            variant="h6"
+            component="div"
+            sx={{
               pointerEvents: 'none',
               fontSize: '14px',
               fontWeight: 600,
@@ -318,11 +318,11 @@ const StatCard: React.FC<{
             {title}
           </Typography>
         </Box>
-        <Typography 
-          variant="h4" 
-          component="div" 
-          sx={{ 
-            mb: 1, 
+        <Typography
+          variant="h4"
+          component="div"
+          sx={{
+            mb: 1,
             pointerEvents: 'none',
             fontSize: '28px',
             fontWeight: 700,
@@ -405,14 +405,14 @@ const AlertCard: React.FC<{
                 borderRadius: 1,
               }}
             >
-              <AlertIcon 
-                sx={{ 
+              <AlertIcon
+                sx={{
                   color: (theme) => {
                     const color = getSeverityColor(alert.severity);
                     return theme.palette[color].main;
                   },
-                  mr: 1 
-                }} 
+                  mr: 1
+                }}
               />
               <Typography variant="body2">{alert.message}</Typography>
             </Box>
@@ -454,8 +454,8 @@ const HealthCard: React.FC<{
                     item.health > 70
                       ? theme.palette.success.main
                       : item.health > 30
-                      ? theme.palette.warning.main
-                      : theme.palette.error.main,
+                        ? theme.palette.warning.main
+                        : theme.palette.error.main,
                 },
               }}
             />
@@ -477,16 +477,16 @@ const SummaryCard: React.FC<{
   };
 }> = ({ title, icon, color, data }) => {
   const theme = useTheme();
-  
+
   return (
     <Card sx={{ height: '100%' }}>
       <CardContent>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <Box sx={{ 
-            bgcolor: color + '15', 
-            borderRadius: '50%', 
-            p: 1, 
-            mr: 1, 
+          <Box sx={{
+            bgcolor: color + '15',
+            borderRadius: '50%',
+            p: 1,
+            mr: 1,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center'
@@ -495,7 +495,7 @@ const SummaryCard: React.FC<{
           </Box>
           <Typography variant="h6">{title}</Typography>
         </Box>
-        
+
         <Box sx={{ mb: 2 }}>
           <Grid container spacing={2}>
             <Grid item xs={6}>
@@ -508,7 +508,7 @@ const SummaryCard: React.FC<{
             </Grid>
           </Grid>
         </Box>
-        
+
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           {data.trendPercentage > 0 ? (
             <TrendingUpIcon sx={{ color: theme.palette.error.main, fontSize: '1rem' }} />
@@ -548,15 +548,15 @@ const FuelSummary: React.FC<{ fuelData: any }> = ({ fuelData }) => {
       </Typography>
       <Grid container spacing={3}>
         <Grid item xs={12} md={4}>
-          <SummaryCard 
-            title="Fuel Expenses" 
-            icon={<FuelIcon />} 
-            color={theme.palette.warning.main} 
+          <SummaryCard
+            title="Fuel Expenses"
+            icon={<FuelIcon />}
+            color={theme.palette.warning.main}
             data={{
               monthlyCost: fuelData.monthlyCost,
               yearToDate: fuelData.yearToDate,
               trendPercentage: fuelData.trendPercentage
-            }} 
+            }}
           />
         </Grid>
         <Grid item xs={12} md={4}>
@@ -691,10 +691,10 @@ const MaintenanceSummary: React.FC<{ maintenanceData: any }> = ({ maintenanceDat
       </Typography>
       <Grid container spacing={3}>
         <Grid item xs={12} md={4}>
-          <SummaryCard 
-            title="Maintenance Expenses" 
-            icon={<MaintenanceIcon />} 
-            color={theme.palette.error.main} 
+          <SummaryCard
+            title="Maintenance Expenses"
+            icon={<MaintenanceIcon />}
+            color={theme.palette.error.main}
             data={{
               monthlyCost: maintenanceData.monthlyCost,
               yearToDate: maintenanceData.yearToDate,
@@ -832,14 +832,14 @@ const CostSummary: React.FC<{ costData: any }> = ({ costData }) => {
           },
         });
         const data = await response.json();
-        
+
         // Filter for current month and group by vehicle
         const now = new Date();
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-        
+
         const vehicleMap = new Map<string, number>();
-        
+
         data.vehicles?.forEach((vehicle: any) => {
           let vehicleTotal = 0;
           vehicle.details?.forEach((expense: any) => {
@@ -852,13 +852,13 @@ const CostSummary: React.FC<{ costData: any }> = ({ costData }) => {
             vehicleMap.set(vehicle.vehicleName, vehicleTotal);
           }
         });
-        
+
         const chartData = Array.from(vehicleMap.entries()).map(([vehicleName, total]) => ({
           id: vehicleName,
           label: vehicleName,
           value: total
         }));
-        
+
         setVehicleExpenses(chartData);
       } catch (error) {
         console.error('Error fetching vehicle expenses:', error);
@@ -867,7 +867,7 @@ const CostSummary: React.FC<{ costData: any }> = ({ costData }) => {
         setLoading(false);
       }
     };
-    
+
     fetchVehicleExpenses();
   }, []);
 
@@ -881,7 +881,7 @@ const CostSummary: React.FC<{ costData: any }> = ({ costData }) => {
 
   return (
     <Grid container spacing={3}>
-    
+
       <Grid item xs={12} md={6}>
         <Card sx={{ height: '100%' }}>
           <CardContent>
@@ -1013,7 +1013,7 @@ const Dashboard: React.FC = () => {
   const [recentReceipts, setRecentReceipts] = useState<any[]>([]);
   const [totalFines, setTotalFines] = useState<{ total_amount: string } | null>(null);
   const [recentFines, setRecentFines] = useState<any[]>([]);
-  
+
   // Use the custom hook for dashboard data
   const { data, isLoading, error, refresh, refreshAll, isRefreshing } = useDashboardData();
 
@@ -1030,7 +1030,7 @@ const Dashboard: React.FC = () => {
         console.error('Error fetching recent invoices:', err);
       }
     };
-    
+
     const fetchRecentReceipts = async () => {
       try {
         const response = await ReceiptService.getInstance().getAllReceipts(1, 5);
@@ -1044,7 +1044,7 @@ const Dashboard: React.FC = () => {
         console.error('Error fetching recent receipts:', err);
       }
     };
-    
+
     const fetchTotalFines = async () => {
       try {
         const token = localStorage.getItem('token');
@@ -1081,7 +1081,7 @@ const Dashboard: React.FC = () => {
         console.error('Error fetching recent fines:', err);
       }
     };
-    
+
     fetchRecentInvoices();
     fetchRecentReceipts();
     fetchTotalFines();
@@ -1094,7 +1094,7 @@ const Dashboard: React.FC = () => {
 
   // Format total expenses with currency symbol
   const totalExpenses = data ? `AED ${data.costData.monthlyCost.toLocaleString()}` : 'AED 0';
-  
+
   // Format expected income from active contracts
   const expectedIncome = data ? `AED ${data.contractStats.totalValue.toLocaleString()}` : 'AED 0';
 
@@ -1136,12 +1136,12 @@ const Dashboard: React.FC = () => {
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
         <Typography variant="h4">
-        Dashboard
-      </Typography>
+          Dashboard
+        </Typography>
         <Box sx={{ display: 'flex', gap: 1 }}>
           <Tooltip title="Refresh data">
-            <IconButton 
-              onClick={refresh} 
+            <IconButton
+              onClick={refresh}
               disabled={isRefreshing}
               color="primary"
             >
@@ -1149,8 +1149,8 @@ const Dashboard: React.FC = () => {
             </IconButton>
           </Tooltip>
           <Tooltip title="Refresh all data">
-            <IconButton 
-              onClick={refreshAll} 
+            <IconButton
+              onClick={refreshAll}
               disabled={isRefreshing}
               color="primary"
             >
@@ -1223,8 +1223,8 @@ const Dashboard: React.FC = () => {
           </Typography>
           <Grid container spacing={3}>
             <Grid item xs={12} sm={6} md={3}>
-              <Card 
-                sx={{ 
+              <Card
+                sx={{
                   cursor: 'pointer',
                   height: '100%',
                   transition: 'all 0.3s ease',
@@ -1238,7 +1238,7 @@ const Dashboard: React.FC = () => {
                 <CardContent sx={{ textAlign: 'center', py: 2 }}>
                   <DescriptionIcon sx={{ fontSize: 40, color: theme.palette.info.main, mb: 1.5 }} />
                   <Typography variant="subtitle1" gutterBottom fontWeight={600}>
-                   Create Contracts
+                    Create Contracts
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
                     Manage all contracts
@@ -1247,8 +1247,8 @@ const Dashboard: React.FC = () => {
               </Card>
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
-              <Card 
-                sx={{ 
+              <Card
+                sx={{
                   cursor: 'pointer',
                   height: '100%',
                   transition: 'all 0.3s ease',
@@ -1270,10 +1270,10 @@ const Dashboard: React.FC = () => {
                 </CardContent>
               </Card>
             </Grid>
-          
+
             <Grid item xs={12} sm={6} md={3}>
-              <Card 
-                sx={{ 
+              <Card
+                sx={{
                   cursor: 'pointer',
                   height: '100%',
                   transition: 'all 0.3s ease',
@@ -1295,9 +1295,9 @@ const Dashboard: React.FC = () => {
                 </CardContent>
               </Card>
             </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-              <Card 
-                sx={{ 
+            <Grid item xs={12} sm={6} md={3}>
+              <Card
+                sx={{
                   cursor: 'pointer',
                   height: '100%',
                   transition: 'all 0.3s ease',
@@ -1313,15 +1313,15 @@ const Dashboard: React.FC = () => {
                     component="img"
                     src="/rta_dubai.png"
                     alt="RTA Dubai"
-                    sx={{ 
-                      width: 48, 
-                      height: 48, 
+                    sx={{
+                      width: 48,
+                      height: 48,
                       mb: 1.5,
                       objectFit: 'contain'
                     }}
                   />
                   <Typography variant="subtitle1" gutterBottom fontWeight={600}>
-                   RTA Fine Search
+                    RTA Fine Search
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
                     Manage RTA Fines for (51563245)
@@ -1376,9 +1376,57 @@ const Dashboard: React.FC = () => {
                         <Typography variant="body2" fontWeight={600} color="error">
                           {fine.violation_details || fine.description || 'RTA Fine'}
                         </Typography>
+                        {/* Number plate design */}
+                        {fine.number_plate && (
+                          (() => {
+                            const [region, plate] = fine.number_plate.split('\n');
+                            return (
+                              <Box
+                                sx={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  borderRadius: '10px',
+                                  background: '#fff',
+                                  border: '2px solid #222',
+                                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                                  minWidth: '120px',
+                                  maxWidth: '180px',
+                                  px: 2,
+                                  py: 1,
+                                  mb: 0.5,
+                                }}
+                              >
+                                <Box sx={{
+                                  background: '#1976D2',
+                                  color: '#fff',
+                                  fontWeight: 700,
+                                  fontSize: '16px',
+                                  borderRadius: '6px',
+                                  px: 1.5,
+                                  py: 0.5,
+                                  mr: 1.5,
+                                  minWidth: '32px',
+                                  textAlign: 'center',
+                                  letterSpacing: '1px',
+                                }}>
+                                  {region}
+                                </Box>
+                                <Box sx={{
+                                  color: '#222',
+                                  fontWeight: 700,
+                                  fontSize: '20px',
+                                  letterSpacing: '2px',
+                                  textAlign: 'center',
+                                  minWidth: '60px',
+                                }}>
+                                  {plate}
+                                </Box>
+                              </Box>
+                            );
+                          })()
+                        )}
                         <Typography variant="caption" color="text.secondary">
-                          {fine.plate_no && `Plate: ${fine.plate_no}`}
-                          {fine.date && ` • Date: ${new Date(fine.date).toLocaleDateString()}`}
+                          {fine.date && `Date: ${new Date(fine.date).toLocaleDateString()}`}
                         </Typography>
                       </Box>
                       <Box sx={{ textAlign: 'right' }}>
@@ -1473,10 +1521,10 @@ const Dashboard: React.FC = () => {
                           size="small"
                           color={
                             receipt.status === 'received' || receipt.status === 'paid' ? 'success' :
-                            receipt.status === 'pending' ? 'warning' :
-                            receipt.status === 'failed' ? 'error' :
-                            receipt.status === 'refunded' ? 'info' :
-                            'default'
+                              receipt.status === 'pending' ? 'warning' :
+                                receipt.status === 'failed' ? 'error' :
+                                  receipt.status === 'refunded' ? 'info' :
+                                    'default'
                           }
                           sx={{ mt: 0.5, fontSize: '0.7rem', height: 20 }}
                         />
@@ -1548,10 +1596,10 @@ const Dashboard: React.FC = () => {
                           size="small"
                           color={
                             invoice.status === 'paid' ? 'success' :
-                            invoice.status === 'partial' ? 'warning' :
-                            invoice.status === 'unpaid' || invoice.status === 'overdue' || invoice.status === 'cancelled' ? 'error' :
-                            invoice.status === 'sent' ? 'info' :
-                            'default'
+                              invoice.status === 'partial' ? 'warning' :
+                                invoice.status === 'unpaid' || invoice.status === 'overdue' || invoice.status === 'cancelled' ? 'error' :
+                                  invoice.status === 'sent' ? 'info' :
+                                    'default'
                           }
                           sx={{ mt: 0.5, fontSize: '0.7rem', height: 20 }}
                         />

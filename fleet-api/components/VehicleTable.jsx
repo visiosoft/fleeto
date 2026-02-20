@@ -122,13 +122,13 @@ const VehicleTable = () => {
 
   // Filter vehicles based on search query and status
   const filteredVehicles = vehicles.filter((vehicle) => {
-    const matchesSearch = 
+    const matchesSearch =
       vehicle.make.toLowerCase().includes(searchQuery.toLowerCase()) ||
       vehicle.model.toLowerCase().includes(searchQuery.toLowerCase()) ||
       vehicle.licensePlate.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesStatus = 
-      selectedStatus === 'all' || 
+
+    const matchesStatus =
+      selectedStatus === 'all' ||
       vehicle.status.toLowerCase() === selectedStatus.toLowerCase();
 
     return matchesSearch && matchesStatus;
@@ -161,9 +161,9 @@ const VehicleTable = () => {
       <Card sx={{ mb: 3 }}>
         <CardContent>
           <Stack direction="row" justifyContent="space-between" alignItems="center">
-            <Typography variant="h5" component="h2" sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
+            <Typography variant="h5" component="h2" sx={{
+              display: 'flex',
+              alignItems: 'center',
               gap: 1,
               color: '#1976D2',
               fontWeight: 600
@@ -173,7 +173,7 @@ const VehicleTable = () => {
             <Button
               variant="contained"
               color="primary"
-              onClick={() => {/* Handle add new vehicle */}}
+              onClick={() => {/* Handle add new vehicle */ }}
               sx={{
                 borderRadius: '8px',
                 textTransform: 'none',
@@ -222,7 +222,7 @@ const VehicleTable = () => {
         open={Boolean(filterAnchorEl)}
         onClose={() => setFilterAnchorEl(null)}
       >
-        <MenuItem 
+        <MenuItem
           onClick={() => {
             setSelectedStatus('all');
             setFilterAnchorEl(null);
@@ -261,8 +261,8 @@ const VehicleTable = () => {
               {filteredVehicles
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((vehicle) => (
-                  <TableRow 
-                    key={vehicle._id} 
+                  <TableRow
+                    key={vehicle._id}
                     hover
                     sx={{
                       '&:hover': {
@@ -273,8 +273,8 @@ const VehicleTable = () => {
                   >
                     <TableCell>
                       <Stack direction="row" spacing={2} alignItems="center">
-                        <Avatar 
-                          sx={{ 
+                        <Avatar
+                          sx={{
                             bgcolor: '#E3F2FD',
                             color: '#1976D2',
                             width: 48,
@@ -295,9 +295,68 @@ const VehicleTable = () => {
                     </TableCell>
                     <TableCell>
                       <Stack spacing={0.5}>
-                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                          {vehicle.licensePlate}
-                        </Typography>
+                        {vehicle.licensePlate ? (
+                          (() => {
+                            // If licensePlate contains region and plate separated by \n, use that, else show as plate only
+                            const parts = vehicle.licensePlate.split('\n');
+                            const region = parts.length > 1 ? parts[0] : '';
+                            const plate = parts.length > 1 ? parts[1] : parts[0];
+                            return (
+                              <Box
+                                sx={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  borderRadius: '10px',
+                                  background: '#fff',
+                                  border: '2px solid #222',
+                                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                                  minWidth: '120px',
+                                  maxWidth: '180px',
+                                  px: 2,
+                                  py: 1,
+                                  mb: 0.5,
+                                  position: 'relative',
+                                }}
+                              >
+                                {/* Dubai SVG top left */}
+                                <Box sx={{ position: 'absolute', top: '-18px', left: '-18px', width: 32, height: 32 }}>
+                                  <img src="/dubai.svg" alt="Dubai" style={{ width: '100%', height: '100%' }} />
+                                </Box>
+                                {region && (
+                                  <Box sx={{
+                                    background: '#1976D2',
+                                    color: '#fff',
+                                    fontWeight: 700,
+                                    fontSize: '16px',
+                                    borderRadius: '6px',
+                                    px: 1.5,
+                                    py: 0.5,
+                                    mr: 1.5,
+                                    minWidth: '32px',
+                                    textAlign: 'center',
+                                    letterSpacing: '1px',
+                                  }}>
+                                    {region}
+                                  </Box>
+                                )}
+                                <Box sx={{
+                                  color: '#222',
+                                  fontWeight: 700,
+                                  fontSize: '20px',
+                                  letterSpacing: '2px',
+                                  textAlign: 'center',
+                                  minWidth: '60px',
+                                }}>
+                                  {plate}
+                                </Box>
+                              </Box>
+                            );
+                          })()
+                        ) : (
+                          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                            -
+                          </Typography>
+                        )}
                         <Typography variant="caption" color="textSecondary">
                           VIN: {vehicle.vin}
                         </Typography>
@@ -318,7 +377,7 @@ const VehicleTable = () => {
                         </Stack>
                         <Stack direction="row" spacing={1} alignItems="center">
                           <CalendarIcon sx={{ fontSize: 16, color: vehicle.nextServiceDue <= new Date() ? 'error.main' : 'text.secondary' }} />
-                          <Typography 
+                          <Typography
                             variant="body2"
                             color={vehicle.nextServiceDue <= new Date() ? 'error.main' : 'inherit'}
                           >
@@ -348,8 +407,8 @@ const VehicleTable = () => {
                         <Tooltip title="Edit">
                           <IconButton
                             size="small"
-                            onClick={() => {/* Handle edit */}}
-                            sx={{ 
+                            onClick={() => {/* Handle edit */ }}
+                            sx={{
                               color: 'primary.main',
                               '&:hover': { backgroundColor: 'primary.lighter' }
                             }}
@@ -364,7 +423,7 @@ const VehicleTable = () => {
                               setSelectedVehicle(vehicle);
                               setActionMenuAnchor(e.currentTarget);
                             }}
-                            sx={{ 
+                            sx={{
                               color: 'action.active',
                               '&:hover': { backgroundColor: 'action.hover' }
                             }}
@@ -375,11 +434,11 @@ const VehicleTable = () => {
                       </Stack>
                     </TableCell>
                   </TableRow>
-              ))}
+                ))}
             </TableBody>
           </Table>
         </TableContainer>
-        
+
         {/* Pagination */}
         <Divider />
         <Box sx={{ p: 2 }}>
@@ -415,13 +474,13 @@ const VehicleTable = () => {
           }
         }}
       >
-        <MenuItem onClick={() => {/* Handle fuel log */}}>
+        <MenuItem onClick={() => {/* Handle fuel log */ }}>
           <FuelIcon sx={{ mr: 2, color: 'primary.main' }} /> Fuel Log
         </MenuItem>
-        <MenuItem onClick={() => {/* Handle maintenance */}}>
+        <MenuItem onClick={() => {/* Handle maintenance */ }}>
           <MaintenanceIcon sx={{ mr: 2, color: 'warning.main' }} /> Maintenance
         </MenuItem>
-        <MenuItem onClick={() => {/* Handle documents */}}>
+        <MenuItem onClick={() => {/* Handle documents */ }}>
           <DocumentIcon sx={{ mr: 2, color: 'info.main' }} /> Documents
         </MenuItem>
         <Divider />
@@ -457,20 +516,20 @@ const VehicleTable = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button 
+          <Button
             onClick={() => setDeleteDialogOpen(false)}
-            sx={{ 
+            sx={{
               textTransform: 'none',
               borderRadius: '8px'
             }}
           >
             Cancel
           </Button>
-          <Button 
-            onClick={handleDeleteConfirm} 
+          <Button
+            onClick={handleDeleteConfirm}
             color="error"
             variant="contained"
-            sx={{ 
+            sx={{
               textTransform: 'none',
               borderRadius: '8px'
             }}

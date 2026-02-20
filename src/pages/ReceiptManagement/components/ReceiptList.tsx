@@ -150,9 +150,7 @@ const ReceiptList: React.FC<ReceiptListProps> = ({ receipts = [], onRefresh }) =
               <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>
                 Receipt Info
               </TableCell>
-              <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>
-                Client
-              </TableCell>
+             
               <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>
                 Amount
               </TableCell>
@@ -228,18 +226,19 @@ const ReceiptList: React.FC<ReceiptListProps> = ({ receipts = [], onRefresh }) =
                             gap: 0.5,
                           }}
                         >
-                          <ReceiptIcon sx={{ fontSize: 12 }} />
-                          {receipt.invoiceId}
                         </Typography>
+                        {/* Show company info if available */}
+                        {receipt.clientName && (
+                          <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+                            {receipt.clientName}
+                            {receipt.clientPhone ? ` • ${receipt.clientPhone}` : ''}
+                          </Typography>
+                        )}
                       </Box>
                     </Box>
                   </Stack>
                 </TableCell>
-                <TableCell>
-                  <Typography variant="body2" fontWeight={600}>
-                    {receipt.clientName}
-                  </Typography>
-                </TableCell>
+                
                 <TableCell>
                   <Box
                     sx={{
