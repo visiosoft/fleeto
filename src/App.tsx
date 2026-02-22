@@ -1,6 +1,5 @@
 import React, { Suspense, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import Navigation from './components/Navigation/Navigation';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment';
 import { useMediaQuery, useTheme, CircularProgress, Box, CssBaseline } from '@mui/material';
@@ -119,7 +118,11 @@ const AppContent: React.FC = () => {
       <Suspense fallback={<LoadingFallback />}>
         <Routes>
           {/* Public routes */}
-          <Route path="/" element={<LandingPage />} />
+          <Route path="/" element={
+            <PublicRoute>
+              <LandingPage />
+            </PublicRoute>
+          } />
           <Route path="/login" element={
             <PublicRoute>
               <Login />

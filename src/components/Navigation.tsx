@@ -22,6 +22,7 @@ import {
   AccountBalanceWallet as AccountBalanceWalletIcon,
   Assessment as AssessmentIcon,
   Settings as SettingsIcon,
+  LocationOn as LocationOnIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -47,8 +48,12 @@ const menuItems = [
     title: 'Add Company / Contract',
     path: '/contracts',
     icon: <DescriptionIcon />,
-    },
- 
+  },
+  {
+    title: 'Tracking',
+    path: '/tracking',
+    icon: <LocationOnIcon />,
+  },
   {
     title: 'Letterhead Templates',
     path: '/letterheads',

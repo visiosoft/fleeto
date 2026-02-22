@@ -1,15 +1,30 @@
 import React from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box } from '@mui/material';
 
 const Tracking: React.FC = () => {
   return (
-    <Box>
-      <Typography variant="h4" gutterBottom>
-        Vehicle Tracking
-      </Typography>
-      <Typography variant="body1">
-        Vehicle tracking functionality will be implemented here.
-      </Typography>
+    <Box 
+      sx={{ 
+        width: '100vw',
+        height: 'calc(100vh - 64px)',
+        marginLeft: { xs: '-1rem', md: '-1.5rem' },
+        marginRight: { xs: '-1rem', md: '-1.5rem' },
+        marginTop: { xs: '-1rem', md: '-1.5rem' },
+        marginBottom: { xs: '-1rem', md: '-1.5rem' },
+        maxWidth: { xs: 'calc(100vw)', md: 'calc(100vw - 16rem)' },
+      }}
+    >
+      <iframe
+        src="http://www.sinotrackpro.com/"
+        title="Sinotrack Pro Vehicle Tracking"
+        style={{
+          width: '100%',
+          height: '100%',
+          border: 'none',
+          display: 'block',
+        }}
+        allowFullScreen
+      />
     </Box>
   );
 };

@@ -12,6 +12,7 @@ import {
   Dashboard as DashboardIcon,
   ReceiptLong as InvoiceIcon,
   Receipt as ReceiptIcon,
+  LocationOn as TrackingIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -48,6 +49,12 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, titl
       label: 'Contracts',
       icon: <ContractIcon />,
       path: '/contracts',
+    },
+    {
+      id: 'tracking',
+      label: 'Tracking',
+      icon: <TrackingIcon />,
+      path: '/tracking',
     },
     {
       id: 'invoices',
