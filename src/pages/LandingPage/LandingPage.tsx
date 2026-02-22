@@ -4,6 +4,7 @@ import Navbar from './Navbar';
 import Hero from './Hero';
 import TrackerProviders from './TrackerProviders';
 import Features from './Features';
+import IndustryVerticals from './IndustryVerticals';
 import DashboardPreview from './DashboardPreview';
 import Benefits from './Benefits';
 import Integrations from './Integrations';
@@ -27,6 +28,7 @@ const LandingPage: React.FC = () => {
       <Hero />
       <TrackerProviders />
       <Features />
+      <IndustryVerticals />
       <DashboardPreview />
       <Benefits />
       <Integrations />

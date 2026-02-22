@@ -26,6 +26,7 @@ import { API_ENDPOINTS } from '../../config/environment';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface CompanySettings {
+  _id?: string;
   companyName: string;
   currency: string;
   address: string;
@@ -53,12 +54,14 @@ const currencies = [
 ];
 
 const Settings: React.FC = () => {
-  const { user, selectedCompany } = useAuth();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
-  
+  const [companies, setCompanies] = useState<CompanySettings[]>([]);
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string>('');
   const [settings, setSettings] = useState<CompanySettings>({
+    _id: '',
     companyName: '',
     currency: 'AED',
     address: '',
@@ -74,47 +77,35 @@ const Settings: React.FC = () => {
   });
 
   useEffect(() => {
-    fetchSettings();
+    fetchCompanies();
   }, []);
 
-  const fetchSettings = async () => {
+  const fetchCompanies = async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      
-      // Fetch from company settings endpoint (single record for the company)
       const response = await axios.get(API_ENDPOINTS.companySettings, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
-      const company = response.data;
-      
-      // Map the nested structure from companyProfile model
-      setSettings({
-        companyName: company.companyName || '',
-        currency: company.currency || 'AED',
-        address: company.address?.street || '',
-        city: company.address?.city || '',
-        state: company.address?.state || '',
-        postalCode: company.address?.postalCode || '',
-        country: company.address?.country || 'United Arab Emirates',
-        phone: Array.isArray(company.contact?.phone) ? company.contact.phone[0] : (company.contact?.phone || ''),
-        email: company.contact?.email || '',
-        contactPerson: company.contactPerson || `${user?.firstName || ''} ${user?.lastName || ''}`.trim(),
-        taxId: company.registration?.taxId || '',
-        website: company.contact?.website || '',
-      });
-    } catch (error) {
-      console.error('Error fetching settings:', error);
-      // If no settings found, just show empty form
-      if (axios.isAxiosError(error) && error.response?.status === 404) {
-        console.log('No company profile found, showing empty form');
-      } else {
-        setSnackbar({ open: true, message: 'Failed to load settings', severity: 'error' });
+      const companiesList = response.data.data?.companies || response.data.companies || [response.data];
+      setCompanies(Array.isArray(companiesList) ? companiesList : [companiesList]);
+      if (companiesList.length > 0) {
+        setSelectedCompanyId(companiesList[0]._id || '');
+        setSettings({ ...companiesList[0] });
       }
+    } catch (error) {
+      console.error('Error fetching companies:', error);
+      setSnackbar({ open: true, message: 'Failed to load companies', severity: 'error' });
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCompanySelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const id = event.target.value as string;
+    setSelectedCompanyId(id);
+    const company = companies.find((c) => c._id === id);
+    if (company) setSettings({ ...company });
   };
 
   const handleChange = (field: keyof CompanySettings) => (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -122,41 +113,17 @@ const Settings: React.FC = () => {
   };
 
   const handleSave = async () => {
+    if (!selectedCompanyId) return;
     setSaving(true);
     try {
       const token = localStorage.getItem('token');
-      
-      // Send data in the nested structure expected by companyProfile model
       await axios.put(
-        API_ENDPOINTS.companySettings,
-        {
-          companyName: settings.companyName,
-          currency: settings.currency,
-          address: {
-            street: settings.address,
-            city: settings.city,
-            state: settings.state,
-            postalCode: settings.postalCode,
-            country: settings.country,
-          },
-          contact: {
-            phone: [settings.phone],
-            email: settings.email,
-            website: settings.website,
-          },
-          registration: {
-            taxId: settings.taxId,
-            registrationNumber: settings.taxId, // Using taxId as registrationNumber for now
-            establishmentDate: new Date(), // Default to current date
-          },
-          contactPerson: settings.contactPerson,
-        },
+        `${API_ENDPOINTS.companySettings}/${selectedCompanyId}`,
+        settings,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
       setSnackbar({ open: true, message: 'Settings saved successfully!', severity: 'success' });
-      // Reload settings to get the updated data
-      fetchSettings();
+      fetchCompanies();
     } catch (error) {
       console.error('Error saving settings:', error);
       setSnackbar({ open: true, message: 'Failed to save settings', severity: 'error' });
@@ -184,6 +151,24 @@ const Settings: React.FC = () => {
         </Typography>
       </Box>
 
+      {/* Company Selector */}
+      <Box mb={3}>
+        <TextField
+          select
+          label="Select Company"
+          value={selectedCompanyId}
+          onChange={handleCompanySelect}
+          fullWidth
+          sx={{ maxWidth: 400 }}
+        >
+          {companies.map((company) => (
+            <MenuItem key={company._id} value={company._id}>
+              {company.companyName}
+            </MenuItem>
+          ))}
+        </TextField>
+      </Box>
+
       <Grid container spacing={3}>
         {/* Company Information */}
         <Grid item xs={12}>
@@ -195,7 +180,7 @@ const Settings: React.FC = () => {
               </Typography>
             </Box>
             <Divider sx={{ mb: 3 }} />
-            
+
             <Grid container spacing={3}>
               <Grid item xs={12} md={6}>
                 <TextField
@@ -253,7 +238,7 @@ const Settings: React.FC = () => {
               </Typography>
             </Box>
             <Divider sx={{ mb: 3 }} />
-            
+
             <Grid container spacing={3}>
               <Grid item xs={12} md={6}>
                 <TextField
@@ -303,7 +288,7 @@ const Settings: React.FC = () => {
               </Typography>
             </Box>
             <Divider sx={{ mb: 3 }} />
-            
+
             <Grid container spacing={3}>
               <Grid item xs={12}>
                 <TextField
@@ -354,13 +339,7 @@ const Settings: React.FC = () => {
         {/* Save Button */}
         <Grid item xs={12}>
           <Box display="flex" justifyContent="flex-end" gap={2}>
-            <Button
-              variant="outlined"
-              onClick={fetchSettings}
-              disabled={saving}
-            >
-              Reset
-            </Button>
+            {/* Reset button removed as fetchSettings is not defined in this context */}
             <Button
               variant="contained"
               color="primary"

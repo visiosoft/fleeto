@@ -60,16 +60,16 @@ export const AlertsPanel: React.FC<AlertsPanelProps> = ({ alerts }) => {
       sx={{
         background: '#ffffff',
         borderRadius: '18px',
-        p: 3,
+        p: { xs: 2, sm: 3 },
         boxShadow: '0 6px 30px rgba(0,0,0,0.05)',
         border: '1px solid #f1f5f9',
       }}
     >
       <Box
         sx={{
-          fontSize: 18,
+          fontSize: { xs: 16, sm: 18 },
           fontWeight: 700,
-          mb: 3,
+          mb: { xs: 2, sm: 3 },
           color: '#111827',
         }}
       >
@@ -92,7 +92,7 @@ export const AlertsPanel: React.FC<AlertsPanelProps> = ({ alerts }) => {
                   background: theme.gradient,
                   borderLeft: `6px solid ${theme.border}`,
                   borderRadius: '16px',
-                  p: 3,
+                  p: { xs: 2, sm: 3 },
                   transition: 'all 0.25s ease',
                   '&:hover': {
                     transform: 'translateY(-4px)',
@@ -100,111 +100,233 @@ export const AlertsPanel: React.FC<AlertsPanelProps> = ({ alerts }) => {
                   },
                 }}
               >
-                <Box sx={{ display: 'flex', gap: 2 }}>
-
-                  {/* Icon */}
-                  <Box sx={{ mt: 0.5 }}>
-                    {renderIcon(alert.type, theme.iconColor)}
-                  </Box>
-
-                  {/* Content */}
-                  <Box sx={{ flex: 1 }}>
-
-                    {/* Title */}
-                    <Box
-                      sx={{
-                        fontWeight: 700,
-                        fontSize: 16,
-                        color: '#111827',
-                        mb: 1,
-                      }}
-                    >
-                      {alert.title}
+                {/* Desktop Layout */}
+                <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
+                  <Box sx={{ display: 'flex', gap: 2 }}>
+                    {/* Icon */}
+                    <Box sx={{ mt: 0.5 }}>
+                      {renderIcon(alert.type, theme.iconColor)}
                     </Box>
 
+                    {/* Content */}
+                    <Box sx={{ flex: 1 }}>
+                      {/* Amount Badge - Top Right */}
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                        {/* Plate number */}
+                        <Box
+                          sx={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            borderRadius: '12px',
+                            background: '#fff',
+                            border: '2px solid #111',
+                            px: 2,
+                            py: 0.6,
+                            gap: 1.2,
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                          }}
+                        >
+                          <Box
+                            component="img"
+                            src="/dubai.svg"
+                            alt="Dubai"
+                            sx={{
+                              width: 22,
+                              height: 22,
+                            }}
+                          />
+                          <Box
+                            sx={{
+                              fontWeight: 800,
+                              fontSize: 18,
+                              letterSpacing: '2px',
+                              color: '#111',
+                            }}
+                          >
+                            {alert.platenumber}
+                          </Box>
+                        </Box>
+                        
+                        {/* Amount Badge */}
+                        <Box
+                          sx={{
+                            background: theme.iconColor,
+                            color: '#fff',
+                            px: 3,
+                            py: 0.8,
+                            borderRadius: '999px',
+                            fontWeight: 800,
+                            fontSize: 18,
+                            letterSpacing: '0.5px',
+                            boxShadow: `0 6px 18px ${theme.iconColor}40`,
+                            minWidth: '110px',
+                            textAlign: 'center',
+                          }}
+                        >
+                          AED {(() => {
+                            // Extract amount from description
+                            const match = alert.description.match(/Amount:\s*(\d+)/);
+                            return match ? match[1] : alert.description;
+                          })()}
+                        </Box>
+                      </Box>
+
+                      {/* Row 2: Vehicle description */}
+                      <Box
+                        sx={{
+                          fontWeight: 600,
+                          fontSize: 16,
+                          color: '#374151',
+                          mb: 1.5,
+                          lineHeight: 1.4,
+                        }}
+                      >
+                        {(() => {
+                          // Extract vehicle info from description
+                          const vehicleInfo = alert.description.split(' • Amount:')[0];
+                          return vehicleInfo || alert.title.replace('RTA Fine - ', '');
+                        })()}
+                      </Box>
+
+                      {/* Row 3: Date/Action */}
+                      {alert.action && alert.actionLabel && (
+                        <Box
+                          onClick={alert.action}
+                          sx={{
+                            mt: 0,
+                            display: 'inline-block',
+                            fontSize: 13,
+                            fontWeight: 600,
+                            color: theme.iconColor,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            '&:hover': {
+                              textDecoration: 'underline',
+                              opacity: 0.85,
+                            },
+                          }}
+                        >
+                          {alert.actionLabel}
+                        </Box>
+                      )}
+                    </Box>
+                  </Box>
+                </Box>
+
+                {/* Mobile Layout */}
+                <Box sx={{ display: { xs: 'block', sm: 'none' } }}>
+                  {/* Row 1: Plate number and Amount */}
+                  <Box sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    mb: 1.5,
+                    gap: 1,
+                    flexWrap: 'nowrap'
+                  }}>
                     {/* Plate Badge */}
                     <Box
                       sx={{
-                        display: 'flex',
+                        display: 'inline-flex',
                         alignItems: 'center',
-                        gap: 2,
-                        mb: 2,
+                        borderRadius: '6px',
+                        background: '#fff',
+                        border: '1.5px solid #111',
+                        px: 1,
+                        py: 0.4,
+                        gap: 0.6,
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                        flexShrink: 0,
+                        maxWidth: '45%',
                       }}
                     >
                       <Box
+                        component="img"
+                        src="/dubai.svg"
+                        alt="Dubai"
                         sx={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          borderRadius: '12px',
-                          background: '#fff',
-                          border: '2px solid #111',
-                          px: 2,
-                          py: 0.6,
-                          gap: 1.2,
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                          width: 14,
+                          height: 14,
+                          flexShrink: 0,
                         }}
-                      >
-                        <Box
-                          component="img"
-                          src="/dubai.svg"
-                          alt="Dubai"
-                          sx={{
-                            width: 22,
-                            height: 22,
-                          }}
-                        />
-                        <Box
-                          sx={{
-                            fontWeight: 800,
-                            fontSize: 18,
-                            letterSpacing: '2px',
-                            color: '#111',
-                          }}
-                        >
-                          {alert.platenumber}
-                        </Box>
-                      </Box>
+                      />
                       <Box
                         sx={{
-                          background: theme.iconColor,
-                          color: '#fff',
-                          px: 3,
-                          py: 0.8,
-                          borderRadius: '999px',
-                          fontWeight: 800,
-                          fontSize: 18,
+                          fontWeight: 700,
+                          fontSize: 12,
                           letterSpacing: '0.5px',
-                          boxShadow: `0 6px 18px ${theme.iconColor}40`,
-                          minWidth: '110px',
-                          textAlign: 'center',
+                          color: '#111',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
                         }}
                       >
-                        {alert.description}
+                        {alert.platenumber}
                       </Box>
                     </Box>
 
-                    {/* Action */}
-                    {alert.action && alert.actionLabel && (
-                      <Box
-                        onClick={alert.action}
-                        sx={{
-                          mt: 0,
-                          display: 'inline-block',
-                          fontSize: 13,
-                          fontWeight: 600,
-                          color: theme.iconColor,
-                          cursor: 'pointer',
-                          transition: 'all 0.2s',
-                          '&:hover': {
-                            textDecoration: 'underline',
-                            opacity: 0.85,
-                          },
-                        }}
-                      >
-                        {alert.actionLabel}
-                      </Box>
-                    )}
+                    {/* Amount Badge */}
+                    <Box
+                      sx={{
+                        background: theme.iconColor,
+                        color: '#fff',
+                        px: 1.5,
+                        py: 0.4,
+                        borderRadius: '999px',
+                        fontWeight: 700,
+                        fontSize: 12,
+                        letterSpacing: '0.2px',
+                        boxShadow: `0 4px 12px ${theme.iconColor}40`,
+                        textAlign: 'center',
+                        flexShrink: 0,
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      AED {(() => {
+                        // Extract amount from description (format: "vehicle info • Amount: 150")
+                        const match = alert.description.match(/Amount:\s*(\d+)/);
+                        return match ? match[1] : alert.description;
+                      })()}
+                    </Box>
                   </Box>
+
+                  {/* Row 2: Vehicle description */}
+                  <Box
+                    sx={{
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: '#374151',
+                      mb: 1,
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    {(() => {
+                      // Extract vehicle info from description (before " • Amount:")
+                      const vehicleInfo = alert.description.split(' • Amount:')[0];
+                      return vehicleInfo || alert.title.replace('RTA Fine - ', '');
+                    })()}
+                  </Box>
+
+                  {/* Row 3: Date */}
+                  {alert.action && alert.actionLabel && (
+                    <Box
+                      onClick={alert.action}
+                      sx={{
+                        display: 'inline-block',
+                        fontSize: 11,
+                        fontWeight: 600,
+                        color: theme.iconColor,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        '&:hover': {
+                          textDecoration: 'underline',
+                          opacity: 0.85,
+                        },
+                      }}
+                    >
+                      {alert.actionLabel}
+                    </Box>
+                  )}
                 </Box>
               </Box>
             );

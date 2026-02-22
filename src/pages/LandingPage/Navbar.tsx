@@ -19,6 +19,7 @@ const Navbar: React.FC = () => {
 
   const menuItems = [
     { label: 'Features', href: '#features' },
+    { label: 'Industry', href: '#industry-verticals' },
     { label: 'GPS Trackers', href: '#trackers' },
     { label: 'Integrations', href: '#integrations' },
     { label: 'Pricing', href: '#pricing' },

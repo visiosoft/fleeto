@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=0.7, minimum-scale=0.7, maximum-scale=2.0, user-scalable=yes" />
     <meta name="theme-color" content="#000000" />
     <meta
       name="description"
@@ -47,6 +47,22 @@
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
     <title>Fleet Management System</title>
+    <style>
+      body {
+        zoom: 0.7;
+        -moz-transform: scale(0.7);
+        -moz-transform-origin: 0 0;
+      }
+      
+      /* Mobile devices - 100% zoom (normal) */
+      @media only screen and (max-width: 768px) {
+        body {
+          zoom: 1;
+          -moz-transform: scale(1);
+          -moz-transform-origin: 0 0;
+        }
+      }
+    </style>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>

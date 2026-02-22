@@ -110,7 +110,7 @@ const Footer: React.FC = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Phone sx={{ fontSize: 20, opacity: 0.8 }} />
                 <Typography sx={{ fontSize: '0.95rem' }}>
-                  +971 4 XXX XXXX
+                  +971 56 9420 950
                 </Typography>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -141,7 +141,7 @@ const Footer: React.FC = () => {
                   component="button"
                   onClick={() => scrollToSection(link.href)}
                   sx={{
-                    color: 'rgba(255, 255, 255, 0.8)',
+                    color: 'rgba(15, 14, 14, 0.8)',
                     textDecoration: 'none',
                     fontSize: '0.95rem',
                     textAlign: 'left',
@@ -178,7 +178,7 @@ const Footer: React.FC = () => {
                   component="button"
                   onClick={() => scrollToSection(link.href)}
                   sx={{
-                    color: 'rgba(255, 255, 255, 0.8)',
+                    color: 'rgba(15, 14, 14, 0.8)',
                     textDecoration: 'none',
                     fontSize: '0.95rem',
                     textAlign: 'left',
@@ -215,7 +215,7 @@ const Footer: React.FC = () => {
                   component="button"
                   onClick={() => scrollToSection(link.href)}
                   sx={{
-                    color: 'rgba(255, 255, 255, 0.8)',
+                    color: 'rgba(15, 14, 14, 0.8)',
                     textDecoration: 'none',
                     fontSize: '0.95rem',
                     textAlign: 'left',
@@ -252,7 +252,7 @@ const Footer: React.FC = () => {
                   component="button"
                   onClick={() => scrollToSection(link.href)}
                   sx={{
-                    color: 'rgba(255, 255, 255, 0.8)',
+                    color: 'rgba(15, 14, 14, 0.8)',
                     textDecoration: 'none',
                     fontSize: '0.95rem',
                     textAlign: 'left',
