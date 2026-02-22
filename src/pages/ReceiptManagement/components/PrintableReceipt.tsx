@@ -1,7 +1,9 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Box, Typography, Button } from '@mui/material';
 import { Receipt } from '../../../types/api';
 import html2pdf from 'html2pdf.js';
+import axios from 'axios';
+import { API_ENDPOINTS } from '../../../config/environment';
 
 interface PrintableReceiptProps {
   receipt: Receipt;
@@ -9,6 +11,35 @@ interface PrintableReceiptProps {
 
 const PrintableReceipt: React.FC<PrintableReceiptProps> = ({ receipt }) => {
   const contentRef = useRef<HTMLDivElement>(null);
+  const [headerImage, setHeaderImage] = useState<string>('/bannerheader.png');
+  const [footerImage, setFooterImage] = useState<string>('/bannerfooter2.png');
+
+  useEffect(() => {
+    fetchCompanySettings();
+  }, []);
+
+  const fetchCompanySettings = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const selectedCompanyId = localStorage.getItem('selectedCompanyId');
+      if (!selectedCompanyId) return;
+
+      const response = await axios.get(
+        `${API_ENDPOINTS.companies}/${selectedCompanyId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const companyData = response.data.data.company;
+      if (companyData.settings?.invoiceHeader) {
+        setHeaderImage(companyData.settings.invoiceHeader);
+      }
+      if (companyData.settings?.invoiceFooter) {
+        setFooterImage(companyData.settings.invoiceFooter);
+      }
+    } catch (error) {
+      console.error('Error fetching company settings:', error);
+    }
+  };
 
   const handleDownload = () => {
     const element = contentRef.current;
@@ -31,7 +62,7 @@ const PrintableReceipt: React.FC<PrintableReceiptProps> = ({ receipt }) => {
         {/* Header Banner */}
         <Box sx={{ width: '100%', mb: 2 }}>
           <img 
-            src="/bannerheader.png" 
+            src={headerImage} 
             alt="Header Banner" 
             style={{ 
               width: '100%', 
@@ -139,7 +170,7 @@ const PrintableReceipt: React.FC<PrintableReceiptProps> = ({ receipt }) => {
         {/* Footer Banner */}
         <Box sx={{ width: '100%', mt: 2 }}>
           <img 
-            src="/bannerfooter2.png" 
+            src={footerImage} 
             alt="Footer Banner" 
             style={{ 
               width: '100%', 

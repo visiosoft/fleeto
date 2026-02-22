@@ -3,8 +3,8 @@ import { Box } from '@mui/material';
 
 const Tracking: React.FC = () => {
   return (
-    <Box 
-      sx={{ 
+    <Box
+      sx={{
         width: '100vw',
         height: 'calc(100vh - 64px)',
         marginLeft: { xs: '-1rem', md: '-1.5rem' },
@@ -15,7 +15,7 @@ const Tracking: React.FC = () => {
       }}
     >
       <iframe
-        src="http://www.sinotrackpro.com/"
+        src="https://app.sinotrack.com/"
         title="Sinotrack Pro Vehicle Tracking"
         style={{
           width: '100%',

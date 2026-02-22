@@ -54,7 +54,7 @@ interface ReportCardProps {
 const ReportCard: React.FC<ReportCardProps> = ({ title, description, icon, color, onGenerate, linkTo, badge }) => {
   const theme = useTheme();
   const navigate = useNavigate();
-  
+
   const handleClick = () => {
     if (linkTo) {
       navigate(linkTo);
@@ -62,12 +62,12 @@ const ReportCard: React.FC<ReportCardProps> = ({ title, description, icon, color
       onGenerate();
     }
   };
-  
+
   return (
-    <Card 
-      sx={{ 
-        height: '100%', 
-        display: 'flex', 
+    <Card
+      sx={{
+        height: '100%',
+        display: 'flex',
         flexDirection: 'column',
         cursor: linkTo || onGenerate ? 'pointer' : 'default',
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -114,30 +114,30 @@ const ReportCard: React.FC<ReportCardProps> = ({ title, description, icon, color
               transition: 'all 0.3s ease',
             }}
           >
-            {React.cloneElement(icon as React.ReactElement, { 
-              sx: { 
+            {React.cloneElement(icon as React.ReactElement, {
+              sx: {
                 color: color,
                 fontSize: 28
-              } 
+              }
             })}
           </Box>
           {badge && (
-            <Chip 
-              label={badge} 
-              size="small" 
-              sx={{ 
+            <Chip
+              label={badge}
+              size="small"
+              sx={{
                 bgcolor: alpha(color, 0.1),
                 color: color,
                 fontWeight: 600,
                 fontSize: '11px',
                 height: '24px',
-              }} 
+              }}
             />
           )}
         </Box>
-        
-        <Typography 
-          variant="h6" 
+
+        <Typography
+          variant="h6"
           component="h2"
           sx={{
             fontWeight: 700,
@@ -149,9 +149,9 @@ const ReportCard: React.FC<ReportCardProps> = ({ title, description, icon, color
         >
           {title}
         </Typography>
-        
-        <Typography 
-          variant="body2" 
+
+        <Typography
+          variant="body2"
           sx={{
             color: '#6B7280',
             fontSize: '14px',
@@ -161,16 +161,16 @@ const ReportCard: React.FC<ReportCardProps> = ({ title, description, icon, color
           {description}
         </Typography>
       </CardContent>
-      
+
       <Divider />
-      
+
       <CardActions sx={{ p: 2, pt: 1.5 }}>
         {linkTo ? (
-          <Button 
+          <Button
             fullWidth
             size="medium"
             endIcon={<ArrowForwardIcon />}
-            sx={{ 
+            sx={{
               color: color,
               fontWeight: 600,
               fontSize: '14px',
@@ -183,12 +183,12 @@ const ReportCard: React.FC<ReportCardProps> = ({ title, description, icon, color
             View Report
           </Button>
         ) : (
-          <Button 
+          <Button
             fullWidth
             size="medium"
             startIcon={<DownloadIcon />}
             onClick={onGenerate}
-            sx={{ 
+            sx={{
               color: color,
               fontWeight: 600,
               fontSize: '14px',
@@ -240,89 +240,74 @@ const Reports: React.FC = () => {
       badge?: string;
     }>;
   }> = [
-    {
-      title: 'Profit & Loss',
-      reports: [
-        {
-          title: 'Monthly Financial Report',
-          description: 'Comprehensive analysis of contract revenue, expenses, and profitability by month',
-          icon: <TrendingUpIcon />,
-          color: theme.palette.success.main,
-          linkTo: '/monthly-report',
-          badge: 'New'
-        }
-      ]
-    },
-    {
-      title: 'Vehicle Reports',
-      reports: [
-        {
-          title: 'Vehicle Utilization Report',
-          description: 'Track vehicle usage, availability, and efficiency metrics',
-          icon: <VehicleIcon />,
-          color: theme.palette.primary.main
-        },
-        {
-          title: 'Maintenance Schedule Report',
-          description: 'View upcoming and past maintenance schedules',
-          icon: <MaintenanceIcon />,
-          color: theme.palette.warning.main
-        },
-        {
-          title: 'Vehicle Performance Report',
-          description: 'Analyze vehicle performance and reliability metrics',
-          icon: <TimelineIcon />,
-          color: theme.palette.info.main
-        }
-      ]
-    },
-    {
-      title: 'Financial Reports',
-      reports: [
-        {
-          title: 'Cost Analysis Report',
-          description: 'Detailed breakdown of operational costs',
-          icon: <CostIcon />,
-          color: theme.palette.success.main
-        },
-        {
-          title: 'Fuel Consumption Report',
-          description: 'Track fuel usage and efficiency metrics',
-          icon: <FuelIcon />,
-          color: theme.palette.error.main
-        },
-        {
-          title: 'Contract Financial Report',
-          description: 'Financial overview of all active contracts',
-          icon: <ContractIcon />,
-          color: theme.palette.secondary.main
-        }
-      ]
-    },
-    {
-      title: 'Driver Reports',
-      reports: [
-        {
-          title: 'Driver Performance Report',
-          description: 'Evaluate driver performance and safety metrics',
-          icon: <DriverIcon />,
-          color: theme.palette.primary.main
-        },
-        {
-          title: 'Driver Schedule Report',
-          description: 'View driver assignments and schedules',
-          icon: <TimelineIcon />,
-          color: theme.palette.warning.main
-        },
-        {
-          title: 'Driver Compliance Report',
-          description: 'Track driver compliance with regulations',
-          icon: <AssessmentIcon />,
-          color: theme.palette.info.main
-        }
-      ]
-    }
-  ];
+      {
+        title: 'Financial Reports',
+        reports: [
+          {
+            title: 'Monthly Financial Report',
+            description: 'Comprehensive analysis of contract revenue, expenses, and profitability by month',
+            icon: <TrendingUpIcon />,
+            color: theme.palette.success.main,
+            linkTo: '/monthly-report',
+            badge: 'New'
+          },
+          {
+            title: 'Net Income Report',
+            description: 'Monthly net income analysis after deducting expenses from revenue with charts',
+            icon: <AssessmentIcon />,
+            color: theme.palette.secondary.main,
+            linkTo: '/net-income-report',
+            badge: 'New'
+          }
+        ]
+      },
+      {
+        title: 'Vehicle Reports',
+        reports: [
+          {
+            title: 'Vehicle Utilization Report',
+            description: 'Track vehicle usage, availability, and efficiency metrics',
+            icon: <VehicleIcon />,
+            color: theme.palette.primary.main
+          },
+          {
+            title: 'Maintenance Schedule Report',
+            description: 'View upcoming and past maintenance schedules',
+            icon: <MaintenanceIcon />,
+            color: theme.palette.warning.main
+          },
+          {
+            title: 'Vehicle Performance Report',
+            description: 'Analyze vehicle performance and reliability metrics',
+            icon: <TimelineIcon />,
+            color: theme.palette.info.main
+          }
+        ]
+      },
+      {
+        title: 'Driver Reports',
+        reports: [
+          {
+            title: 'Driver Performance Report',
+            description: 'Evaluate driver performance and safety metrics',
+            icon: <DriverIcon />,
+            color: theme.palette.primary.main
+          },
+          {
+            title: 'Driver Schedule Report',
+            description: 'View driver assignments and schedules',
+            icon: <TimelineIcon />,
+            color: theme.palette.warning.main
+          },
+          {
+            title: 'Driver Compliance Report',
+            description: 'Track driver compliance with regulations',
+            icon: <AssessmentIcon />,
+            color: theme.palette.info.main
+          }
+        ]
+      }
+    ];
 
   return (
     <Box sx={{ width: '100%', maxWidth: '100%', p: 3 }}>
@@ -341,9 +326,9 @@ const Reports: React.FC = () => {
             >
               Reports & Analytics
             </Typography>
-            <Typography 
-              variant="body1" 
-              sx={{ 
+            <Typography
+              variant="body1"
+              sx={{
                 color: '#6B7280',
                 fontSize: '15px',
               }}
@@ -351,53 +336,13 @@ const Reports: React.FC = () => {
               Generate comprehensive reports and insights for your fleet operations
             </Typography>
           </Box>
-          <Stack direction="row" spacing={1}>
-            <Tooltip title="Export as PDF">
-              <IconButton
-                sx={{
-                  bgcolor: alpha(theme.palette.error.main, 0.1),
-                  color: theme.palette.error.main,
-                  '&:hover': {
-                    bgcolor: alpha(theme.palette.error.main, 0.2),
-                  }
-                }}
-              >
-                <PdfIcon />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Export as Excel">
-              <IconButton
-                sx={{
-                  bgcolor: alpha(theme.palette.success.main, 0.1),
-                  color: theme.palette.success.main,
-                  '&:hover': {
-                    bgcolor: alpha(theme.palette.success.main, 0.2),
-                  }
-                }}
-              >
-                <TableIcon />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Print Report">
-              <IconButton
-                sx={{
-                  bgcolor: alpha(theme.palette.primary.main, 0.1),
-                  color: theme.palette.primary.main,
-                  '&:hover': {
-                    bgcolor: alpha(theme.palette.primary.main, 0.2),
-                  }
-                }}
-              >
-                <PrintIcon />
-              </IconButton>
-            </Tooltip>
-          </Stack>
+          
         </Box>
       </Box>
 
       {/* Tabs Section */}
-      <Paper 
-        sx={{ 
+      <Paper
+        sx={{
           mb: 4,
           borderRadius: '16px',
           overflow: 'hidden',
@@ -428,8 +373,8 @@ const Reports: React.FC = () => {
           }}
         >
           {reportCategories.map((category, index) => (
-            <Tab 
-              key={index} 
+            <Tab
+              key={index}
               label={category.title}
               icon={index === 0 ? <TrendingUpIcon sx={{ fontSize: 20 }} /> : undefined}
               iconPosition="start"
@@ -456,26 +401,26 @@ const Reports: React.FC = () => {
 
       {/* Loading Overlay */}
       {isGenerating && (
-        <Box 
-          sx={{ 
-            position: 'fixed', 
-            top: 0, 
-            left: 0, 
-            right: 0, 
-            bottom: 0, 
-            display: 'flex', 
-            alignItems: 'center', 
+        <Box
+          sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            display: 'flex',
+            alignItems: 'center',
             justifyContent: 'center',
             bgcolor: 'rgba(0,0,0,0.6)',
             backdropFilter: 'blur(4px)',
             zIndex: 9999
           }}
         >
-          <Paper 
-            sx={{ 
-              p: 4, 
-              display: 'flex', 
-              flexDirection: 'column', 
+          <Paper
+            sx={{
+              p: 4,
+              display: 'flex',
+              flexDirection: 'column',
               alignItems: 'center',
               borderRadius: '16px',
               minWidth: '280px',

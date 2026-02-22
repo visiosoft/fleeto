@@ -136,7 +136,10 @@ const updateCompany = async (req, res) => {
             'phone',
             'email',
             'licenseNumber',
-            'currency'
+            'tcNumber',
+            'taxNumber',
+            'currency',
+            'settings'
         ];
 
         const updates = {};
@@ -145,6 +148,8 @@ const updateCompany = async (req, res) => {
                 updates[key] = req.body[key];
             }
         });
+
+        console.log('Updates to be saved:', updates);
 
         if (Object.keys(updates).length === 0) {
             return res.status(400).json({
@@ -155,10 +160,14 @@ const updateCompany = async (req, res) => {
 
         updates.updatedAt = new Date();
 
+        console.log('Final updates with timestamp:', updates);
+
         const result = await CompanyModel.updateOne(
             { _id: new ObjectId(req.params.id) },
             { $set: updates }
         );
+
+        console.log('MongoDB update result:', result);
 
         if (result.modifiedCount === 0) {
             return res.status(400).json({

@@ -27,6 +27,8 @@ import {
 } from '@mui/icons-material';
 import { Invoice } from '../../types/api';
 import BetaInvoiceService from '../../services/BetaInvoiceService';
+import axios from 'axios';
+import { API_ENDPOINTS } from '../../config/environment';
 
 
 const BetaInvoiceView: React.FC = () => {
@@ -35,11 +37,37 @@ const BetaInvoiceView: React.FC = () => {
     const [invoice, setInvoice] = useState<Invoice | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [headerImage, setHeaderImage] = useState<string>('/bannerheader.png');
+    const [footerImage, setFooterImage] = useState<string>('/bannerfooter.png');
     const componentRef = useRef(null);
 
     useEffect(() => {
         fetchInvoice();
+        fetchCompanySettings();
     }, [id]);
+
+    const fetchCompanySettings = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const selectedCompanyId = localStorage.getItem('selectedCompanyId');
+            if (!selectedCompanyId) return;
+
+            const response = await axios.get(
+                `${API_ENDPOINTS.companies}/${selectedCompanyId}`,
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            const companyData = response.data.data.company;
+            if (companyData.settings?.invoiceHeader) {
+                setHeaderImage(companyData.settings.invoiceHeader);
+            }
+            if (companyData.settings?.invoiceFooter) {
+                setFooterImage(companyData.settings.invoiceFooter);
+            }
+        } catch (error) {
+            console.error('Error fetching company settings:', error);
+        }
+    };
 
     const fetchInvoice = async () => {
         try {
@@ -194,7 +222,7 @@ const BetaInvoiceView: React.FC = () => {
                 {/* Banner Header */}
                 <Box className="invoice-header" mb={2} sx={{ mx: -5, mt: -5, '@media print': { mx: 0, mt: 0, mb: 0 } }}>
                     <img
-                        src="/bannerheader.png"
+                        src={headerImage}
                         alt="Header"
                         style={{ width: '100%', height: 'auto', display: 'block' }}
                     />
@@ -396,7 +424,7 @@ const BetaInvoiceView: React.FC = () => {
                 {/* Banner Footer */}
                 <Box className="invoice-footer" sx={{ mx: -5, mb: -5, '@media print': { mx: 0, mb: 0 } }}>
                     <img
-                        src="/bannerfooter.png"
+                        src={footerImage}
                         alt="Footer"
                         style={{ width: '100%', height: 'auto', display: 'block' }}
                     />

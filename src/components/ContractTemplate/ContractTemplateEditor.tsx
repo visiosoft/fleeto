@@ -36,6 +36,7 @@ import html2canvas from 'html2canvas';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 import { API_CONFIG, getApiUrl } from '../../config/api';
+import { API_ENDPOINTS } from '../../config/environment';
 
 const CONTRACT_STATUSES = [
   'Active',
@@ -242,11 +243,40 @@ const ContractTemplateEditor: React.FC<Props> = ({
   });
   const [isRenewing, setIsRenewing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [headerImage, setHeaderImage] = useState<string>('/bannerheader.png');
+  const [footerImage, setFooterImage] = useState<string>('/bannerfooter2.png');
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
     severity: 'success' as 'success' | 'error'
   });
+
+  useEffect(() => {
+    fetchCompanySettings();
+  }, []);
+
+  const fetchCompanySettings = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const selectedCompanyId = localStorage.getItem('selectedCompanyId');
+      if (!selectedCompanyId) return;
+
+      const response = await axios.get(
+        `${API_ENDPOINTS.companies}/${selectedCompanyId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const companyData = response.data.data.company;
+      if (companyData.settings?.invoiceHeader) {
+        setHeaderImage(companyData.settings.invoiceHeader);
+      }
+      if (companyData.settings?.invoiceFooter) {
+        setFooterImage(companyData.settings.invoiceFooter);
+      }
+    } catch (error) {
+      console.error('Error fetching company settings:', error);
+    }
+  };
 
   useEffect(() => {
     const vehicle = vehicles.find((v: Vehicle) => v._id === contract.vehicleId);
@@ -417,7 +447,7 @@ const ContractTemplateEditor: React.FC<Props> = ({
 
       // Preload header banner
       const headerImg = new Image();
-      headerImg.src = '/bannerheader.png';
+      headerImg.src = headerImage;
       await new Promise((resolve, reject) => {
         headerImg.onload = resolve as any;
         headerImg.onerror = reject as any;
@@ -427,7 +457,7 @@ const ContractTemplateEditor: React.FC<Props> = ({
 
       // Preload footer banner
       const footerImg = new Image();
-      footerImg.src = '/bannerfooter2.png';
+      footerImg.src = footerImage;
       await new Promise((resolve, reject) => {
         footerImg.onload = resolve as any;
         footerImg.onerror = reject as any;
@@ -452,7 +482,7 @@ const ContractTemplateEditor: React.FC<Props> = ({
 
       // If the preview already contains a header banner image, skip it on first page slice
       let firstPageSkipPx = 0;
-      const headerDomImg = element.querySelector('img[src*="bannerheader"]') as HTMLImageElement | null;
+      const headerDomImg = element.querySelector('.banner-header img') as HTMLImageElement | null;
       if (headerDomImg) {
         const elementRect = element.getBoundingClientRect();
         const headerRect = headerDomImg.getBoundingClientRect();
@@ -543,7 +573,7 @@ const ContractTemplateEditor: React.FC<Props> = ({
 
       // Preload header banner
       const headerImg = new Image();
-      headerImg.src = '/bannerheader.png';
+      headerImg.src = headerImage;
       await new Promise((resolve, reject) => {
         headerImg.onload = resolve as any;
         headerImg.onerror = reject as any;
@@ -553,7 +583,7 @@ const ContractTemplateEditor: React.FC<Props> = ({
 
       // Preload footer banner
       const footerImg = new Image();
-      footerImg.src = '/bannerfooter2.png';
+      footerImg.src = footerImage;
       await new Promise((resolve, reject) => {
         footerImg.onload = resolve as any;
         footerImg.onerror = reject as any;
@@ -578,7 +608,7 @@ const ContractTemplateEditor: React.FC<Props> = ({
 
       // Skip the header banner from the preview to avoid duplication
       let firstPageSkipPx = 0;
-      const headerDomImg = element.querySelector('img[src*="bannerheader"]') as HTMLImageElement | null;
+      const headerDomImg = element.querySelector('.banner-header img') as HTMLImageElement | null;
       if (headerDomImg) {
         const elementRect = element.getBoundingClientRect();
         const headerRect = headerDomImg.getBoundingClientRect();
@@ -843,7 +873,7 @@ const ContractTemplateEditor: React.FC<Props> = ({
               }}
             >
               <div className="banner-header">
-                <img src="/bannerheader.png" alt="Header Banner" />
+                <img src={headerImage} alt="Header Banner" />
               </div>
               <div dangerouslySetInnerHTML={{
                 __html: `<div class="document-content">${previewContent}</div>`

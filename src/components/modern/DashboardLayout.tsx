@@ -105,10 +105,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, titl
         <Header
           title={title}
           user={{
-            name: user 
-              ? (user.firstName && user.lastName 
-                  ? `${user.firstName} ${user.lastName}` 
-                  : user.email?.split('@')[0] || 'User')
+            name: user
+              ? (user.firstName && user.lastName
+                ? `${user.firstName} ${user.lastName}`
+                : user.email?.split('@')[0] || 'User')
               : 'User',
             email: user?.email || '',
           }}

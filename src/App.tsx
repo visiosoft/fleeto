@@ -38,6 +38,7 @@ const Settings = React.lazy(() => import('./pages/Settings'));
 const CompanySettings = React.lazy(() => import('./pages/CompanySettings/CompanySettings'));
 const FinesSearch = React.lazy(() => import('./pages/FinesSearch/FinesSearch'));
 const MonthlyReport = React.lazy(() => import('./pages/MonthlyReport/MonthlyReport'));
+const NetIncomeReport = React.lazy(() => import('./pages/NetIncomeReport/NetIncomeReport'));
 
 // Beta Invoice Management
 const BetaInvoiceManagement = React.lazy(() => import('./pages/BetaInvoiceManagement/BetaInvoiceManagement'));
@@ -212,6 +213,14 @@ const AppContent: React.FC = () => {
             <ProtectedRoute>
               <ModernPageLayout title="Monthly Report">
                 <MonthlyReport />
+              </ModernPageLayout>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/net-income-report" element={
+            <ProtectedRoute>
+              <ModernPageLayout title="Net Income Report">
+                <NetIncomeReport />
               </ModernPageLayout>
             </ProtectedRoute>
           } />

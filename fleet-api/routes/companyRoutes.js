@@ -13,7 +13,7 @@ router.get('/:id', authenticate, companyController.getCompanyById);
 router.post('/', authenticate, authorize(['admin']), companyController.createCompany);
 
 // Update company
-router.put('/:id', authenticate, authorize(['admin']), companyController.updateCompany);
+router.put('/:id', authenticate, companyController.updateCompany);
 
 // Delete company
 router.delete('/:id', authenticate, authorize(['admin']), companyController.deleteCompany);
