@@ -878,7 +878,7 @@ const ContractTemplateEditor: React.FC<Props> = ({
               <div dangerouslySetInnerHTML={{
                 __html: `<div class="document-content">${previewContent}</div>`
               }} />
-           
+
             </Paper>
           </Paper>
         </Grid>

@@ -76,10 +76,16 @@ exports.login = async (req, res) => {
         // Generate token
         const token = generateToken(user._id);
 
+        // Include tcNumber in company data for frontend use
+        const companyData = {
+            ...company,
+            tcNumber: company.tcNumber || ''
+        };
+
         res.json({
             token,
             user: user.getPublicProfile(),
-            company
+            company: companyData
         });
     } catch (error) {
         res.status(500).json({ message: error.message });

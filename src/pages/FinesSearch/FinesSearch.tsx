@@ -40,6 +40,7 @@ import { API_ENDPOINTS } from '../../config/environment';
 
 interface RtaFine {
   _id?: string;
+  traffic_file_key?: string;
   vehicle_info: string;
   number_plate?: string;
   date_time: string;
@@ -70,11 +71,14 @@ const FinesSearch: React.FC = () => {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
+  const [tcNumber, setTcNumber] = useState<string | null>(null);
 
   const rtaFinesUrl = 'https://ums.rta.ae/violations/public-fines/fines-search';
-  const trafficCode = '51563245';
 
   useEffect(() => {
+    // Get TC number from localStorage
+    const storedTcNumber = localStorage.getItem('tcNumber');
+    setTcNumber(storedTcNumber);
     fetchFinesData();
   }, []);
 
@@ -94,6 +98,10 @@ const FinesSearch: React.FC = () => {
       console.log('RTA Total Fines Response:', totalResponse.data);
       if (totalResponse.data.status === 'success') {
         setTotalFines(totalResponse.data.data);
+        // Show message if TC number not configured
+        if (totalResponse.data.message) {
+          console.warn('API Message:', totalResponse.data.message);
+        }
       }
 
       // Fetch all fines
@@ -101,6 +109,14 @@ const FinesSearch: React.FC = () => {
       console.log('RTA All Fines Response:', finesResponse.data);
       if (finesResponse.data.status === 'success') {
         setFines(finesResponse.data.data.fines);
+        // Show message if TC number not configured or no fines found
+        if (finesResponse.data.message) {
+          console.warn('API Message:', finesResponse.data.message);
+        }
+        // Log the traffic_file_key being used
+        if (finesResponse.data.data.traffic_file_key) {
+          console.log('Using traffic_file_key:', finesResponse.data.data.traffic_file_key);
+        }
       }
     } catch (err: any) {
       console.error('Error fetching RTA fines:', err);
@@ -207,9 +223,21 @@ const FinesSearch: React.FC = () => {
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" gutterBottom>
-          RTA Fines & Violations
-        </Typography>
+        <Box>
+          <Typography variant="h4" gutterBottom>
+            RTA Fines & Violations
+          </Typography>
+          {tcNumber && (
+            <Typography variant="body2" sx={{ color: '#6B7280', mt: 1 }}>
+              TC Number: {tcNumber}
+            </Typography>
+          )}
+          {!tcNumber && (
+            <Alert severity="warning" sx={{ mt: 2, maxWidth: 600 }}>
+              TC Number is not configured. Please set your TC Number in Settings to fetch RTA fines.
+            </Alert>
+          )}
+        </Box>
         <Button
           variant="outlined"
           startIcon={<OpenInNewIcon />}

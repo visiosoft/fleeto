@@ -195,7 +195,7 @@ const Settings: React.FC = () => {
       const reader = new FileReader();
       reader.onloadend = () => {
         const base64String = reader.result as string;
-        
+
         if (type === 'header') {
           setHeaderImage(base64String);
           setSettings(prev => ({
@@ -257,6 +257,12 @@ const Settings: React.FC = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       console.log('Save response:', response.data);
+
+      // Update tcNumber in localStorage if it was changed
+      if (settings.tcNumber) {
+        localStorage.setItem('tcNumber', settings.tcNumber);
+      }
+
       setSnackbar({ open: true, message: 'Settings saved successfully!', severity: 'success' });
       fetchCompanySettings();
     } catch (error: any) {
@@ -280,746 +286,746 @@ const Settings: React.FC = () => {
   return (
     <Box sx={{ width: '100%' }}>
       <Grid container spacing={3}>
-          {/* Company Information */}
-          <Grid item xs={12}>
-            <Paper
-              elevation={0}
-              sx={{
-                p: 4,
-                borderRadius: 3,
-                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
-                }
-              }}
-            >
-              <Stack direction="row" alignItems="center" spacing={2} mb={4}>
-                <Box
+        {/* Company Information */}
+        <Grid item xs={12}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 4,
+              borderRadius: 3,
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+              }
+            }}
+          >
+            <Stack direction="row" alignItems="center" spacing={2} mb={4}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 2,
+                  bgcolor: '#ede9fe',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <BusinessIcon sx={{ color: '#7c3aed', fontSize: 24 }} />
+              </Box>
+              <Typography variant="h6" fontWeight={600} sx={{ color: '#1e293b' }}>
+                Company Information
+              </Typography>
+            </Stack>
+
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Company Name"
+                  value={settings.name}
+                  onChange={handleChange('name')}
+                  required
+                  variant="outlined"
                   sx={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 2,
-                    bgcolor: '#ede9fe',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      '&:hover fieldset': {
+                        borderColor: '#7c3aed',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#7c3aed',
+                        borderWidth: 2,
+                      },
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: '#7c3aed',
+                    },
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  select
+                  label="Currency"
+                  value={settings.currency}
+                  onChange={handleChange('currency')}
+                  required
+                  variant="outlined"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      '&:hover fieldset': {
+                        borderColor: '#7c3aed',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#7c3aed',
+                        borderWidth: 2,
+                      },
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: '#7c3aed',
+                    },
                   }}
                 >
-                  <BusinessIcon sx={{ color: '#7c3aed', fontSize: 24 }} />
-                </Box>
-                <Typography variant="h6" fontWeight={600} sx={{ color: '#1e293b' }}>
-                  Company Information
-                </Typography>
-              </Stack>
+                  {currencies.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Tax Number"
+                  value={settings.taxNumber}
+                  onChange={handleChange('taxNumber')}
+                  variant="outlined"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      '&:hover fieldset': {
+                        borderColor: '#7c3aed',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#7c3aed',
+                        borderWidth: 2,
+                      },
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: '#7c3aed',
+                    },
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="License Number"
+                  value={settings.licenseNumber}
+                  onChange={handleChange('licenseNumber')}
+                  variant="outlined"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      '&:hover fieldset': {
+                        borderColor: '#7c3aed',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#7c3aed',
+                        borderWidth: 2,
+                      },
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: '#7c3aed',
+                    },
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="TC Number"
+                  value={settings.tcNumber}
+                  onChange={handleChange('tcNumber')}
+                  helperText="TC number is required to fetch RTA fines and other traffic-related information"
+                  variant="outlined"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      '&:hover fieldset': {
+                        borderColor: '#7c3aed',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#7c3aed',
+                        borderWidth: 2,
+                      },
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: '#7c3aed',
+                    },
+                  }}
+                />
+              </Grid>
+            </Grid>
+          </Paper>
+        </Grid>
 
-              <Grid container spacing={3}>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Company Name"
-                    value={settings.name}
-                    onChange={handleChange('name')}
-                    required
-                    variant="outlined"
+        {/* Contact Information */}
+        <Grid item xs={12}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 4,
+              borderRadius: 3,
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+              }
+            }}
+          >
+            <Stack direction="row" alignItems="center" spacing={2} mb={4}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 2,
+                  bgcolor: '#dbeafe',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <PersonIcon sx={{ color: '#2563eb', fontSize: 24 }} />
+              </Box>
+              <Typography variant="h6" fontWeight={600} sx={{ color: '#1e293b' }}>
+                Contact Information
+              </Typography>
+            </Stack>
+
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Email Address"
+                  type="email"
+                  value={settings.email}
+                  onChange={handleChange('email')}
+                  variant="outlined"
+                  InputProps={{
+                    startAdornment: <EmailIcon sx={{ mr: 1, color: 'text.secondary' }} />,
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      '&:hover fieldset': {
+                        borderColor: '#2563eb',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#2563eb',
+                        borderWidth: 2,
+                      },
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: '#2563eb',
+                    },
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Phone Number"
+                  value={settings.phone}
+                  onChange={handleChange('phone')}
+                  variant="outlined"
+                  InputProps={{
+                    startAdornment: <PhoneIcon sx={{ mr: 1, color: 'text.secondary' }} />,
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      '&:hover fieldset': {
+                        borderColor: '#2563eb',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#2563eb',
+                        borderWidth: 2,
+                      },
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: '#2563eb',
+                    },
+                  }}
+                />
+              </Grid>
+            </Grid>
+          </Paper>
+        </Grid>
+
+        {/* Address Information */}
+        <Grid item xs={12}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 4,
+              borderRadius: 3,
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+              }
+            }}
+          >
+            <Stack direction="row" alignItems="center" spacing={2} mb={4}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 2,
+                  bgcolor: '#fef3c7',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <LocationIcon sx={{ color: '#f59e0b', fontSize: 24 }} />
+              </Box>
+              <Typography variant="h6" fontWeight={600} sx={{ color: '#1e293b' }}>
+                Address Information
+              </Typography>
+            </Stack>
+
+            <Grid container spacing={3}>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Address"
+                  value={settings.address}
+                  onChange={handleChange('address')}
+                  multiline
+                  rows={3}
+                  variant="outlined"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      '&:hover fieldset': {
+                        borderColor: '#f59e0b',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#f59e0b',
+                        borderWidth: 2,
+                      },
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: '#f59e0b',
+                    },
+                  }}
+                />
+              </Grid>
+            </Grid>
+          </Paper>
+        </Grid>
+
+        {/* Invoice Settings */}
+        <Grid item xs={12}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 4,
+              borderRadius: 3,
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+              }
+            }}
+          >
+            <Stack direction="row" alignItems="center" spacing={2} mb={4}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 2,
+                  bgcolor: '#dcfce7',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <DescriptionIcon sx={{ color: '#16a34a', fontSize: 24 }} />
+              </Box>
+              <Typography variant="h6" fontWeight={600} sx={{ color: '#1e293b' }}>
+                Invoice Settings
+              </Typography>
+            </Stack>
+
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Invoice Prefix"
+                  value={settings.settings?.invoicePrefix || ''}
+                  onChange={handleSettingsChange('invoicePrefix')}
+                  variant="outlined"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      '&:hover fieldset': {
+                        borderColor: '#16a34a',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#16a34a',
+                        borderWidth: 2,
+                      },
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: '#16a34a',
+                    },
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Invoice Number Format"
+                  value={settings.settings?.invoiceNumberFormat || ''}
+                  onChange={handleSettingsChange('invoiceNumberFormat')}
+                  variant="outlined"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      '&:hover fieldset': {
+                        borderColor: '#16a34a',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#16a34a',
+                        borderWidth: 2,
+                      },
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: '#16a34a',
+                    },
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Tax Rate (%)"
+                  type="number"
+                  value={settings.settings?.taxRate || 0}
+                  onChange={handleSettingsChange('taxRate')}
+                  variant="outlined"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      '&:hover fieldset': {
+                        borderColor: '#16a34a',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#16a34a',
+                        borderWidth: 2,
+                      },
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: '#16a34a',
+                    },
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Payment Terms (Days)"
+                  type="number"
+                  value={settings.settings?.paymentTerms || 0}
+                  onChange={handleSettingsChange('paymentTerms')}
+                  variant="outlined"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      '&:hover fieldset': {
+                        borderColor: '#16a34a',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#16a34a',
+                        borderWidth: 2,
+                      },
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: '#16a34a',
+                    },
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Date Format"
+                  value={settings.settings?.dateFormat || ''}
+                  onChange={handleSettingsChange('dateFormat')}
+                  variant="outlined"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      '&:hover fieldset': {
+                        borderColor: '#16a34a',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#16a34a',
+                        borderWidth: 2,
+                      },
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: '#16a34a',
+                    },
+                  }}
+                />
+              </Grid>
+            </Grid>
+          </Paper>
+        </Grid>
+
+        {/* Invoice Header & Footer Images */}
+        <Grid item xs={12}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 4,
+              borderRadius: 3,
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+              }
+            }}
+          >
+            <Stack direction="row" alignItems="center" spacing={2} mb={4}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 2,
+                  bgcolor: '#fef3c7',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <DescriptionIcon sx={{ color: '#f59e0b', fontSize: 24 }} />
+              </Box>
+              <Typography variant="h6" fontWeight={600} sx={{ color: '#1e293b' }}>
+                Invoice Header & Footer
+              </Typography>
+            </Stack>
+
+            <Grid container spacing={4}>
+              {/* Header Image */}
+              <Grid item xs={12} md={6}>
+                <Box>
+                  <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2, color: '#374151' }}>
+                    Invoice Header Image
+                  </Typography>
+                  <Box
                     sx={{
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: 2,
-                        '&:hover fieldset': {
-                          borderColor: '#7c3aed',
-                        },
-                        '&.Mui-focused fieldset': {
-                          borderColor: '#7c3aed',
-                          borderWidth: 2,
-                        },
-                      },
-                      '& .MuiInputLabel-root.Mui-focused': {
-                        color: '#7c3aed',
-                      },
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    select
-                    label="Currency"
-                    value={settings.currency}
-                    onChange={handleChange('currency')}
-                    required
-                    variant="outlined"
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: 2,
-                        '&:hover fieldset': {
-                          borderColor: '#7c3aed',
-                        },
-                        '&.Mui-focused fieldset': {
-                          borderColor: '#7c3aed',
-                          borderWidth: 2,
-                        },
-                      },
-                      '& .MuiInputLabel-root.Mui-focused': {
-                        color: '#7c3aed',
+                      border: '2px dashed #e5e7eb',
+                      borderRadius: 2,
+                      p: 3,
+                      textAlign: 'center',
+                      bgcolor: '#f9fafb',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      '&:hover': {
+                        borderColor: '#f59e0b',
+                        bgcolor: '#fef3c7',
                       },
                     }}
                   >
-                    {currencies.map((option) => (
-                      <MenuItem key={option.value} value={option.value}>
-                        {option.label}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Tax Number"
-                    value={settings.taxNumber}
-                    onChange={handleChange('taxNumber')}
-                    variant="outlined"
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: 2,
-                        '&:hover fieldset': {
-                          borderColor: '#7c3aed',
-                        },
-                        '&.Mui-focused fieldset': {
-                          borderColor: '#7c3aed',
-                          borderWidth: 2,
-                        },
-                      },
-                      '& .MuiInputLabel-root.Mui-focused': {
-                        color: '#7c3aed',
-                      },
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="License Number"
-                    value={settings.licenseNumber}
-                    onChange={handleChange('licenseNumber')}
-                    variant="outlined"
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: 2,
-                        '&:hover fieldset': {
-                          borderColor: '#7c3aed',
-                        },
-                        '&.Mui-focused fieldset': {
-                          borderColor: '#7c3aed',
-                          borderWidth: 2,
-                        },
-                      },
-                      '& .MuiInputLabel-root.Mui-focused': {
-                        color: '#7c3aed',
-                      },
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="TC Number"
-                    value={settings.tcNumber}
-                    onChange={handleChange('tcNumber')}
-                    helperText="TC number is required to fetch RTA fines and other traffic-related information"
-                    variant="outlined"
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: 2,
-                        '&:hover fieldset': {
-                          borderColor: '#7c3aed',
-                        },
-                        '&.Mui-focused fieldset': {
-                          borderColor: '#7c3aed',
-                          borderWidth: 2,
-                        },
-                      },
-                      '& .MuiInputLabel-root.Mui-focused': {
-                        color: '#7c3aed',
-                      },
-                    }}
-                  />
-                </Grid>
-              </Grid>
-            </Paper>
-          </Grid>
-
-          {/* Contact Information */}
-          <Grid item xs={12}>
-            <Paper
-              elevation={0}
-              sx={{
-                p: 4,
-                borderRadius: 3,
-                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
-                }
-              }}
-            >
-              <Stack direction="row" alignItems="center" spacing={2} mb={4}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 2,
-                    bgcolor: '#dbeafe',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  <PersonIcon sx={{ color: '#2563eb', fontSize: 24 }} />
-                </Box>
-                <Typography variant="h6" fontWeight={600} sx={{ color: '#1e293b' }}>
-                  Contact Information
-                </Typography>
-              </Stack>
-
-              <Grid container spacing={3}>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Email Address"
-                    type="email"
-                    value={settings.email}
-                    onChange={handleChange('email')}
-                    variant="outlined"
-                    InputProps={{
-                      startAdornment: <EmailIcon sx={{ mr: 1, color: 'text.secondary' }} />,
-                    }}
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: 2,
-                        '&:hover fieldset': {
-                          borderColor: '#2563eb',
-                        },
-                        '&.Mui-focused fieldset': {
-                          borderColor: '#2563eb',
-                          borderWidth: 2,
-                        },
-                      },
-                      '& .MuiInputLabel-root.Mui-focused': {
-                        color: '#2563eb',
-                      },
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Phone Number"
-                    value={settings.phone}
-                    onChange={handleChange('phone')}
-                    variant="outlined"
-                    InputProps={{
-                      startAdornment: <PhoneIcon sx={{ mr: 1, color: 'text.secondary' }} />,
-                    }}
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: 2,
-                        '&:hover fieldset': {
-                          borderColor: '#2563eb',
-                        },
-                        '&.Mui-focused fieldset': {
-                          borderColor: '#2563eb',
-                          borderWidth: 2,
-                        },
-                      },
-                      '& .MuiInputLabel-root.Mui-focused': {
-                        color: '#2563eb',
-                      },
-                    }}
-                  />
-                </Grid>
-              </Grid>
-            </Paper>
-          </Grid>
-
-          {/* Address Information */}
-          <Grid item xs={12}>
-            <Paper
-              elevation={0}
-              sx={{
-                p: 4,
-                borderRadius: 3,
-                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
-                }
-              }}
-            >
-              <Stack direction="row" alignItems="center" spacing={2} mb={4}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 2,
-                    bgcolor: '#fef3c7',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  <LocationIcon sx={{ color: '#f59e0b', fontSize: 24 }} />
-                </Box>
-                <Typography variant="h6" fontWeight={600} sx={{ color: '#1e293b' }}>
-                  Address Information
-                </Typography>
-              </Stack>
-
-              <Grid container spacing={3}>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Address"
-                    value={settings.address}
-                    onChange={handleChange('address')}
-                    multiline
-                    rows={3}
-                    variant="outlined"
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: 2,
-                        '&:hover fieldset': {
-                          borderColor: '#f59e0b',
-                        },
-                        '&.Mui-focused fieldset': {
-                          borderColor: '#f59e0b',
-                          borderWidth: 2,
-                        },
-                      },
-                      '& .MuiInputLabel-root.Mui-focused': {
-                        color: '#f59e0b',
-                      },
-                    }}
-                  />
-                </Grid>
-              </Grid>
-            </Paper>
-          </Grid>
-
-          {/* Invoice Settings */}
-          <Grid item xs={12}>
-            <Paper
-              elevation={0}
-              sx={{
-                p: 4,
-                borderRadius: 3,
-                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
-                }
-              }}
-            >
-              <Stack direction="row" alignItems="center" spacing={2} mb={4}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 2,
-                    bgcolor: '#dcfce7',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  <DescriptionIcon sx={{ color: '#16a34a', fontSize: 24 }} />
-                </Box>
-                <Typography variant="h6" fontWeight={600} sx={{ color: '#1e293b' }}>
-                  Invoice Settings
-                </Typography>
-              </Stack>
-
-              <Grid container spacing={3}>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Invoice Prefix"
-                    value={settings.settings?.invoicePrefix || ''}
-                    onChange={handleSettingsChange('invoicePrefix')}
-                    variant="outlined"
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: 2,
-                        '&:hover fieldset': {
-                          borderColor: '#16a34a',
-                        },
-                        '&.Mui-focused fieldset': {
-                          borderColor: '#16a34a',
-                          borderWidth: 2,
-                        },
-                      },
-                      '& .MuiInputLabel-root.Mui-focused': {
-                        color: '#16a34a',
-                      },
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Invoice Number Format"
-                    value={settings.settings?.invoiceNumberFormat || ''}
-                    onChange={handleSettingsChange('invoiceNumberFormat')}
-                    variant="outlined"
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: 2,
-                        '&:hover fieldset': {
-                          borderColor: '#16a34a',
-                        },
-                        '&.Mui-focused fieldset': {
-                          borderColor: '#16a34a',
-                          borderWidth: 2,
-                        },
-                      },
-                      '& .MuiInputLabel-root.Mui-focused': {
-                        color: '#16a34a',
-                      },
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Tax Rate (%)"
-                    type="number"
-                    value={settings.settings?.taxRate || 0}
-                    onChange={handleSettingsChange('taxRate')}
-                    variant="outlined"
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: 2,
-                        '&:hover fieldset': {
-                          borderColor: '#16a34a',
-                        },
-                        '&.Mui-focused fieldset': {
-                          borderColor: '#16a34a',
-                          borderWidth: 2,
-                        },
-                      },
-                      '& .MuiInputLabel-root.Mui-focused': {
-                        color: '#16a34a',
-                      },
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Payment Terms (Days)"
-                    type="number"
-                    value={settings.settings?.paymentTerms || 0}
-                    onChange={handleSettingsChange('paymentTerms')}
-                    variant="outlined"
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: 2,
-                        '&:hover fieldset': {
-                          borderColor: '#16a34a',
-                        },
-                        '&.Mui-focused fieldset': {
-                          borderColor: '#16a34a',
-                          borderWidth: 2,
-                        },
-                      },
-                      '& .MuiInputLabel-root.Mui-focused': {
-                        color: '#16a34a',
-                      },
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Date Format"
-                    value={settings.settings?.dateFormat || ''}
-                    onChange={handleSettingsChange('dateFormat')}
-                    variant="outlined"
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: 2,
-                        '&:hover fieldset': {
-                          borderColor: '#16a34a',
-                        },
-                        '&.Mui-focused fieldset': {
-                          borderColor: '#16a34a',
-                          borderWidth: 2,
-                        },
-                      },
-                      '& .MuiInputLabel-root.Mui-focused': {
-                        color: '#16a34a',
-                      },
-                    }}
-                  />
-                </Grid>
-              </Grid>
-            </Paper>
-          </Grid>
-
-          {/* Invoice Header & Footer Images */}
-          <Grid item xs={12}>
-            <Paper 
-              elevation={0}
-              sx={{ 
-                p: 4, 
-                borderRadius: 3,
-                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
-                }
-              }}
-            >
-              <Stack direction="row" alignItems="center" spacing={2} mb={4}>
-                <Box 
-                  sx={{ 
-                    width: 40, 
-                    height: 40, 
-                    borderRadius: 2, 
-                    bgcolor: '#fef3c7',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  <DescriptionIcon sx={{ color: '#f59e0b', fontSize: 24 }} />
-                </Box>
-                <Typography variant="h6" fontWeight={600} sx={{ color: '#1e293b' }}>
-                  Invoice Header & Footer
-                </Typography>
-              </Stack>
-              
-              <Grid container spacing={4}>
-                {/* Header Image */}
-                <Grid item xs={12} md={6}>
-                  <Box>
-                    <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2, color: '#374151' }}>
-                      Invoice Header Image
-                    </Typography>
-                    <Box
-                      sx={{
-                        border: '2px dashed #e5e7eb',
-                        borderRadius: 2,
-                        p: 3,
-                        textAlign: 'center',
-                        bgcolor: '#f9fafb',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
-                        '&:hover': {
-                          borderColor: '#f59e0b',
-                          bgcolor: '#fef3c7',
-                        },
-                      }}
-                    >
-                      <input
-                        accept="image/*"
-                        style={{ display: 'none' }}
-                        id="header-image-upload"
-                        type="file"
-                        onChange={(e) => handleImageUpload('header', e)}
-                      />
-                      <label htmlFor="header-image-upload" style={{ cursor: 'pointer', width: '100%' }}>
-                        {headerImage ? (
-                          <Box>
-                            <img
-                              src={headerImage}
-                              alt="Invoice Header"
-                              style={{
-                                maxWidth: '100%',
-                                maxHeight: '200px',
-                                objectFit: 'contain',
-                                borderRadius: '8px',
-                                marginBottom: '12px',
+                    <input
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                      id="header-image-upload"
+                      type="file"
+                      onChange={(e) => handleImageUpload('header', e)}
+                    />
+                    <label htmlFor="header-image-upload" style={{ cursor: 'pointer', width: '100%' }}>
+                      {headerImage ? (
+                        <Box>
+                          <img
+                            src={headerImage}
+                            alt="Invoice Header"
+                            style={{
+                              maxWidth: '100%',
+                              maxHeight: '200px',
+                              objectFit: 'contain',
+                              borderRadius: '8px',
+                              marginBottom: '12px',
+                            }}
+                          />
+                          <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                            <Button
+                              variant="outlined"
+                              size="small"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                document.getElementById('header-image-upload')?.click();
                               }}
-                            />
-                            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-                              <Button
-                                variant="outlined"
-                                size="small"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  document.getElementById('header-image-upload')?.click();
-                                }}
-                                sx={{ textTransform: 'none' }}
-                              >
-                                Change Image
-                              </Button>
-                              <Button
-                                variant="outlined"
-                                size="small"
-                                color="error"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  handleRemoveImage('header');
-                                }}
-                                sx={{ textTransform: 'none' }}
-                              >
-                                Remove
-                              </Button>
-                            </Box>
-                          </Box>
-                        ) : (
-                          <Box>
-                            <DescriptionIcon sx={{ fontSize: 48, color: '#9ca3af', mb: 2 }} />
-                            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                              Click to upload header image
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              PNG, JPG up to 2MB
-                            </Typography>
-                          </Box>
-                        )}
-                      </label>
-                    </Box>
-                  </Box>
-                </Grid>
-
-                {/* Footer Image */}
-                <Grid item xs={12} md={6}>
-                  <Box>
-                    <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2, color: '#374151' }}>
-                      Invoice Footer Image
-                    </Typography>
-                    <Box
-                      sx={{
-                        border: '2px dashed #e5e7eb',
-                        borderRadius: 2,
-                        p: 3,
-                        textAlign: 'center',
-                        bgcolor: '#f9fafb',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
-                        '&:hover': {
-                          borderColor: '#f59e0b',
-                          bgcolor: '#fef3c7',
-                        },
-                      }}
-                    >
-                      <input
-                        accept="image/*"
-                        style={{ display: 'none' }}
-                        id="footer-image-upload"
-                        type="file"
-                        onChange={(e) => handleImageUpload('footer', e)}
-                      />
-                      <label htmlFor="footer-image-upload" style={{ cursor: 'pointer', width: '100%' }}>
-                        {footerImage ? (
-                          <Box>
-                            <img
-                              src={footerImage}
-                              alt="Invoice Footer"
-                              style={{
-                                maxWidth: '100%',
-                                maxHeight: '200px',
-                                objectFit: 'contain',
-                                borderRadius: '8px',
-                                marginBottom: '12px',
+                              sx={{ textTransform: 'none' }}
+                            >
+                              Change Image
+                            </Button>
+                            <Button
+                              variant="outlined"
+                              size="small"
+                              color="error"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                handleRemoveImage('header');
                               }}
-                            />
-                            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-                              <Button
-                                variant="outlined"
-                                size="small"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  document.getElementById('footer-image-upload')?.click();
-                                }}
-                                sx={{ textTransform: 'none' }}
-                              >
-                                Change Image
-                              </Button>
-                              <Button
-                                variant="outlined"
-                                size="small"
-                                color="error"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  handleRemoveImage('footer');
-                                }}
-                                sx={{ textTransform: 'none' }}
-                              >
-                                Remove
-                              </Button>
-                            </Box>
+                              sx={{ textTransform: 'none' }}
+                            >
+                              Remove
+                            </Button>
                           </Box>
-                        ) : (
-                          <Box>
-                            <DescriptionIcon sx={{ fontSize: 48, color: '#9ca3af', mb: 2 }} />
-                            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                              Click to upload footer image
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              PNG, JPG up to 2MB
-                            </Typography>
-                          </Box>
-                        )}
-                      </label>
-                    </Box>
+                        </Box>
+                      ) : (
+                        <Box>
+                          <DescriptionIcon sx={{ fontSize: 48, color: '#9ca3af', mb: 2 }} />
+                          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                            Click to upload header image
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            PNG, JPG up to 2MB
+                          </Typography>
+                        </Box>
+                      )}
+                    </label>
                   </Box>
-                </Grid>
+                </Box>
               </Grid>
-            </Paper>
-          </Grid>
 
-          {/* Save Button */}
-          <Grid item xs={12}>
-            <Paper
-              elevation={0}
-              sx={{
-                p: 3,
-                borderRadius: 3,
-                background: 'white',
-                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-              }}
-            >
-              <Box display="flex" justifyContent="flex-end" gap={2}>
-                <Button
-                  variant="contained"
-                  startIcon={saving ? <CircularProgress size={20} sx={{ color: 'white' }} /> : <SaveIcon />}
-                  onClick={handleSave}
-                  disabled={saving}
-                  size="large"
-                  sx={{
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    color: 'white',
-                    px: 4,
-                    py: 1.5,
-                    borderRadius: 2,
-                    textTransform: 'none',
-                    fontSize: '1rem',
-                    fontWeight: 600,
-                    boxShadow: '0 4px 6px -1px rgba(102, 126, 234, 0.4)',
-                    '&:hover': {
-                      background: 'linear-gradient(135deg, #5568d3 0%, #653a8b 100%)',
-                      boxShadow: '0 10px 15px -3px rgba(102, 126, 234, 0.4)',
-                      transform: 'translateY(-1px)',
-                    },
-                    '&:active': {
-                      transform: 'translateY(0)',
-                    },
-                    '&:disabled': {
-                      background: '#e2e8f0',
-                      color: '#94a3b8',
-                      boxShadow: 'none',
-                    },
-                    transition: 'all 0.2s ease',
-                  }}
-                >
-                  {saving ? 'Saving...' : 'Save Settings'}
-                </Button>
-              </Box>
-            </Paper>
-          </Grid>
+              {/* Footer Image */}
+              <Grid item xs={12} md={6}>
+                <Box>
+                  <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2, color: '#374151' }}>
+                    Invoice Footer Image
+                  </Typography>
+                  <Box
+                    sx={{
+                      border: '2px dashed #e5e7eb',
+                      borderRadius: 2,
+                      p: 3,
+                      textAlign: 'center',
+                      bgcolor: '#f9fafb',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      '&:hover': {
+                        borderColor: '#f59e0b',
+                        bgcolor: '#fef3c7',
+                      },
+                    }}
+                  >
+                    <input
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                      id="footer-image-upload"
+                      type="file"
+                      onChange={(e) => handleImageUpload('footer', e)}
+                    />
+                    <label htmlFor="footer-image-upload" style={{ cursor: 'pointer', width: '100%' }}>
+                      {footerImage ? (
+                        <Box>
+                          <img
+                            src={footerImage}
+                            alt="Invoice Footer"
+                            style={{
+                              maxWidth: '100%',
+                              maxHeight: '200px',
+                              objectFit: 'contain',
+                              borderRadius: '8px',
+                              marginBottom: '12px',
+                            }}
+                          />
+                          <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                            <Button
+                              variant="outlined"
+                              size="small"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                document.getElementById('footer-image-upload')?.click();
+                              }}
+                              sx={{ textTransform: 'none' }}
+                            >
+                              Change Image
+                            </Button>
+                            <Button
+                              variant="outlined"
+                              size="small"
+                              color="error"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                handleRemoveImage('footer');
+                              }}
+                              sx={{ textTransform: 'none' }}
+                            >
+                              Remove
+                            </Button>
+                          </Box>
+                        </Box>
+                      ) : (
+                        <Box>
+                          <DescriptionIcon sx={{ fontSize: 48, color: '#9ca3af', mb: 2 }} />
+                          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                            Click to upload footer image
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            PNG, JPG up to 2MB
+                          </Typography>
+                        </Box>
+                      )}
+                    </label>
+                  </Box>
+                </Box>
+              </Grid>
+            </Grid>
+          </Paper>
         </Grid>
+
+        {/* Save Button */}
+        <Grid item xs={12}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 3,
+              borderRadius: 3,
+              background: 'white',
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+            }}
+          >
+            <Box display="flex" justifyContent="flex-end" gap={2}>
+              <Button
+                variant="contained"
+                startIcon={saving ? <CircularProgress size={20} sx={{ color: 'white' }} /> : <SaveIcon />}
+                onClick={handleSave}
+                disabled={saving}
+                size="large"
+                sx={{
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  color: 'white',
+                  px: 4,
+                  py: 1.5,
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  fontSize: '1rem',
+                  fontWeight: 600,
+                  boxShadow: '0 4px 6px -1px rgba(102, 126, 234, 0.4)',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #5568d3 0%, #653a8b 100%)',
+                    boxShadow: '0 10px 15px -3px rgba(102, 126, 234, 0.4)',
+                    transform: 'translateY(-1px)',
+                  },
+                  '&:active': {
+                    transform: 'translateY(0)',
+                  },
+                  '&:disabled': {
+                    background: '#e2e8f0',
+                    color: '#94a3b8',
+                    boxShadow: 'none',
+                  },
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                {saving ? 'Saving...' : 'Save Settings'}
+              </Button>
+            </Box>
+          </Paper>
+        </Grid>
+      </Grid>
 
       <Snackbar
         open={snackbar.open}

@@ -456,19 +456,19 @@ Object.entries(COLLECTIONS).forEach(([key, collectionName]) => {
     try {
       // Get company ID from authenticated user
       const companyId = req.user.companyId;
-      
+
       if (!companyId) {
         return res.status(400).json({
           status: 'error',
           message: 'Company ID not found in user token'
         });
       }
-      
+
       const collection = await db.getCollection(collectionName);
-      const result = await collection.find({ 
-        companyId: companyId.toString() 
+      const result = await collection.find({
+        companyId: companyId.toString()
       }).toArray();
-      
+
       res.status(200).json(result);
     } catch (error) {
       console.error(`Error getting all ${collectionName}:`, error);
@@ -481,25 +481,25 @@ Object.entries(COLLECTIONS).forEach(([key, collectionName]) => {
     try {
       // Get company ID from authenticated user
       const companyId = req.user.companyId;
-      
+
       if (!companyId) {
         return res.status(400).json({
           status: 'error',
           message: 'Company ID not found in user token'
         });
       }
-      
+
       const id = req.params.id;
       const collection = await db.getCollection(collectionName);
-      const result = await collection.findOne({ 
+      const result = await collection.findOne({
         _id: new ObjectId(id),
         companyId: companyId.toString()
       });
-      
+
       if (!result) {
         return res.status(404).json({ status: 'error', message: `${key} not found` });
       }
-      
+
       res.status(200).json(result);
     } catch (error) {
       console.error(`Error getting ${key} by ID:`, error);
@@ -512,24 +512,24 @@ Object.entries(COLLECTIONS).forEach(([key, collectionName]) => {
     try {
       // Get company ID from authenticated user
       const companyId = req.user.companyId;
-      
+
       if (!companyId) {
         return res.status(400).json({
           status: 'error',
           message: 'Company ID not found in user token'
         });
       }
-      
+
       const newDoc = {
         ...req.body,
         companyId: companyId.toString(),
         createdAt: new Date(),
         updatedAt: new Date()
       };
-      
+
       const collection = await db.getCollection(collectionName);
       const result = await collection.insertOne(newDoc);
-      
+
       res.status(201).json({
         status: 'success',
         _id: result.insertedId,
@@ -546,47 +546,47 @@ Object.entries(COLLECTIONS).forEach(([key, collectionName]) => {
     try {
       // Get company ID from authenticated user
       const companyId = req.user.companyId;
-      
+
       if (!companyId) {
         return res.status(400).json({
           status: 'error',
           message: 'Company ID not found in user token'
         });
       }
-      
+
       const id = req.params.id;
       const updateData = {
         ...req.body,
         updatedAt: new Date()
       };
-      
+
       // Ensure companyId cannot be changed
       delete updateData.companyId;
-      
+
       const collection = await db.getCollection(collectionName);
-      
+
       // First check if document exists and belongs to this company
       const existingDoc = await collection.findOne({
         _id: new ObjectId(id),
         companyId: companyId.toString()
       });
-      
+
       if (!existingDoc) {
-        return res.status(404).json({ 
-          status: 'error', 
-          message: `${key} not found or access denied` 
+        return res.status(404).json({
+          status: 'error',
+          message: `${key} not found or access denied`
         });
       }
-      
+
       const result = await collection.updateOne(
         { _id: new ObjectId(id), companyId: companyId.toString() },
         { $set: updateData }
       );
-      
+
       if (result.matchedCount === 0) {
         return res.status(404).json({ status: 'error', message: `${key} not found` });
       }
-      
+
       const updatedDoc = await collection.findOne({ _id: new ObjectId(id) });
       res.status(200).json(updatedDoc);
     } catch (error) {
@@ -600,39 +600,39 @@ Object.entries(COLLECTIONS).forEach(([key, collectionName]) => {
     try {
       // Get company ID from authenticated user
       const companyId = req.user.companyId;
-      
+
       if (!companyId) {
         return res.status(400).json({
           status: 'error',
           message: 'Company ID not found in user token'
         });
       }
-      
+
       const id = req.params.id;
       const collection = await db.getCollection(collectionName);
-      
+
       // Check if document exists and belongs to this company
       const existingDoc = await collection.findOne({
         _id: new ObjectId(id),
         companyId: companyId.toString()
       });
-      
+
       if (!existingDoc) {
-        return res.status(404).json({ 
-          status: 'error', 
-          message: `${key} not found or access denied` 
+        return res.status(404).json({
+          status: 'error',
+          message: `${key} not found or access denied`
         });
       }
-      
-      const result = await collection.deleteOne({ 
+
+      const result = await collection.deleteOne({
         _id: new ObjectId(id),
         companyId: companyId.toString()
       });
-      
+
       if (result.deletedCount === 0) {
         return res.status(404).json({ status: 'error', message: `${key} not found` });
       }
-      
+
       res.status(200).json({ status: 'success', message: `${key} deleted successfully` });
     } catch (error) {
       console.error(`Error deleting ${key}:`, error);
@@ -645,30 +645,30 @@ Object.entries(COLLECTIONS).forEach(([key, collectionName]) => {
     try {
       // Get company ID from authenticated user
       const companyId = req.user.companyId;
-      
+
       if (!companyId) {
         return res.status(400).json({
           status: 'error',
           message: 'Company ID not found in user token'
         });
       }
-      
+
       // Convert query params to MongoDB query
       const query = {
         // Always filter by company ID
         companyId: companyId.toString()
       };
-      
+
       // Remove non-filter parameters
       const { page, limit, sort, ...filters } = req.query;
-      
+
       // Build the query from the remaining filters
       Object.entries(filters).forEach(([key, value]) => {
         // Handle special query operators like gt, lt, etc.
         if (key.includes('_')) {
           const [field, operator] = key.split('_');
           query[field] = query[field] || {};
-          
+
           switch (operator) {
             case 'gt':
               query[field]['$gt'] = Number(value);
@@ -694,7 +694,7 @@ Object.entries(COLLECTIONS).forEach(([key, collectionName]) => {
           }
         }
       });
-      
+
       const collection = await db.getCollection(collectionName);
       const result = await collection.find(query).toArray();
       res.status(200).json(result);
@@ -708,7 +708,7 @@ Object.entries(COLLECTIONS).forEach(([key, collectionName]) => {
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ 
+  res.status(500).json({
     status: 'error',
     message: 'Something went wrong!',
     error: process.env.NODE_ENV === 'development' ? err.message : undefined
@@ -734,7 +734,7 @@ const startServer = async () => {
     // Connect to database FIRST
     await db.connectToDatabase();
     console.log('Database connection established');
-    
+
     // Then start the server
     const server = app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
@@ -751,14 +751,14 @@ const startServer = async () => {
         console.error('Server error:', err);
       }
     });
-    
+
     // Handle server shutdown
     process.on('SIGINT', async () => {
       console.log('Server shutting down...');
       await db.closeConnection();
       process.exit(0);
     });
-    
+
   } catch (error) {
     console.error('Failed to start server:', error);
     process.exit(1);

@@ -52,7 +52,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, navigate }
         setUser(parsedUser);
         setToken(savedToken);
         setCompanies(parsedCompanies);
-        
+
         if (savedSelectedCompanyId) {
           setSelectedCompanyId(savedSelectedCompanyId);
           const company = parsedCompanies.find((c: Company) => c._id === savedSelectedCompanyId);
@@ -74,7 +74,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, navigate }
         localStorage.removeItem('selectedCompanyId');
       }
     }
-    
+
     // Set loading to false after attempting to load auth state
     setIsLoading(false);
   }, []);
@@ -86,18 +86,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, navigate }
 
       if (response.status === 'success' && response.data) {
         const { user, token, company } = response.data;
-        
+
         // Convert the single company to the expected format
         const companies = [{
           _id: company.id,
           name: company.name,
           role: user.role
         }];
-        
+
         setUser(user);
         setToken(token);
         setCompanies(companies);
-        
+
         // Auto-select the company since there's only one
         setSelectedCompany(companies[0]);
         setSelectedCompanyId(companies[0]._id);
@@ -107,6 +107,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, navigate }
         localStorage.setItem('user', JSON.stringify(user));
         localStorage.setItem('companies', JSON.stringify(companies));
         localStorage.setItem('selectedCompanyId', companies[0]._id);
+
+        // Store tcNumber for RTA fines fetching
+        if (company.tcNumber) {
+          localStorage.setItem('tcNumber', company.tcNumber);
+        }
 
         // Don't navigate here - let the calling component handle navigation
         // This allows for more flexible routing (e.g., redirect to intended page)
@@ -137,6 +142,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, navigate }
       localStorage.removeItem('user');
       localStorage.removeItem('companies');
       localStorage.removeItem('selectedCompanyId');
+      localStorage.removeItem('tcNumber');
       navigate('/login');
     }
   };

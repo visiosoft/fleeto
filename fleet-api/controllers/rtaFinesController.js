@@ -2,14 +2,14 @@ const db = require('../config/db');
 
 const RtaFinesController = {
   /**
-   * Get total fines from rta_total collection
+   * Get total fines from rta_total collection by traffic file key
    * @param {Object} req - Express request object
    * @param {Object} res - Express response object
    */
   async getTotalFines(req, res) {
     try {
       const companyId = req.user.companyId;
-      
+
       if (!companyId) {
         return res.status(400).json({
           status: 'error',
@@ -18,10 +18,34 @@ const RtaFinesController = {
       }
 
       console.log(`Fetching total fines for company ID: ${companyId}`);
-      
+
+      // Get company to retrieve traffic_file_key (tcNumber)
+      const Company = require('../models/companyModel');
+      const { ObjectId } = require('mongodb');
+      const company = await Company.findOne({ _id: new ObjectId(companyId) });
+
+      if (!company || !company.tcNumber) {
+        return res.status(200).json({
+          status: 'success',
+          message: 'TC Number not configured. Please set TC Number in settings.',
+          data: {
+            type: 'total_fines',
+            total_amount: 'Pay all AED 0',
+            traffic_file_key: null,
+            last_updated: {
+              $date: new Date().toISOString()
+            }
+          }
+        });
+      }
+
+      const trafficFileKey = company.tcNumber;
+      console.log(`Using traffic file key: ${trafficFileKey}`);
+
       const rtaTotalCollection = await db.getCollection('rta_total');
-      const totalFines = await rtaTotalCollection.findOne({ 
-        type: 'total_fines'
+      const totalFines = await rtaTotalCollection.findOne({
+        type: 'total_fines',
+        traffic_file_key: trafficFileKey
       });
 
       if (!totalFines) {
@@ -29,6 +53,7 @@ const RtaFinesController = {
           status: 'success',
           data: {
             type: 'total_fines',
+            traffic_file_key: trafficFileKey,
             total_amount: 'Pay all AED 0',
             last_updated: {
               $date: new Date().toISOString()
@@ -40,8 +65,8 @@ const RtaFinesController = {
       // Ensure consistent date format
       if (totalFines.last_updated && !(totalFines.last_updated.$date)) {
         totalFines.last_updated = {
-          $date: totalFines.last_updated instanceof Date 
-            ? totalFines.last_updated.toISOString() 
+          $date: totalFines.last_updated instanceof Date
+            ? totalFines.last_updated.toISOString()
             : new Date(totalFines.last_updated).toISOString()
         };
       }
@@ -52,23 +77,23 @@ const RtaFinesController = {
       });
     } catch (error) {
       console.error('Error getting total fines:', error);
-      res.status(500).json({ 
-        status: 'error', 
-        message: 'Failed to retrieve total fines', 
-        error: error.message 
+      res.status(500).json({
+        status: 'error',
+        message: 'Failed to retrieve total fines',
+        error: error.message
       });
     }
   },
 
   /**
-   * Get all fines from rta_fines collection
+   * Get all fines from rta_fines collection by traffic file key
    * @param {Object} req - Express request object
    * @param {Object} res - Express response object
    */
   async getAllFines(req, res) {
     try {
       const companyId = req.user.companyId;
-      
+
       if (!companyId) {
         return res.status(400).json({
           status: 'error',
@@ -77,26 +102,53 @@ const RtaFinesController = {
       }
 
       console.log(`Fetching all fines for company ID: ${companyId}`);
-      
+
+      // Get company to retrieve traffic_file_key (tcNumber)
+      const Company = require('../models/companyModel');
+      const { ObjectId } = require('mongodb');
+      const company = await Company.findOne({ _id: new ObjectId(companyId) });
+
+      if (!company || !company.tcNumber) {
+        return res.status(200).json({
+          status: 'success',
+          message: 'TC Number not configured. Please set TC Number in settings.',
+          data: {
+            fines: [],
+            count: 0
+          }
+        });
+      }
+
+      const trafficFileKey = company.tcNumber;
+      console.log(`Using traffic file key: ${trafficFileKey}`);
+
       const rtaFinesCollection = await db.getCollection('rta_fines');
+
+      // Query using traffic_file_key
+      const query = { traffic_file_key: trafficFileKey };
+      console.log('Querying rta_fines with:', JSON.stringify(query));
+
       const fines = await rtaFinesCollection
-        .find({})
+        .find(query)
         .sort({ date_time: -1 })
         .toArray();
+
+      console.log(`Found ${fines.length} fines for traffic_file_key: ${trafficFileKey}`);
 
       res.status(200).json({
         status: 'success',
         data: {
           fines: fines,
-          count: fines.length
+          count: fines.length,
+          traffic_file_key: trafficFileKey
         }
       });
     } catch (error) {
       console.error('Error getting fines:', error);
-      res.status(500).json({ 
-        status: 'error', 
-        message: 'Failed to retrieve fines', 
-        error: error.message 
+      res.status(500).json({
+        status: 'error',
+        message: 'Failed to retrieve fines',
+        error: error.message
       });
     }
   },
@@ -110,7 +162,7 @@ const RtaFinesController = {
     try {
       const companyId = req.user.companyId;
       const { vehicleInfo } = req.params;
-      
+
       if (!companyId) {
         return res.status(400).json({
           status: 'error',
@@ -119,7 +171,7 @@ const RtaFinesController = {
       }
 
       console.log(`Fetching fines for vehicle: ${vehicleInfo}`);
-      
+
       const rtaFinesCollection = await db.getCollection('rta_fines');
       const fines = await rtaFinesCollection
         .find({ vehicle_info: vehicleInfo })
@@ -135,10 +187,10 @@ const RtaFinesController = {
       });
     } catch (error) {
       console.error('Error getting fines by vehicle:', error);
-      res.status(500).json({ 
-        status: 'error', 
-        message: 'Failed to retrieve fines by vehicle', 
-        error: error.message 
+      res.status(500).json({
+        status: 'error',
+        message: 'Failed to retrieve fines by vehicle',
+        error: error.message
       });
     }
   },
@@ -152,7 +204,7 @@ const RtaFinesController = {
     try {
       const companyId = req.user.companyId;
       const { id } = req.params;
-      
+
       if (!companyId) {
         return res.status(400).json({
           status: 'error',
@@ -161,11 +213,11 @@ const RtaFinesController = {
       }
 
       console.log(`Deleting fine with ID: ${id}`);
-      
+
       const rtaFinesCollection = await db.getCollection('rta_fines');
       const { ObjectId } = require('mongodb');
-      
-      const result = await rtaFinesCollection.deleteOne({ 
+
+      const result = await rtaFinesCollection.deleteOne({
         _id: new ObjectId(id)
       });
 
@@ -182,10 +234,10 @@ const RtaFinesController = {
       });
     } catch (error) {
       console.error('Error deleting fine:', error);
-      res.status(500).json({ 
-        status: 'error', 
-        message: 'Failed to delete fine', 
-        error: error.message 
+      res.status(500).json({
+        status: 'error',
+        message: 'Failed to delete fine',
+        error: error.message
       });
     }
   }

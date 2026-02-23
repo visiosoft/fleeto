@@ -61,11 +61,11 @@ const PrintableReceipt: React.FC<PrintableReceiptProps> = ({ receipt }) => {
       <Box ref={contentRef} sx={{ p: 0, backgroundColor: 'white' }}>
         {/* Header Banner */}
         <Box sx={{ width: '100%', mb: 2 }}>
-          <img 
-            src={headerImage} 
-            alt="Header Banner" 
-            style={{ 
-              width: '100%', 
+          <img
+            src={headerImage}
+            alt="Header Banner"
+            style={{
+              width: '100%',
               height: 'auto',
               display: 'block',
               margin: 0,
@@ -103,13 +103,13 @@ const PrintableReceipt: React.FC<PrintableReceiptProps> = ({ receipt }) => {
             <Typography variant="subtitle1" gutterBottom sx={{ fontSize: '1rem', fontWeight: 'bold' }}>
               Payment Details
             </Typography>
-            <Box sx={{ 
-              border: '1px solid #e0e0e0', 
+            <Box sx={{
+              border: '1px solid #e0e0e0',
               borderRadius: 1,
               overflow: 'hidden'
             }}>
-              <Box sx={{ 
-                display: 'grid', 
+              <Box sx={{
+                display: 'grid',
                 gridTemplateColumns: '1fr 1fr',
                 '& > div': {
                   p: 1,
@@ -123,22 +123,22 @@ const PrintableReceipt: React.FC<PrintableReceiptProps> = ({ receipt }) => {
               }}>
                 <Box>Invoice ID</Box>
                 <Box>{receipt.invoiceId}</Box>
-                
+
                 <Box>Amount</Box>
                 <Box>AED {receipt.amount.toFixed(2)}</Box>
-                
+
                 <Box>Payment Method</Box>
                 <Box>{(receipt.paymentMethod || '').replace('_', ' ').toUpperCase()}</Box>
-                
+
                 <Box>Payment Date</Box>
                 <Box>{new Date(receipt.paymentDate).toLocaleDateString()}</Box>
-                
+
                 <Box>Status</Box>
-                <Box sx={{ 
-                  color: receipt.status === 'received' || receipt.status === 'paid' ? 'success.main' : 
-                         receipt.status === 'pending' ? 'warning.main' :
-                         receipt.status === 'failed' ? 'error.main' :
-                         receipt.status === 'refunded' ? 'info.main' : 'inherit'
+                <Box sx={{
+                  color: receipt.status === 'received' || receipt.status === 'paid' ? 'success.main' :
+                    receipt.status === 'pending' ? 'warning.main' :
+                      receipt.status === 'failed' ? 'error.main' :
+                        receipt.status === 'refunded' ? 'info.main' : 'inherit'
                 }}>
                   {(receipt.status || '').toUpperCase()}
                 </Box>
@@ -169,11 +169,11 @@ const PrintableReceipt: React.FC<PrintableReceiptProps> = ({ receipt }) => {
 
         {/* Footer Banner */}
         <Box sx={{ width: '100%', mt: 2 }}>
-          <img 
-            src={footerImage} 
-            alt="Footer Banner" 
-            style={{ 
-              width: '100%', 
+          <img
+            src={footerImage}
+            alt="Footer Banner"
+            style={{
+              width: '100%',
               height: 'auto',
               display: 'block',
               margin: 0,

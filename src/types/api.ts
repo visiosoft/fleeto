@@ -186,6 +186,7 @@ export interface LoginResponse {
       id: string;
       name: string;
       status: string;
+      tcNumber?: string;
     };
   };
 }
