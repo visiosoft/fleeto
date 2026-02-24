@@ -234,7 +234,16 @@ const ContractManagement: React.FC = () => {
   const handleEditContract = async (contract: Contract) => {
     try {
       const response = await axios.get(getApiUrl(`${API_CONFIG.ENDPOINTS.CONTRACTS}/${contract._id}`));
-      setCurrentContract(response.data);
+      // Ensure all fields are present, fallback to emptyContract defaults if missing
+      const loaded = { ...emptyContract, ...response.data };
+      // Patch: Ensure all string fields are at least empty string, not undefined
+      setCurrentContract({
+        ...loaded,
+        contractType: loaded.contractType || '',
+        contactPerson: loaded.contactPerson || '',
+        contactPhone: loaded.contactPhone || '',
+        contactEmail: loaded.contactEmail || '',
+      } as Contract);
       setFormErrors({});
       setOpenDialog(true);
     } catch (error) {
@@ -281,9 +290,11 @@ const ContractManagement: React.FC = () => {
 
     setIsLoading(true);
     try {
+      // Always send all contract fields, including value and details
+      const contractPayload = { ...emptyContract, ...currentContract };
       if (currentContract._id) {
         // Update existing contract
-        const { _id, ...contractToUpdate } = currentContract;
+        const { _id, ...contractToUpdate } = contractPayload;
         console.log('Updating contract:', contractToUpdate);
         const response = await axios.put(
           getApiUrl(`${API_CONFIG.ENDPOINTS.CONTRACTS}/${_id}`),
@@ -292,7 +303,7 @@ const ContractManagement: React.FC = () => {
         console.log('Update response:', response.data);
       } else {
         // Create new contract
-        const { _id, ...contractToCreate } = currentContract;
+        const { _id, ...contractToCreate } = contractPayload;
         console.log('Creating contract:', contractToCreate);
         const response = await axios.post(
           getApiUrl(API_CONFIG.ENDPOINTS.CONTRACTS),

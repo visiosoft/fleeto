@@ -55,15 +55,18 @@ export const ModernDashboard: React.FC = () => {
   const [vehicles, setVehicles] = useState<any[]>([]);
   const [selectedVehicle, setSelectedVehicle] = useState<string>('all');
 
-  // Fetch vehicles list
+  // Fetch vehicles list (per company)
   useEffect(() => {
     const fetchVehicles = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get(API_ENDPOINTS.vehicles, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-
+        const companyId = localStorage.getItem('companyId');
+        const response = await axios.get(
+          companyId ? `${API_ENDPOINTS.vehicles}?companyId=${companyId}` : API_ENDPOINTS.vehicles,
+          {
+            headers: { Authorization: `Bearer ${token}` }
+          }
+        );
         if (response.data) {
           setVehicles(response.data);
         }
@@ -71,28 +74,26 @@ export const ModernDashboard: React.FC = () => {
         console.error('Error fetching vehicles:', error);
       }
     };
-
     fetchVehicles();
   }, []);
 
-  // Fetch vehicle expenses for pie chart (current month only)
+  // Fetch vehicle expenses for pie chart (current month only, per company)
   useEffect(() => {
     const fetchVehicleExpenses = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get(API_ENDPOINTS.costs.all, {
+        const companyId = localStorage.getItem('companyId');
+        const url = companyId ? `${API_ENDPOINTS.costs.all}?companyId=${companyId}` : API_ENDPOINTS.costs.all;
+        const response = await axios.get(url, {
           headers: { Authorization: `Bearer ${token}` }
         });
-
         if (response.data && response.data.vehicles) {
           // Get current month and year
           const now = new Date();
           const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
           const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-
           // Group expenses by vehicle for current month
           const vehicleMap = new Map();
-
           response.data.vehicles.forEach((vehicle: any) => {
             let vehicleTotal = 0;
             vehicle.details?.forEach((expense: any) => {
@@ -105,88 +106,78 @@ export const ModernDashboard: React.FC = () => {
               vehicleMap.set(vehicle.vehicleName, vehicleTotal);
             }
           });
-
           const vehicleData = Array.from(vehicleMap.entries()).map(([name, total]) => ({
             id: name,
             label: name,
             value: total
           }));
-
           setVehicleExpenses(vehicleData);
         }
       } catch (error) {
         console.error('Error fetching vehicle expenses:', error);
       }
     };
-
     fetchVehicleExpenses();
   }, []);
 
-  // Fetch active contracts and show each contract separately
+  // Fetch active contracts and show each contract separately (per company)
   useEffect(() => {
     const fetchVehicleUtilization = async () => {
       try {
         const token = localStorage.getItem('token');
-
+        const companyId = localStorage.getItem('companyId');
+        const url = companyId ? `${API_ENDPOINTS.contracts}?companyId=${companyId}` : API_ENDPOINTS.contracts;
         // Fetch contracts
-        const response = await axios.get(API_ENDPOINTS.contracts, {
+        const response = await axios.get(url, {
           headers: { Authorization: `Bearer ${token}` }
         });
-
         console.log('Contracts Response:', response.data);
-
         // Get all contracts (directly an array)
         const contracts = Array.isArray(response.data)
           ? response.data
           : [];
-
         // Filter for active contracts and create data for each
         const activeContracts = contracts.filter((contract: any) =>
           contract.status === 'Active' && contract.value
         );
-
         console.log('Active contracts:', activeContracts);
-
         // Create a unique entry for each contract
         const contractData = activeContracts.map((contract: any, index: number) => {
           // Use company name if available, otherwise use contract ID
           const displayName = contract.companyName
             ? `${contract.companyName.substring(0, 30)}${contract.companyName.length > 30 ? '...' : ''}`
             : `Contract ${index + 1}`;
-
           return {
             vehicle: displayName,
             income: contract.value
           };
         });
-
         console.log('Chart Data:', contractData);
-
         setVehicleContracts(contractData.length > 0 ? contractData : []);
       } catch (error) {
         console.error('Error fetching contracts:', error);
       }
     };
-
     fetchVehicleUtilization();
   }, []);
 
-  // Fetch yearly income and expense data for the last 12 months
+  // Fetch yearly income and expense data for the last 12 months (per company)
   useEffect(() => {
     const fetchYearlyData = async () => {
       try {
         const token = localStorage.getItem('token');
-
+        const companyId = localStorage.getItem('companyId');
+        const expensesUrl = companyId ? `${API_ENDPOINTS.costs.all}?companyId=${companyId}` : API_ENDPOINTS.costs.all;
+        const contractsUrl = companyId ? `${API_ENDPOINTS.contracts}?companyId=${companyId}` : API_ENDPOINTS.contracts;
         // Fetch all expenses and contracts
         const [expensesRes, contractsRes] = await Promise.all([
-          axios.get(API_ENDPOINTS.costs.all, {
+          axios.get(expensesUrl, {
             headers: { Authorization: `Bearer ${token}` }
           }),
-          axios.get(API_ENDPOINTS.contracts, {
+          axios.get(contractsUrl, {
             headers: { Authorization: `Bearer ${token}` }
           })
         ]);
-
         // Generate last 12 months
         interface MonthData {
           month: string;
@@ -195,7 +186,6 @@ export const ModernDashboard: React.FC = () => {
           income: number;
           expenses: number;
         }
-
         const months: MonthData[] = [];
         const now = new Date();
         for (let i = 11; i >= 0; i--) {
@@ -208,7 +198,6 @@ export const ModernDashboard: React.FC = () => {
             expenses: 0
           });
         }
-
         // Calculate monthly expenses
         if (expensesRes.data?.vehicles) {
           expensesRes.data.vehicles.forEach((vehicle: any) => {
@@ -224,18 +213,15 @@ export const ModernDashboard: React.FC = () => {
             });
           });
         }
-
         // Calculate monthly income from active contracts
         if (contractsRes.data && Array.isArray(contractsRes.data)) {
           contractsRes.data.forEach((contract: any) => {
             if (contract.status === 'Active' && contract.value) {
               const startDate = new Date(contract.startDate);
               const endDate = contract.endDate ? new Date(contract.endDate) : now;
-
               months.forEach(monthData => {
                 const monthStart = new Date(monthData.year, monthData.monthIndex, 1);
                 const monthEnd = new Date(monthData.year, monthData.monthIndex + 1, 0);
-
                 // If contract was active during this month
                 if (startDate <= monthEnd && endDate >= monthStart) {
                   monthData.income += contract.value || 0;
@@ -244,13 +230,11 @@ export const ModernDashboard: React.FC = () => {
             }
           });
         }
-
         setYearlyIncomeExpense(months);
       } catch (error) {
         console.error('Error fetching yearly data:', error);
       }
     };
-
     fetchYearlyData();
   }, []);
 
