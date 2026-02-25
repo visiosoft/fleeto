@@ -63,6 +63,7 @@ import {
   Sort as SortIcon,
   Clear as ClearIcon,
 } from '@mui/icons-material';
+import ExpenseDocuments from '../../components/ExpenseDocuments';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import moment from 'moment';
 import { ResponsivePie } from '@nivo/pie';
@@ -190,8 +191,8 @@ const Row: React.FC<{
 
   return (
     <>
-      <TableRow 
-        sx={{ 
+      <TableRow
+        sx={{
           '& > *': { borderBottom: 'unset' },
           backgroundColor: open ? alpha(theme.palette.primary.main, 0.04) : 'transparent',
           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -215,9 +216,9 @@ const Row: React.FC<{
         </TableCell>
         <TableCell component="th" scope="row">
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Avatar 
-              sx={{ 
-                width: 36, 
+            <Avatar
+              sx={{
+                width: 36,
                 height: 36,
                 background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
                 boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.3)}`,
@@ -239,9 +240,9 @@ const Row: React.FC<{
           </Box>
         </TableCell>
         <TableCell align="right">
-          <Chip 
-            label={row.details.length} 
-            size="small" 
+          <Chip
+            label={row.details.length}
+            size="small"
             color="primary"
             sx={{ fontWeight: 700 }}
           />
@@ -268,12 +269,12 @@ const Row: React.FC<{
                 </TableHead>
                 <TableBody>
                   {row.details.map((detail) => (
-                    <TableRow 
+                    <TableRow
                       key={detail._id}
                       onMouseEnter={() => setHoveredRow(detail._id)}
                       onMouseLeave={() => setHoveredRow(null)}
                       sx={{
-                        backgroundColor: hoveredRow === detail._id 
+                        backgroundColor: hoveredRow === detail._id
                           ? alpha(theme.palette.primary.main, 0.04)
                           : 'transparent',
                         transition: 'all 0.2s',
@@ -399,6 +400,8 @@ const CostManagement: React.FC = () => {
   const [sortBy, setSortBy] = useState<'date' | 'amount' | 'vehicle'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [contractIncome, setContractIncome] = useState<number>(0);
+  const [expenseDocumentsOpen, setExpenseDocumentsOpen] = useState(false);
+  const [expenseDocumentsId, setExpenseDocumentsId] = useState<string | null>(null);
 
   const fetchCostData = async () => {
     try {
@@ -434,7 +437,7 @@ const CostManagement: React.FC = () => {
         const response = await axios.get(API_ENDPOINTS.vehicles, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        
+
         if (response.data) {
           setVehicles(response.data);
         }
@@ -442,7 +445,7 @@ const CostManagement: React.FC = () => {
         console.error('Error fetching vehicles:', error);
       }
     };
-    
+
     fetchVehicles();
   }, []);
 
@@ -454,22 +457,22 @@ const CostManagement: React.FC = () => {
         const response = await axios.get(API_ENDPOINTS.contracts, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        
+
         if (response.data) {
           let contracts = response.data;
-          
+
           // Filter by selected vehicles if any
           if (selectedVehicles.length > 0) {
-            contracts = contracts.filter((contract: any) => 
+            contracts = contracts.filter((contract: any) =>
               selectedVehicles.includes(contract.vehicleId)
             );
           }
-          
+
           // Calculate total income from active contracts
           const totalIncome = contracts
             .filter((contract: any) => contract.status === 'Active')
             .reduce((sum: number, contract: any) => sum + Number(contract.value || 0), 0);
-          
+
           setContractIncome(totalIncome);
         }
       } catch (error) {
@@ -477,7 +480,7 @@ const CostManagement: React.FC = () => {
         setContractIncome(0);
       }
     };
-    
+
     fetchContractIncome();
   }, [selectedVehicles]);
 
@@ -542,9 +545,9 @@ const CostManagement: React.FC = () => {
   const getAllExpenses = () => {
     const filteredData = getFilteredData();
     if (!filteredData) return [];
-    
+
     let allExpenses: (ExpenseDetail & { vehicleName: string })[] = [];
-    
+
     filteredData.vehicles.forEach(vehicle => {
       if (vehicle.details && Array.isArray(vehicle.details)) {
         vehicle.details.forEach(expense => {
@@ -555,7 +558,7 @@ const CostManagement: React.FC = () => {
         });
       }
     });
-    
+
     // Apply search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
@@ -567,11 +570,11 @@ const CostManagement: React.FC = () => {
         expense.paymentMethod?.toLowerCase().includes(query)
       );
     }
-    
+
     // Apply sorting
     allExpenses.sort((a, b) => {
       let comparison = 0;
-      
+
       switch (sortBy) {
         case 'date':
           comparison = new Date(a.date).getTime() - new Date(b.date).getTime();
@@ -585,12 +588,12 @@ const CostManagement: React.FC = () => {
         default:
           comparison = new Date(a.date).getTime() - new Date(b.date).getTime();
       }
-      
+
       return sortOrder === 'asc' ? comparison : -comparison;
     });
-    
+
     console.log('All expenses count:', allExpenses.length);
-    
+
     return allExpenses;
   };
 
@@ -648,7 +651,7 @@ const CostManagement: React.FC = () => {
       if (formValues.notes) {
         formData.append('notes', formValues.notes);
       }
-      
+
       // Append multiple files
       if (selectedFiles.length > 0) {
         selectedFiles.forEach((file) => {
@@ -665,12 +668,12 @@ const CostManagement: React.FC = () => {
       });
 
       console.log('Expense created successfully:', response.data);
-      
+
       setAddDialogOpen(false);
       await fetchCostData(); // Wait for data to refresh
-      
+
       alert('Expense added successfully!');
-      
+
       // Reset form values
       setFormValues({
         vehicleId: '',
@@ -730,7 +733,7 @@ const CostManagement: React.FC = () => {
       if (formValues.notes) {
         formData.append('notes', formValues.notes);
       }
-      
+
       if (selectedFiles.length > 0) {
         selectedFiles.forEach((file) => {
           formData.append('receipts', file);
@@ -1046,8 +1049,8 @@ const CostManagement: React.FC = () => {
                   width: 48,
                   height: 48,
                   borderRadius: '12px',
-                  background: contractIncome - filteredTotal >= 0 
-                    ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)' 
+                  background: contractIncome - filteredTotal >= 0
+                    ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)'
                     : 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
                   display: 'flex',
                   alignItems: 'center',
@@ -1183,7 +1186,7 @@ const CostManagement: React.FC = () => {
                     ),
                   }}
                 />
-                
+
                 <FormControl size="small" sx={{ minWidth: 150 }}>
                   <InputLabel>Sort By</InputLabel>
                   <Select
@@ -1255,7 +1258,7 @@ const CostManagement: React.FC = () => {
                   </Select>
                 </FormControl>
 
-                <Chip 
+                <Chip
                   label={`${filteredExpenses.length} expense${filteredExpenses.length !== 1 ? 's' : ''}`}
                   color="primary"
                   variant="outlined"
@@ -1265,128 +1268,153 @@ const CostManagement: React.FC = () => {
               {/* Two Column Layout: Table (75%) and Chart (25%) */}
               <Grid container spacing={2}>
                 <Grid item xs={12} lg={9}>
-                  <TableContainer sx={{ 
+                  <TableContainer sx={{
                     borderRadius: 3,
                     overflowX: 'auto',
                     boxShadow: `0 1px 3px ${alpha(theme.palette.common.black, 0.1)}`,
                   }}>
-              <Table>
-                <TableHead>
-                  <TableRow sx={{ background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, ${alpha(theme.palette.secondary.main, 0.05)} 100%)` }}>
-                    <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Date</TableCell>
-                    <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Vehicle</TableCell>
-                    <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Type</TableCell>
-                    <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Description</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Amount</TableCell>
-                    <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Status</TableCell>
-                    <TableCell align="center" sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {getAllExpenses().map((expense) => (
-                    <TableRow
-                      key={expense._id}
-                      sx={{
-                        '&:hover': {
-                          backgroundColor: alpha(theme.palette.primary.main, 0.04),
-                        },
-                        transition: 'background-color 0.2s',
-                      }}
-                    >
-                      <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <CalendarIcon sx={{ fontSize: 14, color: theme.palette.text.secondary }} />
-                          <Typography variant="body2">{new Date(expense.date).toLocaleDateString()}</Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2" fontWeight={600}>
-                          {expense.vehicleName}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={expense.expenseType}
-                          color={(expense.expenseType === 'fuel' ? 'primary' : expense.expenseType === 'maintenance' ? 'secondary' : 'default') as any}
-                          size="small"
-                          sx={{ fontWeight: 700, fontSize: '0.7rem' }}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2" color="text.secondary">
-                          {expense.description}
-                        </Typography>
-                      </TableCell>
-                      <TableCell align="right">
-                        <Typography variant="body2" fontWeight={600}>
-                          AED {expense.amount.toLocaleString()}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={expense.paymentStatus}
-                          color={(expense.paymentStatus === 'paid' ? 'success' : expense.paymentStatus === 'pending' ? 'warning' : 'error') as any}
-                          size="small"
-                          sx={{ fontWeight: 700, fontSize: '0.7rem' }}
-                        />
-                      </TableCell>
-                      <TableCell align="center">
-                        <Stack direction="row" spacing={0.5} justifyContent="center">
-                          <Tooltip title="Edit Expense">
-                            <IconButton
-                              size="small"
-                              onClick={() => handleEditClick(expense)}
-                              sx={{
-                                backgroundColor: alpha(theme.palette.info.main, 0.1),
-                                '&:hover': {
-                                  backgroundColor: alpha(theme.palette.info.main, 0.2),
-                                  transform: 'scale(1.1)',
-                                },
-                                transition: 'all 0.2s',
-                              }}
-                            >
-                              <EditIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="Delete Expense">
-                            <IconButton
-                              size="small"
-                              onClick={() => handleDeleteClick(expense._id)}
-                              sx={{
-                                backgroundColor: alpha(theme.palette.error.main, 0.1),
-                                '&:hover': {
-                                  backgroundColor: alpha(theme.palette.error.main, 0.2),
-                                  transform: 'scale(1.1)',
-                                },
-                                transition: 'all 0.2s',
-                              }}
-                            >
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        </Stack>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {getAllExpenses().length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
-                        <Typography variant="body2" color="text.secondary">
-                          No expenses found. Click "Add Expense" to create your first expense.
-                        </Typography>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                    <Table>
+                      <TableHead>
+                        <TableRow sx={{ background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, ${alpha(theme.palette.secondary.main, 0.05)} 100%)` }}>
+                          <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Date</TableCell>
+                          <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Vehicle</TableCell>
+                          <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Type</TableCell>
+                          <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Description</TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Amount</TableCell>
+                          <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Status</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Actions</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {getAllExpenses().map((expense) => (
+                          <TableRow
+                            key={expense._id}
+                            sx={{
+                              '&:hover': {
+                                backgroundColor: alpha(theme.palette.primary.main, 0.04),
+                              },
+                              transition: 'background-color 0.2s',
+                            }}
+                          >
+                            <TableCell>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <CalendarIcon sx={{ fontSize: 14, color: theme.palette.text.secondary }} />
+                                <Typography variant="body2">{new Date(expense.date).toLocaleDateString()}</Typography>
+                              </Box>
+                            </TableCell>
+                            <TableCell>
+                              <Typography variant="body2" fontWeight={600}>
+                                {expense.vehicleName}
+                              </Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Chip
+                                label={expense.expenseType}
+                                color={(expense.expenseType === 'fuel' ? 'primary' : expense.expenseType === 'maintenance' ? 'secondary' : 'default') as any}
+                                size="small"
+                                sx={{ fontWeight: 700, fontSize: '0.7rem' }}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Typography variant="body2" color="text.secondary">
+                                {expense.description}
+                              </Typography>
+                            </TableCell>
+                            <TableCell align="right">
+                              <Typography variant="body2" fontWeight={600}>
+                                AED {expense.amount.toLocaleString()}
+                              </Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Chip
+                                label={expense.paymentStatus}
+                                color={(expense.paymentStatus === 'paid' ? 'success' : expense.paymentStatus === 'pending' ? 'warning' : 'error') as any}
+                                size="small"
+                                sx={{ fontWeight: 700, fontSize: '0.7rem' }}
+                              />
+                            </TableCell>
+                            <TableCell align="center">
+                              <Stack direction="row" spacing={0.5} justifyContent="center">
+                                <Tooltip title="Documents">
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => {
+                                      setExpenseDocumentsId(expense._id);
+                                      setExpenseDocumentsOpen(true);
+                                    }}
+                                    sx={{
+                                      backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                                      '&:hover': {
+                                        backgroundColor: alpha(theme.palette.primary.main, 0.18),
+                                        transform: 'scale(1.1)',
+                                      },
+                                      transition: 'all 0.2s',
+                                    }}
+                                  >
+                                    <AttachFileIcon fontSize="small" />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Edit Expense">
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => handleEditClick(expense)}
+                                    sx={{
+                                      backgroundColor: alpha(theme.palette.info.main, 0.1),
+                                      '&:hover': {
+                                        backgroundColor: alpha(theme.palette.info.main, 0.2),
+                                        transform: 'scale(1.1)',
+                                      },
+                                      transition: 'all 0.2s',
+                                    }}
+                                  >
+                                    <EditIcon fontSize="small" />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Delete Expense">
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => handleDeleteClick(expense._id)}
+                                    sx={{
+                                      backgroundColor: alpha(theme.palette.error.main, 0.1),
+                                      '&:hover': {
+                                        backgroundColor: alpha(theme.palette.error.main, 0.2),
+                                        transform: 'scale(1.1)',
+                                      },
+                                      transition: 'all 0.2s',
+                                    }}
+                                  >
+                                    <DeleteIcon fontSize="small" />
+                                  </IconButton>
+                                </Tooltip>
+                              </Stack>
+                            </TableCell>
+                            {/* Expense Documents Modal */}
+                            <ExpenseDocuments
+                              open={expenseDocumentsOpen}
+                              expenseId={expenseDocumentsId || ''}
+                              onClose={() => setExpenseDocumentsOpen(false)}
+                            />
+                          </TableRow>
+                        ))}
+                        {getAllExpenses().length === 0 && (
+                          <TableRow>
+                            <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                              <Typography variant="body2" color="text.secondary">
+                                No expenses found. Click "Add Expense" to create your first expense.
+                              </Typography>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
                 </Grid>
-                
+
                 {/* Donut Chart Column (25%) */}
                 <Grid item xs={12} lg={3}>
                   {chartData && (
-                    <Paper sx={{ 
-                      p: 2, 
+                    <Paper sx={{
+                      p: 2,
                       height: '100%',
                       borderRadius: 3,
                       boxShadow: `0 1px 3px ${alpha(theme.palette.common.black, 0.1)}`,
@@ -1588,7 +1616,7 @@ const CostManagement: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button 
+          <Button
             onClick={() => {
               setSelectedVehicle('all');
               setSelectedExpenseType('all');
@@ -1652,78 +1680,15 @@ const CostManagement: React.FC = () => {
               placeholder="Add any notes or comments about this expense..."
               sx={{ mb: 2 }}
             />
-
-            <Box sx={{ mb: 2 }}>
-              <Button
-                variant="outlined"
-                component="label"
-                fullWidth
-                startIcon={<AttachFileIcon />}
-                sx={{ mb: 1 }}
-              >
-                Upload Receipts/Invoices (Multiple)
-                <input
-                  type="file"
-                  hidden
-                  multiple
-                  accept="image/*,application/pdf"
-                  onChange={(e) => {
-                    const files = Array.from(e.target.files || []);
-                    if (files.length > 0) {
-                      setSelectedFiles([...selectedFiles, ...files]);
-                    }
-                  }}
-                />
-              </Button>
-              {selectedFiles.length > 0 && (
-                <Box sx={{ mt: 2 }}>
-                  <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
-                    New Files to Upload ({selectedFiles.length})
-                  </Typography>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                    {selectedFiles.map((file, index) => (
-                      <Box 
-                        key={index} 
-                        sx={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          gap: 1,
-                          p: 1,
-                          border: '1px solid',
-                          borderColor: 'primary.main',
-                          borderRadius: 1,
-                          backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.05)
-                        }}
-                      >
-                        <FileIcon fontSize="small" color="primary" />
-                        <Typography variant="body2" sx={{ flex: 1 }}>
-                          {file.name}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {(file.size / 1024).toFixed(1)} KB
-                        </Typography>
-                        <IconButton
-                          size="small"
-                          onClick={() => setSelectedFiles(selectedFiles.filter((_, i) => i !== index))}
-                          color="error"
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </Box>
-                    ))}
-                  </Box>
-                </Box>
-              )}
-            </Box>
           </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setAddDialogOpen(false)} disabled={uploading}>
             Cancel
           </Button>
-          <Button 
-            onClick={handleAddExpense} 
-            variant="contained" 
+          <Button
+            onClick={handleAddExpense}
+            variant="contained"
             disabled={uploading || !formValues.vehicleId || !formValues.amount}
           >
             {uploading ? <CircularProgress size={24} /> : 'Add Expense'}
@@ -1789,15 +1754,15 @@ const CostManagement: React.FC = () => {
                   </Typography>
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                     {selectedExpense.receipts.map((receipt, index) => {
-                      const isImage = receipt.fileName?.match(/\.(jpg|jpeg|png|gif|webp|bmp)$/i) || 
-                                      receipt.url?.match(/\.(jpg|jpeg|png|gif|webp|bmp)$/i);
-                      
+                      const isImage = receipt.fileName?.match(/\.(jpg|jpeg|png|gif|webp|bmp)$/i) ||
+                        receipt.url?.match(/\.(jpg|jpeg|png|gif|webp|bmp)$/i);
+
                       return (
-                        <Box 
-                          key={index} 
-                          sx={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
+                        <Box
+                          key={index}
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
                             gap: 1,
                             p: 1,
                             border: '1px solid',
@@ -1852,7 +1817,7 @@ const CostManagement: React.FC = () => {
                                     ...selectedExpense,
                                     receipts: updatedReceipts
                                   });
-                                  
+
                                   // TODO: Add API call to delete from server
                                   // For now, it will be removed when the expense is saved
                                 } catch (error) {
@@ -1904,13 +1869,13 @@ const CostManagement: React.FC = () => {
                     {selectedFiles.map((file, index) => {
                       const isImage = file.type.startsWith('image/');
                       const imageUrl = isImage ? URL.createObjectURL(file) : null;
-                      
+
                       return (
-                        <Box 
-                          key={index} 
-                          sx={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
+                        <Box
+                          key={index}
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
                             gap: 1,
                             p: 1,
                             border: '1px solid',
@@ -1968,9 +1933,9 @@ const CostManagement: React.FC = () => {
           <Button onClick={() => setEditDialogOpen(false)} disabled={uploading}>
             Cancel
           </Button>
-          <Button 
-            onClick={handleUpdateExpense} 
-            variant="contained" 
+          <Button
+            onClick={handleUpdateExpense}
+            variant="contained"
             disabled={uploading || !formValues.vehicleId || !formValues.amount}
           >
             {uploading ? <CircularProgress size={24} /> : 'Update Expense'}

@@ -34,6 +34,16 @@ router.get('/vehicle/:vehicleId', ExpenseController.getExpensesByVehicle);
 // Get expenses by driver
 router.get('/driver/:driverId', ExpenseController.getExpensesByDriver);
 
+
+// Get documents for a specific expense
+router.get('/:id/documents', ExpenseController.getExpenseDocuments);
+
+// Upload documents to an expense
+router.post('/:id/upload-documents', upload.array('receipts', 10), ExpenseController.uploadExpenseDocuments);
+
+// Delete a document from an expense
+router.delete('/:id/documents/:documentId', ExpenseController.deleteExpenseDocument);
+
 // Get specific expense
 router.get('/:id', ExpenseController.getExpenseById);
 
