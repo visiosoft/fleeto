@@ -75,6 +75,7 @@ const BetaInvoiceView: React.FC = () => {
             const response = await BetaInvoiceService.getInstance().getInvoiceById(id!);
             if (response.data.status === 'success') {
                 setInvoice(response.data.data);
+                console.log('Invoice loaded with payments:', response.data.data.payments);
             } else {
                 setError('Failed to load invoice');
             }
@@ -144,12 +145,31 @@ const BetaInvoiceView: React.FC = () => {
                             margin-top: 140px;
                             margin-bottom: 140px;
                             padding: 0 10px;
+                            page-break-inside: avoid;
                         }
                         .printable-invoice .MuiBox-root {
                             margin-bottom: 4px !important;
                         }
                         .printable-invoice .MuiTableContainer-root {
                             margin-bottom: 4px !important;
+                            page-break-inside: avoid;
+                        }
+                        .printable-invoice .MuiTable-root {
+                            page-break-inside: auto;
+                        }
+                        .printable-invoice .MuiTableRow-root {
+                            page-break-inside: avoid;
+                            page-break-after: auto;
+                        }
+                        .payment-history-section {
+                            page-break-before: always;
+                            page-break-inside: avoid;
+                            visibility: visible !important;
+                            margin-top: 250px !important;
+                            padding-top: 20px !important;
+                        }
+                        .notes-section {
+                            page-break-inside: avoid;
                         }
                         .printable-invoice .MuiDivider-root {
                             margin: 4px 0 !important;
@@ -242,7 +262,7 @@ const BetaInvoiceView: React.FC = () => {
                             <Box mt={2}>
                                 <Chip
                                     label={invoice.status.toUpperCase()}
-                                    color={invoice.status === 'paid' ? 'success' : invoice.status === 'sent' ? 'info' : 'default'}
+                                    color={invoice.status === 'paid' ? 'success' : invoice.status === 'partial' ? 'warning' : invoice.status === 'sent' ? 'info' : 'default'}
                                     size="small"
                                 />
                             </Box>
@@ -359,7 +379,7 @@ const BetaInvoiceView: React.FC = () => {
 
                     {/* Payment History */}
                     {invoice.payments && invoice.payments.length > 0 && (
-                        <Box mb={2} sx={{ '@media print': { mb: 1 } }}>
+                        <Box mb={2} className="payment-history-section" sx={{ '@media print': { mb: 1 } }}>
                             <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                                 PAYMENT HISTORY
                             </Typography>
@@ -382,7 +402,7 @@ const BetaInvoiceView: React.FC = () => {
                                                 <TableCell>{payment.paymentMethod}</TableCell>
                                                 <TableCell>{payment.notes || '-'}</TableCell>
                                                 <TableCell align="right">
-                                                    AED {(payment.amount || payment.amountPaid || 0).toFixed(2)}
+                                                    AED {(payment.amountPaid || payment.amount || 0).toFixed(2)}
                                                 </TableCell>
                                             </TableRow>
                                         ))}
@@ -394,7 +414,7 @@ const BetaInvoiceView: React.FC = () => {
 
                     {/* Notes */}
                     {invoice.notes && (
-                        <Box mb={2} sx={{ '@media print': { mb: 1 } }}>
+                        <Box mb={2} className="notes-section" sx={{ '@media print': { mb: 1 } }}>
                             <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                                 NOTES
                             </Typography>

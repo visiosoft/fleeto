@@ -48,6 +48,10 @@ class BetaInvoiceService {
         return axios.post(`${API_URL}/${id}/payments`, paymentData, this.getAuthHeader());
     }
 
+    async updatePayment(id: string, paymentId: string, paymentData: any) {
+        return axios.put(`${API_URL}/${id}/payments/${paymentId}`, paymentData, this.getAuthHeader());
+    }
+
     async deletePayment(id: string, paymentId: string) {
         return axios.delete(`${API_URL}/${id}/payments/${paymentId}`, this.getAuthHeader());
     }

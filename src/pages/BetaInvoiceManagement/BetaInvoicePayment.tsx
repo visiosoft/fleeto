@@ -18,8 +18,12 @@ import {
     Alert,
     Chip,
     MenuItem,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
 } from '@mui/material';
-import { Delete as DeleteIcon, ArrowBack as ArrowBackIcon, Print as PrintIcon } from '@mui/icons-material';
+import { Delete as DeleteIcon, ArrowBack as ArrowBackIcon, Print as PrintIcon, Edit as EditIcon } from '@mui/icons-material';
 import { Invoice } from '../../types/api';
 import BetaInvoiceService from '../../services/BetaInvoiceService';
 
@@ -33,6 +37,15 @@ const BetaInvoicePayment: React.FC = () => {
         amountPaid: '',
         paymentMethod: 'cash',
         paymentDate: new Date().toISOString().split('T')[0],
+        transactionId: '',
+        notes: '',
+    });
+    const [editingPayment, setEditingPayment] = useState<any>(null);
+    const [editDialogOpen, setEditDialogOpen] = useState(false);
+    const [editPaymentData, setEditPaymentData] = useState({
+        amountPaid: '',
+        paymentMethod: 'cash',
+        paymentDate: '',
         transactionId: '',
         notes: '',
     });
@@ -100,6 +113,46 @@ const BetaInvoicePayment: React.FC = () => {
                 setError('Failed to delete payment');
             }
         }
+    };
+
+    const handleEditPayment = (payment: any) => {
+        setEditingPayment(payment);
+        setEditPaymentData({
+            amountPaid: payment.amountPaid?.toString() || '',
+            paymentMethod: payment.paymentMethod || 'cash',
+            paymentDate: payment.paymentDate ? new Date(payment.paymentDate).toISOString().split('T')[0] : '',
+            transactionId: payment.transactionId || '',
+            notes: payment.notes || '',
+        });
+        setEditDialogOpen(true);
+    };
+
+    const handleUpdatePayment = async () => {
+        try {
+            setError(null);
+            const amount = Number(editPaymentData.amountPaid);
+
+            if (isNaN(amount) || amount <= 0) {
+                setError('Please enter a valid payment amount');
+                return;
+            }
+
+            await BetaInvoiceService.getInstance().updatePayment(id!, editingPayment._id, {
+                ...editPaymentData,
+                amountPaid: amount,
+            });
+
+            setEditDialogOpen(false);
+            setEditingPayment(null);
+            fetchInvoice();
+        } catch (err: any) {
+            setError(err.response?.data?.message || 'Failed to update payment');
+        }
+    };
+
+    const handleCloseEditDialog = () => {
+        setEditDialogOpen(false);
+        setEditingPayment(null);
     };
 
     if (loading) {
@@ -278,6 +331,14 @@ const BetaInvoicePayment: React.FC = () => {
                                                 <TableCell>
                                                     <IconButton
                                                         size="small"
+                                                        onClick={() => handleEditPayment(payment)}
+                                                        color="primary"
+                                                        sx={{ mr: 1 }}
+                                                    >
+                                                        <EditIcon />
+                                                    </IconButton>
+                                                    <IconButton
+                                                        size="small"
                                                         onClick={() => handleDeletePayment(payment._id)}
                                                         color="error"
                                                     >
@@ -299,6 +360,77 @@ const BetaInvoicePayment: React.FC = () => {
                     </Paper>
                 </Grid>
             </Grid>
+
+            {/* Edit Payment Dialog */}
+            <Dialog open={editDialogOpen} onClose={handleCloseEditDialog} maxWidth="sm" fullWidth>
+                <DialogTitle>Edit Payment</DialogTitle>
+                <DialogContent>
+                    <Box sx={{ pt: 2 }}>
+                        <Grid container spacing={2}>
+                            <Grid item xs={12}>
+                                <TextField
+                                    fullWidth
+                                    required
+                                    type="number"
+                                    label="Amount (AED)"
+                                    value={editPaymentData.amountPaid}
+                                    onChange={(e) => setEditPaymentData({ ...editPaymentData, amountPaid: e.target.value })}
+                                    inputProps={{ step: '0.01', min: '0' }}
+                                />
+                            </Grid>
+                            <Grid item xs={12}>
+                                <TextField
+                                    fullWidth
+                                    select
+                                    label="Payment Method"
+                                    value={editPaymentData.paymentMethod}
+                                    onChange={(e) => setEditPaymentData({ ...editPaymentData, paymentMethod: e.target.value })}
+                                >
+                                    <MenuItem value="cash">Cash</MenuItem>
+                                    <MenuItem value="bank_transfer">Bank Transfer</MenuItem>
+                                    <MenuItem value="cheque">Cheque</MenuItem>
+                                    <MenuItem value="card">Card</MenuItem>
+                                    <MenuItem value="other">Other</MenuItem>
+                                </TextField>
+                            </Grid>
+                            <Grid item xs={12}>
+                                <TextField
+                                    fullWidth
+                                    type="date"
+                                    label="Payment Date"
+                                    value={editPaymentData.paymentDate}
+                                    onChange={(e) => setEditPaymentData({ ...editPaymentData, paymentDate: e.target.value })}
+                                    InputLabelProps={{ shrink: true }}
+                                />
+                            </Grid>
+                            <Grid item xs={12}>
+                                <TextField
+                                    fullWidth
+                                    label="Transaction ID (Optional)"
+                                    value={editPaymentData.transactionId}
+                                    onChange={(e) => setEditPaymentData({ ...editPaymentData, transactionId: e.target.value })}
+                                />
+                            </Grid>
+                            <Grid item xs={12}>
+                                <TextField
+                                    fullWidth
+                                    multiline
+                                    rows={2}
+                                    label="Notes (Optional)"
+                                    value={editPaymentData.notes}
+                                    onChange={(e) => setEditPaymentData({ ...editPaymentData, notes: e.target.value })}
+                                />
+                            </Grid>
+                        </Grid>
+                    </Box>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleCloseEditDialog}>Cancel</Button>
+                    <Button onClick={handleUpdatePayment} variant="contained" color="primary">
+                        Update Payment
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Container>
     );
 };

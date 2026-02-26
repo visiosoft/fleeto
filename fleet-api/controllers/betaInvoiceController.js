@@ -495,6 +495,128 @@ exports.addPayment = async (req, res) => {
     }
 };
 
+// Update payment in invoice
+exports.updatePayment = async (req, res) => {
+    try {
+        const companyId = req.user.companyId;
+        const { id, paymentId } = req.params;
+        const { amountPaid, paymentMethod, paymentDate, transactionId, notes } = req.body;
+
+        if (!companyId) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'Company ID not found in user token'
+            });
+        }
+
+        const collection = await InvoiceModel.getCollection();
+        const invoice = await collection.findOne({
+            _id: new ObjectId(id),
+            companyId: companyId.toString()
+        });
+
+        if (!invoice) {
+            return res.status(404).json({
+                status: 'error',
+                message: 'Invoice not found'
+            });
+        }
+
+        // Find the payment to update
+        const paymentIndex = (invoice.payments || []).findIndex(p => p._id.toString() === paymentId);
+
+        if (paymentIndex === -1) {
+            return res.status(404).json({
+                status: 'error',
+                message: 'Payment not found'
+            });
+        }
+
+        // Validate payment amount if provided
+        if (amountPaid !== undefined) {
+            const paymentAmount = Number(amountPaid);
+
+            if (isNaN(paymentAmount) || paymentAmount <= 0) {
+                return res.status(400).json({
+                    status: 'error',
+                    message: 'Payment amount must be a valid number greater than 0'
+                });
+            }
+
+            // Calculate what the new total paid would be (excluding the current payment being edited)
+            const otherPaymentsTotal = invoice.payments
+                .filter((_, idx) => idx !== paymentIndex)
+                .reduce((sum, p) => sum + (Number(p.amountPaid) || 0), 0);
+
+            const newTotalPaid = otherPaymentsTotal + paymentAmount;
+
+            // Check if new amount would exceed invoice total
+            if (newTotalPaid > invoice.total) {
+                return res.status(400).json({
+                    status: 'error',
+                    message: `Total payments (${newTotalPaid.toFixed(2)}) would exceed invoice total (${invoice.total.toFixed(2)})`
+                });
+            }
+        }
+
+        // Update payment fields
+        const updatedPayments = [...invoice.payments];
+        updatedPayments[paymentIndex] = {
+            ...updatedPayments[paymentIndex],
+            ...(amountPaid !== undefined && { amountPaid: Number(amountPaid) }),
+            ...(paymentMethod && { paymentMethod }),
+            ...(paymentDate && { paymentDate: new Date(paymentDate) }),
+            ...(transactionId !== undefined && { transactionId }),
+            ...(notes !== undefined && { notes }),
+            updatedAt: new Date()
+        };
+
+        // Recalculate totals
+        const newTotalPaid = updatedPayments.reduce((sum, p) => sum + (Number(p.amountPaid) || 0), 0);
+        const newRemainingBalance = Math.max(0, invoice.total - newTotalPaid);
+        const newStatus = determineStatus(invoice.total, newTotalPaid, invoice.status);
+
+        const result = await collection.updateOne(
+            { _id: new ObjectId(id) },
+            {
+                $set: {
+                    payments: updatedPayments,
+                    totalPaid: newTotalPaid,
+                    remainingBalance: newRemainingBalance,
+                    status: newStatus,
+                    updatedAt: new Date()
+                }
+            }
+        );
+
+        if (result.modifiedCount === 0) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'Failed to update payment'
+            });
+        }
+
+        const updatedInvoice = await collection.findOne({ _id: new ObjectId(id) });
+
+        console.log(`✅ Payment updated in invoice ${invoice.invoiceNumber}`);
+
+        res.status(200).json({
+            status: 'success',
+            data: {
+                ...updatedInvoice,
+                totalPaid: newTotalPaid,
+                remainingBalance: newRemainingBalance
+            }
+        });
+    } catch (error) {
+        console.error('Error updating payment:', error);
+        res.status(500).json({
+            status: 'error',
+            message: error.message
+        });
+    }
+};
+
 // Delete payment from invoice
 exports.deletePayment = async (req, res) => {
     try {

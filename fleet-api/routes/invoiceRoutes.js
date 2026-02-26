@@ -15,6 +15,7 @@ router.post('/beta', betaInvoiceController.createInvoice);
 router.put('/beta/:id', betaInvoiceController.updateInvoice);
 router.delete('/beta/:id', betaInvoiceController.deleteInvoice);
 router.post('/beta/:id/payments', betaInvoiceController.addPayment);
+router.put('/beta/:id/payments/:paymentId', betaInvoiceController.updatePayment);
 router.delete('/beta/:id/payments/:paymentId', betaInvoiceController.deletePayment);
 
 // Original Invoice Routes (keep for backward compatibility)
