@@ -30,6 +30,11 @@ const companyContractSchema = new mongoose.Schema({
         type: String,
         required: false
     },
+    contractType: {
+        type: String,
+        required: false,
+        trim: true
+    },
     startDate: {
         type: Date,
         required: true
@@ -47,6 +52,21 @@ const companyContractSchema = new mongoose.Schema({
         type: Number,
         required: false,
         min: 0
+    },
+    contactPerson: {
+        type: String,
+        required: false,
+        trim: true
+    },
+    contactEmail: {
+        type: String,
+        required: false,
+        trim: true
+    },
+    contactPhone: {
+        type: String,
+        required: false,
+        trim: true
     },
     status: {
         type: String,
@@ -85,12 +105,12 @@ companyContractSchema.index({ status: 1 });
 companyContractSchema.index({ tradeLicenseNo: 1 });
 
 // Add a method to check if contract is expired
-companyContractSchema.methods.isExpired = function() {
+companyContractSchema.methods.isExpired = function () {
     return new Date() > this.endDate;
 };
 
 // Add a method to get remaining days in contract
-companyContractSchema.methods.getRemainingDays = function() {
+companyContractSchema.methods.getRemainingDays = function () {
     const today = new Date();
     const endDate = this.endDate;
     const diffTime = endDate - today;

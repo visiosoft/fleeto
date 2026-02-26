@@ -57,7 +57,12 @@ const createCompany = async (req, res) => {
             phone,
             email,
             licenseNumber,
-            currency
+            currency,
+            taxNumber,
+            timezone,
+            status,
+            subscription,
+            settings
         } = req.body;
 
         // Validate required fields
@@ -84,6 +89,24 @@ const createCompany = async (req, res) => {
             email,
             licenseNumber,
             currency,
+            taxNumber: taxNumber || '',
+            timezone: timezone || 'Asia/Dubai',
+            status: status || 'active',
+            subscription: subscription || {
+                plan: 'free',
+                startDate: new Date().toISOString(),
+                endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+                status: 'active'
+            },
+            settings: settings || {
+                invoicePrefix: 'INV',
+                invoiceNumberFormat: 'YYYY-XXXX',
+                taxRate: 5,
+                paymentTerms: 30,
+                defaultCurrency: currency,
+                dateFormat: 'DD/MM/YYYY',
+                timeFormat: '24h'
+            },
             createdAt: new Date(),
             updatedAt: new Date()
         };
@@ -139,6 +162,9 @@ const updateCompany = async (req, res) => {
             'tcNumber',
             'taxNumber',
             'currency',
+            'timezone',
+            'status',
+            'subscription',
             'settings'
         ];
 

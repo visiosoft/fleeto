@@ -69,7 +69,7 @@ const MonthlyReport: React.FC = () => {
   const theme = useTheme();
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [selectedVehicles, setSelectedVehicles] = useState<string[]>([]);
-  const [selectedMonth, setSelectedMonth] = useState<string>(moment().format('YYYY-MM'));
+  const [selectedMonths, setSelectedMonths] = useState<string[]>([moment().format('YYYY-MM')]);
   const [monthlyData, setMonthlyData] = useState<MonthlyData | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -97,8 +97,11 @@ const MonthlyReport: React.FC = () => {
       setLoading(true);
       try {
         const token = localStorage.getItem('token');
-        const startDate = moment(selectedMonth).startOf('month');
-        const endDate = moment(selectedMonth).endOf('month');
+
+        // Calculate the date range from all selected months
+        const sortedMonths = [...selectedMonths].sort();
+        const startDate = moment(sortedMonths[0]).startOf('month');
+        const endDate = moment(sortedMonths[sortedMonths.length - 1]).endOf('month');
 
         // Fetch expenses
         const expensesResponse = await axios.get(API_ENDPOINTS.costs.all, {
@@ -110,27 +113,33 @@ const MonthlyReport: React.FC = () => {
           headers: { Authorization: `Bearer ${token}` }
         });
 
-        const allVehicles = selectedVehicles.length > 0 
+        const allVehicles = selectedVehicles.length > 0
           ? vehicles.filter(v => selectedVehicles.includes(v._id))
           : vehicles;
 
         const vehicleReports: VehicleReport[] = allVehicles.map(vehicle => {
-          // Calculate expenses for this vehicle in selected month
+          // Calculate expenses for this vehicle in selected months
           const vehicleExpenses = expensesResponse.data.vehicles
             ?.find((v: any) => v.vehicleId === vehicle._id)
             ?.details?.filter((d: any) => {
               const expenseDate = moment(d.date);
-              return expenseDate.isBetween(startDate, endDate, 'day', '[]');
+              // Check if expense date is within any of the selected months
+              return selectedMonths.some(month => {
+                const monthStart = moment(month).startOf('month');
+                const monthEnd = moment(month).endOf('month');
+                return expenseDate.isBetween(monthStart, monthEnd, 'day', '[]');
+              });
             })
             .reduce((sum: number, d: any) => sum + Number(d.amount || 0), 0) || 0;
 
           // Calculate contract amount from active contracts for this vehicle
           const vehicleContracts = contractsResponse.data
             .filter((c: any) => c.vehicleId === vehicle._id && c.status === 'Active');
-          
-          // Calculate total annual contract value
-          const totalContractValue = vehicleContracts
+
+          // Calculate total annual contract value (multiply by number of months selected)
+          const monthlyContractValue = vehicleContracts
             .reduce((sum: number, c: any) => sum + Number(c.value || 0), 0);
+          const totalContractValue = monthlyContractValue * selectedMonths.length;
 
           const profit = totalContractValue - vehicleExpenses;
           const profitMargin = totalContractValue > 0 ? (profit / totalContractValue) * 100 : 0;
@@ -149,12 +158,17 @@ const MonthlyReport: React.FC = () => {
         const totalContractAmount = vehicleReports.reduce((sum, v) => sum + v.contractAmount, 0);
         const totalExpenses = vehicleReports.reduce((sum, v) => sum + v.expenses, 0);
         const totalProfit = totalContractAmount - totalExpenses;
-        const averageProfitMargin = totalContractAmount > 0 
-          ? (totalProfit / totalContractAmount) * 100 
+        const averageProfitMargin = totalContractAmount > 0
+          ? (totalProfit / totalContractAmount) * 100
           : 0;
 
+        // Create display label for selected months
+        const monthLabel = selectedMonths.length === 1
+          ? moment(selectedMonths[0]).format('MMMM YYYY')
+          : `${selectedMonths.length} Months Selected`;
+
         setMonthlyData({
-          month: moment(selectedMonth).format('MMMM YYYY'),
+          month: monthLabel,
           vehicles: vehicleReports,
           totalContractAmount,
           totalExpenses,
@@ -171,14 +185,14 @@ const MonthlyReport: React.FC = () => {
     if (vehicles.length > 0) {
       fetchMonthlyReport();
     }
-  }, [selectedMonth, selectedVehicles, vehicles]);
+  }, [selectedMonths, selectedVehicles, vehicles]);
 
   const handleVehicleChange = (event: SelectChangeEvent<string[]>) => {
     setSelectedVehicles(event.target.value as string[]);
   };
 
-  const handleMonthChange = (event: SelectChangeEvent) => {
-    setSelectedMonth(event.target.value);
+  const handleMonthChange = (event: SelectChangeEvent<string[]>) => {
+    setSelectedMonths(event.target.value as string[]);
   };
 
   // Generate last 12 months for dropdown
@@ -228,12 +242,26 @@ const MonthlyReport: React.FC = () => {
       <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid item xs={12} md={6}>
           <FormControl fullWidth>
-            <InputLabel>Select Month</InputLabel>
+            <InputLabel>Select Months</InputLabel>
             <Select
-              value={selectedMonth}
-              label="Select Month"
+              multiple
+              value={selectedMonths}
+              label="Select Months"
               onChange={handleMonthChange}
-              startAdornment={<CalendarIcon sx={{ mr: 1, color: 'text.secondary' }} />}
+              renderValue={(selected) => (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  {selected.map((value) => {
+                    const monthLabel = monthOptions.find(m => m.value === value)?.label || value;
+                    return (
+                      <Chip
+                        key={value}
+                        label={monthLabel}
+                        size="small"
+                      />
+                    );
+                  })}
+                </Box>
+              )}
             >
               {monthOptions.map(option => (
                 <MenuItem key={option.value} value={option.value}>
@@ -256,8 +284,8 @@ const MonthlyReport: React.FC = () => {
                   {selected.map((value) => {
                     const vehicle = vehicles.find(v => v._id === value);
                     return (
-                      <Chip 
-                        key={value} 
+                      <Chip
+                        key={value}
                         label={vehicle?.licensePlate || value}
                         size="small"
                       />
@@ -449,8 +477,8 @@ const MonthlyReport: React.FC = () => {
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                     <Box
                       sx={{
-                        backgroundColor: monthlyData.totalProfit >= 0 
-                          ? alpha('#10B981', 0.1) 
+                        backgroundColor: monthlyData.totalProfit >= 0
+                          ? alpha('#10B981', 0.1)
                           : alpha('#F59E0B', 0.1),
                         borderRadius: '8px',
                         p: 1,
@@ -460,11 +488,11 @@ const MonthlyReport: React.FC = () => {
                         justifyContent: 'center',
                       }}
                     >
-                      <TrendingUpIcon 
-                        sx={{ 
-                          color: monthlyData.totalProfit >= 0 ? '#10B981' : '#F59E0B', 
-                          fontSize: 24 
-                        }} 
+                      <TrendingUpIcon
+                        sx={{
+                          color: monthlyData.totalProfit >= 0 ? '#10B981' : '#F59E0B',
+                          fontSize: 24
+                        }}
                       />
                     </Box>
                     <Typography
@@ -495,8 +523,8 @@ const MonthlyReport: React.FC = () => {
                     sx={{
                       height: 6,
                       borderRadius: 9999,
-                      backgroundColor: monthlyData.totalProfit >= 0 
-                        ? alpha('#10B981', 0.2) 
+                      backgroundColor: monthlyData.totalProfit >= 0
+                        ? alpha('#10B981', 0.2)
                         : alpha('#F59E0B', 0.2),
                       overflow: 'hidden',
                     }}

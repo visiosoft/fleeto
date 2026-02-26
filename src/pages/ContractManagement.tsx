@@ -120,7 +120,7 @@ const emptyContract: Partial<Contract> = {
   startDate: '',
   endDate: '',
   value: 0,
-  status: 'Draft',
+  status: 'Active',
   contactPerson: '',
   contactEmail: '',
   contactPhone: '',
@@ -237,12 +237,15 @@ const ContractManagement: React.FC = () => {
       // Ensure all fields are present, fallback to emptyContract defaults if missing
       const loaded = { ...emptyContract, ...response.data };
       // Patch: Ensure all string fields are at least empty string, not undefined
+      // Format dates from ISO format to YYYY-MM-DD for date inputs
       setCurrentContract({
         ...loaded,
         contractType: loaded.contractType || '',
         contactPerson: loaded.contactPerson || '',
         contactPhone: loaded.contactPhone || '',
         contactEmail: loaded.contactEmail || '',
+        startDate: loaded.startDate ? moment(loaded.startDate).format('YYYY-MM-DD') : '',
+        endDate: loaded.endDate ? moment(loaded.endDate).format('YYYY-MM-DD') : '',
       } as Contract);
       setFormErrors({});
       setOpenDialog(true);
@@ -363,7 +366,7 @@ const ContractManagement: React.FC = () => {
 
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
-    
+
     if (!currentContract.companyName) errors.companyName = 'Company name is required';
     if (!currentContract.tradeLicenseNo) errors.tradeLicenseNo = 'Trade license number is required';
     if (!currentContract.contractType) errors.contractType = 'Contract type is required';
@@ -371,21 +374,19 @@ const ContractManagement: React.FC = () => {
     if (!currentContract.endDate) errors.endDate = 'End date is required';
     if (currentContract.value <= 0) errors.value = 'Value must be greater than 0';
     if (!currentContract.contactPerson) errors.contactPerson = 'Contact person is required';
-    if (!currentContract.contactEmail) errors.contactEmail = 'Contact email is required';
-    if (!currentContract.contactPhone) errors.contactPhone = 'Contact phone is required';
     if (!currentContract.vehicleId) errors.vehicleId = 'Vehicle is required';
-    
+
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (currentContract.contactEmail && !emailRegex.test(currentContract.contactEmail)) {
       errors.contactEmail = 'Invalid email format';
     }
-    
+
     // Validate dates
     if (moment(currentContract.endDate).isBefore(currentContract.startDate)) {
       errors.endDate = 'End date must be after start date';
     }
-    
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -447,13 +448,13 @@ const ContractManagement: React.FC = () => {
       // First get the latest contract data
       const response = await axios.get(getApiUrl(`${API_CONFIG.ENDPOINTS.CONTRACTS}/${contract._id}`));
       const updatedContract = response.data;
-      
+
       // Store both contract and vehicles data in localStorage for the template editor
       localStorage.setItem('currentContractData', JSON.stringify({
         contract: updatedContract,
         vehicles: vehicles
       }));
-      
+
       // Navigate to template editor with contract data using React Router
       navigate(`/contracts/template/${contract._id}`);
     } catch (error) {
@@ -536,16 +537,25 @@ const ContractManagement: React.FC = () => {
         />
       </Grid>
       <Grid item xs={12} sm={6}>
-        <TextField
-          fullWidth
-          label="Type"
-          name="contractType"
-          value={currentContract.contractType}
-          onChange={handleTextFieldChange}
-          error={!!formErrors.contractType}
-          helperText={formErrors.contractType}
-          required
-        />
+        <FormControl fullWidth required error={!!formErrors.contractType}>
+          <InputLabel id="contract-type-label">Type</InputLabel>
+          <Select
+            labelId="contract-type-label"
+            name="contractType"
+            value={currentContract.contractType}
+            onChange={handleSelectChange}
+            label="Type"
+          >
+            <MenuItem value="Monthly With Driver">Monthly With Driver</MenuItem>
+            <MenuItem value="Monthly Without Driver">Monthly Without Driver</MenuItem>
+            <MenuItem value="Other">Other</MenuItem>
+          </Select>
+          {formErrors.contractType && (
+            <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.75 }}>
+              {formErrors.contractType}
+            </Typography>
+          )}
+        </FormControl>
       </Grid>
       <Grid item xs={12} sm={6}>
         <FormControl fullWidth required>
@@ -629,7 +639,6 @@ const ContractManagement: React.FC = () => {
           onChange={handleTextFieldChange}
           error={!!formErrors.contactEmail}
           helperText={formErrors.contactEmail}
-          required
         />
       </Grid>
       <Grid item xs={12} sm={6}>
@@ -641,7 +650,6 @@ const ContractManagement: React.FC = () => {
           onChange={handleTextFieldChange}
           error={!!formErrors.contactPhone}
           helperText={formErrors.contactPhone}
-          required
         />
       </Grid>
       <Grid item xs={12}>
@@ -714,8 +722,8 @@ const ContractManagement: React.FC = () => {
               transition: 'all 0.2s',
             }}
           >
-            <Badge 
-              badgeContent={contract.documents?.length || 0} 
+            <Badge
+              badgeContent={contract.documents?.length || 0}
               color="success"
               sx={{
                 '& .MuiBadge-badge': {
@@ -779,7 +787,7 @@ const ContractManagement: React.FC = () => {
   // Filter and sort contracts
   const filteredAndSortedContracts = React.useMemo(() => {
     let filtered = contracts;
-    
+
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = contracts.filter(contract =>
@@ -791,7 +799,7 @@ const ContractManagement: React.FC = () => {
         contract.tradeLicenseNo?.toLowerCase().includes(query)
       );
     }
-    
+
     const sorted = [...filtered].sort((a, b) => {
       switch (sortBy) {
         case 'companyName':
@@ -809,7 +817,7 @@ const ContractManagement: React.FC = () => {
           return new Date(b.startDate).getTime() - new Date(a.startDate).getTime(); // Newest first
       }
     });
-    
+
     return sorted;
   }, [contracts, searchQuery, sortBy]);
 
@@ -822,8 +830,8 @@ const ContractManagement: React.FC = () => {
       {/* Statistics Cards */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid item xs={12} md={3}>
-          <Card 
-            sx={{ 
+          <Card
+            sx={{
               height: '100%',
               borderRadius: 3,
               boxShadow: `0 4px 20px ${alpha(theme.palette.info.main, 0.15)}`,
@@ -849,10 +857,10 @@ const ContractManagement: React.FC = () => {
             <CardContent sx={{ p: 3 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                 <Box>
-                  <Typography 
-                    variant="body2" 
-                    color="text.secondary" 
-                    sx={{ 
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{
                       fontWeight: 600,
                       textTransform: 'uppercase',
                       letterSpacing: '0.5px',
@@ -862,9 +870,9 @@ const ContractManagement: React.FC = () => {
                   >
                     Total Contracts
                   </Typography>
-                  <Typography 
-                    variant="h5" 
-                    sx={{ 
+                  <Typography
+                    variant="h5"
+                    sx={{
                       fontWeight: 700,
                       color: theme.palette.info.main,
                     }}
@@ -872,9 +880,9 @@ const ContractManagement: React.FC = () => {
                     {stats?.totalContracts || 0}
                   </Typography>
                 </Box>
-                <Avatar 
-                  sx={{ 
-                    width: 44, 
+                <Avatar
+                  sx={{
+                    width: 44,
                     height: 44,
                     background: `linear-gradient(135deg, ${theme.palette.info.main} 0%, ${theme.palette.info.dark} 100%)`,
                     boxShadow: `0 4px 14px ${alpha(theme.palette.info.main, 0.4)}`,
@@ -883,16 +891,16 @@ const ContractManagement: React.FC = () => {
                   <ContractIcon sx={{ fontSize: 22, color: 'white' }} />
                 </Avatar>
               </Box>
-              <Box 
-                sx={{ 
+              <Box
+                sx={{
                   height: 6,
                   borderRadius: 3,
                   backgroundColor: alpha(theme.palette.info.main, 0.1),
                   overflow: 'hidden',
                 }}
               >
-                <Box 
-                  sx={{ 
+                <Box
+                  sx={{
                     height: '100%',
                     width: '100%',
                     background: `linear-gradient(135deg, ${theme.palette.info.main} 0%, ${theme.palette.info.dark} 100%)`,
@@ -903,8 +911,8 @@ const ContractManagement: React.FC = () => {
           </Card>
         </Grid>
         <Grid item xs={12} md={3}>
-          <Card 
-            sx={{ 
+          <Card
+            sx={{
               height: '100%',
               borderRadius: 3,
               boxShadow: `0 4px 20px ${alpha(theme.palette.success.main, 0.15)}`,
@@ -930,10 +938,10 @@ const ContractManagement: React.FC = () => {
             <CardContent sx={{ p: 3 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                 <Box>
-                  <Typography 
-                    variant="body2" 
-                    color="text.secondary" 
-                    sx={{ 
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{
                       fontWeight: 600,
                       textTransform: 'uppercase',
                       letterSpacing: '0.5px',
@@ -943,9 +951,9 @@ const ContractManagement: React.FC = () => {
                   >
                     Active Contracts
                   </Typography>
-                  <Typography 
-                    variant="h5" 
-                    sx={{ 
+                  <Typography
+                    variant="h5"
+                    sx={{
                       fontWeight: 700,
                       color: theme.palette.success.main,
                     }}
@@ -953,9 +961,9 @@ const ContractManagement: React.FC = () => {
                     {stats?.activeContracts || 0}
                   </Typography>
                 </Box>
-                <Avatar 
-                  sx={{ 
-                    width: 44, 
+                <Avatar
+                  sx={{
+                    width: 44,
                     height: 44,
                     background: `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`,
                     boxShadow: `0 4px 14px ${alpha(theme.palette.success.main, 0.4)}`,
@@ -964,16 +972,16 @@ const ContractManagement: React.FC = () => {
                   <ActiveIcon sx={{ fontSize: 22, color: 'white' }} />
                 </Avatar>
               </Box>
-              <Box 
-                sx={{ 
+              <Box
+                sx={{
                   height: 6,
                   borderRadius: 3,
                   backgroundColor: alpha(theme.palette.success.main, 0.1),
                   overflow: 'hidden',
                 }}
               >
-                <Box 
-                  sx={{ 
+                <Box
+                  sx={{
                     height: '100%',
                     width: stats?.totalContracts ? `${(stats.activeContracts / stats.totalContracts) * 100}%` : '0%',
                     background: `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`,
@@ -985,8 +993,8 @@ const ContractManagement: React.FC = () => {
           </Card>
         </Grid>
         <Grid item xs={12} md={3}>
-          <Card 
-            sx={{ 
+          <Card
+            sx={{
               height: '100%',
               borderRadius: 3,
               boxShadow: `0 4px 20px ${alpha(theme.palette.warning.main, 0.15)}`,
@@ -1012,10 +1020,10 @@ const ContractManagement: React.FC = () => {
             <CardContent sx={{ p: 3 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                 <Box>
-                  <Typography 
-                    variant="body2" 
-                    color="text.secondary" 
-                    sx={{ 
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{
                       fontWeight: 600,
                       textTransform: 'uppercase',
                       letterSpacing: '0.5px',
@@ -1025,9 +1033,9 @@ const ContractManagement: React.FC = () => {
                   >
                     Expiring Soon
                   </Typography>
-                  <Typography 
-                    variant="h5" 
-                    sx={{ 
+                  <Typography
+                    variant="h5"
+                    sx={{
                       fontWeight: 700,
                       color: theme.palette.warning.main,
                     }}
@@ -1035,9 +1043,9 @@ const ContractManagement: React.FC = () => {
                     {stats?.expiringContracts || 0}
                   </Typography>
                 </Box>
-                <Avatar 
-                  sx={{ 
-                    width: 44, 
+                <Avatar
+                  sx={{
+                    width: 44,
                     height: 44,
                     background: `linear-gradient(135deg, ${theme.palette.warning.main} 0%, ${theme.palette.warning.dark} 100%)`,
                     boxShadow: `0 4px 14px ${alpha(theme.palette.warning.main, 0.4)}`,
@@ -1046,16 +1054,16 @@ const ContractManagement: React.FC = () => {
                   <ExpiringIcon sx={{ fontSize: 22, color: 'white' }} />
                 </Avatar>
               </Box>
-              <Box 
-                sx={{ 
+              <Box
+                sx={{
                   height: 6,
                   borderRadius: 3,
                   backgroundColor: alpha(theme.palette.warning.main, 0.1),
                   overflow: 'hidden',
                 }}
               >
-                <Box 
-                  sx={{ 
+                <Box
+                  sx={{
                     height: '100%',
                     width: stats?.totalContracts ? `${(stats.expiringContracts / stats.totalContracts) * 100}%` : '0%',
                     background: `linear-gradient(135deg, ${theme.palette.warning.main} 0%, ${theme.palette.warning.dark} 100%)`,
@@ -1067,8 +1075,8 @@ const ContractManagement: React.FC = () => {
           </Card>
         </Grid>
         <Grid item xs={12} md={3}>
-          <Card 
-            sx={{ 
+          <Card
+            sx={{
               height: '100%',
               borderRadius: 3,
               boxShadow: `0 4px 20px ${alpha(theme.palette.primary.main, 0.15)}`,
@@ -1094,10 +1102,10 @@ const ContractManagement: React.FC = () => {
             <CardContent sx={{ p: 3 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                 <Box>
-                  <Typography 
-                    variant="body2" 
-                    color="text.secondary" 
-                    sx={{ 
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{
                       fontWeight: 600,
                       textTransform: 'uppercase',
                       letterSpacing: '0.5px',
@@ -1107,9 +1115,9 @@ const ContractManagement: React.FC = () => {
                   >
                     Total Value
                   </Typography>
-                  <Typography 
-                    variant="h5" 
-                    sx={{ 
+                  <Typography
+                    variant="h5"
+                    sx={{
                       fontWeight: 700,
                       color: theme.palette.primary.main,
                       display: 'flex',
@@ -1117,10 +1125,10 @@ const ContractManagement: React.FC = () => {
                       gap: 0.5,
                     }}
                   >
-                    <Typography 
-                      component="span" 
-                      variant="body2" 
-                      sx={{ 
+                    <Typography
+                      component="span"
+                      variant="body2"
+                      sx={{
                         fontWeight: 600,
                         color: theme.palette.text.secondary,
                       }}
@@ -1130,9 +1138,9 @@ const ContractManagement: React.FC = () => {
                     {(stats?.totalValue || 0).toLocaleString()}
                   </Typography>
                 </Box>
-                <Avatar 
-                  sx={{ 
-                    width: 44, 
+                <Avatar
+                  sx={{
+                    width: 44,
                     height: 44,
                     background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
                     boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.4)}`,
@@ -1141,16 +1149,16 @@ const ContractManagement: React.FC = () => {
                   <MoneyIcon sx={{ fontSize: 22, color: 'white' }} />
                 </Avatar>
               </Box>
-              <Box 
-                sx={{ 
+              <Box
+                sx={{
                   height: 6,
                   borderRadius: 3,
                   backgroundColor: alpha(theme.palette.primary.main, 0.1),
                   overflow: 'hidden',
                 }}
               >
-                <Box 
-                  sx={{ 
+                <Box
+                  sx={{
                     height: '100%',
                     width: '100%',
                     background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
@@ -1191,159 +1199,159 @@ const ContractManagement: React.FC = () => {
       )}
 
       {/* Contracts Table */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Typography variant="h6">
-            Contract List
-          </Typography>
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<AddIcon />}
-            onClick={handleAddContract}
-          >
-            Add Contract
-          </Button>
-        </Box>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h6">
+          Contract List
+        </Typography>
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<AddIcon />}
+          onClick={handleAddContract}
+        >
+          Add Contract
+        </Button>
+      </Box>
 
-        <TableToolbar
-          searchValue={searchQuery}
-          onSearchChange={(value) => setSearchQuery(value)}
-          sortValue={sortBy}
-          onSortChange={(value) => setSortBy(value)}
-          sortOptions={sortOptions}
-          searchPlaceholder="Search contracts..."
-          sortLabel="Sort By"
-        />
+      <TableToolbar
+        searchValue={searchQuery}
+        onSearchChange={(value) => setSearchQuery(value)}
+        sortValue={sortBy}
+        onSortChange={(value) => setSortBy(value)}
+        sortOptions={sortOptions}
+        searchPlaceholder="Search contracts..."
+        sortLabel="Sort By"
+      />
 
-        {isLoading ? (
-          <LinearProgress />
-        ) : (
-          <TableContainer sx={{ 
-            borderRadius: 3,
-            overflowX: 'auto',
-            boxShadow: `0 1px 3px ${alpha(theme.palette.common.black, 0.1)}`,
-          }}>
-            <Table>
-              <TableHead>
-                <TableRow sx={{ background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, ${alpha(theme.palette.secondary.main, 0.05)} 100%)` }}>
-                  <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Contract Info</TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Vehicle</TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Duration</TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Value</TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Status</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredAndSortedContracts.map((contract) => {
-                  const vehicle = vehicles.find(v => v._id === contract.vehicleId);
-                  const vehicleDisplay = contract.vehicleId 
-                    ? (vehicle 
-                        ? `${vehicle.licensePlate} | ${vehicle.make} ${vehicle.model} ${vehicle.year}` 
-                        : 'Vehicle not found')
-                    : 'No vehicle assigned';
-                    
-                  return (
-                    <TableRow 
-                      key={contract._id}
-                      onMouseEnter={() => setHoveredRow(contract._id || null)}
-                      onMouseLeave={() => setHoveredRow(null)}
-                      sx={{
-                        backgroundColor: hoveredRow === contract._id 
-                          ? alpha(theme.palette.primary.main, 0.04)
-                          : 'transparent',
-                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                        transform: hoveredRow === contract._id ? 'translateY(-2px)' : 'translateY(0)',
-                        boxShadow: hoveredRow === contract._id 
-                          ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.15)}`
-                          : 'none',
-                        borderLeft: hoveredRow === contract._id 
-                          ? `4px solid ${theme.palette.primary.main}`
-                          : '4px solid transparent',
-                        '& td': {
-                          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-                          py: 2.5,
-                        },
-                        '&:last-child td': {
-                          borderBottom: 'none',
-                        },
-                        cursor: 'pointer',
-                      }}
-                    >
-                      <TableCell>
-                        <Stack spacing={0.5}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Avatar 
-                              sx={{ 
-                                width: 40, 
-                                height: 40,
-                                background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-                                boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.3)}`,
-                              }}
-                            >
-                              <DescriptionIcon sx={{ fontSize: 20 }} />
-                            </Avatar>
-                            <Box>
-                              <Typography variant="body2" fontWeight={700}>
-                                {contract.companyName}
-                              </Typography>
-                              <Typography variant="caption" color="text.secondary">
-                                {contract.contractType}
-                              </Typography>
-                            </Box>
+      {isLoading ? (
+        <LinearProgress />
+      ) : (
+        <TableContainer sx={{
+          borderRadius: 3,
+          overflowX: 'auto',
+          boxShadow: `0 1px 3px ${alpha(theme.palette.common.black, 0.1)}`,
+        }}>
+          <Table>
+            <TableHead>
+              <TableRow sx={{ background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, ${alpha(theme.palette.secondary.main, 0.05)} 100%)` }}>
+                <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Contract Info</TableCell>
+                <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Vehicle</TableCell>
+                <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Duration</TableCell>
+                <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Value</TableCell>
+                <TableCell sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Status</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 700, color: theme.palette.text.secondary, borderBottom: `2px solid ${theme.palette.divider}`, py: 2.5 }}>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {filteredAndSortedContracts.map((contract) => {
+                const vehicle = vehicles.find(v => v._id === contract.vehicleId);
+                const vehicleDisplay = contract.vehicleId
+                  ? (vehicle
+                    ? `${vehicle.licensePlate} | ${vehicle.make} ${vehicle.model} ${vehicle.year}`
+                    : 'Vehicle not found')
+                  : 'No vehicle assigned';
+
+                return (
+                  <TableRow
+                    key={contract._id}
+                    onMouseEnter={() => setHoveredRow(contract._id || null)}
+                    onMouseLeave={() => setHoveredRow(null)}
+                    sx={{
+                      backgroundColor: hoveredRow === contract._id
+                        ? alpha(theme.palette.primary.main, 0.04)
+                        : 'transparent',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      transform: hoveredRow === contract._id ? 'translateY(-2px)' : 'translateY(0)',
+                      boxShadow: hoveredRow === contract._id
+                        ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.15)}`
+                        : 'none',
+                      borderLeft: hoveredRow === contract._id
+                        ? `4px solid ${theme.palette.primary.main}`
+                        : '4px solid transparent',
+                      '& td': {
+                        borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+                        py: 2.5,
+                      },
+                      '&:last-child td': {
+                        borderBottom: 'none',
+                      },
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <TableCell>
+                      <Stack spacing={0.5}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Avatar
+                            sx={{
+                              width: 40,
+                              height: 40,
+                              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+                              boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.3)}`,
+                            }}
+                          >
+                            <DescriptionIcon sx={{ fontSize: 20 }} />
+                          </Avatar>
+                          <Box>
+                            <Typography variant="body2" fontWeight={700}>
+                              {contract.companyName}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {contract.contractType}
+                            </Typography>
                           </Box>
-                        </Stack>
-                      </TableCell>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                          <DirectionsCarIcon sx={{ fontSize: 16, color: theme.palette.info.main }} />
-                          <Typography variant="body2">{vehicleDisplay}</Typography>
                         </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Stack spacing={0.5}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                            <CalendarIcon sx={{ fontSize: 14, color: theme.palette.text.secondary }} />
-                            <Typography variant="caption" color="text.secondary">
-                              Start: {contract.startDate ? new Date(contract.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
-                            </Typography>
-                          </Box>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                            <CalendarIcon sx={{ fontSize: 14, color: theme.palette.error.main }} />
-                            <Typography variant="caption" color="text.secondary">
-                              End: {contract.endDate ? new Date(contract.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
-                            </Typography>
-                          </Box>
-                        </Stack>
-                      </TableCell>
-                      <TableCell>
+                      </Stack>
+                    </TableCell>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <DirectionsCarIcon sx={{ fontSize: 16, color: theme.palette.info.main }} />
+                        <Typography variant="body2">{vehicleDisplay}</Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Stack spacing={0.5}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                          <MoneyIcon sx={{ fontSize: 16, color: theme.palette.success.main }} />
-                          <Typography variant="body2" fontWeight={700} color="success.main">
-                            AED {contract.value?.toLocaleString('en-AE') || '0'}
+                          <CalendarIcon sx={{ fontSize: 14, color: theme.palette.text.secondary }} />
+                          <Typography variant="caption" color="text.secondary">
+                            Start: {contract.startDate ? new Date(contract.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
                           </Typography>
                         </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={contract.status}
-                          color={getStatusColor(contract.status)}
-                          size="small"
-                          sx={{
-                            fontWeight: 700,
-                            fontSize: '0.75rem',
-                            letterSpacing: '0.5px',
-                          }}
-                        />
-                      </TableCell>
-                      {renderActionsCell(contract)}
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <CalendarIcon sx={{ fontSize: 14, color: theme.palette.error.main }} />
+                          <Typography variant="caption" color="text.secondary">
+                            End: {contract.endDate ? new Date(contract.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
+                          </Typography>
+                        </Box>
+                      </Stack>
+                    </TableCell>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <MoneyIcon sx={{ fontSize: 16, color: theme.palette.success.main }} />
+                        <Typography variant="body2" fontWeight={700} color="success.main">
+                          AED {contract.value?.toLocaleString('en-AE') || '0'}
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={contract.status}
+                        color={getStatusColor(contract.status)}
+                        size="small"
+                        sx={{
+                          fontWeight: 700,
+                          fontSize: '0.75rem',
+                          letterSpacing: '0.5px',
+                        }}
+                      />
+                    </TableCell>
+                    {renderActionsCell(contract)}
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
 
       {/* Add/Edit Dialog */}
       <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>

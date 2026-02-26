@@ -82,7 +82,15 @@ const BetaInvoiceForm: React.FC = () => {
             setLoading(true);
             const response = await BetaInvoiceService.getInstance().getInvoiceById(id!);
             if (response.data.status === 'success') {
-                setInvoice(response.data.data);
+                const invoiceData = response.data.data;
+                // Ensure all items have amount calculated
+                if (invoiceData.items) {
+                    invoiceData.items = invoiceData.items.map((item: InvoiceItem) => ({
+                        ...item,
+                        amount: item.amount ?? (item.quantity * item.unitPrice),
+                    }));
+                }
+                setInvoice(invoiceData);
             }
         } catch (err) {
             setError('Failed to fetch invoice');
@@ -259,7 +267,7 @@ const BetaInvoiceForm: React.FC = () => {
                                 >
                                     {contracts.map((contract) => (
                                         <MenuItem key={contract._id} value={contract._id}>
-                                            {contract.companyName} - AED {contract.value.toFixed(2)}
+                                            {contract.companyName} - AED {(contract.value ?? 0).toFixed(2)}
                                         </MenuItem>
                                     ))}
                                 </Select>
@@ -352,7 +360,7 @@ const BetaInvoiceForm: React.FC = () => {
                                                         sx={{ width: 120 }}
                                                     />
                                                 </TableCell>
-                                                <TableCell>AED {item.amount.toFixed(2)}</TableCell>
+                                                <TableCell>AED {(item.amount ?? 0).toFixed(2)}</TableCell>
                                                 <TableCell>
                                                     <IconButton
                                                         size="small"

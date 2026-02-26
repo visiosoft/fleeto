@@ -139,12 +139,12 @@ const calculateStats = (contracts: ContractFormData[]): ContractStats => {
 
   const stats: ContractStats = {
     totalContracts: contracts.length,
-    activeContracts: contracts.filter(contract => 
-      contract.status === 'Active' && 
+    activeContracts: contracts.filter(contract =>
+      contract.status === 'Active' &&
       moment(contract.endDate).isAfter(now)
     ).length,
-    expiringContracts: contracts.filter(contract => 
-      contract.status === 'Active' && 
+    expiringContracts: contracts.filter(contract =>
+      contract.status === 'Active' &&
       moment(contract.endDate).isBetween(now, thirtyDaysFromNow)
     ).length,
     totalValue: contracts.reduce((sum, contract) => sum + Number(contract.value), 0),
@@ -199,25 +199,25 @@ const ContractManagement: React.FC = () => {
     try {
       const response = await axios.get(getApiUrl(API_CONFIG.ENDPOINTS.CONTRACTS));
       const contractsData = response.data;
-      
+
       // Sort contracts: Terminated status goes to the end
       const sortedContracts = contractsData.sort((a: ContractFormData, b: ContractFormData) => {
         if (a.status === 'Terminated' && b.status !== 'Terminated') return 1;
         if (a.status !== 'Terminated' && b.status === 'Terminated') return -1;
         return 0;
       });
-      
+
       setContracts(sortedContracts);
-      
+
       // Calculate stats from contracts data
       const calculatedStats = calculateStats(contractsData);
       setStats(calculatedStats);
-      
+
       // Calculate expiring contracts
       const now = moment();
       const thirtyDaysFromNow = moment().add(30, 'days');
-      const expiring = contractsData.filter((contract: ContractFormData) => 
-        contract.status === 'Active' && 
+      const expiring = contractsData.filter((contract: ContractFormData) =>
+        contract.status === 'Active' &&
         moment(contract.endDate).isBetween(now, thirtyDaysFromNow)
       );
       setExpiringContracts(expiring);
@@ -235,7 +235,7 @@ const ContractManagement: React.FC = () => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        
+
         // Fetch contract statistics
         const statsResponse = await axios.get<ApiResponse<ContractStats>>(
           getApiUrl('/api/dashboard/contracts/stats')
@@ -246,7 +246,7 @@ const ContractManagement: React.FC = () => {
           setStats({
             totalContracts: contractStats.totalContracts || 0,
             activeContracts: contractStats.activeContracts || 0,
-            expiringContracts:  0,
+            expiringContracts: 0,
             totalValue: contractStats.totalValue || 0,
             averageValue: contractStats.totalValue ? (contractStats.totalValue / (contractStats.totalContracts || 1)) : 0
           });
@@ -279,7 +279,14 @@ const ContractManagement: React.FC = () => {
   const handleEditContract = async (contract: ContractFormData) => {
     try {
       const response = await axios.get(getApiUrl(`${API_CONFIG.ENDPOINTS.CONTRACTS}/${contract._id}`));
-      setCurrentContract(response.data);
+      const contractData = response.data;
+
+      // Format dates for date inputs (YYYY-MM-DD)
+      setCurrentContract({
+        ...contractData,
+        startDate: contractData.startDate ? moment(contractData.startDate).format('YYYY-MM-DD') : '',
+        endDate: contractData.endDate ? moment(contractData.endDate).format('YYYY-MM-DD') : '',
+      });
       setFormErrors({});
       setOpenDialog(true);
     } catch (error) {
@@ -324,7 +331,7 @@ const ContractManagement: React.FC = () => {
 
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
-    
+
     if (!currentContract.companyName) errors.companyName = 'Company name is required';
     if (!currentContract.vehicleId) errors.vehicleId = 'Vehicle is required';
     if (!currentContract.tradeLicenseNo) errors.tradeLicenseNo = 'Trade license number is required';
@@ -334,18 +341,18 @@ const ContractManagement: React.FC = () => {
     if (currentContract.value <= 0) errors.value = 'Value must be greater than 0';
     if (!currentContract.contactPerson) errors.contactPerson = 'Contact person is required';
     if (!currentContract.contactPhone) errors.contactPhone = 'Contact phone is required';
-    
+
     if (currentContract.contactEmail) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(currentContract.contactEmail)) {
         errors.contactEmail = 'Invalid email format';
       }
     }
-    
+
     if (moment(currentContract.endDate).isBefore(currentContract.startDate)) {
       errors.endDate = 'End date must be after start date';
     }
-    
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -517,8 +524,8 @@ const ContractManagement: React.FC = () => {
   const renderActionsCell = (contract: ContractFormData) => (
     <TableCell>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        <IconButton 
-          size="small" 
+        <IconButton
+          size="small"
           onClick={() => handleEditContract(contract)}
           title="Edit Contract"
         >
@@ -538,8 +545,8 @@ const ContractManagement: React.FC = () => {
             <AutorenewIcon />
           </IconButton>
         )}
-        <IconButton 
-          size="small" 
+        <IconButton
+          size="small"
           onClick={() => handleDeleteConfirm(contract._id || '')}
           title="Delete Contract"
         >
@@ -587,16 +594,25 @@ const ContractManagement: React.FC = () => {
         />
       </Grid>
       <Grid item xs={12} sm={6}>
-        <TextField
-          fullWidth
-          label="Type"
-          name="contractType"
-          value={currentContract.contractType}
-          onChange={handleInputChange}
-          error={!!formErrors.contractType}
-          helperText={formErrors.contractType}
-          required
-        />
+        <FormControl fullWidth required error={!!formErrors.contractType}>
+          <InputLabel id="contract-type-label">Type</InputLabel>
+          <Select
+            labelId="contract-type-label"
+            name="contractType"
+            value={currentContract.contractType}
+            onChange={handleSelectChange}
+            label="Type"
+          >
+            <MenuItem value="Monthly With Driver">Monthly With Driver</MenuItem>
+            <MenuItem value="Monthly Without Driver">Monthly Without Driver</MenuItem>
+            <MenuItem value="Other">Other</MenuItem>
+          </Select>
+          {formErrors.contractType && (
+            <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.75 }}>
+              {formErrors.contractType}
+            </Typography>
+          )}
+        </FormControl>
       </Grid>
       <Grid item xs={12} sm={6}>
         <TextField
@@ -613,6 +629,7 @@ const ContractManagement: React.FC = () => {
       <Grid item xs={12} sm={6}>
         <TextField
           fullWidth
+          type="date"
           label="Start Date"
           name="startDate"
           value={currentContract.startDate}
@@ -626,6 +643,7 @@ const ContractManagement: React.FC = () => {
       <Grid item xs={12} sm={6}>
         <TextField
           fullWidth
+          type="date"
           label="End Date"
           name="endDate"
           value={currentContract.endDate}
@@ -732,7 +750,7 @@ const ContractManagement: React.FC = () => {
   // Filter and sort contracts
   const filteredAndSortedContracts = React.useMemo(() => {
     let filtered = contracts;
-    
+
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = contracts.filter(contract =>
@@ -746,7 +764,7 @@ const ContractManagement: React.FC = () => {
         contract.notes?.toLowerCase().includes(query)
       );
     }
-    
+
     const sorted = [...filtered].sort((a, b) => {
       switch (sortBy) {
         case 'companyName':
@@ -764,7 +782,7 @@ const ContractManagement: React.FC = () => {
           return new Date(b.startDate).getTime() - new Date(a.startDate).getTime(); // Newest first
       }
     });
-    
+
     return sorted;
   }, [contracts, searchQuery, sortBy]);
 
@@ -779,8 +797,8 @@ const ContractManagement: React.FC = () => {
   return (
     <Container maxWidth={false} sx={{ mt: 4, mb: 4, px: 3 }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
-        <Typography 
-          variant="h4" 
+        <Typography
+          variant="h4"
           component="h1"
           sx={{
             fontSize: '28px',
@@ -1064,7 +1082,7 @@ const ContractManagement: React.FC = () => {
         {/* Contracts Table */}
         <Grid item xs={12}>
           <Paper sx={{ overflow: 'hidden' }}>
-            <TableContainer sx={{ 
+            <TableContainer sx={{
               borderRadius: 3,
               overflowX: 'auto',
               boxShadow: `0 1px 3px ${alpha(theme.palette.common.black, 0.1)}`,
@@ -1097,7 +1115,7 @@ const ContractManagement: React.FC = () => {
                 </TableHead>
                 <TableBody>
                   {filteredAndSortedContracts.map((contract) => (
-                    <TableRow 
+                    <TableRow
                       key={contract._id}
                       sx={{
                         backgroundColor: 'transparent',
@@ -1121,7 +1139,7 @@ const ContractManagement: React.FC = () => {
                     >
                       <TableCell>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Avatar sx={{ 
+                          <Avatar sx={{
                             bgcolor: theme.palette.primary.main,
                             width: 40,
                             height: 40,
@@ -1162,11 +1180,11 @@ const ContractManagement: React.FC = () => {
                             <Typography variant="body2" noWrap sx={{ fontWeight: 500 }}>
                               {moment(contract.startDate).format('MMM DD, YYYY')} - {moment(contract.endDate).format('MMM DD, YYYY')}
                             </Typography>
-                            <Typography 
-                              variant="caption" 
-                              sx={{ 
-                                color: moment(contract.endDate).diff(moment(), 'days') < 30 
-                                  ? theme.palette.error.main 
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                color: moment(contract.endDate).diff(moment(), 'days') < 30
+                                  ? theme.palette.error.main
                                   : theme.palette.success.main,
                                 fontWeight: 500
                               }}
@@ -1189,7 +1207,7 @@ const ContractManagement: React.FC = () => {
                           label={contract.status}
                           color={getStatusColor(contract.status)}
                           size="small"
-                          sx={{ 
+                          sx={{
                             minWidth: 100,
                             fontWeight: 500,
                             boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
@@ -1199,12 +1217,12 @@ const ContractManagement: React.FC = () => {
                       <TableCell align="right">
                         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5 }}>
                           <Tooltip title="View Details" arrow>
-                            <IconButton 
-                              size="small" 
-                              sx={{ 
+                            <IconButton
+                              size="small"
+                              sx={{
                                 color: theme.palette.info.main,
                                 backgroundColor: alpha(theme.palette.info.main, 0.1),
-                                '&:hover': { 
+                                '&:hover': {
                                   backgroundColor: alpha(theme.palette.info.main, 0.2),
                                   transform: 'scale(1.1)'
                                 },
@@ -1215,13 +1233,13 @@ const ContractManagement: React.FC = () => {
                             </IconButton>
                           </Tooltip>
                           <Tooltip title="Edit Contract" arrow>
-                            <IconButton 
-                              size="small" 
+                            <IconButton
+                              size="small"
                               onClick={() => handleEditContract(contract)}
-                              sx={{ 
+                              sx={{
                                 color: theme.palette.primary.main,
                                 backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                                '&:hover': { 
+                                '&:hover': {
                                   backgroundColor: alpha(theme.palette.primary.main, 0.2),
                                   transform: 'scale(1.1)'
                                 },
@@ -1232,13 +1250,13 @@ const ContractManagement: React.FC = () => {
                             </IconButton>
                           </Tooltip>
                           <Tooltip title="Delete Contract" arrow>
-                            <IconButton 
-                              size="small" 
+                            <IconButton
+                              size="small"
                               onClick={() => handleDeleteConfirm(contract._id || '')}
-                              sx={{ 
+                              sx={{
                                 color: theme.palette.error.main,
                                 backgroundColor: alpha(theme.palette.error.main, 0.1),
-                                '&:hover': { 
+                                '&:hover': {
                                   backgroundColor: alpha(theme.palette.error.main, 0.2),
                                   transform: 'scale(1.1)'
                                 },
@@ -1260,9 +1278,9 @@ const ContractManagement: React.FC = () => {
               component="div"
               count={contracts.length}
               page={0}
-              onPageChange={() => {}}
+              onPageChange={() => { }}
               rowsPerPage={10}
-              onRowsPerPageChange={() => {}}
+              onRowsPerPageChange={() => { }}
               rowsPerPageOptions={[5, 10, 25]}
             />
           </Paper>
@@ -1280,7 +1298,7 @@ const ContractManagement: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button 
+          <Button
             onClick={handleCloseDialog}
             sx={{
               color: '#6B7280',
@@ -1294,8 +1312,8 @@ const ContractManagement: React.FC = () => {
           >
             Cancel
           </Button>
-          <Button 
-            variant="contained" 
+          <Button
+            variant="contained"
             onClick={handleCloseDialog}
             sx={{
               backgroundColor: '#2563EB !important',
@@ -1327,7 +1345,7 @@ const ContractManagement: React.FC = () => {
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button 
+          <Button
             onClick={() => setDeleteConfirmOpen(false)}
             sx={{
               color: '#6B7280',
@@ -1341,8 +1359,8 @@ const ContractManagement: React.FC = () => {
           >
             Cancel
           </Button>
-          <Button 
-            onClick={handleDeleteContract} 
+          <Button
+            onClick={handleDeleteContract}
             variant="contained"
             sx={{
               backgroundColor: '#EF4444 !important',
@@ -1471,7 +1489,7 @@ const ContractManagement: React.FC = () => {
           />
         </DialogContent>
         <DialogActions>
-          <Button 
+          <Button
             onClick={() => setIsNewTemplateDialogOpen(false)}
             sx={{
               color: '#6B7280',
@@ -1485,8 +1503,8 @@ const ContractManagement: React.FC = () => {
           >
             Cancel
           </Button>
-          <Button 
-            onClick={handleCreateTemplate} 
+          <Button
+            onClick={handleCreateTemplate}
             variant="contained"
             sx={{
               backgroundColor: '#2563EB !important',

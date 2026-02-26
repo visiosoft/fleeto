@@ -4,14 +4,14 @@ const { CompanyContract, CONTRACT_STATUS } = require('../models/companyContract'
 exports.getAllContracts = async (req, res) => {
     try {
         const companyId = req.user?.companyId;
-        
+
         if (!companyId) {
             return res.status(400).json({
                 status: 'error',
                 message: 'Company ID not found in user token'
             });
         }
-        
+
         const contracts = await CompanyContract.find({ companyId: companyId }).sort({ startDate: -1 });
         res.status(200).json(contracts);
     } catch (error) {
@@ -42,14 +42,14 @@ exports.getContractStatuses = async (req, res) => {
 exports.getContractById = async (req, res) => {
     try {
         const companyId = req.user?.companyId;
-        
+
         if (!companyId) {
             return res.status(400).json({
                 status: 'error',
                 message: 'Company ID not found in user token'
             });
         }
-        
+
         const contract = await CompanyContract.findOne({ _id: req.params.id, companyId: companyId });
         if (!contract) {
             return res.status(404).json({ message: 'Contract not found' });
@@ -64,21 +64,27 @@ exports.getContractById = async (req, res) => {
 exports.createContract = async (req, res) => {
     try {
         const companyId = req.user?.companyId;
-        
+
         if (!companyId) {
             return res.status(400).json({
                 status: 'error',
                 message: 'Company ID not found in user token'
             });
         }
-        
+
         const newContract = new CompanyContract({
             companyName: req.body.companyName,
             tradeLicenseNo: req.body.tradeLicenseNo,
             vehicleName: req.body.vehicleName,
+            vehicleId: req.body.vehicleId,
+            contractType: req.body.contractType,
             startDate: req.body.startDate,
             endDate: req.body.endDate,
             amount: req.body.amount,
+            value: req.body.value,
+            contactPerson: req.body.contactPerson,
+            contactEmail: req.body.contactEmail,
+            contactPhone: req.body.contactPhone,
             status: req.body.status || CONTRACT_STATUS.PENDING,
             documents: req.body.documents || [],
             notes: req.body.notes,
@@ -95,14 +101,14 @@ exports.createContract = async (req, res) => {
 exports.updateContractStatus = async (req, res) => {
     try {
         const companyId = req.user?.companyId;
-        
+
         if (!companyId) {
             return res.status(400).json({
                 status: 'error',
                 message: 'Company ID not found in user token'
             });
         }
-        
+
         const { status } = req.body;
         if (!Object.values(CONTRACT_STATUS).includes(status)) {
             return res.status(400).json({ message: 'Invalid status value' });
@@ -113,7 +119,7 @@ exports.updateContractStatus = async (req, res) => {
             { status },
             { new: true }
         );
-        
+
         if (!updatedContract) {
             return res.status(404).json({ message: 'Contract not found' });
         }
@@ -127,14 +133,14 @@ exports.updateContractStatus = async (req, res) => {
 exports.updateContract = async (req, res) => {
     try {
         const companyId = req.user?.companyId;
-        
+
         if (!companyId) {
             return res.status(400).json({
                 status: 'error',
                 message: 'Company ID not found in user token'
             });
         }
-        
+
         const updatedContract = await CompanyContract.findOneAndUpdate(
             { _id: req.params.id, companyId: companyId },
             req.body,
@@ -153,14 +159,14 @@ exports.updateContract = async (req, res) => {
 exports.deleteContract = async (req, res) => {
     try {
         const companyId = req.user?.companyId;
-        
+
         if (!companyId) {
             return res.status(400).json({
                 status: 'error',
                 message: 'Company ID not found in user token'
             });
         }
-        
+
         const deletedContract = await CompanyContract.findOneAndDelete({ _id: req.params.id, companyId: companyId });
         if (!deletedContract) {
             return res.status(404).json({ message: 'Contract not found' });
@@ -202,14 +208,14 @@ exports.getContractByTradeLicense = async (req, res) => {
 exports.getContractsByStatus = async (req, res) => {
     try {
         const companyId = req.user?.companyId;
-        
+
         if (!companyId) {
             return res.status(400).json({
                 status: 'error',
                 message: 'Company ID not found in user token'
             });
         }
-        
+
         const contracts = await CompanyContract.find({
             status: req.params.status,
             companyId: companyId
@@ -224,17 +230,17 @@ exports.getContractsByStatus = async (req, res) => {
 exports.getExpiringContracts = async (req, res) => {
     try {
         const companyId = req.user?.companyId;
-        
+
         if (!companyId) {
             return res.status(400).json({
                 status: 'error',
                 message: 'Company ID not found in user token'
             });
         }
-        
+
         const thirtyDaysFromNow = new Date();
         thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
-        
+
         const contracts = await CompanyContract.find({
             endDate: {
                 $gte: new Date(),
@@ -253,14 +259,14 @@ exports.getExpiringContracts = async (req, res) => {
 exports.getContractStats = async (req, res) => {
     try {
         const companyId = req.user?.companyId;
-        
+
         if (!companyId) {
             return res.status(400).json({
                 status: 'error',
                 message: 'Company ID not found in user token'
             });
         }
-        
+
         const stats = await CompanyContract.aggregate([
             { $match: { companyId: companyId } },
             {
@@ -287,7 +293,7 @@ exports.getContractStats = async (req, res) => {
 exports.uploadDocument = async (req, res) => {
     try {
         const companyId = req.user?.companyId;
-        
+
         if (!companyId) {
             return res.status(400).json({
                 status: 'error',
@@ -348,7 +354,7 @@ exports.uploadDocument = async (req, res) => {
 exports.getDocuments = async (req, res) => {
     try {
         const companyId = req.user?.companyId;
-        
+
         if (!companyId) {
             return res.status(400).json({
                 status: 'error',
@@ -385,7 +391,7 @@ exports.deleteDocument = async (req, res) => {
         const companyId = req.user?.companyId;
         const fs = require('fs');
         const path = require('path');
-        
+
         if (!companyId) {
             return res.status(400).json({
                 status: 'error',
@@ -404,7 +410,7 @@ exports.deleteDocument = async (req, res) => {
 
         // Find the document
         const document = contract.documents.id(req.params.documentId);
-        
+
         if (!document) {
             return res.status(404).json({ message: 'Document not found' });
         }
@@ -439,7 +445,7 @@ exports.serveDocument = async (req, res) => {
         const companyId = req.user?.companyId;
         const fs = require('fs');
         const path = require('path');
-        
+
         if (!companyId) {
             return res.status(400).json({
                 status: 'error',
@@ -458,7 +464,7 @@ exports.serveDocument = async (req, res) => {
 
         // Construct file path
         const filePath = path.join(__dirname, '../../public/contracts', req.params.contractId, req.params.filename);
-        
+
         // Check if file exists
         if (!fs.existsSync(filePath)) {
             return res.status(404).json({ message: 'File not found' });

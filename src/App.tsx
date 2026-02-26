@@ -382,17 +382,11 @@ const AppContent: React.FC = () => {
               </ModernPageLayout>
             </ProtectedRoute>
           } />
+          {/* Specific routes MUST come before parameterized routes */}
           <Route path="/beta-invoices/new" element={
             <ProtectedRoute>
               <ModernPageLayout title="New Invoice">
                 <BetaInvoiceForm />
-              </ModernPageLayout>
-            </ProtectedRoute>
-          } />
-          <Route path="/beta-invoices/:id" element={
-            <ProtectedRoute>
-              <ModernPageLayout title="View Invoice">
-                <BetaInvoiceView />
               </ModernPageLayout>
             </ProtectedRoute>
           } />
@@ -407,6 +401,13 @@ const AppContent: React.FC = () => {
             <ProtectedRoute>
               <ModernPageLayout title="Invoice Payment">
                 <BetaInvoicePayment />
+              </ModernPageLayout>
+            </ProtectedRoute>
+          } />
+          <Route path="/beta-invoices/:id" element={
+            <ProtectedRoute>
+              <ModernPageLayout title="View Invoice">
+                <BetaInvoiceView />
               </ModernPageLayout>
             </ProtectedRoute>
           } />
