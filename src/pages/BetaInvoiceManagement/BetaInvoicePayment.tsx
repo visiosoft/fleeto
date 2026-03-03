@@ -318,7 +318,7 @@ const BetaInvoicePayment: React.FC = () => {
                                         invoice.payments.map((payment: any) => (
                                             <TableRow key={payment._id}>
                                                 <TableCell>
-                                                    {new Date(payment.paymentDate || payment.createdAt).toLocaleDateString()}
+                                                    {new Date(payment.paymentDate || payment.createdAt).toLocaleDateString('en-GB')}
                                                 </TableCell>
                                                 <TableCell>
                                                     <Typography color="success.main" fontWeight="bold">

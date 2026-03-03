@@ -48,13 +48,13 @@ const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({ invoice }) => {
 
       // Encode the message for URL
       const encodedMessage = encodeURIComponent(message);
-      
+
       // Create WhatsApp share URL with phone number
       const phoneNumber = invoice.contract?.contactPhone?.replace(/[^0-9]/g, '') || '';
-      const whatsappUrl = phoneNumber 
+      const whatsappUrl = phoneNumber
         ? `https://wa.me/${phoneNumber}?text=${encodedMessage}`
         : `https://wa.me/?text=${encodedMessage}`;
-      
+
       // Open WhatsApp in a new window
       window.open(whatsappUrl, '_blank');
     } catch (error) {
@@ -69,11 +69,11 @@ const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({ invoice }) => {
 
   return (
     <>
-      <Box 
+      <Box
         ref={contentRef}
-        sx={{ 
-          p: 3, 
-          maxWidth: '800px', 
+        sx={{
+          p: 3,
+          maxWidth: '800px',
           margin: '0 auto',
           '@media print': {
             padding: '15px',
@@ -86,7 +86,7 @@ const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({ invoice }) => {
         }}
       >
         {/* Header Banner */}
-        <Box sx={{ 
+        <Box sx={{
           mb: 2,
           width: '100%',
           '@media print': {
@@ -100,11 +100,11 @@ const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({ invoice }) => {
             overflow: 'hidden'
           }
         }}>
-          <img 
-            src="/bannerheader.png" 
-            alt="Header Banner" 
-            style={{ 
-              width: '100%', 
+          <img
+            src="/bannerheader.png"
+            alt="Header Banner"
+            style={{
+              width: '100%',
               height: '100%',
               objectFit: 'cover',
               display: 'block'
@@ -122,8 +122,8 @@ const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({ invoice }) => {
           }
         }}>
           {/* Header */}
-          <Box sx={{ 
-            mb: 2, 
+          <Box sx={{
+            mb: 2,
             textAlign: 'center',
             borderBottom: '1px solid #eee',
             pb: 1,
@@ -149,13 +149,13 @@ const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({ invoice }) => {
               </Typography>
             </Box>
             <Box>
-              <Typography variant="body2" gutterBottom sx={{ 
+              <Typography variant="body2" gutterBottom sx={{
                 fontSize: '0.75rem',
                 color: invoice?.status === 'paid' ? '#2e7d32' : // Green for paid
-                         invoice?.status === 'sent' ? '#ed6c02' : // Orange for sent
-                         invoice?.status === 'overdue' ? '#d32f2f' : // Red for overdue
-                         invoice?.status === 'cancelled' ? '#757575' : // Grey for cancelled
-                         '#757575', // Grey for draft
+                  invoice?.status === 'sent' ? '#ed6c02' : // Orange for sent
+                    invoice?.status === 'overdue' ? '#d32f2f' : // Red for overdue
+                      invoice?.status === 'cancelled' ? '#757575' : // Grey for cancelled
+                        '#757575', // Grey for draft
                 fontWeight: 'bold'
               }}>
                 Status: {(invoice?.status || 'draft').toUpperCase()}
@@ -227,9 +227,9 @@ const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({ invoice }) => {
           )}
 
           {/* Footer */}
-          <Box sx={{ 
-            mt: 2, 
-            pt: 1, 
+          <Box sx={{
+            mt: 2,
+            pt: 1,
             borderTop: '1px solid #eee',
             '@media print': {
               borderTop: '1px solid #000',
@@ -263,7 +263,7 @@ const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({ invoice }) => {
         </Box>
 
         {/* Footer Banner */}
-        <Box sx={{ 
+        <Box sx={{
           mt: 2,
           width: '100%',
           '@media print': {
@@ -277,11 +277,11 @@ const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({ invoice }) => {
             overflow: 'hidden'
           }
         }}>
-          <img 
-            src="/bannerfooter.png" 
-            alt="Footer Banner" 
-            style={{ 
-              width: '100%', 
+          <img
+            src="/bannerfooter2.png"
+            alt="Footer Banner"
+            style={{
+              width: '100%',
               height: '100%',
               objectFit: 'cover',
               display: 'block'
@@ -290,12 +290,12 @@ const PrintableInvoice: React.FC<PrintableInvoiceProps> = ({ invoice }) => {
         </Box>
 
         {/* Action Buttons */}
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'flex-end', 
-          gap: 2, 
-          mb: 2, 
-          '@media print': { display: 'none' } 
+        <Box sx={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          gap: 2,
+          mb: 2,
+          '@media print': { display: 'none' }
         }}>
           <Button
             variant="contained"

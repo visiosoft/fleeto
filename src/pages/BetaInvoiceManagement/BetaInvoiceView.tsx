@@ -37,8 +37,8 @@ const BetaInvoiceView: React.FC = () => {
     const [invoice, setInvoice] = useState<Invoice | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [headerImage, setHeaderImage] = useState<string>('/bannerheader.png');
-    const [footerImage, setFooterImage] = useState<string>('/bannerfooter.png');
+    const [headerImage, setHeaderImage] = useState<string>('/bannerheader2.png');
+    const [footerImage, setFooterImage] = useState<string>('/bannerfooter2.png');
     const componentRef = useRef(null);
 
     useEffect(() => {
@@ -125,7 +125,7 @@ const BetaInvoiceView: React.FC = () => {
                             margin: 0;
                             padding: 0 !important;
                             box-shadow: none !important;
-                            font-size: 0.75em;
+                            font-size: 0.55em;
                         }
                         .invoice-header {
                             position: fixed;
@@ -142,7 +142,7 @@ const BetaInvoiceView: React.FC = () => {
                             z-index: 1000;
                         }
                         .invoice-content {
-                            margin-top: 140px;
+                            margin-top: 180px;
                             margin-bottom: 140px;
                             padding: 0 10px;
                             page-break-inside: avoid;
@@ -173,6 +173,9 @@ const BetaInvoiceView: React.FC = () => {
                         }
                         .printable-invoice .MuiDivider-root {
                             margin: 4px 0 !important;
+                        }
+                        .printable-invoice .MuiChip-root {
+                            display: none !important;
                         }
                         @page {
                             margin: 0.3cm;
@@ -253,10 +256,10 @@ const BetaInvoiceView: React.FC = () => {
                     {/* Header Text */}
                     <Box display="flex" justifyContent="space-between" mb={2} px={0} sx={{ '@media print': { mb: 1 } }}>
                         <Box>
-                            <Typography variant="h4" fontWeight="bold" color="primary">
+                            <Typography variant="h5" fontWeight="bold" color="primary">
                                 INVOICE
                             </Typography>
-                            <Typography variant="body1" color="text.secondary">
+                            <Typography variant="body2" color="text.secondary">
                                 #{invoice.invoiceNumber}
                             </Typography>
                             <Box mt={2}>
@@ -267,12 +270,12 @@ const BetaInvoiceView: React.FC = () => {
                                 />
                             </Box>
                         </Box>
-                        <Box textAlign="right">
-                            <Typography variant="h6" fontWeight="bold">Efficient Move</Typography>
-                            <Typography variant="body2">New & Used Furniture Removal L.L.C</Typography>
-                            <Typography variant="body2">Dubai, UAE</Typography>
-                            <Typography variant="body2">Phone: +971569420950</Typography>
-                            <Typography variant="body2">License No: 1383686</Typography>
+                        <Box textAlign="right" sx={{ '@media print': { maxWidth: '100%', overflow: 'visible' } }}>
+                            <Typography variant="subtitle1" fontWeight="bold">Efficient Move</Typography>
+                            <Typography variant="caption" display="block">New & Used Furniture Removal L.L.C</Typography>
+                            <Typography variant="caption" display="block">Dubai, UAE</Typography>
+                            <Typography variant="caption" display="block">Phone: +971567139353</Typography>
+                            <Typography variant="caption" display="block">License No: 1383686</Typography>
                         </Box>
                     </Box>
 
@@ -310,7 +313,7 @@ const BetaInvoiceView: React.FC = () => {
                                     ISSUE DATE
                                 </Typography>
                                 <Typography variant="body2" fontWeight="bold">
-                                    {new Date(invoice.issueDate).toLocaleDateString()}
+                                    {new Date(invoice.issueDate).toLocaleDateString('en-GB')}
                                 </Typography>
                             </Box>
                             <Box>
@@ -318,7 +321,7 @@ const BetaInvoiceView: React.FC = () => {
                                     DUE DATE
                                 </Typography>
                                 <Typography variant="body2" fontWeight="bold">
-                                    {new Date(invoice.dueDate).toLocaleDateString()}
+                                    {new Date(invoice.dueDate).toLocaleDateString('en-GB')}
                                 </Typography>
                             </Box>
                         </Grid>
@@ -397,7 +400,7 @@ const BetaInvoiceView: React.FC = () => {
                                         {invoice.payments.map((payment, index) => (
                                             <TableRow key={index}>
                                                 <TableCell>
-                                                    {new Date(payment.paymentDate).toLocaleDateString()}
+                                                    {new Date(payment.paymentDate).toLocaleDateString('en-GB')}
                                                 </TableCell>
                                                 <TableCell>{payment.paymentMethod}</TableCell>
                                                 <TableCell>{payment.notes || '-'}</TableCell>

@@ -104,9 +104,9 @@ const BetaInvoiceTable: React.FC<BetaInvoiceTableProps> = ({ invoices = [], onRe
 
     if (!invoices || invoices.length === 0) {
         return (
-            <Box 
-                sx={{ 
-                    p: 8, 
+            <Box
+                sx={{
+                    p: 8,
                     textAlign: 'center',
                     background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, ${alpha(theme.palette.secondary.main, 0.05)} 100%)`,
                     borderRadius: 2,
@@ -124,8 +124,8 @@ const BetaInvoiceTable: React.FC<BetaInvoiceTableProps> = ({ invoices = [], onRe
     }
 
     return (
-        <TableContainer 
-            sx={{ 
+        <TableContainer
+            sx={{
                 borderRadius: '12px',
                 overflowX: 'auto',
                 border: '1px solid #E5E7EB',
@@ -135,50 +135,50 @@ const BetaInvoiceTable: React.FC<BetaInvoiceTableProps> = ({ invoices = [], onRe
             <Table>
                 <TableHead>
                     <TableRow sx={{ backgroundColor: '#F8FAFC' }}>
-                        <TableCell sx={{ 
-                            fontWeight: 600, 
+                        <TableCell sx={{
+                            fontWeight: 600,
                             color: '#374151',
                             fontSize: '13px',
                             textTransform: 'uppercase',
                             letterSpacing: '0.025em',
                             borderBottom: '2px solid #E5E7EB',
-                            py: 2.5 
+                            py: 2.5
                         }}>Invoice Info</TableCell>
-                        <TableCell sx={{ 
-                            fontWeight: 600, 
+                        <TableCell sx={{
+                            fontWeight: 600,
                             color: '#374151',
                             fontSize: '13px',
                             textTransform: 'uppercase',
                             letterSpacing: '0.025em',
                             borderBottom: '2px solid #E5E7EB',
-                            py: 2.5 
+                            py: 2.5
                         }}>Dates</TableCell>
-                        <TableCell sx={{ 
-                            fontWeight: 600, 
+                        <TableCell sx={{
+                            fontWeight: 600,
                             color: '#374151',
                             fontSize: '13px',
                             textTransform: 'uppercase',
                             letterSpacing: '0.025em',
                             borderBottom: '2px solid #E5E7EB',
-                            py: 2.5 
+                            py: 2.5
                         }}>Amounts</TableCell>
-                        <TableCell sx={{ 
-                            fontWeight: 600, 
+                        <TableCell sx={{
+                            fontWeight: 600,
                             color: '#374151',
                             fontSize: '13px',
                             textTransform: 'uppercase',
                             letterSpacing: '0.025em',
                             borderBottom: '2px solid #E5E7EB',
-                            py: 2.5 
+                            py: 2.5
                         }}>Status</TableCell>
-                        <TableCell align="center" sx={{ 
-                            fontWeight: 600, 
+                        <TableCell align="center" sx={{
+                            fontWeight: 600,
                             color: '#374151',
                             fontSize: '13px',
                             textTransform: 'uppercase',
                             letterSpacing: '0.025em',
                             borderBottom: '2px solid #E5E7EB',
-                            py: 2.5 
+                            py: 2.5
                         }}>Actions</TableCell>
                     </TableRow>
                 </TableHead>
@@ -188,12 +188,12 @@ const BetaInvoiceTable: React.FC<BetaInvoiceTableProps> = ({ invoices = [], onRe
                         const remainingBalance = invoice.remainingBalance || 0;
 
                         return (
-                            <TableRow 
+                            <TableRow
                                 key={invoice._id}
                                 onMouseEnter={() => setHoveredRow(invoice._id)}
                                 onMouseLeave={() => setHoveredRow(null)}
                                 sx={{
-                                    backgroundColor: hoveredRow === invoice._id 
+                                    backgroundColor: hoveredRow === invoice._id
                                         ? '#F1F5F9'
                                         : index % 2 === 0 ? '#FFFFFF' : '#F9FAFB',
                                     transition: 'background-color 0.2s ease',
@@ -212,9 +212,9 @@ const BetaInvoiceTable: React.FC<BetaInvoiceTableProps> = ({ invoices = [], onRe
                                 <TableCell>
                                     <Stack spacing={0.5}>
                                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                            <Avatar 
-                                                sx={{ 
-                                                    width: 40, 
+                                            <Avatar
+                                                sx={{
+                                                    width: 40,
                                                     height: 40,
                                                     background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
                                                     boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.3)}`,
@@ -223,11 +223,11 @@ const BetaInvoiceTable: React.FC<BetaInvoiceTableProps> = ({ invoices = [], onRe
                                                 <ReceiptIcon sx={{ fontSize: 20 }} />
                                             </Avatar>
                                             <Box>
-                                                <Typography 
-                                                    variant="body2" 
+                                                <Typography
+                                                    variant="body2"
                                                     fontWeight={700}
                                                     onClick={() => handleRecordPayment(invoice._id)}
-                                                    sx={{ 
+                                                    sx={{
                                                         cursor: 'pointer',
                                                         color: theme.palette.primary.main,
                                                         '&:hover': {
@@ -253,13 +253,13 @@ const BetaInvoiceTable: React.FC<BetaInvoiceTableProps> = ({ invoices = [], onRe
                                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                             <CalendarIcon sx={{ fontSize: 14, color: theme.palette.text.secondary }} />
                                             <Typography variant="caption" color="text.secondary">
-                                                Issue: {invoice.issueDate ? new Date(invoice.issueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
+                                                Issue: {invoice.issueDate ? new Date(invoice.issueDate).toLocaleDateString('en-GB') : 'N/A'}
                                             </Typography>
                                         </Box>
                                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                             <CalendarIcon sx={{ fontSize: 14, color: theme.palette.error.main }} />
                                             <Typography variant="caption" color="text.secondary">
-                                                Due: {invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
+                                                Due: {invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('en-GB') : 'N/A'}
                                             </Typography>
                                         </Box>
                                     </Stack>
@@ -306,8 +306,8 @@ const BetaInvoiceTable: React.FC<BetaInvoiceTableProps> = ({ invoices = [], onRe
                                             letterSpacing: '0.5px',
                                             boxShadow: (() => {
                                                 const statusColor = getStatusColor(invoice.status || 'draft');
-                                                const color = statusColor === 'default' 
-                                                    ? theme.palette.grey[500] 
+                                                const color = statusColor === 'default'
+                                                    ? theme.palette.grey[500]
                                                     : theme.palette[statusColor as 'success' | 'warning' | 'error' | 'info'].main;
                                                 return `0 2px 4px ${alpha(color, 0.2)}`;
                                             })(),
@@ -318,8 +318,8 @@ const BetaInvoiceTable: React.FC<BetaInvoiceTableProps> = ({ invoices = [], onRe
                                     />
                                 </TableCell>
                                 <TableCell align="center">
-                                    <Stack 
-                                        direction="row" 
+                                    <Stack
+                                        direction="row"
                                         spacing={0.5}
                                         justifyContent="center"
                                         sx={{
