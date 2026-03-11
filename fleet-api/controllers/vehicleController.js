@@ -14,17 +14,17 @@ const VehicleController = {
   async getAllVehicles(req, res) {
     try {
       const companyId = req.user?.companyId;
-      
+
       console.log('Getting vehicles for companyId:', companyId);
       console.log('User object:', JSON.stringify(req.user, null, 2));
-      
+
       if (!companyId) {
         return res.status(400).json({
           status: 'error',
           message: 'Company ID not found in user token'
         });
       }
-      
+
       const vehicles = await Vehicle.find({ companyId: companyId });
       console.log('Found vehicles:', vehicles.length);
       res.json(vehicles);
@@ -42,14 +42,14 @@ const VehicleController = {
   async getVehicleById(req, res) {
     try {
       const companyId = req.user?.companyId;
-      
+
       if (!companyId) {
         return res.status(400).json({
           status: 'error',
           message: 'Company ID not found in user token'
         });
       }
-      
+
       const vehicle = await Vehicle.findOne({
         _id: req.params.id,
         companyId: companyId
@@ -74,14 +74,14 @@ const VehicleController = {
   async createVehicle(req, res) {
     try {
       const companyId = req.user?.companyId;
-      
+
       if (!companyId) {
         return res.status(400).json({
           status: 'error',
           message: 'Company ID not found in user token'
         });
       }
-      
+
       const vehicle = new Vehicle({
         ...req.body,
         companyId: companyId
@@ -105,7 +105,7 @@ const VehicleController = {
       'make', 'model', 'year', 'licensePlate', 'vin',
       'type', 'status', 'mileage', 'lastService',
       'nextServiceDue', 'fuelType', 'fuelCapacity',
-      'lastMaintenance', 'nextMaintenance', 'expiryDate',
+      'lastMaintenance', 'nextMaintenance', 'expiryDate', 'purchaseDate',
       'assignedDriver', 'insuranceInfo', 'notes',
       'registrationExpiry', 'currentMileage', 'lastServiceDate'
     ];
@@ -115,7 +115,7 @@ const VehicleController = {
       const invalidFields = updates.filter(update => !allowedUpdates.includes(update));
       console.error('Invalid update fields:', invalidFields);
       console.error('Received fields:', updates);
-      return res.status(400).json({ 
+      return res.status(400).json({
         message: 'Invalid updates',
         invalidFields: invalidFields,
         receivedFields: updates
@@ -124,14 +124,14 @@ const VehicleController = {
 
     try {
       const companyId = req.user?.companyId;
-      
+
       if (!companyId) {
         return res.status(400).json({
           status: 'error',
           message: 'Company ID not found in user token'
         });
       }
-      
+
       const vehicle = await Vehicle.findOne({
         _id: req.params.id,
         companyId: companyId
@@ -158,14 +158,14 @@ const VehicleController = {
   async deleteVehicle(req, res) {
     try {
       const companyId = req.user?.companyId;
-      
+
       if (!companyId) {
         return res.status(400).json({
           status: 'error',
           message: 'Company ID not found in user token'
         });
       }
-      
+
       const vehicle = await Vehicle.findOneAndDelete({
         _id: req.params.id,
         companyId: companyId
@@ -190,14 +190,14 @@ const VehicleController = {
   async getVehicleMaintenance(req, res) {
     try {
       const companyId = req.user?.companyId;
-      
+
       if (!companyId) {
         return res.status(400).json({
           status: 'error',
           message: 'Company ID not found in user token'
         });
       }
-      
+
       const vehicle = await Vehicle.findOne({
         _id: req.params.id,
         companyId: companyId
@@ -222,14 +222,14 @@ const VehicleController = {
   async addMaintenanceRecord(req, res) {
     try {
       const companyId = req.user?.companyId;
-      
+
       if (!companyId) {
         return res.status(400).json({
           status: 'error',
           message: 'Company ID not found in user token'
         });
       }
-      
+
       const vehicle = await Vehicle.findOne({
         _id: req.params.id,
         companyId: companyId
@@ -256,14 +256,14 @@ const VehicleController = {
   async updateMaintenanceRecord(req, res) {
     try {
       const companyId = req.user?.companyId;
-      
+
       if (!companyId) {
         return res.status(400).json({
           status: 'error',
           message: 'Company ID not found in user token'
         });
       }
-      
+
       const vehicle = await Vehicle.findOne({
         _id: req.params.id,
         companyId: companyId
@@ -295,14 +295,14 @@ const VehicleController = {
   async deleteMaintenanceRecord(req, res) {
     try {
       const companyId = req.user?.companyId;
-      
+
       if (!companyId) {
         return res.status(400).json({
           status: 'error',
           message: 'Company ID not found in user token'
         });
       }
-      
+
       const vehicle = await Vehicle.findOne({
         _id: req.params.id,
         companyId: companyId
@@ -332,14 +332,14 @@ const VehicleController = {
   async getVehicleDocuments(req, res) {
     try {
       const companyId = req.user?.companyId;
-      
+
       if (!companyId) {
         return res.status(400).json({
           status: 'error',
           message: 'Company ID not found in user token'
         });
       }
-      
+
       const vehicle = await Vehicle.findOne({
         _id: req.params.id,
         companyId: companyId
@@ -364,14 +364,14 @@ const VehicleController = {
   async addVehicleDocument(req, res) {
     try {
       const companyId = req.user?.companyId;
-      
+
       if (!companyId) {
         return res.status(400).json({
           status: 'error',
           message: 'Company ID not found in user token'
         });
       }
-      
+
       const vehicle = await Vehicle.findOne({
         _id: req.params.id,
         companyId: companyId
@@ -398,14 +398,14 @@ const VehicleController = {
   async deleteVehicleDocument(req, res) {
     try {
       const companyId = req.user?.companyId;
-      
+
       if (!companyId) {
         return res.status(400).json({
           status: 'error',
           message: 'Company ID not found in user token'
         });
       }
-      
+
       const vehicle = await Vehicle.findOne({
         _id: req.params.id,
         companyId: companyId
@@ -436,7 +436,7 @@ const VehicleController = {
     try {
       // Build query from request parameters
       const query = {};
-      
+
       // Handle make/model search
       if (req.query.search) {
         const searchRegex = new RegExp(req.query.search, 'i');
@@ -446,34 +446,34 @@ const VehicleController = {
           { licensePlate: { $regex: searchRegex } }
         ];
       }
-      
+
       // Handle status filter
       if (req.query.status) {
         query.status = req.query.status;
       }
-      
+
       // Handle year filter
       if (req.query.year) {
         query.year = parseInt(req.query.year);
       }
-      
+
       // Handle mileage range filter
       if (req.query.minMileage || req.query.maxMileage) {
         query.mileage = {};
         if (req.query.minMileage) query.mileage.$gte = parseInt(req.query.minMileage);
         if (req.query.maxMileage) query.mileage.$lte = parseInt(req.query.maxMileage);
       }
-      
+
       const collection = await VehicleModel.getCollection();
       const vehicles = await collection.find(query).toArray();
-      
+
       res.status(200).json(vehicles);
     } catch (error) {
       console.error('Error searching vehicles:', error);
-      res.status(500).json({ 
-        status: 'error', 
-        message: 'Failed to search vehicles', 
-        error: error.message 
+      res.status(500).json({
+        status: 'error',
+        message: 'Failed to search vehicles',
+        error: error.message
       });
     }
   },
@@ -486,7 +486,7 @@ const VehicleController = {
   async uploadDocument(req, res) {
     try {
       const companyId = req.user?.companyId;
-      
+
       if (!companyId) {
         return res.status(400).json({
           status: 'error',
@@ -546,7 +546,7 @@ const VehicleController = {
   async getDocuments(req, res) {
     try {
       const companyId = req.user?.companyId;
-      
+
       if (!companyId) {
         return res.status(400).json({
           status: 'error',
@@ -587,7 +587,7 @@ const VehicleController = {
       const companyId = req.user?.companyId;
       const fs = require('fs');
       const path = require('path');
-      
+
       if (!companyId) {
         return res.status(400).json({
           status: 'error',
@@ -606,7 +606,7 @@ const VehicleController = {
 
       // Find the document
       const document = vehicle.documents.id(req.params.documentId);
-      
+
       if (!document) {
         return res.status(404).json({ message: 'Document not found' });
       }
@@ -645,7 +645,7 @@ const VehicleController = {
       const companyId = req.user?.companyId;
       const fs = require('fs');
       const path = require('path');
-      
+
       if (!companyId) {
         return res.status(400).json({
           status: 'error',
@@ -664,7 +664,7 @@ const VehicleController = {
 
       // Construct file path
       const filePath = path.join(__dirname, '../../public/vehicles', req.params.vehicleId, req.params.filename);
-      
+
       // Check if file exists
       if (!fs.existsSync(filePath)) {
         return res.status(404).json({ message: 'File not found' });

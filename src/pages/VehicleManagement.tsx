@@ -171,6 +171,7 @@ interface Vehicle {
   licensePlate: string;
   vin: string;
   expiryDate?: Moment;
+  purchaseDate?: Moment;
   status: 'Active' | 'Maintenance' | 'Out of Service';
   mileage: number;
   lastMaintenance?: Moment;
@@ -187,10 +188,11 @@ interface Vehicle {
   image?: string;
 }
 
-interface VehicleFormValues extends Omit<Vehicle, '_id' | 'lastMaintenance' | 'nextMaintenance' | 'expiryDate' | 'insuranceInfo'> {
+interface VehicleFormValues extends Omit<Vehicle, '_id' | 'lastMaintenance' | 'nextMaintenance' | 'expiryDate' | 'purchaseDate' | 'insuranceInfo'> {
   lastMaintenance?: Moment | null;
   nextMaintenance?: Moment | null;
   expiryDate?: Moment | null;
+  purchaseDate?: Moment | null;
   insuranceProvider?: string;
   insurancePolicyNumber?: string;
   insuranceExpiryDate?: Moment | null;
@@ -281,6 +283,7 @@ const VehicleManagement: React.FC = () => {
         lastMaintenance: vehicleData.lastMaintenance ? moment(vehicleData.lastMaintenance) : null,
         nextMaintenance: vehicleData.nextMaintenance ? moment(vehicleData.nextMaintenance) : null,
         expiryDate: vehicleData.expiryDate ? moment(vehicleData.expiryDate) : null,
+        purchaseDate: vehicleData.purchaseDate ? moment(vehicleData.purchaseDate) : null,
         insuranceProvider: vehicleData.insuranceInfo?.provider,
         insurancePolicyNumber: vehicleData.insuranceInfo?.policyNumber,
         insuranceExpiryDate: vehicleData.insuranceInfo?.expiryDate ? moment(vehicleData.insuranceInfo.expiryDate) : null,
@@ -347,6 +350,7 @@ const VehicleManagement: React.FC = () => {
         lastMaintenance: formValues.lastMaintenance?.format('YYYY-MM-DD'),
         nextMaintenance: formValues.nextMaintenance?.format('YYYY-MM-DD'),
         expiryDate: formValues.expiryDate?.format('YYYY-MM-DD'),
+        purchaseDate: formValues.purchaseDate?.format('YYYY-MM-DD'),
         insuranceInfo: insuranceProvider ? {
           provider: insuranceProvider,
           policyNumber: insurancePolicyNumber,
@@ -1093,6 +1097,14 @@ const VehicleManagement: React.FC = () => {
                 value={formValues.expiryDate || null}
                 onChange={(date) => setFormValues(prev => ({ ...prev, expiryDate: date }))}
                 slotProps={{ textField: { fullWidth: true, required: true } }}
+              />
+            </Grid>
+            <Grid item xs={6}>
+              <DatePicker
+                label="Purchase Date"
+                value={formValues.purchaseDate || null}
+                onChange={(date) => setFormValues(prev => ({ ...prev, purchaseDate: date }))}
+                slotProps={{ textField: { fullWidth: true } }}
               />
             </Grid>
             <Grid item xs={12}>

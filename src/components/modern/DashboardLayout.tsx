@@ -57,6 +57,12 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, titl
       path: '/tracking',
     },
     {
+      id: 'letterheads',
+      label: 'Letterhead Templates',
+      icon: <ContractIcon />,
+      path: '/letterheads',
+    },
+    {
       id: 'invoices',
       label: 'Invoices',
       icon: <InvoiceIcon />,

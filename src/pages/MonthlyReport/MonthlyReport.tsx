@@ -44,6 +44,7 @@ interface Vehicle {
   licensePlate: string;
   make: string;
   model: string;
+  purchaseDate?: string;
 }
 
 interface VehicleReport {
@@ -132,14 +133,56 @@ const MonthlyReport: React.FC = () => {
             })
             .reduce((sum: number, d: any) => sum + Number(d.amount || 0), 0) || 0;
 
-          // Calculate contract amount from active contracts for this vehicle
-          const vehicleContracts = contractsResponse.data
-            .filter((c: any) => c.vehicleId === vehicle._id && c.status === 'Active');
+          // Calculate contract amount from contracts that overlap with selected months
+          // Include Active, Terminated, and Expired contracts based on their date range
+          let totalContractValue = 0;
 
-          // Calculate total annual contract value (multiply by number of months selected)
-          const monthlyContractValue = vehicleContracts
-            .reduce((sum: number, c: any) => sum + Number(c.value || 0), 0);
-          const totalContractValue = monthlyContractValue * selectedMonths.length;
+          // Get all contracts for this vehicle
+          const vehicleContracts = contractsResponse.data
+            .filter((c: any) => c.vehicleId === vehicle._id);
+
+          // For each contract, calculate how many of the selected months it was active for
+          vehicleContracts.forEach((contract: any) => {
+            const contractStart = moment(contract.startDate);
+            const contractEnd = moment(contract.endDate);
+            const contractValue = Number(contract.value || 0);
+
+            // Count how many selected months this contract should be billed for
+            let activeMonthCount = 0;
+            selectedMonths.forEach(month => {
+              const monthStart = moment(month).startOf('month');
+              const monthEnd = moment(month).endOf('month');
+
+              // Get the month/year of contract start and end
+              const contractStartMonth = contractStart.format('YYYY-MM');
+              const contractEndMonth = contractEnd.format('YYYY-MM');
+              const currentMonth = moment(month).format('YYYY-MM');
+
+              // Include month if:
+              // 1. It's the month the contract started (even if mid-month)
+              // 2. OR it's a full month between start and end (contract active entire month)
+              const isStartMonth = currentMonth === contractStartMonth;
+              const isFullMonth = contractStart.isSameOrBefore(monthStart) &&
+                contractEnd.isSameOrAfter(monthEnd);
+
+              // Don't include the end month if contract ended before the last day
+              const isEndMonth = currentMonth === contractEndMonth;
+              const endedBeforeMonthEnd = isEndMonth && contractEnd.isBefore(monthEnd);
+
+              // Check if month is after purchase date (if purchase date exists)
+              let monthAfterPurchase = true;
+              if (vehicle.purchaseDate) {
+                const purchaseMonth = moment(vehicle.purchaseDate).startOf('month');
+                monthAfterPurchase = monthStart.isSameOrAfter(purchaseMonth);
+              }
+
+              if ((isStartMonth || isFullMonth) && !endedBeforeMonthEnd && monthAfterPurchase) {
+                activeMonthCount++;
+              }
+            });
+
+            totalContractValue += contractValue * activeMonthCount;
+          });
 
           const profit = totalContractValue - vehicleExpenses;
           const profitMargin = totalContractValue > 0 ? (profit / totalContractValue) * 100 : 0;

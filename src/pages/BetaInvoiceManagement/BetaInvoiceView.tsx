@@ -125,7 +125,7 @@ const BetaInvoiceView: React.FC = () => {
                             margin: 0;
                             padding: 0 !important;
                             box-shadow: none !important;
-                            font-size: 0.55em;
+                            font-size: 9px !important;
                         }
                         .invoice-header {
                             position: fixed;
@@ -146,6 +146,7 @@ const BetaInvoiceView: React.FC = () => {
                             margin-bottom: 140px;
                             padding: 0 10px;
                             page-break-inside: avoid;
+                            font-size: 0.65em !important;
                         }
                         .printable-invoice .MuiBox-root {
                             margin-bottom: 4px !important;
@@ -252,7 +253,7 @@ const BetaInvoiceView: React.FC = () => {
                 </Box>
 
                 {/* Main Invoice Content */}
-                <Box className="invoice-content">
+                <Box className="invoice-content" sx={{ fontSize: '0.9rem', '@media print': { fontSize: 'inherit !important' } }}>
                     {/* Header Text */}
                     <Box display="flex" justifyContent="space-between" mb={2} px={0} sx={{ '@media print': { mb: 1 } }}>
                         <Box>

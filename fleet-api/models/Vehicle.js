@@ -86,6 +86,10 @@ const vehicleSchema = new mongoose.Schema({
         type: Date,
         required: true
     },
+    purchaseDate: {
+        type: Date,
+        required: false
+    },
     assignedDriver: {
         type: String,
         required: false
@@ -156,7 +160,7 @@ const vehicleSchema = new mongoose.Schema({
 });
 
 // Update the updatedAt timestamp before saving
-vehicleSchema.pre('save', function(next) {
+vehicleSchema.pre('save', function (next) {
     this.updatedAt = Date.now();
     next();
 });
