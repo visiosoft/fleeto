@@ -18,6 +18,7 @@ import {
   Table,
   TableHead,
   TableBody,
+  TableFooter,
   TableRow,
   TableCell,
   Tabs,
@@ -1406,6 +1407,24 @@ const CostManagement: React.FC = () => {
                           </TableRow>
                         )}
                       </TableBody>
+                      {getAllExpenses().length > 0 && (
+                        <TableFooter>
+                          <TableRow
+                            sx={{
+                              background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.08)} 0%, ${alpha(theme.palette.secondary.main, 0.08)} 100%)`,
+                              borderTop: `2px solid ${theme.palette.divider}`,
+                            }}
+                          >
+                            <TableCell colSpan={4} sx={{ fontWeight: 700, fontSize: '0.95rem', py: 2 }}>
+                              Total for selected period
+                            </TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 800, fontSize: '1rem', color: theme.palette.error.main, py: 2 }}>
+                              AED {filteredTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </TableCell>
+                            <TableCell colSpan={2} />
+                          </TableRow>
+                        </TableFooter>
+                      )}
                     </Table>
                   </TableContainer>
                 </Grid>

@@ -258,6 +258,14 @@ const Reports: React.FC = () => {
             color: theme.palette.secondary.main,
             linkTo: '/net-income-report',
             badge: 'New'
+          },
+          {
+            title: 'Contract Cycle Report',
+            description: 'Income vs. expenses per billing cycle. Select vehicles, auto-detect cycle from contract start date, and compare revenue against expenses for any period.',
+            icon: <ContractIcon />,
+            color: '#7C3AED',
+            linkTo: '/contract-cycle-report',
+            badge: 'New'
           }
         ]
       },

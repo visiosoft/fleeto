@@ -6,7 +6,7 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 class AuthService {
   private static instance: AuthService;
 
-  private constructor() {}
+  private constructor() { }
 
   static getInstance(): AuthService {
     if (!AuthService.instance) {
@@ -17,10 +17,10 @@ class AuthService {
 
   async login(email: string, password: string): Promise<LoginResponse> {
     try {
-      console.log('Attempting login to:', `${API_BASE_URL}/auth/login`);
+      console.log('Attempting login to:', `${API_BASE_URL}/api/auth/login`);
       console.log('Login payload:', { email, password: '***' });
-      
-      const response = await axios.post(`${API_BASE_URL}/auth/login`, {
+
+      const response = await axios.post(`${API_BASE_URL}/api/auth/login`, {
         email,
         password,
       }, {
@@ -28,7 +28,7 @@ class AuthService {
           'Content-Type': 'application/json',
         },
       });
-      
+
       console.log('Login response:', response.data);
       return response.data;
     } catch (error) {

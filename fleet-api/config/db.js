@@ -4,44 +4,48 @@
  */
 const { MongoClient } = require('mongodb');
 const mongoose = require('mongoose');
+const dns = require('dns');
 require('dotenv').config();
+
+// Force DNS resolution through Cloudflare to improve SRV lookup reliability
+dns.setServers(['1.1.1.1', '1.0.0.1']);
 
 // Import mock data for offline/testing use
 const mockData = require('./mock-data');
 
 // MongoDB Connection
-const MONGODB_URI = "mongodb+srv://devxulfiqar:nSISUpLopruL7S8j@mypaperlessoffice.z5g84.mongodb.net/fleet-management?retryWrites=true&w=majority&appName=mypaperlessoffice" ;
+const MONGODB_URI = "mongodb+srv://devxulfiqar:nSISUpLopruL7S8j@mypaperlessoffice.z5g84.mongodb.net/fleet-management?retryWrites=true&w=majority&appName=mypaperlessoffice";
 const DB_NAME = process.env.DB_NAME || 'fleet-management';
 
 // MongoDB connection options
 const options = {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    serverSelectionTimeoutMS: 30000, // Increased from 15000 to 30000
-    socketTimeoutMS: 60000, // Increased from 45000 to 60000
-    connectTimeoutMS: 30000, // Increased from 15000 to 30000
-    maxPoolSize: 10,
-    minPoolSize: 5,
-    retryWrites: true,
-    w: 'majority',
-    retryReads: true
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 30000, // Increased from 15000 to 30000
+  socketTimeoutMS: 60000, // Increased from 45000 to 60000
+  connectTimeoutMS: 30000, // Increased from 15000 to 30000
+  maxPoolSize: 10,
+  minPoolSize: 5,
+  retryWrites: true,
+  w: 'majority',
+  retryReads: true
 };
 
 // Collections
 const COLLECTIONS = {
-    drivers: 'drivers',
-    vehicles: 'vehicles',
-    maintenance: 'maintenance',
-    fuel: 'fuel',
-    contracts: 'contracts',
-    expenses: 'expenses',
-    companies: 'companies',
-    users: 'users',
-    payrollentries: 'payrollentries',
-    notes: 'notes',
-    payroll: 'payroll',
-    invoices: 'invoices',
-    receipts: 'receipts'
+  drivers: 'drivers',
+  vehicles: 'vehicles',
+  maintenance: 'maintenance',
+  fuel: 'fuel',
+  contracts: 'contracts',
+  expenses: 'expenses',
+  companies: 'companies',
+  users: 'users',
+  payrollentries: 'payrollentries',
+  notes: 'notes',
+  payroll: 'payroll',
+  invoices: 'invoices',
+  receipts: 'receipts'
 };
 
 // DB connection instance
@@ -61,7 +65,7 @@ class MockCollection {
   async find(query = {}) {
     // Simple implementation of find with filtering
     let results = this.data;
-    
+
     // Apply basic filtering (exact matches only)
     if (Object.keys(query).length > 0) {
       results = results.filter(item => {
@@ -70,7 +74,7 @@ class MockCollection {
         });
       });
     }
-    
+
     // Return object with toArray method to match MongoDB API
     return {
       toArray: async () => results
@@ -83,7 +87,7 @@ class MockCollection {
       const idStr = query._id.toString();
       return this.data.find(item => item._id.toString() === idStr) || null;
     }
-    
+
     // Simple implementation for other queries
     return this.data.find(item => {
       return Object.entries(query).every(([key, value]) => {
@@ -97,7 +101,7 @@ class MockCollection {
     if (!document._id) {
       document._id = require('mongodb').ObjectId();
     }
-    
+
     this.data.push(document);
     return {
       acknowledged: true,
@@ -132,7 +136,7 @@ class MockCollection {
 
   async deleteOne(filter) {
     const initialLength = this.data.length;
-    
+
     if (filter._id) {
       this.data = this.data.filter(item => item._id.toString() !== filter._id.toString());
     } else {
@@ -155,7 +159,7 @@ class MockCollection {
 class MockDatabase {
   constructor() {
     this.collections = {};
-    
+
     // Initialize collections with mock data
     for (const [name, data] of Object.entries(mockData)) {
       this.collections[name] = new MockCollection(name, data);
@@ -190,54 +194,54 @@ class MockDatabase {
  * @returns {Promise<Object>} MongoDB database instance or mock database
  */
 const connectToDatabase = async () => {
-    try {
-        if (dbInstance && mongoose.connection.readyState === 1) {
-            return dbInstance;
-        }
-
-        console.log('Connecting to MongoDB...');
-        
-        // Connect Mongoose (for models like Vehicle, Driver, etc.)
-        await mongoose.connect(MONGODB_URI, {
-            serverSelectionTimeoutMS: 30000,
-            socketTimeoutMS: 60000,
-            connectTimeoutMS: 30000,
-        });
-        console.log('Mongoose connected to MongoDB successfully');
-        
-        // Connect native MongoDB client (for collections that don't use Mongoose)
-        client = await MongoClient.connect(MONGODB_URI, options);
-        dbInstance = client.db(DB_NAME);
-        
-        // Test the connection
-        await dbInstance.command({ ping: 1 });
-        console.log('Native MongoDB client connected successfully');
-        
-        // Set up connection error handling
-        client.on('error', (error) => {
-            console.error('MongoDB connection error:', error);
-        });
-
-        client.on('close', () => {
-            console.log('MongoDB connection closed');
-            dbInstance = null;
-        });
-        
-        mongoose.connection.on('error', (error) => {
-            console.error('Mongoose connection error:', error);
-        });
-        
-        mongoose.connection.on('disconnected', () => {
-            console.log('Mongoose disconnected');
-        });
-        
-        return dbInstance;
-    } catch (error) {
-        console.error('MongoDB connection error:', error);
-        console.log('Falling back to mock data...');
-        useMockData = true;
-        return new MockDatabase();
+  try {
+    if (dbInstance && mongoose.connection.readyState === 1) {
+      return dbInstance;
     }
+
+    console.log('Connecting to MongoDB...');
+
+    // Connect Mongoose (for models like Vehicle, Driver, etc.)
+    await mongoose.connect(MONGODB_URI, {
+      serverSelectionTimeoutMS: 30000,
+      socketTimeoutMS: 60000,
+      connectTimeoutMS: 30000,
+    });
+    console.log('Mongoose connected to MongoDB successfully');
+
+    // Connect native MongoDB client (for collections that don't use Mongoose)
+    client = await MongoClient.connect(MONGODB_URI, options);
+    dbInstance = client.db(DB_NAME);
+
+    // Test the connection
+    await dbInstance.command({ ping: 1 });
+    console.log('Native MongoDB client connected successfully');
+
+    // Set up connection error handling
+    client.on('error', (error) => {
+      console.error('MongoDB connection error:', error);
+    });
+
+    client.on('close', () => {
+      console.log('MongoDB connection closed');
+      dbInstance = null;
+    });
+
+    mongoose.connection.on('error', (error) => {
+      console.error('Mongoose connection error:', error);
+    });
+
+    mongoose.connection.on('disconnected', () => {
+      console.log('Mongoose disconnected');
+    });
+
+    return dbInstance;
+  } catch (error) {
+    console.error('MongoDB connection error:', error);
+    console.log('Falling back to mock data...');
+    useMockData = true;
+    return new MockDatabase();
+  }
 };
 
 /**
@@ -245,10 +249,10 @@ const connectToDatabase = async () => {
  * @returns {Promise<Object>} MongoDB database instance or mock database
  */
 const getDb = async () => {
-    if (!dbInstance) {
-        await connectToDatabase();
-    }
-    return dbInstance;
+  if (!dbInstance) {
+    await connectToDatabase();
+  }
+  return dbInstance;
 };
 
 /**
@@ -257,8 +261,8 @@ const getDb = async () => {
  * @returns {Promise<Collection>} MongoDB collection or mock collection
  */
 const getCollection = async (collectionName) => {
-    const db = await getDb();
-    return db.collection(collectionName);
+  const db = await getDb();
+  return db.collection(collectionName);
 };
 
 /**
@@ -273,23 +277,23 @@ const isUsingMockData = () => {
  * Close the database connection
  */
 const closeConnection = async () => {
-    if (mongoose.connection.readyState === 1) {
-        await mongoose.disconnect();
-        console.log('Mongoose disconnected');
-    }
-    if (client) {
-        await client.close();
-        client = null;
-        dbInstance = null;
-        console.log('Native MongoDB client closed');
-    }
+  if (mongoose.connection.readyState === 1) {
+    await mongoose.disconnect();
+    console.log('Mongoose disconnected');
+  }
+  if (client) {
+    await client.close();
+    client = null;
+    dbInstance = null;
+    console.log('Native MongoDB client closed');
+  }
 };
 
 module.exports = {
-    connectToDatabase,
-    getDb,
-    getCollection,
-    closeConnection,
-    isUsingMockData,
-    COLLECTIONS
+  connectToDatabase,
+  getDb,
+  getCollection,
+  closeConnection,
+  isUsingMockData,
+  COLLECTIONS
 }; 
