@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { LoginResponse } from '../types/api';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 class AuthService {
   private static instance: AuthService;
@@ -17,10 +17,10 @@ class AuthService {
 
   async login(email: string, password: string): Promise<LoginResponse> {
     try {
-      console.log('Attempting login to:', `${API_BASE_URL}/api/auth/login`);
+      console.log('Attempting login to:', `${API_BASE_URL}/auth/login`);
       console.log('Login payload:', { email, password: '***' });
 
-      const response = await axios.post(`${API_BASE_URL}/api/auth/login`, {
+      const response = await axios.post(`${API_BASE_URL}/auth/login`, {
         email,
         password,
       }, {
@@ -58,7 +58,7 @@ class AuthService {
 
   async verifyToken(token: string): Promise<boolean> {
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/auth/verify`, {
+      const response = await axios.get(`${API_BASE_URL}/auth/verify`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -71,7 +71,7 @@ class AuthService {
 
   async logout(): Promise<void> {
     try {
-      await axios.post(`${API_BASE_URL}/api/auth/logout`);
+      await axios.post(`${API_BASE_URL}/auth/logout`);
     } catch (error) {
       console.error('Logout error:', error);
     }
