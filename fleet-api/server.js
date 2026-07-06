@@ -425,6 +425,26 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
+// Health check endpoint
+app.get('/api/health', async (req, res) => {
+  try {
+    const database = await db.getDb();
+    const dbStatus = database ? 'connected' : 'disconnected';
+    res.json({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      database: dbStatus,
+    });
+  } catch (error) {
+    res.status(503).json({
+      status: 'error',
+      timestamp: new Date().toISOString(),
+      message: 'Service unhealthy',
+    });
+  }
+});
+
 // Use routes
 app.use('/api/auth', authRoutes);
 app.use('/api/vehicles', vehicleRoutes);
