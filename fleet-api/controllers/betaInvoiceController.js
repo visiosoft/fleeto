@@ -1,6 +1,7 @@
 const { ObjectId } = require('mongodb');
 const InvoiceModel = require('../models/invoiceModel');
 const ContractModel = require('../models/Contract');
+const { BRAND, brandCss, brandHeaderHtml, brandFooterHtml } = require('../utils/brandTemplate');
 
 // Helper function to calculate totals from items
 const calculateTotals = (items, includeVat) => {
@@ -698,6 +699,256 @@ exports.deletePayment = async (req, res) => {
             status: 'error',
             message: error.message
         });
+    }
+};
+
+// Generate invoice PDF
+exports.generatePdf = async (req, res) => {
+    try {
+        const companyId = req.user.companyId;
+        const id = req.params.id;
+
+        if (!companyId) {
+            return res.status(400).json({ status: 'error', message: 'Company ID not found' });
+        }
+
+        const collection = await InvoiceModel.getCollection();
+        const invoices = await collection.aggregate([
+            { $match: { _id: new ObjectId(id), companyId: companyId.toString() } },
+            {
+                $lookup: {
+                    from: 'contracts',
+                    let: { contractId: '$contractId' },
+                    pipeline: [{ $match: { $expr: { $eq: ['$_id', '$$contractId'] } } }],
+                    as: 'contract'
+                }
+            },
+            { $unwind: { path: '$contract', preserveNullAndEmptyArrays: true } }
+        ]).toArray();
+
+        if (!invoices.length) {
+            return res.status(404).json({ status: 'error', message: 'Invoice not found' });
+        }
+
+        const invoice = invoices[0];
+        const { totalPaid, remainingBalance } = calculatePaymentTotals(invoice);
+        const contract = invoice.contract || {};
+
+        const formatDate = (d) => {
+            if (!d) return '';
+            const date = new Date(d);
+            return isNaN(date.getTime()) ? d : date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+        };
+
+        const fmtNum = (n) => Number(n || 0).toFixed(2);
+
+        const html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&display=swap');
+  @page { margin: 0; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Bricolage Grotesque', serif; color: #333; }
+
+  /* === BRAND HEADER/FOOTER === */
+  ${brandCss}
+
+  /* === BODY === */
+  .body { padding: 36px 40px 20px; }
+
+  /* === INVOICE TITLE + COMPANY INFO === */
+  .title-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px; }
+  .title-left h2 { font-size: 28px; font-weight: 800; color: #232B38; text-transform: uppercase; }
+  .title-left .inv-num { font-size: 13px; color: #666; margin-top: 2px; }
+  .company-info { text-align: right; font-size: 12px; color: #555; line-height: 1.7; }
+  .company-info .name { font-size: 15px; font-weight: 700; color: #222; }
+
+  /* === BILL TO + DATES === */
+  .bill-section { display: flex; justify-content: space-between; border-top: 2px solid #eee; border-bottom: 2px solid #eee; padding: 16px 0; margin-bottom: 24px; }
+  .bill-to { }
+  .bill-to .label { font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+  .bill-to .client-name { font-size: 18px; font-weight: 700; color: #222; }
+  .bill-to .client-detail { font-size: 12px; color: #666; margin-top: 2px; }
+  .dates { text-align: right; }
+  .dates .date-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+  .dates .date-value { font-size: 15px; font-weight: 700; color: #222; margin-bottom: 8px; }
+
+  /* === TABLE === */
+  table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+  thead td { font-size: 12px; font-weight: 700; color: #333; padding: 10px 0; border-bottom: 2px solid #333; }
+  thead td:nth-child(2) { text-align: center; }
+  thead td:nth-child(3) { text-align: right; }
+  thead td:last-child { text-align: right; }
+  tbody td { padding: 14px 0; font-size: 13px; color: #444; border-bottom: 1px solid #eee; }
+  tbody td:nth-child(2) { text-align: center; }
+  tbody td:nth-child(3) { text-align: right; }
+  tbody td:last-child { text-align: right; }
+
+  /* === TOTALS === */
+  .totals { display: flex; justify-content: flex-end; margin-top: 12px; margin-bottom: 32px; }
+  .totals-box { width: 300px; }
+  .totals-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; color: #555; }
+  .totals-row.total-main { border-top: 2px solid #333; padding-top: 10px; margin-top: 4px; }
+  .totals-row.total-main span:first-child { font-size: 16px; font-weight: 700; color: #222; }
+  .totals-row.total-main span:last-child { font-size: 18px; font-weight: 800; color: #222; }
+  .totals-row.paid span { color: #888; }
+  .totals-row.balance span:first-child { font-weight: 700; color: #c0392b; }
+  .totals-row.balance span:last-child { font-weight: 700; color: #c0392b; }
+
+  /* === BANK DETAILS === */
+  .bank-details { text-align: center; margin: 24px 0; padding: 20px; border-top: 1px solid #eee; }
+  .bank-details .company-legal { font-size: 12px; font-weight: 700; color: #333; text-transform: uppercase; margin-bottom: 8px; }
+  .bank-details p { font-size: 12px; color: #666; line-height: 1.8; }
+
+  /* === NOTES === */
+  .notes { margin: 0 0 24px; padding: 14px 16px; background: #fafafa; border-left: 3px solid #35A3EF; border-radius: 4px; }
+  .notes h4 { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .notes p { font-size: 12px; color: #555; line-height: 1.6; white-space: pre-line; }
+
+</style></head><body>
+  ${brandHeaderHtml}
+
+  <div class="body">
+    <!-- INVOICE TITLE + COMPANY -->
+    <div class="title-row">
+      <div class="title-left">
+        <h2>Invoice</h2>
+        <div class="inv-num">#${invoice.invoiceNumber}</div>
+      </div>
+      <div class="company-info">
+        <div class="name">${BRAND.shortName}</div>
+        <div>${BRAND.subName}</div>
+        <div>${BRAND.city}</div>
+        <div>${BRAND.phone}</div>
+      </div>
+    </div>
+
+    <!-- BILL TO + DATES -->
+    <div class="bill-section">
+      <div class="bill-to">
+        <div class="label">Bill To</div>
+        <div class="client-name">${contract.companyName || 'Client'}</div>
+        ${contract.contactPerson ? `<div class="client-detail">${contract.contactPerson}</div>` : ''}
+        ${contract.contactEmail ? `<div class="client-detail">${contract.contactEmail}</div>` : ''}
+        ${contract.tradeLicenseNo ? `<div class="client-detail">License No: ${contract.tradeLicenseNo}</div>` : ''}
+      </div>
+      <div class="dates">
+        <div class="date-label">Issue Date</div>
+        <div class="date-value">${formatDate(invoice.issueDate)}</div>
+        <div class="date-label">Due Date</div>
+        <div class="date-value">${formatDate(invoice.dueDate)}</div>
+      </div>
+    </div>
+
+    <!-- LINE ITEMS TABLE -->
+    <table>
+      <thead><tr><td>Description</td><td>Qty</td><td>Unit Price</td><td>Amount</td></tr></thead>
+      <tbody>
+        ${(invoice.items || []).map(item => `
+          <tr>
+            <td>${item.description || ''}</td>
+            <td>${item.quantity || 1}</td>
+            <td>${fmtNum(item.unitPrice)}</td>
+            <td>${fmtNum(item.amount)}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+
+    <!-- TOTALS -->
+    <div class="totals">
+      <div class="totals-box">
+        <div class="totals-row"><span>Subtotal:</span><span>AED ${fmtNum(invoice.subtotal)}</span></div>
+        ${invoice.includeVat !== false && invoice.tax > 0 ? `<div class="totals-row"><span>VAT (5%):</span><span>AED ${fmtNum(invoice.tax)}</span></div>` : ''}
+        <div class="totals-row total-main"><span>Total:</span><span>AED ${fmtNum(invoice.total)}</span></div>
+        <div class="totals-row paid"><span>Paid:</span><span>AED ${fmtNum(totalPaid)}</span></div>
+        <div class="totals-row balance"><span>Balance Due:</span><span>AED ${fmtNum(remainingBalance)}</span></div>
+      </div>
+    </div>
+
+    ${invoice.notes ? `
+    <div class="notes">
+      <h4>Notes</h4>
+      <p>${invoice.notes}</p>
+    </div>` : ''}
+
+    <!-- BANK DETAILS -->
+    <div class="bank-details">
+      <div class="company-legal">${BRAND.name}</div>
+      <p>Bank Name: WIO Bank<br>Account Number: 9834601124<br>IBAN: AE230860000009834601124</p>
+    </div>
+  </div>
+
+  ${brandFooterHtml}
+</body></html>`;
+
+        let puppeteer;
+        try {
+            puppeteer = require('puppeteer');
+        } catch (e) {
+            return res.status(500).json({ status: 'error', message: 'PDF generation not available - puppeteer not installed' });
+        }
+
+        const browser = await puppeteer.launch({
+            headless: 'new',
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
+        });
+        const page = await browser.newPage();
+        await page.setContent(html, { waitUntil: 'networkidle0' });
+        const pdfBuffer = await page.pdf({
+            format: 'A4',
+            printBackground: true,
+            margin: { top: '20px', right: '20px', bottom: '20px', left: '20px' }
+        });
+        await browser.close();
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="Invoice-${invoice.invoiceNumber}.pdf"`);
+        res.send(pdfBuffer);
+    } catch (error) {
+        console.error('Error generating PDF:', error);
+        res.status(500).json({ status: 'error', message: error.message });
+    }
+};
+
+// Get invoice HTML for client-side PDF generation
+exports.getInvoiceHtml = async (req, res) => {
+    try {
+        const companyId = req.user.companyId;
+        const id = req.params.id;
+
+        if (!companyId) {
+            return res.status(400).json({ status: 'error', message: 'Company ID not found' });
+        }
+
+        const collection = await InvoiceModel.getCollection();
+        const invoices = await collection.aggregate([
+            { $match: { _id: new ObjectId(id), companyId: companyId.toString() } },
+            {
+                $lookup: {
+                    from: 'contracts',
+                    let: { contractId: '$contractId' },
+                    pipeline: [{ $match: { $expr: { $eq: ['$_id', '$$contractId'] } } }],
+                    as: 'contract'
+                }
+            },
+            { $unwind: { path: '$contract', preserveNullAndEmptyArrays: true } }
+        ]).toArray();
+
+        if (!invoices.length) {
+            return res.status(404).json({ status: 'error', message: 'Invoice not found' });
+        }
+
+        const invoice = invoices[0];
+        const { totalPaid, remainingBalance } = calculatePaymentTotals(invoice);
+
+        res.status(200).json({
+            status: 'success',
+            data: { ...invoice, totalPaid, remainingBalance }
+        });
+    } catch (error) {
+        console.error('Error getting invoice HTML:', error);
+        res.status(500).json({ status: 'error', message: error.message });
     }
 };
 

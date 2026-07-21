@@ -14,6 +14,8 @@ router.get('/beta/:id', betaInvoiceController.getInvoiceById);
 router.post('/beta', betaInvoiceController.createInvoice);
 router.put('/beta/:id', betaInvoiceController.updateInvoice);
 router.delete('/beta/:id', betaInvoiceController.deleteInvoice);
+router.get('/beta/:id/pdf', betaInvoiceController.generatePdf);
+router.get('/beta/:id/html', betaInvoiceController.getInvoiceHtml);
 router.post('/beta/:id/payments', betaInvoiceController.addPayment);
 router.put('/beta/:id/payments/:paymentId', betaInvoiceController.updatePayment);
 router.delete('/beta/:id/payments/:paymentId', betaInvoiceController.deletePayment);

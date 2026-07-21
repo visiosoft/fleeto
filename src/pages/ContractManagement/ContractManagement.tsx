@@ -1616,6 +1616,12 @@ e. **Negligence and Misuse:** The Client shall be fully liable for the cost of a
 
 f. **Records:** The Client shall maintain complete and accurate records of all maintenance and repairs performed on the Vehicle and make them available for inspection by the Company upon request.
 
+7. **⚠️ MILEAGE LIMIT AND EXCESS CHARGES ⚠️**
+
+**>>> THE MAXIMUM DISTANCE THE VEHICLE MAY BE DRIVEN IS 5,000 KM PER MONTH. ANY DISTANCE EXCEEDING 5,000 KM IN A CALENDAR MONTH SHALL BE CHARGED AT A RATE OF 1 AED PER ADDITIONAL KILOMETER DRIVEN. <<<**
+
+The odometer reading shall be recorded at the beginning and end of each month. Excess mileage charges shall be invoiced separately and are payable within 7 days of invoice date.
+
 Terms and Conditions:
 1. The contract duration is specified above and may be renewed upon mutual agreement.
 2. The contract value is to be paid according to the agreed payment schedule.

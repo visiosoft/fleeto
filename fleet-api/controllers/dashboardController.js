@@ -22,19 +22,24 @@ const DashboardController = {
       }
       
       console.log(`Fetching active counts for company ID: ${companyId}`);
-      
-      // Get vehicle collection
+
+      // Match companyId stored as either string or ObjectId; status case-insensitive
+      const companyIdMatch = {
+        $in: ObjectId.isValid(companyId)
+          ? [companyId.toString(), new ObjectId(companyId)]
+          : [companyId.toString()]
+      };
+
       const vehicleCollection = await db.getCollection('vehicles');
-      const activeVehicles = await vehicleCollection.find({ 
-        status: 'active',
-        companyId: companyId.toString()
+      const activeVehicles = await vehicleCollection.find({
+        status: { $regex: /^active$/i },
+        companyId: companyIdMatch
       }).toArray();
 
-      // Get driver collection
       const driverCollection = await db.getCollection('drivers');
-      const activeDrivers = await driverCollection.find({ 
-        status: 'active',
-        companyId: companyId.toString()
+      const activeDrivers = await driverCollection.find({
+        status: { $regex: /^active$/i },
+        companyId: companyIdMatch
       }).toArray();
 
       console.log(`Found ${activeVehicles.length} active vehicles and ${activeDrivers.length} active drivers for company ${companyId}`);
@@ -547,9 +552,15 @@ const DashboardController = {
       const expiringSoonDate = new Date();
       expiringSoonDate.setDate(expiringSoonDate.getDate() + 60);
 
-      // First, let's get all contracts to debug
+      // Match companyId stored as either string or ObjectId
+      const companyIdMatch = {
+        $in: ObjectId.isValid(companyId)
+          ? [companyId.toString(), new ObjectId(companyId)]
+          : [companyId.toString()]
+      };
+
       const allContracts = await collection.find({
-        companyId: companyId.toString()
+        companyId: companyIdMatch
       }).toArray();
       
       console.log('Total contracts found:', allContracts.length);
@@ -559,19 +570,24 @@ const DashboardController = {
       const validContracts = allContracts.map(contract => {
         const endDate = new Date(contract.endDate);
         const startDate = new Date(contract.startDate);
+        // Active = explicit 'active' status; contracts without a status fall back to date check
+        const status = (contract.status || '').toLowerCase();
+        const isActive = status
+          ? status === 'active'
+          : endDate > now;
         return {
           ...contract,
           endDate,
           startDate,
-          isActive: endDate > now && (!contract.status || contract.status !== 'terminated'),
-          isExpiringSoon: endDate > now && endDate <= expiringSoonDate && (!contract.status || contract.status !== 'terminated')
+          isActive,
+          isExpiringSoon: isActive && endDate > now && endDate <= expiringSoonDate
         };
       });
 
       const pipeline = [
         {
           $match: {
-            companyId: companyId.toString()
+            companyId: companyIdMatch
           }
         },
         {

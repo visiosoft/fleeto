@@ -554,9 +554,10 @@ const ExpenseController = {
   async getExpenseSummary(req, res) {
     try {
       const { startDate, endDate, groupBy = 'expenseType' } = req.query;
+      const companyId = req.user?.companyId;
 
-      // Build date filter if provided
       const matchStage = {};
+      if (companyId) matchStage.companyId = companyId.toString();
       if (startDate || endDate) {
         matchStage.date = {};
         if (startDate) matchStage.date.$gte = new Date(startDate);

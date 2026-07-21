@@ -215,9 +215,13 @@ const ContractCycleReport: React.FC = () => {
     setManualDates(false);
   };
 
-  // ── helper: find the active contract for a vehicle ───────────────────────
+  // ── helper: find which contract was active on the expense date ───────────
   const getContractForExpense = (exp: ExpenseDetail): Contract | undefined =>
-    activeContracts.find(c => c.vehicleId === exp.vehicleId);
+    allSelectedContracts.find(c =>
+      c.vehicleId === exp.vehicleId &&
+      moment(exp.date).isSameOrAfter(moment(c.startDate), 'day') &&
+      (!c.endDate || moment(exp.date).isSameOrBefore(moment(c.endDate), 'day'))
+    );
 
   // ── filtered & enriched expenses ─────────────────────────────────────────
   const enrichedExpenses = useMemo<EnrichedExpense[]>(() => {
@@ -245,11 +249,8 @@ const ContractCycleReport: React.FC = () => {
   const incomeBreakdown = useMemo(() => {
     const today = moment().endOf('day');
     const isOngoing = periodEnd.isAfter(today, 'day');
-    // For completed periods use the full period length as denominator;
-    // for in-progress periods use days elapsed so far
     const effectiveEnd = isOngoing ? today.clone() : periodEnd.clone();
     const periodDays = periodEnd.diff(periodStart, 'days') + 1;
-    const elapsedDays = effectiveEnd.diff(periodStart, 'days') + 1;
 
     return contractsInPeriod.map(c => {
       const overlapStart = moment.max(moment(c.startDate), periodStart.clone().startOf('day'));
@@ -257,11 +258,14 @@ const ContractCycleReport: React.FC = () => {
         ? moment.min(moment(c.endDate), effectiveEnd.clone())
         : effectiveEnd.clone();
       const overlapDays = Math.max(0, overlapEnd.diff(overlapStart, 'days') + 1);
-      // Daily rate is always based on full period (monthly rate / full cycle days)
-      const dailyRate = (c.value || 0) / periodDays;
-      const proratedValue = dailyRate * overlapDays;
+      // Only pro-rate if the contract ended before the period end; active contracts get full value
+      const endedInPeriod = c.status !== 'Active' && !!c.endDate && moment(c.endDate).isSameOrBefore(periodEnd, 'day');
+      const dailyRate = (c.value || 0) / 30;
+      const proratedValue = endedInPeriod
+        ? Math.round(dailyRate * overlapDays * 100) / 100
+        : (c.value || 0);
       const vehicle = vehicles.find(v => v._id === c.vehicleId);
-      return { contract: c, overlapDays, periodDays, elapsedDays, dailyRate, proratedValue, isOngoing, vehicle };
+      return { contract: c, overlapDays, periodDays, dailyRate, proratedValue, isOngoing, vehicle };
     });
   }, [contractsInPeriod, periodStart, periodEnd, vehicles]);
 
@@ -305,15 +309,15 @@ const ContractCycleReport: React.FC = () => {
   const buildPDFHtml = () => {
     const vehicleNames = selectedVehicleIds.map(id => vehicleLabel(id)).join(', ');
 
-    const contractRows = incomeBreakdown.map(({ contract: c, overlapDays, periodDays, dailyRate, proratedValue }) => {
-      const isPartial = overlapDays < periodDays;
+    const contractRows = incomeBreakdown.map(({ contract: c, overlapDays, dailyRate, proratedValue }) => {
+      const endedInPeriod = c.status !== 'Active' && !!c.endDate && moment(c.endDate).isSameOrBefore(periodEnd, 'day');
       return `<tr>
         <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;font-weight:600;">${c.companyName}</td>
         <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;">${vehicleLabel(c.vehicleId)}</td>
         <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;">${moment(c.startDate).format('D MMM YYYY')}</td>
-        <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;">${c.endDate ? moment(c.endDate).format('D MMM YYYY') : '—'}</td>
-        <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;text-align:center;">${isPartial ? `${overlapDays}/${periodDays} days` : 'Full period'}</td>
-        <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;text-align:right;">${isPartial ? `${fmt(dailyRate)}/day` : `${fmt(c.value)}/mo`}</td>
+        <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;">${c.endDate ? moment(c.endDate).format('D MMM YYYY') : 'Active'}</td>
+        <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;text-align:center;">${endedInPeriod ? `${overlapDays}/30 days` : 'Full month'}</td>
+        <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;text-align:right;">${endedInPeriod ? `${fmt(dailyRate)}/day` : '—'}</td>
         <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;text-align:right;font-weight:700;color:#15803d;">${fmt(proratedValue)}</td>
       </tr>`;
     }).join('');
@@ -524,7 +528,7 @@ const ContractCycleReport: React.FC = () => {
   const handleShareWhatsApp = () => {
     const vehicleNames = selectedVehicleIds.map(id => vehicleLabel(id).split('—')[0].trim()).join(', ');
     const lines = [
-      `📊 *Contract Cycle Report*`,
+      `📊 *${selectedVehicleIds.length === 1 ? `${vehicleLabel(selectedVehicleIds[0]).split(' — ')[0]} - Monthly Report` : 'Monthly Report'}*`,
       `Period: ${periodLabel}`,
       `Vehicles: ${vehicleNames || 'None selected'}`,
       ``,
@@ -804,7 +808,7 @@ const ContractCycleReport: React.FC = () => {
                 label: 'Total Income',
                 value: fmt(totalIncome),
                 sub: incomeBreakdown.some(b => b.isOngoing)
-                  ? `In progress — ${incomeBreakdown[0]?.elapsedDays ?? 0} of ${incomeBreakdown[0]?.periodDays ?? 0} days`
+                  ? `In progress — ${incomeBreakdown[0]?.overlapDays ?? 0} days worked`
                   : incomeBreakdown.some(b => b.overlapDays < b.periodDays)
                   ? `Pro-rated (${incomeBreakdown.length} contract${incomeBreakdown.length !== 1 ? 's' : ''})`
                   : `${incomeBreakdown.length} contract${incomeBreakdown.length !== 1 ? 's' : ''} — full cycle`,
@@ -991,7 +995,7 @@ const ContractCycleReport: React.FC = () => {
                 <Paper sx={{ borderRadius: 3, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.08)', mb: 3 }}>
                   <Box sx={{ p: 2.5 }}>
                     <Typography variant="h6" fontWeight={700} sx={{ mb: 2 }}>Income Breakdown</Typography>
-                    {incomeBreakdown.map(({ contract: c, overlapDays, periodDays, elapsedDays, dailyRate, proratedValue, isOngoing }) => {
+                    {incomeBreakdown.map(({ contract: c, overlapDays, periodDays, dailyRate, proratedValue, isOngoing }) => {
                       const isPartial = overlapDays < periodDays;
                       const bgColor = isOngoing ? '#eff6ff' : isPartial ? '#fffbeb' : '#f0fdf4';
                       const borderColor = isOngoing ? '#93c5fd' : isPartial ? '#fcd34d' : '#86efac';
@@ -1007,11 +1011,15 @@ const ContractCycleReport: React.FC = () => {
                           <Typography variant="caption" color="text.secondary" display="block">{vehicleLabel(c.vehicleId)}</Typography>
                           {isOngoing ? (
                             <Typography variant="caption" sx={{ color: '#1d4ed8', fontWeight: 600 }}>
-                              {overlapDays}/{periodDays} days elapsed · {fmt(dailyRate)}/day
+                              {overlapDays} days worked (in progress) · {fmt(dailyRate)}/day
+                            </Typography>
+                          ) : isPartial && c.status !== 'Active' && !!c.endDate && moment(c.endDate).isSameOrBefore(periodEnd, 'day') ? (
+                            <Typography variant="caption" sx={{ color: '#d97706', fontWeight: 600 }}>
+                              {overlapDays}/30 days × {fmt(dailyRate)}/day (contract ended {moment(c.endDate).format('D MMM')})
                             </Typography>
                           ) : isPartial ? (
                             <Typography variant="caption" sx={{ color: '#d97706', fontWeight: 600 }}>
-                              {overlapDays}/{periodDays} days × {fmt(dailyRate)}/day
+                              {overlapDays}/30 days × {fmt(dailyRate)}/day
                             </Typography>
                           ) : (
                             <Typography variant="caption" color="text.secondary">Full cycle · {fmt(c.value)}/month</Typography>

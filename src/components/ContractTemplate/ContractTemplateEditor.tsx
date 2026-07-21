@@ -175,6 +175,11 @@ with Trade License No. 1383686, having its registered office at Dubai, UAE
 </li>
 
 
+<li style="background-color: #FFFF00; border: 2px solid #FF0000; padding: 10px;">
+   <b>MILEAGE LIMIT AND EXCESS CHARGES</b>
+   <p><b style="color: #FF0000; font-size: 14px;">The maximum distance the Vehicle may be driven is 5,000 km per month. Any distance exceeding 5,000 km in a calendar month shall be charged at a rate of 1 AED per additional kilometer driven. The odometer reading shall be recorded at the beginning and end of each month, and excess mileage charges shall be invoiced separately and are payable within 7 days of invoice date.</b></p>
+</li>
+
 <li><b>PROHIBITED USE</b>
    <p>The Vehicle shall not be used for illegal activities, racing, reckless driving, sub-renting, or transport outside the Dubai without written consent of the Company.</p>
 </li>
