@@ -434,13 +434,16 @@ const BetaInvoiceView: React.FC = () => {
                             EFFICIENT MOVE NEW & USED FURNITURE REMOVAL L.L.C
                         </Typography>
                         <Typography variant="body2" sx={{ fontSize: '0.75rem' }} align="center">
-                            Bank Name: WIO Bank
+                            Account Holder: Sardar Basharat Safdar
                         </Typography>
                         <Typography variant="body2" sx={{ fontSize: '0.75rem' }} align="center">
-                            Account Number: 9834601124
+                            Bank Name: Mashreq Bank
                         </Typography>
                         <Typography variant="body2" sx={{ fontSize: '0.75rem' }} align="center">
-                            IBAN: AE230860000009834601124
+                            Account Number: 019120198982
+                        </Typography>
+                        <Typography variant="body2" sx={{ fontSize: '0.75rem' }} align="center">
+                            IBAN: AE710330000019120198982
                         </Typography>
                     </Box>
                 </Box>

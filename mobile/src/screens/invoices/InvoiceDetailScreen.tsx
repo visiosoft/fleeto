@@ -112,7 +112,7 @@ const generateInvoiceHtml = (invoice: any) => {
       <div class="t-row balance"><span>Balance Due:</span><span>AED ${fmtNum((invoice.total || 0) - (invoice.totalPaid || 0))}</span></div>
     </div></div>
     ${invoice.notes ? `<div class="notes"><h4>Notes</h4><p>${invoice.notes}</p></div>` : ''}
-    <div class="bank"><div class="legal">${BRAND.name}</div><p>Bank Name: WIO Bank<br>Account Number: 9834601124<br>IBAN: AE230860000009834601124</p></div>
+    <div class="bank"><div class="legal">${BRAND.name}</div><p>Account Holder: Sardar Basharat Safdar<br>Bank Name: Mashreq Bank<br>Account Number: 019120198982<br>IBAN: AE710330000019120198982</p></div>
   </div>
   ${brandFooterHtml}
 </body></html>`;
@@ -140,10 +140,12 @@ const InvoiceDetailScreen = ({ route, navigation }: any) => {
 
   const handleDelete = () => Alert.alert('Delete Invoice', 'Are you sure?', [
     { text: 'Cancel', style: 'cancel' },
-    { text: 'Delete', style: 'destructive', onPress: async () => {
-      try { await invoiceService.delete(id); navigation.goBack(); }
-      catch { Alert.alert('Error', 'Failed to delete'); }
-    }},
+    {
+      text: 'Delete', style: 'destructive', onPress: async () => {
+        try { await invoiceService.delete(id); navigation.goBack(); }
+        catch { Alert.alert('Error', 'Failed to delete'); }
+      }
+    },
   ]);
 
   const generateAndSharePdf = async (shareToWhatsApp = false) => {
@@ -193,7 +195,7 @@ const InvoiceDetailScreen = ({ route, navigation }: any) => {
       }
     } catch (err: any) {
       console.error('PDF error:', err);
-      if (webWin) { try { webWin.close(); } catch {} }
+      if (webWin) { try { webWin.close(); } catch { } }
       if (Platform.OS === 'web') window.alert(err.message || 'Failed to generate PDF');
       else Alert.alert('Error', err.message || 'Failed to generate PDF');
     } finally { setPdfLoading(false); }

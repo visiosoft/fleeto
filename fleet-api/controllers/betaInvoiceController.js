@@ -875,7 +875,7 @@ exports.generatePdf = async (req, res) => {
     <!-- BANK DETAILS -->
     <div class="bank-details">
       <div class="company-legal">${BRAND.name}</div>
-      <p>Bank Name: WIO Bank<br>Account Number: 9834601124<br>IBAN: AE230860000009834601124</p>
+      <p>Account Holder: Sardar Basharat Safdar<br>Bank Name: Mashreq Bank<br>Account Number: 019120198982<br>IBAN: AE710330000019120198982</p>
     </div>
   </div>
 
