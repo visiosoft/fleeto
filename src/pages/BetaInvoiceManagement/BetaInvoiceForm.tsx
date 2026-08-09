@@ -47,6 +47,8 @@ const BetaInvoiceForm: React.FC = () => {
         includeVat: true,
         total: 0,
         notes: '',
+        termsAndConditions: '',
+        customerNotes: '',
     });
 
     useEffect(() => {
@@ -227,6 +229,8 @@ const BetaInvoiceForm: React.FC = () => {
                 items: invoice.items,
                 includeVat: invoice.includeVat,
                 notes: invoice.notes,
+                termsAndConditions: invoice.termsAndConditions,
+                customerNotes: invoice.customerNotes,
             };
 
             if (id) {
@@ -325,6 +329,7 @@ const BetaInvoiceForm: React.FC = () => {
                                     <TableHead>
                                         <TableRow>
                                             <TableCell>Description</TableCell>
+                                            <TableCell>Sub Description</TableCell>
                                             <TableCell>Quantity</TableCell>
                                             <TableCell>Unit Price</TableCell>
                                             <TableCell>Amount</TableCell>
@@ -340,6 +345,15 @@ const BetaInvoiceForm: React.FC = () => {
                                                         value={item.description}
                                                         onChange={(e) => handleItemChange(item._id, 'description', e.target.value)}
                                                         size="small"
+                                                    />
+                                                </TableCell>
+                                                <TableCell>
+                                                    <TextField
+                                                        fullWidth
+                                                        value={item.subDescription || ''}
+                                                        onChange={(e) => handleItemChange(item._id, 'subDescription', e.target.value)}
+                                                        size="small"
+                                                        placeholder="Additional details"
                                                     />
                                                 </TableCell>
                                                 <TableCell>
@@ -403,6 +417,30 @@ const BetaInvoiceForm: React.FC = () => {
                                 label="Notes"
                                 value={invoice.notes}
                                 onChange={(e) => setInvoice(prev => ({ ...prev, notes: e.target.value }))}
+                            />
+                        </Grid>
+
+                        <Grid item xs={12}>
+                            <TextField
+                                fullWidth
+                                multiline
+                                rows={3}
+                                label="Terms and Conditions"
+                                value={invoice.termsAndConditions}
+                                onChange={(e) => setInvoice(prev => ({ ...prev, termsAndConditions: e.target.value }))}
+                                placeholder="e.g. Payment is due within 30 days of invoice date..."
+                            />
+                        </Grid>
+
+                        <Grid item xs={12}>
+                            <TextField
+                                fullWidth
+                                multiline
+                                rows={3}
+                                label="Customer Notes"
+                                value={invoice.customerNotes}
+                                onChange={(e) => setInvoice(prev => ({ ...prev, customerNotes: e.target.value }))}
+                                placeholder="Notes visible to the customer..."
                             />
                         </Grid>
 

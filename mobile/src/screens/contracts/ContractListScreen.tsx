@@ -5,6 +5,7 @@ import { contractService } from '../../services/contractService';
 import LoadingScreen from '../../components/common/LoadingScreen';
 import EmptyState from '../../components/common/EmptyState';
 import { colors, spacing, fonts } from '../../config/theme';
+import { rateAdjective, remainingTerm, normaliseContractType } from '../../utils/contractTerm';
 
 // Mockup palette for this screen
 const ui = {
@@ -108,6 +109,7 @@ const ContractListScreen = ({ navigation }: any) => {
         renderItem={({ item }) => {
           const st = statusStyle(item.status);
           const isExpired = (item.status || '').toLowerCase() === 'expired';
+          const term = remainingTerm(item.endDate);
           return (
             <TouchableOpacity
               style={[styles.card, isExpired && { opacity: 0.6 }]}
@@ -133,10 +135,12 @@ const ContractListScreen = ({ navigation }: any) => {
                 </View>
                 <View style={[styles.infoChip, { backgroundColor: ui.sandTint }]}>
                   <Text style={styles.chipLabel}>TYPE</Text>
-                  <Text style={styles.chipValueSm}>{item.contractType || 'Self-drive'}</Text>
+                  <Text style={styles.chipValueSm}>
+                    {normaliseContractType(item.contractType) === 'With Driver' ? 'With driver' : 'No driver'}
+                  </Text>
                 </View>
                 <View style={[styles.infoChip, { backgroundColor: ui.sandTint }]}>
-                  <Text style={styles.chipLabel}>MONTHLY</Text>
+                  <Text style={styles.chipLabel}>{rateAdjective(item.rateUnit)}</Text>
                   <Text style={styles.chipValue}>{((item.amount || item.value || 0) / 1000).toFixed(0)}K</Text>
                 </View>
               </View>
@@ -146,6 +150,13 @@ const ContractListScreen = ({ navigation }: any) => {
                 <View style={styles.dateSection}>
                   <Icon name="calendar-range" size={14} color={ui.muted} />
                   <Text style={styles.dateText}>{fmt(item.startDate)} — {fmt(item.endDate)}</Text>
+                  {/* Countdown appended to the existing date line so the card
+                      gains information without gaining another row. */}
+                  {!!term && !isExpired && (
+                    <Text style={[styles.termText, term.urgent && styles.termTextUrgent]}>
+                      · {term.label}
+                    </Text>
+                  )}
                 </View>
                 <View style={styles.actionIcons}>
                   <TouchableOpacity
@@ -213,6 +224,8 @@ const styles = StyleSheet.create({
   },
   dateSection: { flexDirection: 'row', alignItems: 'center', flex: 1 },
   dateText: { fontSize: 12, fontFamily: fonts.regular, color: ui.muted, marginLeft: 8 },
+  termText: { fontSize: 12, fontFamily: fonts.semiBold, color: ui.muted, marginLeft: 4 },
+  termTextUrgent: { color: '#D97706' },
   actionIcons: { flexDirection: 'row', gap: 6 },
   iconBtn: {
     width: 28, height: 28, borderRadius: 8,

@@ -322,7 +322,7 @@ const Settings: React.FC = () => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `fleeto-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      a.download = `fleetoz-backup-${new Date().toISOString().slice(0, 10)}.json`;
       a.click();
       URL.revokeObjectURL(url);
       setSnackbar({ open: true, message: 'Backup exported successfully', severity: 'success' });

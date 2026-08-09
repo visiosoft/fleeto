@@ -52,6 +52,9 @@ import {
   CheckCircle as ActiveIcon,
   Warning as ExpiringIcon,
   AttachFile as AttachFileIcon,
+  Draw as SignatureIcon,
+  ContentCopy as CopyIcon,
+  WhatsApp as WhatsAppIcon,
 } from '@mui/icons-material';
 import { API_CONFIG, getApiUrl } from '../config/api';
 import axios, { AxiosError } from 'axios';
@@ -72,6 +75,28 @@ const CONTRACT_STATUSES = [
 ] as const;
 
 type ContractStatus = typeof CONTRACT_STATUSES[number];
+
+type SignatureStatus = 'not_sent' | 'sent' | 'viewed' | 'signed' | 'declined' | 'cancelled';
+
+interface ContractSignature {
+  status?: SignatureStatus;
+  sentAt?: string;
+  sentToName?: string;
+  sentToPhone?: string;
+  sentToEmail?: string;
+  notifyPhone?: string;
+  viewedAt?: string;
+  signedAt?: string;
+  declinedAt?: string;
+  declineReason?: string;
+  signerName?: string;
+  signatureImage?: string;
+  ipAddress?: string;
+  tokenExpiresAt?: string;
+  signUrl?: string | null;
+  whatsappUrl?: string | null;
+  shareMessage?: string | null;
+}
 
 interface Contract {
   _id?: string;
@@ -102,6 +127,7 @@ interface Contract {
     uploadDate: string;
     expiryDate?: string;
   }>;
+  signature?: ContractSignature;
 }
 
 interface ContractStats {
@@ -161,6 +187,15 @@ const ContractManagement: React.FC = () => {
   const [sortBy, setSortBy] = useState('startDate');
   const [documentsDialogOpen, setDocumentsDialogOpen] = useState(false);
   const [selectedContractId, setSelectedContractId] = useState<string | null>(null);
+  const [signatureDialogOpen, setSignatureDialogOpen] = useState(false);
+  const [signatureContract, setSignatureContract] = useState<Contract | null>(null);
+  const [signatureInfo, setSignatureInfo] = useState<ContractSignature | null>(null);
+  const [signatureLoading, setSignatureLoading] = useState(false);
+  const [signatureSending, setSignatureSending] = useState(false);
+  // Number that gets the WhatsApp alert when the client submits. Remembered locally
+  // so it does not have to be retyped for every contract.
+  const [notifyPhone, setNotifyPhone] = useState(() => localStorage.getItem('signatureNotifyPhone') || '');
+  const [recipientPhone, setRecipientPhone] = useState('');
 
   useEffect(() => {
     fetchContracts();
@@ -467,6 +502,144 @@ const ContractManagement: React.FC = () => {
     }
   };
 
+  const handleOpenSignatureDialog = async (contract: Contract) => {
+    setSignatureContract(contract);
+    setSignatureInfo(contract.signature || null);
+    setRecipientPhone(contract.signature?.sentToPhone || contract.contactPhone || '');
+    setSignatureDialogOpen(true);
+    setSignatureLoading(true);
+    try {
+      const response = await axios.get(
+        getApiUrl(`${API_CONFIG.ENDPOINTS.CONTRACTS}/${contract._id}/signature`)
+      );
+      setSignatureInfo(response.data.data);
+    } catch (error) {
+      console.error('Error fetching signature status:', error);
+    } finally {
+      setSignatureLoading(false);
+    }
+  };
+
+  const handleSendForSignature = async () => {
+    if (!signatureContract?._id) return;
+    setSignatureSending(true);
+    try {
+      const response = await axios.post(
+        getApiUrl(`${API_CONFIG.ENDPOINTS.CONTRACTS}/${signatureContract._id}/send-for-signature`),
+        {
+          phone: recipientPhone || undefined,
+          notifyPhone: notifyPhone || undefined,
+        }
+      );
+
+      localStorage.setItem('signatureNotifyPhone', notifyPhone);
+      const { signature, signUrl, whatsappUrl, shareMessage } = response.data.data;
+      setSignatureInfo({ ...signature, signUrl, whatsappUrl, shareMessage });
+      setSnackbar({ open: true, message: response.data.message, severity: 'success' });
+      fetchContracts();
+    } catch (error) {
+      const axiosError = error as AxiosError<{ message?: string }>;
+      setSnackbar({
+        open: true,
+        message: axiosError.response?.data?.message || 'Failed to send contract for signature',
+        severity: 'error',
+      });
+    } finally {
+      setSignatureSending(false);
+    }
+  };
+
+  const handleCancelSignatureRequest = async () => {
+    if (!signatureContract?._id) return;
+    try {
+      await axios.post(
+        getApiUrl(`${API_CONFIG.ENDPOINTS.CONTRACTS}/${signatureContract._id}/signature/cancel`),
+        {}
+      );
+      setSignatureInfo((prev) => (prev ? { ...prev, status: 'cancelled', signUrl: null } : prev));
+      setSnackbar({ open: true, message: 'Signing link cancelled', severity: 'info' });
+      fetchContracts();
+    } catch (error) {
+      const axiosError = error as AxiosError<{ message?: string }>;
+      setSnackbar({
+        open: true,
+        message: axiosError.response?.data?.message || 'Failed to cancel signing link',
+        severity: 'error',
+      });
+    }
+  };
+
+  // Clipboard API needs a secure context; fall back to a hidden textarea over plain HTTP.
+  const copyToClipboard = async (text: string, label: string) => {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const el = document.createElement('textarea');
+        el.value = text;
+        el.style.position = 'fixed';
+        el.style.opacity = '0';
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+      }
+      setSnackbar({ open: true, message: `${label} copied to clipboard`, severity: 'success' });
+    } catch {
+      setSnackbar({ open: true, message: 'Could not copy — select the text and copy manually', severity: 'warning' });
+    }
+  };
+
+  // Opens the signed contract in a new tab, ready to print or save as PDF.
+  // Fetched via axios so the auth header applies, then written into the window.
+  const handleViewSignedDocument = async () => {
+    if (!signatureContract?._id) return;
+    const win = window.open('', '_blank');
+    try {
+      const response = await axios.get(
+        getApiUrl(`${API_CONFIG.ENDPOINTS.CONTRACTS}/${signatureContract._id}/signed-document`)
+      );
+      if (!win) {
+        setSnackbar({ open: true, message: 'Please allow pop-ups to view the signed contract', severity: 'warning' });
+        return;
+      }
+      win.document.write(response.data.data.html);
+      win.document.close();
+      win.focus();
+    } catch (error) {
+      win?.close();
+      const axiosError = error as AxiosError<{ message?: string }>;
+      setSnackbar({
+        open: true,
+        message: axiosError.response?.data?.message || 'Failed to load the signed contract',
+        severity: 'error',
+      });
+    }
+  };
+
+  // Opens WhatsApp (Web or desktop app) with the message pre-filled, ready to send.
+  const handleOpenWhatsApp = () => {
+    if (!signatureInfo?.whatsappUrl) return;
+    window.open(signatureInfo.whatsappUrl, '_blank', 'noopener');
+  };
+
+  const getSignatureChip = (status?: SignatureStatus) => {
+    switch (status) {
+      case 'signed':
+        return { label: 'Signed', color: 'success' as const };
+      case 'sent':
+        return { label: 'Awaiting signature', color: 'info' as const };
+      case 'viewed':
+        return { label: 'Viewed by client', color: 'warning' as const };
+      case 'declined':
+        return { label: 'Declined', color: 'error' as const };
+      case 'cancelled':
+        return { label: 'Cancelled', color: 'default' as const };
+      default:
+        return { label: 'Not sent', color: 'default' as const };
+    }
+  };
+
   const handleContractRenewal = async (contract: Contract) => {
     try {
       // Implement the logic to renew the contract
@@ -736,6 +909,39 @@ const ContractManagement: React.FC = () => {
             >
               <AttachFileIcon fontSize="small" />
             </Badge>
+          </IconButton>
+        </Tooltip>
+        <Tooltip title={
+          contract.signature?.status === 'signed'
+            ? 'Signed by client — view signature'
+            : 'Send to client for e-signature'
+        }>
+          <IconButton
+            size="small"
+            onClick={() => handleOpenSignatureDialog(contract)}
+            sx={{
+              backgroundColor: alpha(
+                contract.signature?.status === 'signed'
+                  ? theme.palette.success.main
+                  : theme.palette.warning.main,
+                0.1
+              ),
+              '&:hover': {
+                backgroundColor: alpha(
+                  contract.signature?.status === 'signed'
+                    ? theme.palette.success.main
+                    : theme.palette.warning.main,
+                  0.2
+                ),
+                transform: 'scale(1.1)',
+              },
+              transition: 'all 0.2s',
+            }}
+          >
+            <SignatureIcon
+              fontSize="small"
+              color={contract.signature?.status === 'signed' ? 'success' : 'inherit'}
+            />
           </IconButton>
         </Tooltip>
         <Tooltip title="Edit and Generate Contract Template">
@@ -1389,6 +1595,183 @@ const ContractManagement: React.FC = () => {
           <Button onClick={handleDeleteContract} color="error" variant="contained">
             Delete
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Remote e-Signature Dialog */}
+      <Dialog
+        open={signatureDialogOpen}
+        onClose={() => setSignatureDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <SignatureIcon color="primary" />
+            <Box>
+              <Typography variant="h6">Remote e-Signature</Typography>
+              <Typography variant="caption" color="text.secondary">
+                {signatureContract?.companyName}
+              </Typography>
+            </Box>
+          </Stack>
+        </DialogTitle>
+        <DialogContent dividers>
+          {signatureLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+              <CircularProgress />
+            </Box>
+          ) : (
+            <Stack spacing={2.5}>
+              <Box>
+                <Typography variant="caption" color="text.secondary">Status</Typography>
+                <Box sx={{ mt: 0.5 }}>
+                  <Chip
+                    size="small"
+                    label={getSignatureChip(signatureInfo?.status).label}
+                    color={getSignatureChip(signatureInfo?.status).color}
+                  />
+                </Box>
+              </Box>
+
+              {signatureInfo?.status === 'signed' ? (
+                <>
+                  <Alert severity="success">
+                    Signed by <strong>{signatureInfo.signerName}</strong> on{' '}
+                    {moment(signatureInfo.signedAt).format('DD MMM YYYY, HH:mm')}
+                  </Alert>
+                  {signatureInfo.signatureImage && (
+                    <Box
+                      sx={{
+                        border: `1px solid ${theme.palette.divider}`,
+                        borderRadius: 1,
+                        p: 2,
+                        backgroundColor: alpha(theme.palette.background.default, 0.6),
+                        textAlign: 'center',
+                      }}
+                    >
+                      <img
+                        src={signatureInfo.signatureImage}
+                        alt="Client signature"
+                        style={{ maxHeight: 120, maxWidth: '100%' }}
+                      />
+                    </Box>
+                  )}
+                  <Button
+                    variant="contained"
+                    startIcon={<DescriptionIcon />}
+                    onClick={handleViewSignedDocument}
+                  >
+                    View / print signed contract
+                  </Button>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">Audit trail</Typography>
+                    <Typography variant="body2">
+                      Sent {moment(signatureInfo.sentAt).format('DD MMM YYYY, HH:mm')}
+                      {signatureInfo.viewedAt &&
+                        ` · Viewed ${moment(signatureInfo.viewedAt).format('DD MMM YYYY, HH:mm')}`}
+                      {signatureInfo.ipAddress && ` · IP ${signatureInfo.ipAddress}`}
+                    </Typography>
+                  </Box>
+                </>
+              ) : (
+                <>
+                  {signatureInfo?.status === 'declined' && (
+                    <Alert severity="error">
+                      Declined on {moment(signatureInfo.declinedAt).format('DD MMM YYYY, HH:mm')}
+                      {signatureInfo.declineReason ? ` — "${signatureInfo.declineReason}"` : ''}
+                    </Alert>
+                  )}
+
+                  <TextField
+                    fullWidth
+                    label="Client WhatsApp number"
+                    value={recipientPhone}
+                    onChange={(e) => setRecipientPhone(e.target.value)}
+                    placeholder="+9715XXXXXXX"
+                    helperText="WhatsApp opens with this chat and the message ready to send."
+                  />
+
+                  <TextField
+                    fullWidth
+                    label="Notify me on this WhatsApp number"
+                    value={notifyPhone}
+                    onChange={(e) => setNotifyPhone(e.target.value)}
+                    placeholder="+9715XXXXXXX"
+                    helperText="You get a WhatsApp alert the moment the client submits."
+                  />
+
+                  {signatureInfo?.signUrl && (
+                    <Box>
+                      <Typography variant="caption" color="text.secondary">
+                        Signing link (expires{' '}
+                        {moment(signatureInfo.tokenExpiresAt).format('DD MMM YYYY')})
+                      </Typography>
+                      <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.5 }}>
+                        <TextField
+                          fullWidth
+                          size="small"
+                          value={signatureInfo.signUrl}
+                          InputProps={{ readOnly: true }}
+                          onFocus={(e) => e.target.select()}
+                        />
+                        <Tooltip title="Copy link">
+                          <IconButton onClick={() => copyToClipboard(signatureInfo.signUrl!, 'Link')}>
+                            <CopyIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Stack>
+
+                      <Stack direction="row" spacing={1} sx={{ mt: 1.5 }} flexWrap="wrap" useFlexGap>
+                        <Button
+                          variant="contained"
+                          size="small"
+                          startIcon={<WhatsAppIcon />}
+                          onClick={handleOpenWhatsApp}
+                          sx={{
+                            backgroundColor: '#25D366',
+                            '&:hover': { backgroundColor: '#1DA851' },
+                          }}
+                        >
+                          Send on WhatsApp
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          startIcon={<CopyIcon />}
+                          onClick={() => copyToClipboard(signatureInfo.shareMessage || signatureInfo.signUrl!, 'Message')}
+                        >
+                          Copy full message
+                        </Button>
+                      </Stack>
+                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                        WhatsApp opens with the message pre-filled — press send there. Or copy the
+                        link and use SMS, email, or any other channel.
+                      </Typography>
+                    </Box>
+                  )}
+                </>
+              )}
+            </Stack>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSignatureDialogOpen(false)}>Close</Button>
+          {signatureInfo?.signUrl && signatureInfo.status !== 'signed' && (
+            <Button color="error" onClick={handleCancelSignatureRequest}>
+              Cancel link
+            </Button>
+          )}
+          {signatureInfo?.status !== 'signed' && (
+            <Button
+              variant="contained"
+              onClick={handleSendForSignature}
+              disabled={signatureSending || signatureLoading}
+              startIcon={signatureSending ? <CircularProgress size={16} /> : <SignatureIcon />}
+            >
+              {signatureInfo?.signUrl ? 'New link' : 'Create signing link'}
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
 

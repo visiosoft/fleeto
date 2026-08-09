@@ -33,4 +33,10 @@ router.delete('/entries/:id', payrollController.deletePayrollEntry);
 // Export payroll data
 router.get('/export', payrollController.exportPayroll);
 
+// Advances handed out before payday, and settlement payments
+router.post('/entries/:id/advances', payrollController.addAdvance);
+router.delete('/entries/:id/advances/:rowId', payrollController.deleteAdvance);
+router.post('/entries/:id/payments', payrollController.addPayment);
+router.delete('/entries/:id/payments/:rowId', payrollController.deletePayment);
+
 module.exports = router; 

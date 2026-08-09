@@ -72,6 +72,8 @@ export const API_ENDPOINTS = {
   rtaFines: {
     total: `${API_BASE_URL}/rta-fines/total`,
     all: `${API_BASE_URL}/rta-fines/all`,
+    withClients: `${API_BASE_URL}/rta-fines/with-clients`,
+    reminderSent: (id: string) => `${API_BASE_URL}/rta-fines/${id}/reminder-sent`,
     byVehicle: (vehicleInfo: string) => `${API_BASE_URL}/rta-fines/vehicle/${vehicleInfo}`,
     delete: (id: string) => `${API_BASE_URL}/rta-fines/${id}`,
   },

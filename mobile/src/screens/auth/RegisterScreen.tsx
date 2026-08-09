@@ -46,7 +46,7 @@ const RegisterScreen = ({ navigation }: any) => {
             <Icon name="truck-outline" size={32} color={colors.accent} />
           </View>
           <Text style={styles.headerTitle}>Create Account</Text>
-          <Text style={styles.headerSub}>Join Efficient Fleet Manager</Text>
+          <Text style={styles.headerSub}>Join FleetOZ</Text>
         </View>
 
         <View style={styles.formCard}>

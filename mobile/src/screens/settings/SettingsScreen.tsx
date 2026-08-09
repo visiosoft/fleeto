@@ -35,9 +35,11 @@ const SettingsScreen = ({ navigation }: any) => {
     { icon: 'account-group-outline', label: 'Team Members', onPress: () => navigation.navigate('SettingsUsers') },
     { icon: 'office-building-cog-outline', label: 'Company Settings', onPress: () => navigation.navigate('SettingsCompany') },
     { icon: 'file-document-edit-outline', label: 'Letterheads', onPress: () => navigation.navigate('SettingsLetterheads') },
+    { icon: 'message-text-outline', label: 'Message Templates', onPress: () => navigation.navigate('SettingsTemplates') },
     { icon: 'note-text-outline', label: 'General Notes', onPress: () => navigation.navigate('SettingsNotes') },
     { icon: 'gas-station-outline', label: 'Fuel Records', onPress: () => navigation.navigate('SettingsFuelRecords') },
     { icon: 'wrench-outline', label: 'Maintenance', onPress: () => navigation.navigate('SettingsMaintenance') },
+    { icon: 'account-cash-outline', label: 'Staff Accounts', onPress: () => navigation.navigate('SettingsStaffAccounts') },
   ];
 
   return (
@@ -113,18 +115,8 @@ const SettingsScreen = ({ navigation }: any) => {
         </TouchableOpacity>
       </View>
 
-      {/* General */}
-      <Text style={[styles.sectionLabel, { marginTop: 20 }]}>General</Text>
-      <View style={styles.menuCard}>
-        {menuItems.map((item) => (
-          <TouchableOpacity key={item.label} style={[styles.menuRow, styles.menuRowBorder]} activeOpacity={0.7} onPress={item.onPress}>
-            <View style={styles.menuIcon}>
-              <Icon name={item.icon} size={16} color={ui.purple} />
-            </View>
-            <Text style={styles.menuLabel}>{item.label}</Text>
-            <Icon name="chevron-right" size={20} color={ui.muted} />
-          </TouchableOpacity>
-        ))}
+      {/* Everything else lives in the left drawer; only sign-out remains here */}
+      <View style={[styles.menuCard, { marginTop: 20 }]}>
         <TouchableOpacity style={styles.menuRow} activeOpacity={0.7} onPress={handleLogout}>
           <View style={[styles.menuIcon, { backgroundColor: ui.redTint }]}>
             <Icon name="logout" size={16} color={ui.red} />

@@ -40,7 +40,7 @@ const LoginScreen = ({ navigation }: any) => {
           <View style={styles.logoContainer}>
             <Icon name="truck-fast" size={40} color={colors.white} />
           </View>
-          <Text style={styles.appName}>Efficient Fleet Manager</Text>
+          <Text style={styles.appName}>FleetOZ</Text>
           <Text style={styles.subtitle}>Fleet Management System</Text>
         </View>
 

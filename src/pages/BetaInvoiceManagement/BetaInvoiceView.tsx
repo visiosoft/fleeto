@@ -342,7 +342,14 @@ const BetaInvoiceView: React.FC = () => {
                             <TableBody>
                                 {invoice.items.map((item, index) => (
                                     <TableRow key={index}>
-                                        <TableCell>{item.description}</TableCell>
+                                        <TableCell>
+                                            {item.description}
+                                            {item.subDescription && (
+                                                <Typography variant="caption" display="block" color="text.secondary">
+                                                    {item.subDescription}
+                                                </Typography>
+                                            )}
+                                        </TableCell>
                                         <TableCell align="right">{item.quantity}</TableCell>
                                         <TableCell align="right">{item.unitPrice.toFixed(2)}</TableCell>
                                         <TableCell align="right">{item.amount.toFixed(2)}</TableCell>
@@ -424,6 +431,28 @@ const BetaInvoiceView: React.FC = () => {
                             </Typography>
                             <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
                                 {invoice.notes}
+                            </Typography>
+                        </Box>
+                    )}
+
+                    {invoice.termsAndConditions && (
+                        <Box mb={2} className="terms-section" sx={{ '@media print': { mb: 1 } }}>
+                            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                                TERMS AND CONDITIONS
+                            </Typography>
+                            <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                                {invoice.termsAndConditions}
+                            </Typography>
+                        </Box>
+                    )}
+
+                    {invoice.customerNotes && (
+                        <Box mb={2} className="customer-notes-section" sx={{ '@media print': { mb: 1 } }}>
+                            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                                CUSTOMER NOTES
+                            </Typography>
+                            <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                                {invoice.customerNotes}
                             </Typography>
                         </Box>
                     )}

@@ -3,6 +3,7 @@ const router = express.Router();
 const companyContractController = require('../controllers/companyContractController');
 const { authenticate } = require('../middleware/auth');
 const uploadContract = require('../middleware/uploadContract');
+const contractSignatureController = require('../controllers/contractSignatureController');
 
 // Apply authentication middleware to all routes
 router.use(authenticate);
@@ -28,6 +29,9 @@ router.get('/:id', companyContractController.getContractById);
 // POST /api/contracts - Create a new contract
 router.post('/', companyContractController.createContract);
 
+// GET /api/contracts/:id/billing-schedule - Preview generated invoice periods
+router.get('/:id/billing-schedule', companyContractController.getBillingSchedule);
+
 // PATCH /api/contracts/:id/status - Update contract status
 router.patch('/:id/status', companyContractController.updateContractStatus);
 
@@ -45,6 +49,12 @@ router.get('/license/:tradeLicenseNo', companyContractController.getContractByTr
 
 // GET /api/contracts/status/:status - Get contracts by status
 router.get('/status/:status', companyContractController.getContractsByStatus);
+
+// Remote e-signature routes
+router.post('/:id/send-for-signature', contractSignatureController.sendForSignature);
+router.get('/:id/signature', contractSignatureController.getSignatureStatus);
+router.get('/:id/signed-document', contractSignatureController.getSignedDocument);
+router.post('/:id/signature/cancel', contractSignatureController.cancelSignatureRequest);
 
 // Document management routes
 router.post('/:id/upload-document', uploadContract.single('document'), companyContractController.uploadDocument);

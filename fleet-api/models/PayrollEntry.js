@@ -12,6 +12,7 @@ class PayrollEntry {
     this.month = month;
     this.year = parseInt(year);
     
+    this.driverId = data.driverId || null;
     this.baseSalary = parseFloat(data.baseSalary) || 0;
     this.overtimeHours = parseFloat(data.overtimeHours) || 0;
     this.overtimeRate = parseFloat(data.overtimeRate) || 0;
@@ -19,13 +20,26 @@ class PayrollEntry {
     this.deductions = parseFloat(data.deductions) || 0;
     this.paymentMethod = data.paymentMethod || 'bank_transfer';
     this.notes = data.notes || '';
-    
-    // Calculate total amount and net pay
-    const overtimePay = this.overtimeHours * this.overtimeRate;
-    this.totalAmount = this.baseSalary + overtimePay + this.bonuses;
-    this.netPay = this.totalAmount - this.deductions;
-    
-    this.status = data.status || 'pending';
+
+    // Advances already handed to the driver during the month, and settlement
+    // payments made against this payslip.
+    this.advances = Array.isArray(data.advances) ? data.advances : [];
+    this.payments = Array.isArray(data.payments) ? data.payments : [];
+
+    const sum = (rows) => rows.reduce((t, r) => t + (parseFloat(r.amount) || 0), 0);
+    this.totalAdvances = sum(this.advances);
+    this.totalPaid = sum(this.payments);
+
+    // Gross = salary + overtime + bonuses. Advances are money already received,
+    // so they reduce what is still owed, exactly like a deduction.
+    this.overtimePay = this.overtimeHours * this.overtimeRate;
+    this.totalAmount = this.baseSalary + this.overtimePay + this.bonuses;
+    this.netPay = this.totalAmount - this.deductions - this.totalAdvances;
+    this.balanceDue = this.netPay - this.totalPaid;
+
+    this.status = data.status
+      || (this.balanceDue <= 0 && this.netPay > 0 ? 'paid'
+        : this.totalPaid > 0 ? 'partial' : 'pending');
     this.paymentDate = data.paymentDate ? new Date(data.paymentDate) : null;
     this.createdAt = data.createdAt ? new Date(data.createdAt) : new Date();
     this.updatedAt = new Date();
@@ -81,14 +95,21 @@ class PayrollEntry {
   toJSON() {
     return {
       _id: this._id,
+      driverId: this.driverId,
       driverName: this.driverName,
       month: this.month,
       year: this.year,
       baseSalary: this.baseSalary,
       overtimeHours: this.overtimeHours,
       overtimeRate: this.overtimeRate,
+      overtimePay: this.overtimePay,
       bonuses: this.bonuses,
       deductions: this.deductions,
+      advances: this.advances,
+      payments: this.payments,
+      totalAdvances: this.totalAdvances,
+      totalPaid: this.totalPaid,
+      balanceDue: this.balanceDue,
       totalAmount: this.totalAmount,
       netPay: this.netPay,
       paymentMethod: this.paymentMethod,

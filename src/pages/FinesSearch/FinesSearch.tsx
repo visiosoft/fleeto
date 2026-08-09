@@ -25,6 +25,7 @@ import {
   DialogContentText,
   DialogActions,
   Snackbar,
+  Tooltip,
 } from '@mui/material';
 import {
   Warning as WarningIcon,
@@ -34,9 +35,12 @@ import {
   OpenInNew as OpenInNewIcon,
   Gavel as GavelIcon,
   Delete as DeleteIcon,
+  WhatsApp as WhatsAppIcon,
+  ContentCopy as CopyIcon,
 } from '@mui/icons-material';
 import axios from 'axios';
 import { API_ENDPOINTS } from '../../config/environment';
+import { sortFinesNewestFirst } from '../../utils/fineDate';
 
 interface RtaFine {
   _id?: string;
@@ -50,6 +54,27 @@ interface RtaFine {
   created_at: {
     $date: string;
   };
+  // Added by /rta-fines/with-clients
+  matchedVehicle?: {
+    _id: string;
+    licensePlate?: string;
+    make?: string;
+    model?: string;
+  } | null;
+  client?: {
+    contractId: string;
+    companyName?: string;
+    contactPerson?: string;
+    contactPhone?: string;
+    contractStatus?: string;
+  } | null;
+  reminderMessage?: string;
+  whatsappUrl?: string | null;
+  reminder?: {
+    lastSentAt?: string;
+    count?: number;
+    lastSentTo?: string;
+  } | null;
 }
 
 interface RtaTotal {
@@ -104,8 +129,8 @@ const FinesSearch: React.FC = () => {
         }
       }
 
-      // Fetch all fines
-      const finesResponse = await axios.get(API_ENDPOINTS.rtaFines.all, { headers });
+      // Fetch all fines, already matched to the renting client
+      const finesResponse = await axios.get(API_ENDPOINTS.rtaFines.withClients, { headers });
       console.log('RTA All Fines Response:', finesResponse.data);
       if (finesResponse.data.status === 'success') {
         setFines(finesResponse.data.data.fines);
@@ -152,6 +177,54 @@ const FinesSearch: React.FC = () => {
 
   const handleOpenRTAPortal = () => {
     window.open(rtaFinesUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  // Opens WhatsApp with the reminder pre-filled and records that we chased it.
+  // The record is written optimistically - the user still has to press send in
+  // WhatsApp, so this tracks "reminder raised", not "message delivered".
+  const handleRemindClient = async (fine: RtaFine) => {
+    if (!fine.whatsappUrl) return;
+    window.open(fine.whatsappUrl, '_blank', 'noopener');
+
+    if (!fine._id) return;
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(
+        API_ENDPOINTS.rtaFines.reminderSent(fine._id),
+        { phone: fine.client?.contactPhone },
+        { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
+      );
+      setFines((prev) => prev.map((f) => (f._id === fine._id
+        ? { ...f, reminder: { ...f.reminder, lastSentAt: new Date().toISOString(), count: (f.reminder?.count || 0) + 1 } }
+        : f)));
+    } catch (err) {
+      console.error('Could not record fine reminder:', err);
+    }
+  };
+
+  const handleCopyReminder = async (fine: RtaFine) => {
+    if (!fine.reminderMessage) return;
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(fine.reminderMessage);
+      } else {
+        const el = document.createElement('textarea');
+        el.value = fine.reminderMessage;
+        el.style.position = 'fixed';
+        el.style.opacity = '0';
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+      }
+      setSnackbarMessage('Reminder message copied to clipboard');
+      setSnackbarSeverity('success');
+      setSnackbarOpen(true);
+    } catch {
+      setSnackbarMessage('Could not copy the message');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    }
   };
 
   const handleDeleteClick = (fine: RtaFine) => {
@@ -419,17 +492,15 @@ const FinesSearch: React.FC = () => {
                       Black Points
                     </TableCell>
                     <TableCell sx={{ fontWeight: 600, color: '#374151', fontSize: '13px' }}>
+                      Client
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: '#374151', fontSize: '13px' }}>
                       Actions
                     </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {[...fines]
-                    .sort((a, b) => {
-                      const dateA = a.date_time ? new Date(a.date_time).getTime() : 0;
-                      const dateB = b.date_time ? new Date(b.date_time).getTime() : 0;
-                      return dateB - dateA;
-                    })
+                  {sortFinesNewestFirst(fines)
                     .map((fine, index) => (
                       <TableRow
                         key={fine._id || index}
@@ -550,18 +621,73 @@ const FinesSearch: React.FC = () => {
                           )}
                         </TableCell>
                         <TableCell>
-                          <IconButton
-                            onClick={() => handleDeleteClick(fine)}
-                            size="small"
-                            sx={{
-                              color: theme.palette.error.main,
-                              '&:hover': {
-                                backgroundColor: `${theme.palette.error.main}15`,
-                              },
-                            }}
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
+                          {fine.client ? (
+                            <Box>
+                              <Typography variant="body2" sx={{ fontSize: '13px', fontWeight: 600, color: '#111827' }}>
+                                {fine.client.contactPerson || fine.client.companyName}
+                              </Typography>
+                              <Typography variant="caption" sx={{ color: '#6B7280' }}>
+                                {fine.client.contactPhone || 'No phone on contract'}
+                              </Typography>
+                              {fine.reminder?.lastSentAt && (
+                                <Typography variant="caption" sx={{ display: 'block', color: '#059669' }}>
+                                  Reminded {new Date(fine.reminder.lastSentAt).toLocaleDateString('en-GB')}
+                                  {fine.reminder.count && fine.reminder.count > 1 ? ` (${fine.reminder.count}x)` : ''}
+                                </Typography>
+                              )}
+                            </Box>
+                          ) : (
+                            <Tooltip title="No contract found for this vehicle. Check the plate on the vehicle record or the contract.">
+                              <Chip label="Unmatched" size="small" variant="outlined" sx={{ fontSize: '11px' }} />
+                            </Tooltip>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Stack direction="row" spacing={0.5}>
+                            <Tooltip title={
+                              fine.whatsappUrl
+                                ? `Remind ${fine.client?.contactPerson || 'client'} on WhatsApp`
+                                : 'No client phone number available'
+                            }>
+                              <span>
+                                <IconButton
+                                  onClick={() => handleRemindClient(fine)}
+                                  size="small"
+                                  disabled={!fine.whatsappUrl}
+                                  sx={{
+                                    color: '#25D366',
+                                    '&:hover': { backgroundColor: '#25D36615' },
+                                  }}
+                                >
+                                  <WhatsAppIcon fontSize="small" />
+                                </IconButton>
+                              </span>
+                            </Tooltip>
+                            <Tooltip title="Copy reminder message">
+                              <span>
+                                <IconButton
+                                  onClick={() => handleCopyReminder(fine)}
+                                  size="small"
+                                  disabled={!fine.reminderMessage}
+                                  sx={{ color: '#6B7280', '&:hover': { backgroundColor: '#6B728015' } }}
+                                >
+                                  <CopyIcon fontSize="small" />
+                                </IconButton>
+                              </span>
+                            </Tooltip>
+                            <IconButton
+                              onClick={() => handleDeleteClick(fine)}
+                              size="small"
+                              sx={{
+                                color: theme.palette.error.main,
+                                '&:hover': {
+                                  backgroundColor: `${theme.palette.error.main}15`,
+                                },
+                              }}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Stack>
                         </TableCell>
                       </TableRow>
                     ))}

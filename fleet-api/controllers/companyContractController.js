@@ -1,4 +1,5 @@
-const { CompanyContract, CONTRACT_STATUS } = require('../models/companyContract');
+const { CompanyContract, CONTRACT_STATUS, BILLING_CYCLE } = require('../models/companyContract');
+const { billingPeriods, nextBillingPeriod, contractValue, renewalEndDate } = require('../utils/billingSchedule');
 
 // Get all company contracts
 exports.getAllContracts = async (req, res) => {
@@ -81,6 +82,12 @@ exports.createContract = async (req, res) => {
             startDate: req.body.startDate,
             endDate: req.body.endDate,
             amount: req.body.amount,
+            rateUnit: req.body.rateUnit || 'month',
+            billingCycle: req.body.billingCycle || BILLING_CYCLE.MONTHLY,
+            prorate: req.body.prorate !== false,
+            autoRenew: req.body.autoRenew === true,
+            renewalTerm: req.body.renewalTerm,
+            securityDeposit: req.body.securityDeposit,
             value: req.body.value,
             contactPerson: req.body.contactPerson,
             contactEmail: req.body.contactEmail,
@@ -90,6 +97,12 @@ exports.createContract = async (req, res) => {
             notes: req.body.notes,
             companyId: companyId
         });
+        // Seed the billing cursor so the billing run can pick the contract up
+        // without re-deriving history. Rentals bill in advance, so the invoice
+        // is due at the start of the period it covers.
+        const firstPeriod = nextBillingPeriod(newContract);
+        if (firstPeriod) newContract.nextInvoiceDate = firstPeriod.periodStart;
+
         const savedContract = await newContract.save();
         res.status(201).json(savedContract);
     } catch (error) {
@@ -149,9 +162,53 @@ exports.updateContract = async (req, res) => {
         if (!updatedContract) {
             return res.status(404).json({ message: 'Contract not found' });
         }
+
+        // Re-anchor the billing cursor when the schedule itself moved. Left
+        // alone otherwise, since the billing run owns this field.
+        const SCHEDULE_FIELDS = ['startDate', 'endDate', 'amount', 'rateUnit', 'billingCycle', 'prorate'];
+        if (SCHEDULE_FIELDS.some((f) => f in req.body)) {
+            const period = nextBillingPeriod(updatedContract);
+            updatedContract.nextInvoiceDate = period ? period.periodStart : null;
+            await updatedContract.save();
+        }
+
         res.status(200).json(updatedContract);
     } catch (error) {
         res.status(400).json({ message: error.message });
+    }
+};
+
+// Preview the invoice periods a contract will generate. Read-only - nothing
+// here is persisted, so the form can show the schedule before saving.
+exports.getBillingSchedule = async (req, res) => {
+    try {
+        const companyId = req.user?.companyId;
+
+        if (!companyId) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'Company ID not found in user token'
+            });
+        }
+
+        const contract = await CompanyContract.findOne({ _id: req.params.id, companyId });
+        if (!contract) {
+            return res.status(404).json({ message: 'Contract not found' });
+        }
+
+        const periods = billingPeriods(contract);
+        res.status(200).json({
+            contractId: contract._id,
+            rateUnit: contract.rateUnit || 'month',
+            billingCycle: contract.billingCycle || 'monthly',
+            prorate: contract.prorate !== false,
+            totalValue: contractValue(contract),
+            nextInvoiceDate: contract.nextInvoiceDate || null,
+            renewsUntil: renewalEndDate(contract),
+            periods
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
 };
 

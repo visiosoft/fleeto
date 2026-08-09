@@ -543,3 +543,95 @@ exports.createTestDriver = async (req, res) => {
     });
   }
 }; 
+// --- Advances and settlement payments -------------------------------------
+// Advances are money handed to the driver before payday; they reduce the net
+// still owed. Payments are settlements against that remaining balance.
+
+const recalcTotals = (entry) => {
+  const sum = (rows) => (rows || []).reduce((t, r) => t + (parseFloat(r.amount) || 0), 0);
+  const totalAdvances = sum(entry.advances);
+  const totalPaid = sum(entry.payments);
+  const overtimePay = (parseFloat(entry.overtimeHours) || 0) * (parseFloat(entry.overtimeRate) || 0);
+  const totalAmount = (parseFloat(entry.baseSalary) || 0) + overtimePay + (parseFloat(entry.bonuses) || 0);
+  const netPay = totalAmount - (parseFloat(entry.deductions) || 0) - totalAdvances;
+  const balanceDue = netPay - totalPaid;
+  return {
+    totalAdvances,
+    totalPaid,
+    overtimePay,
+    totalAmount,
+    netPay,
+    balanceDue,
+    status: balanceDue <= 0 && netPay > 0 ? 'paid' : totalPaid > 0 ? 'partial' : 'pending',
+    updatedAt: new Date(),
+  };
+};
+
+const addRow = (field) => async (req, res) => {
+  try {
+    const companyId = req.user.companyId;
+    if (!companyId) {
+      return res.status(400).json({ status: 'error', message: 'Company ID not found in user token' });
+    }
+    const amount = parseFloat(req.body.amount);
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ status: 'error', message: 'A positive amount is required' });
+    }
+
+    const collection = await db.getCollection('payrollentries');
+    const entry = await collection.findOne({
+      _id: new ObjectId(req.params.id),
+      companyId: companyId.toString(),
+    });
+    if (!entry) return res.status(404).json({ status: 'error', message: 'Payroll entry not found' });
+
+    const row = {
+      _id: new ObjectId(),
+      amount,
+      date: req.body.date ? new Date(req.body.date) : new Date(),
+      method: req.body.method || 'cash',
+      note: req.body.note || '',
+      createdAt: new Date(),
+    };
+    const rows = [...(entry[field] || []), row];
+    const totals = recalcTotals({ ...entry, [field]: rows });
+
+    await collection.updateOne(
+      { _id: entry._id },
+      { $set: { [field]: rows, ...totals } }
+    );
+
+    const updated = await collection.findOne({ _id: entry._id });
+    res.status(201).json({ status: 'success', data: updated });
+  } catch (error) {
+    console.error(`Error adding ${field}:`, error);
+    res.status(500).json({ status: 'error', message: error.message });
+  }
+};
+
+const removeRow = (field) => async (req, res) => {
+  try {
+    const companyId = req.user.companyId;
+    const collection = await db.getCollection('payrollentries');
+    const entry = await collection.findOne({
+      _id: new ObjectId(req.params.id),
+      companyId: companyId.toString(),
+    });
+    if (!entry) return res.status(404).json({ status: 'error', message: 'Payroll entry not found' });
+
+    const rows = (entry[field] || []).filter((r) => String(r._id) !== String(req.params.rowId));
+    const totals = recalcTotals({ ...entry, [field]: rows });
+
+    await collection.updateOne({ _id: entry._id }, { $set: { [field]: rows, ...totals } });
+    const updated = await collection.findOne({ _id: entry._id });
+    res.status(200).json({ status: 'success', data: updated });
+  } catch (error) {
+    console.error(`Error removing ${field}:`, error);
+    res.status(500).json({ status: 'error', message: error.message });
+  }
+};
+
+exports.addAdvance = addRow('advances');
+exports.deleteAdvance = removeRow('advances');
+exports.addPayment = addRow('payments');
+exports.deletePayment = removeRow('payments');

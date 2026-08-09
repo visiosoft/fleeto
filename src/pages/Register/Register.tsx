@@ -122,13 +122,13 @@ const Register: React.FC = () => {
         companyData,
         adminData
       });
-      
+
       // Automatically log in with the admin credentials
       const loginResponse = await api.login(adminData.email, adminData.password);
 
       // Store the token
       localStorage.setItem('token', loginResponse.token);
-      
+
       setSuccess(true);
       setTimeout(() => {
         navigate('/dashboard'); // Redirect to dashboard instead of login
@@ -407,7 +407,7 @@ const Register: React.FC = () => {
                 letterSpacing: '-0.015em',
               }}
             >
-              fleeto
+              fleetoz
             </Typography>
           </Box>
 
@@ -450,9 +450,9 @@ const Register: React.FC = () => {
             }}
           >
             {error && (
-              <Alert 
-                severity="error" 
-                sx={{ 
+              <Alert
+                severity="error"
+                sx={{
                   mb: 3,
                   borderRadius: '12px',
                   fontFamily: "'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
@@ -463,9 +463,9 @@ const Register: React.FC = () => {
             )}
 
             {success && (
-              <Alert 
-                severity="success" 
-                sx={{ 
+              <Alert
+                severity="success"
+                sx={{
                   mb: 3,
                   borderRadius: '12px',
                   fontFamily: "'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
@@ -476,9 +476,9 @@ const Register: React.FC = () => {
             )}
 
             <Box component="form" onSubmit={handleSubmit}>
-              <Stepper 
-                activeStep={activeStep} 
-                sx={{ 
+              <Stepper
+                activeStep={activeStep}
+                sx={{
                   mb: 5,
                   '& .MuiStepLabel-label': {
                     fontFamily: "'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
@@ -532,7 +532,7 @@ const Register: React.FC = () => {
                 >
                   back
                 </Button>
-                
+
                 {activeStep === steps.length - 1 ? (
                   <Button
                     type="submit"
@@ -604,9 +604,9 @@ const Register: React.FC = () => {
           </Box>
 
           <Box sx={{ mt: 4, textAlign: 'center' }}>
-            <Typography 
-              variant="body2" 
-              sx={{ 
+            <Typography
+              variant="body2"
+              sx={{
                 fontFamily: "'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
                 color: '#6e6e73',
                 fontSize: '15px',
@@ -615,10 +615,10 @@ const Register: React.FC = () => {
               already have an account?{' '}
               <Button
                 onClick={() => navigate('/login')}
-                sx={{ 
-                  textTransform: 'none', 
-                  fontWeight: 500, 
-                  p: 0, 
+                sx={{
+                  textTransform: 'none',
+                  fontWeight: 500,
+                  p: 0,
                   minWidth: 0,
                   color: '#0071e3',
                   fontFamily: "'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",

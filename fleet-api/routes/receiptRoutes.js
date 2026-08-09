@@ -1,10 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const receiptController = require('../controllers/receiptController');
+const paymentReceiptController = require('../controllers/paymentReceiptController');
 const { authenticate } = require('../middleware/auth');
 
 // Apply authentication middleware to all receipt routes
 router.use(authenticate);
+
+// Printable receipt document (branded HTML, for PDF export)
+router.get('/:id/document', paymentReceiptController.getReceiptDocument);
 
 // Get receipts by invoice (specific route)
 router.get('/invoice/:invoiceId', receiptController.getReceiptsByInvoice);

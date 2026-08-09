@@ -99,7 +99,7 @@ const Login: React.FC = () => {
                 letterSpacing: '-0.015em',
               }}
             >
-              fleeto
+              fleetoz
             </Typography>
           </Box>
 
@@ -142,9 +142,9 @@ const Login: React.FC = () => {
             </Typography>
 
             {error && (
-              <Alert 
-                severity="error" 
-                sx={{ 
+              <Alert
+                severity="error"
+                sx={{
                   mb: 3,
                   borderRadius: '12px',
                   fontFamily: "'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
@@ -271,9 +271,9 @@ const Login: React.FC = () => {
               </Button>
 
               <Box sx={{ mt: 3, textAlign: 'center' }}>
-                <Typography 
-                  variant="body2" 
-                  sx={{ 
+                <Typography
+                  variant="body2"
+                  sx={{
                     fontFamily: "'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",
                     color: '#6e6e73',
                     fontSize: '15px',
@@ -282,10 +282,10 @@ const Login: React.FC = () => {
                   don't have an account?{' '}
                   <Button
                     onClick={() => navigate('/register')}
-                    sx={{ 
-                      textTransform: 'none', 
-                      fontWeight: 500, 
-                      p: 0, 
+                    sx={{
+                      textTransform: 'none',
+                      fontWeight: 500,
+                      p: 0,
                       minWidth: 0,
                       color: '#0071e3',
                       fontFamily: "'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif",

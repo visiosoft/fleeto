@@ -14,3 +14,10 @@ fleet-api/.env
 # IDE
 .vscode/
 .idea/
+# Uploaded user documents (receipts, driver IDs) - not source code
+fleet-api/uploads/
+public/drivers/
+public/expenses/
+
+# Expo local cache
+mobile/.expo/

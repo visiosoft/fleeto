@@ -1,6 +1,5 @@
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { View, ActivityIndicator } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useFonts } from 'expo-font';
 import {
@@ -16,8 +15,8 @@ import {
   PlusJakartaSans_600SemiBold,
 } from '@expo-google-fonts/plus-jakarta-sans';
 import { AuthProvider } from './src/contexts/AuthContext';
+import SplashScreen from './src/screens/SplashScreen';
 import AppNavigator from './src/navigation/AppNavigator';
-import { colors } from './src/config/theme';
 
 const App: React.FC = () => {
   const [fontsLoaded] = useFonts({
@@ -31,20 +30,18 @@ const App: React.FC = () => {
     PlusJakartaSans_600SemiBold,
   });
 
-  if (!fontsLoaded) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.primary }}>
-        <ActivityIndicator size="large" color={colors.white} />
-      </View>
-    );
-  }
-
+  // The dark root colour prevents a white flash between the native splash
+  // and the first rendered frame.
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <AuthProvider>
-        <StatusBar style="light" backgroundColor={colors.primary} />
-        <AppNavigator />
-      </AuthProvider>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#1A0B33' }}>
+      <StatusBar style="light" backgroundColor="#1A0B33" translucent={false} />
+      {!fontsLoaded ? (
+        <SplashScreen fontsReady={false} message="Starting up" />
+      ) : (
+        <AuthProvider>
+          <AppNavigator />
+        </AuthProvider>
+      )}
     </GestureHandlerRootView>
   );
 };

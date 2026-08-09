@@ -88,21 +88,6 @@ const InvoiceListScreen = ({ navigation }: any) => {
             <Text style={[styles.summaryAmount, { color: colors.accent }]}>AED {totalOutstanding.toLocaleString()}</Text>
           </View>
         </View>
-        <View style={styles.summaryBar}>
-          <View style={[styles.summaryBarFill, { flex: totalPaid || 1 }]} />
-          <View style={[styles.summaryBarRemain, { flex: totalOutstanding || 0.1 }]} />
-        </View>
-        <View style={styles.summaryChips}>
-          <View style={[styles.summaryChip, { backgroundColor: colors.successLight }]}>
-            <Text style={[styles.summaryChipText, { color: colors.success }]}>Paid: {getCount('Paid')}</Text>
-          </View>
-          <View style={[styles.summaryChip, { backgroundColor: colors.warningLight }]}>
-            <Text style={[styles.summaryChipText, { color: '#92400E' }]}>Draft: {getCount('Draft')}</Text>
-          </View>
-          <View style={[styles.summaryChip, { backgroundColor: colors.errorLight }]}>
-            <Text style={[styles.summaryChipText, { color: colors.error }]}>Overdue: {getCount('Overdue')}</Text>
-          </View>
-        </View>
       </View>
 
       {/* Tabs */}
@@ -195,7 +180,7 @@ const styles = StyleSheet.create({
   },
   summaryCard: {
     backgroundColor: colors.surface, marginHorizontal: spacing.md,
-    borderRadius: borderRadius.lg, padding: spacing.md, marginBottom: spacing.sm,
+    borderRadius: borderRadius.lg, padding: spacing.sm, marginBottom: spacing.xs,
     ...shadows.sm,
   },
   summaryRow: { flexDirection: 'row', alignItems: 'center' },
@@ -209,10 +194,10 @@ const styles = StyleSheet.create({
   summaryChips: { flexDirection: 'row', gap: spacing.xs, marginTop: spacing.sm },
   summaryChip: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: borderRadius.full },
   summaryChipText: { fontSize: fontSize.xs, fontFamily: fonts.semiBold },
-  tabScroll: { flexGrow: 0, marginBottom: spacing.xs },
-  tabRow: { paddingHorizontal: spacing.md, gap: spacing.xs },
+  tabScroll: { flexGrow: 0, marginBottom: spacing.sm, minHeight: 44 },
+  tabRow: { paddingHorizontal: spacing.md, gap: spacing.xs, alignItems: 'center', paddingVertical: 6 },
   tab: {
-    paddingHorizontal: 16, height: 38, justifyContent: 'center',
+    paddingHorizontal: 14, height: 34, justifyContent: 'center',
     borderRadius: borderRadius.full, backgroundColor: colors.surface,
     borderWidth: 1, borderColor: colors.border,
   },

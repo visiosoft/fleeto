@@ -77,6 +77,8 @@ export interface Invoice {
   includeVat: boolean;
   total: number;
   notes: string;
+  termsAndConditions?: string;
+  customerNotes?: string;
   paymentHistory: PaymentRecord[];
   payments?: PaymentRecord[];
   totalPaid?: number;
@@ -88,6 +90,7 @@ export interface Invoice {
 export interface InvoiceItem {
   _id: string;
   description: string;
+  subDescription?: string;
   quantity: number;
   unitPrice: number;
   amount: number;

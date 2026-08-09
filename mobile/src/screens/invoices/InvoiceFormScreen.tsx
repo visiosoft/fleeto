@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert,
-  TextInput, Modal, FlatList,
+  TextInput, Modal, FlatList, Platform,
 } from 'react-native';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { invoiceService } from '../../services/financeService';
 import { contractService } from '../../services/contractService';
 import FormInput from '../../components/common/FormInput';
+import DatePickerField from '../../components/common/DatePickerField';
 import Card from '../../components/common/Card';
 import LoadingScreen from '../../components/common/LoadingScreen';
 import { colors, spacing, borderRadius, fontSize, shadows, fonts } from '../../config/theme';
@@ -28,6 +29,7 @@ const daysUntil = (d: any) => {
 const InvoiceFormScreen = ({ route, navigation }: any) => {
   const existing = route.params?.invoice;
   const preselectedContract = route.params?.contract;
+  const preselectedContractId = route.params?.contractId;
   const isEdit = !!existing;
 
   const [contracts, setContracts] = useState<any[]>([]);
@@ -39,7 +41,7 @@ const InvoiceFormScreen = ({ route, navigation }: any) => {
   const [invoiceNumber, setInvoiceNumber] = useState(existing?.invoiceNumber || '');
   const [issueDate, setIssueDate] = useState(existing?.issueDate ? formatDate(existing.issueDate) : formatDate(new Date()));
   const [dueDate, setDueDate] = useState(existing?.dueDate ? formatDate(existing.dueDate) : '');
-  const [includeVat, setIncludeVat] = useState(existing?.includeVat !== false);
+  const [includeVat, setIncludeVat] = useState(existing?.includeVat === true);
   const [notes, setNotes] = useState(existing?.notes || '');
   const [items, setItems] = useState<any[]>(
     existing?.items?.length ? existing.items : [{ description: '', quantity: '1', unitPrice: '', amount: '' }]
@@ -51,7 +53,10 @@ const InvoiceFormScreen = ({ route, navigation }: any) => {
       const res = await contractService.getAll();
       const data = res.data?.data || res.data || [];
       setContracts(data);
-      if (existing?.contractId && !preselectedContract) {
+      if (preselectedContractId && !preselectedContract) {
+        const match = data.find((c: any) => c._id === preselectedContractId);
+        if (match) setSelectedContract(match);
+      } else if (existing?.contractId && !preselectedContract) {
         const match = data.find((c: any) => c._id === existing.contractId || c._id === existing.contractId?.toString());
         if (match) setSelectedContract(match);
       }
@@ -70,14 +75,28 @@ const InvoiceFormScreen = ({ route, navigation }: any) => {
 
   useEffect(() => {
     if (selectedContract && !isEdit) {
-      if (!dueDate) setDueDate(formatDate(selectedContract.endDate));
+      // Calculate billing month based on contract start day
+      const start = new Date(selectedContract.startDate);
+      const now = new Date();
+      const startDay = start.getDate();
+      // Current billing period: from startDay of current month to startDay of next month
+      const billingStart = new Date(now.getFullYear(), now.getMonth(), startDay);
+      const billingEnd = new Date(now.getFullYear(), now.getMonth() + 1, startDay - 1);
+
+      // Due date = billing period end + 2 days
+      const due = new Date(billingEnd);
+      due.setDate(due.getDate() + 2);
+      setDueDate(formatDate(due));
+
       const contractValue = selectedContract.amount || selectedContract.value || 0;
       if (contractValue > 0) {
+        // Billing month label = the month the period ends in
+        const monthLabel = billingEnd.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
         const contractDesc = [
-          selectedContract.contractType || 'Contract',
-          selectedContract.vehicleName ? `- ${selectedContract.vehicleName}` : '',
+          selectedContract.contractType || 'Monthly',
           selectedContract.companyName ? `(${selectedContract.companyName})` : '',
-          `[${formatDate(selectedContract.startDate)} to ${formatDate(selectedContract.endDate)}]`,
+          selectedContract.vehicleName ? `- ${selectedContract.vehicleName}` : '',
+          `- ${monthLabel}`,
         ].filter(Boolean).join(' ');
         setItems([{
           description: contractDesc,
@@ -212,11 +231,11 @@ const InvoiceFormScreen = ({ route, navigation }: any) => {
       <FormInput label="Invoice Number" value={invoiceNumber} onChangeText={setInvoiceNumber} placeholder="INV-001" required />
       <View style={styles.dateRow}>
         <View style={{ flex: 1 }}>
-          <FormInput label="Issue Date" value={issueDate} onChangeText={setIssueDate} placeholder="YYYY-MM-DD" />
+          <DatePickerField label="Issue Date" value={issueDate} onChange={setIssueDate} placeholder="Select issue date" />
         </View>
         <View style={{ width: spacing.sm }} />
         <View style={{ flex: 1 }}>
-          <FormInput label="Due Date" value={dueDate} onChangeText={setDueDate} placeholder="YYYY-MM-DD" />
+          <DatePickerField label="Due Date" value={dueDate} onChange={setDueDate} placeholder="Select due date" />
         </View>
       </View>
 
@@ -242,25 +261,16 @@ const InvoiceFormScreen = ({ route, navigation }: any) => {
           <View style={styles.itemRow}>
             <TextInput
               style={[styles.itemInput, { flex: 1 }]}
-              placeholder="Qty"
-              value={item.quantity}
-              onChangeText={(v) => updateItem(idx, 'quantity', v)}
-              keyboardType="numeric"
-              placeholderTextColor={colors.textLight}
-            />
-            <View style={{ width: spacing.xs }} />
-            <TextInput
-              style={[styles.itemInput, { flex: 2 }]}
-              placeholder="Unit Price"
+              placeholder="Amount (AED)"
               value={item.unitPrice}
-              onChangeText={(v) => updateItem(idx, 'unitPrice', v)}
+              onChangeText={(v) => { updateItem(idx, 'unitPrice', v); updateItem(idx, 'quantity', '1'); }}
               keyboardType="numeric"
               placeholderTextColor={colors.textLight}
             />
-            <View style={{ width: spacing.xs }} />
-            <View style={[styles.itemInput, styles.amountBox, { flex: 2 }]}>
-              <Text style={styles.amountText}>AED {parseFloat(item.amount || '0').toLocaleString()}</Text>
-            </View>
+          </View>
+          <View style={styles.amountRow}>
+            <Text style={styles.amountLabel}>Total:</Text>
+            <Text style={styles.amountText}>AED {parseFloat(item.amount || '0').toLocaleString()}</Text>
           </View>
         </Card>
       ))}
@@ -395,12 +405,14 @@ const styles = StyleSheet.create({
   itemNum: { fontSize: fontSize.sm, fontFamily: fonts.semiBold, color: colors.textSecondary },
   itemInput: {
     borderWidth: 1, borderColor: colors.border, borderRadius: borderRadius.sm,
-    paddingHorizontal: spacing.sm, paddingVertical: spacing.xs + 2,
-    fontSize: fontSize.md, color: colors.text, marginBottom: spacing.xs,
+    paddingHorizontal: spacing.sm, paddingVertical: 8,
+    fontSize: fontSize.sm, color: colors.text, marginBottom: spacing.xs,
+    height: 40,
   },
   itemRow: { flexDirection: 'row' },
-  amountBox: { backgroundColor: colors.divider, justifyContent: 'center', borderColor: 'transparent' },
-  amountText: { fontSize: fontSize.md, fontFamily: fonts.semiBold, color: colors.text },
+  amountRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 4 },
+  amountLabel: { fontSize: fontSize.sm, color: colors.textSecondary, fontFamily: fonts.regular },
+  amountText: { fontSize: fontSize.md, fontFamily: fonts.bold, color: colors.primary },
   addItemBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     paddingVertical: spacing.sm, borderWidth: 1.5, borderColor: colors.primary,

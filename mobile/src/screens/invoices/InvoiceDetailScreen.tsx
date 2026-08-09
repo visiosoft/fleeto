@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform, Linking, TextInput, Modal, ActivityIndicator } from 'react-native';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
+import * as Clipboard from 'expo-clipboard';
 import { invoiceService } from '../../services/financeService';
 import LoadingScreen from '../../components/common/LoadingScreen';
 import { colors, spacing, fonts } from '../../config/theme';
@@ -33,9 +34,9 @@ const generateInvoiceHtml = (invoice: any) => {
   @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&display=swap');
   @page { margin: 0; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Bricolage Grotesque', serif; color: #333; }
+  body { font-family: 'Bricolage Grotesque', serif; color: #333; min-height: 100vh; display: flex; flex-direction: column; }
   ${brandCss}
-  .body { padding: 28px 32px 16px; }
+  .body { flex: 1; padding: 28px 32px 16px; }
   .title-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
   .title-left h2 { font-size: 26px; font-weight: 800; color: #232B38; text-transform: uppercase; }
   .title-left .inv-num { font-size: 12px; color: #666; margin-top: 2px; }
@@ -123,6 +124,13 @@ const InvoiceDetailScreen = ({ route, navigation }: any) => {
   const [invoice, setInvoice] = useState<any>(route.params.invoice || null);
   const [loading, setLoading] = useState(!route.params.invoice);
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentAmount, setPaymentAmount] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('bank_transfer');
+  const [paymentNote, setPaymentNote] = useState('');
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [receipt, setReceipt] = useState<any>(null);
+  const [receiptLoading, setReceiptLoading] = useState(false);
 
   const fetchInvoice = async () => {
     try {
@@ -138,15 +146,23 @@ const InvoiceDetailScreen = ({ route, navigation }: any) => {
     return unsub;
   }, [navigation]);
 
-  const handleDelete = () => Alert.alert('Delete Invoice', 'Are you sure?', [
-    { text: 'Cancel', style: 'cancel' },
-    {
-      text: 'Delete', style: 'destructive', onPress: async () => {
-        try { await invoiceService.delete(id); navigation.goBack(); }
-        catch { Alert.alert('Error', 'Failed to delete'); }
+  const handleDelete = () => {
+    const doDelete = async () => {
+      try { await invoiceService.delete(id); navigation.goBack(); }
+      catch {
+        if (Platform.OS === 'web') window.alert('Failed to delete');
+        else Alert.alert('Error', 'Failed to delete');
       }
-    },
-  ]);
+    };
+    if (Platform.OS === 'web') {
+      if (window.confirm('Delete this invoice?')) doDelete();
+    } else {
+      Alert.alert('Delete Invoice', 'Are you sure?', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', style: 'destructive', onPress: doDelete },
+      ]);
+    }
+  };
 
   const generateAndSharePdf = async (shareToWhatsApp = false) => {
     if (!invoice) return;
@@ -201,6 +217,83 @@ const InvoiceDetailScreen = ({ route, navigation }: any) => {
     } finally { setPdfLoading(false); }
   };
 
+  // Creates (or re-fetches) the receipt for the latest payment and opens the
+  // share sheet. Safe to call twice - the API returns the existing receipt
+  // rather than issuing a second one for the same payment.
+  const issueReceipt = async ({ prompt = false }: { prompt?: boolean } = {}) => {
+    setReceiptLoading(true);
+    try {
+      const r = await invoiceService.createReceipt(id);
+      setReceipt(r.data.data);
+      if (prompt) setShowReceiptModal(true);
+      return r.data.data;
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || 'Failed to create receipt';
+      if (Platform.OS === 'web') window.alert(msg); else Alert.alert('Error', msg);
+      return null;
+    } finally {
+      setReceiptLoading(false);
+    }
+  };
+
+  const openReceipt = async () => {
+    const data = receipt || await issueReceipt();
+    if (data) setShowReceiptModal(true);
+  };
+
+  // wa.me carries text only, so the message links to the hosted receipt page
+  // where the client can view and save the PDF themselves.
+  const sendReceiptOnWhatsApp = () => {
+    if (!receipt?.whatsappUrl) return;
+    Linking.openURL(receipt.whatsappUrl).catch(() => {
+      Alert.alert('WhatsApp unavailable', 'Could not open WhatsApp. Copy the message and send it another way.');
+    });
+  };
+
+  // Attaches the actual PDF file - this is how a receipt PDF reaches WhatsApp,
+  // since a wa.me link cannot carry an attachment.
+  const shareReceiptPdf = async () => {
+    if (!receipt?.html) return;
+    setReceiptLoading(true);
+    try {
+      if (Platform.OS === 'web') {
+        const win = window.open('', '_blank');
+        if (!win) { window.alert('Please allow pop-ups to open the receipt.'); return; }
+        win.document.write(receipt.html);
+        win.document.close();
+        win.focus();
+        setTimeout(() => win.print(), 400);
+      } else {
+        const { uri } = await Print.printToFileAsync({ html: receipt.html });
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(uri, {
+            mimeType: 'application/pdf',
+            dialogTitle: `Receipt ${receipt.receipt?.receiptNumber || ''}`,
+            UTI: 'com.adobe.pdf',
+          });
+        } else {
+          await Print.printAsync({ html: receipt.html });
+        }
+      }
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'Failed to generate receipt PDF');
+    } finally {
+      setReceiptLoading(false);
+    }
+  };
+
+  const copyReceiptMessage = async () => {
+    if (!receipt?.shareMessage) return;
+    await Clipboard.setStringAsync(receipt.shareMessage);
+    Alert.alert('Copied', 'Receipt message copied to clipboard.');
+  };
+
+  const copyReceiptLink = async () => {
+    if (!receipt?.publicUrl) return;
+    await Clipboard.setStringAsync(receipt.publicUrl);
+    Alert.alert('Copied', 'Receipt link copied to clipboard.');
+  };
+
   const handleMarkPaid = async () => {
     try {
       await invoiceService.update(id, { status: 'paid' });
@@ -210,6 +303,70 @@ const InvoiceDetailScreen = ({ route, navigation }: any) => {
       if (Platform.OS === 'web') window.alert(msg);
       else Alert.alert('Error', msg);
     }
+  };
+
+  const handleRecordPayment = async () => {
+    const amt = parseFloat(paymentAmount);
+    if (!amt || amt <= 0) {
+      if (Platform.OS === 'web') window.alert('Enter a valid amount');
+      else Alert.alert('Error', 'Enter a valid amount');
+      return;
+    }
+    try {
+      await invoiceService.addPayment(id, {
+        amountPaid: amt,
+        paymentMethod,
+        notes: paymentNote,
+      });
+      setShowPaymentModal(false);
+      setPaymentAmount('');
+      setPaymentNote('');
+      await fetchInvoice();
+
+      // A payment is only really done once the client has the receipt, so offer
+      // it straight away rather than making them hunt for it later.
+      await issueReceipt({ prompt: true });
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Failed to record payment';
+      if (Platform.OS === 'web') window.alert(msg);
+      else Alert.alert('Error', msg);
+    }
+  };
+
+  const handleSendWhatsApp = () => {
+    const phone = String(contract?.contactPhone || '').replace(/[^\d]/g, '');
+    const total = (invoice.total || 0);
+    const paid = invoice.totalPaid || 0;
+    const bal = total - paid;
+    const dueStr = invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+    const invoiceLink = `https://api.mypaperlessoffice.org/api/invoices/beta/${id}/html`;
+    const amountLine = paid > 0
+      ? `Total: AED ${total.toLocaleString()}\nPaid: AED ${paid.toLocaleString()}\nBalance Due: *AED ${bal.toLocaleString()}*`
+      : `Amount: *AED ${total.toLocaleString()}*`;
+    const msg = `Dear ${contract?.contactPerson || contract?.companyName || 'Client'},\n\nInvoice #${invoice.invoiceNumber || ''}\n${amountLine}\nDue Date: *${dueStr}*\n\nView/Download Invoice:\n${invoiceLink}\n\nPlease arrange payment at your earliest convenience.\n\nThank you,\nEfficient Move`;
+    const url = phone
+      ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`
+      : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+    Linking.openURL(url).catch(() => { });
+    invoiceService.update(id, { status: 'sent' }).then(() => fetchInvoice()).catch(() => { });
+  };
+
+  const handleSendReminder = () => {
+    const phone = String(contract?.contactPhone || '').replace(/[^\d]/g, '');
+    const bal = ((invoice.total || 0) - (invoice.totalPaid || 0)).toLocaleString();
+    const dueDate = invoice.dueDate ? new Date(invoice.dueDate) : null;
+    const dueStr = dueDate ? dueDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+    const isOverdue = dueDate ? dueDate.getTime() < Date.now() : false;
+    const invoiceLink = `https://api.mypaperlessoffice.org/api/invoices/beta/${id}/html`;
+
+    const msg = isOverdue
+      ? `Dear ${contract?.contactPerson || contract?.companyName || 'Client'},\n\n⚠️ *OVERDUE* — Invoice #${invoice.invoiceNumber || ''}\n\nThe due date (*${dueStr}*) has already passed.\nBalance Due: *AED ${bal}*\n\nPlease settle this payment immediately to avoid any service disruption.\n\nView/Download Invoice:\n${invoiceLink}\n\nThank you,\nEfficient Move`
+      : `Dear ${contract?.contactPerson || contract?.companyName || 'Client'},\n\nFriendly reminder for Invoice #${invoice.invoiceNumber || ''}\nBalance Due: *AED ${bal}*\nDue Date: *${dueStr}*\n\nView/Download Invoice:\n${invoiceLink}\n\nKindly arrange payment at your earliest.\n\nThank you,\nEfficient Move`;
+
+    const url = phone
+      ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`
+      : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+    Linking.openURL(url).catch(() => { });
   };
 
   if (loading || !invoice) return <LoadingScreen />;
@@ -222,9 +379,13 @@ const InvoiceDetailScreen = ({ route, navigation }: any) => {
 
   const pill = status === 'paid'
     ? { bg: ui.greenTint, color: ui.green, label: 'Paid' }
-    : status === 'draft'
-      ? { bg: ui.grayTint, color: ui.muted, label: 'Draft' }
-      : { bg: ui.amberTint, color: ui.amber, label: 'Unpaid' };
+    : status === 'partial'
+      ? { bg: '#fef3c7', color: '#d97706', label: 'Partially Paid' }
+      : status === 'draft'
+        ? { bg: ui.grayTint, color: ui.muted, label: 'Draft' }
+        : status === 'overdue' || (invoice.dueDate && new Date(invoice.dueDate) < new Date() && status !== 'paid')
+          ? { bg: '#fee2e2', color: '#dc2626', label: 'Overdue' }
+          : { bg: ui.amberTint, color: ui.amber, label: 'Unpaid' };
 
   const infoCells = [
     { label: 'Issue Date', value: fmtDate(invoice.issueDate || invoice.invoiceDate) },
@@ -297,14 +458,6 @@ const InvoiceDetailScreen = ({ route, navigation }: any) => {
       <View style={styles.actionsWrap}>
         <View style={styles.actionsRow}>
           <TouchableOpacity
-            style={[styles.primaryBtn, pdfLoading && { opacity: 0.6 }]}
-            onPress={() => generateAndSharePdf(true)}
-            disabled={pdfLoading}
-          >
-            <Icon name="send-outline" size={16} color="#fff" />
-            <Text style={styles.primaryBtnText}>{pdfLoading ? 'Wait...' : 'Send to Client'}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
             style={[styles.secondaryBtn, pdfLoading && { opacity: 0.6 }]}
             onPress={() => generateAndSharePdf(false)}
             disabled={pdfLoading}
@@ -315,28 +468,115 @@ const InvoiceDetailScreen = ({ route, navigation }: any) => {
         </View>
 
         {status !== 'paid' && (
-          <TouchableOpacity style={styles.markPaidBtn} onPress={handleMarkPaid}>
-            <Icon name="check-circle-outline" size={16} color={ui.green} />
-            <Text style={styles.markPaidText}>Mark as Paid</Text>
+          <View style={{ gap: 8, marginTop: 12 }}>
+            <TouchableOpacity style={styles.recordPayBtn} onPress={() => setShowPaymentModal(true)}>
+              <Icon name="cash-plus" size={16} color={ui.purple} />
+              <Text style={[styles.markPaidText, { color: ui.purple }]}>Record Payment</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.markPaidBtn} onPress={handleMarkPaid}>
+              <Icon name="check-circle-outline" size={16} color={ui.green} />
+              <Text style={styles.markPaidText}>Mark as Fully Paid</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Available whenever money has been received, including part payments */}
+        {(invoice.payments?.length > 0 || (invoice.totalPaid || 0) > 0) && (
+          <TouchableOpacity
+            style={styles.receiptBtn}
+            onPress={openReceipt}
+            disabled={receiptLoading}
+          >
+            {receiptLoading
+              ? <ActivityIndicator size="small" color="#fff" />
+              : <Icon name="receipt" size={16} color="#fff" />}
+            <Text style={styles.receiptBtnText}>
+              {receiptLoading ? 'Preparing…' : 'Receipt — send to client'}
+            </Text>
           </TouchableOpacity>
         )}
       </View>
 
-      {/* WhatsApp card */}
+      {/* WhatsApp Send */}
+      {status !== 'paid' && (
+        <TouchableOpacity
+          style={styles.whatsappCard}
+          onPress={handleSendWhatsApp}
+        >
+          <View style={styles.whatsappIcon}>
+            <Icon name="whatsapp" size={20} color="#fff" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.whatsappTitle}>Send Invoice via WhatsApp</Text>
+            <Text style={styles.whatsappSub}>Send directly to client's number</Text>
+          </View>
+          <Icon name="chevron-right" size={22} color={ui.muted} />
+        </TouchableOpacity>
+      )}
+
+      {/* WhatsApp Reminder */}
+      {status !== 'paid' && (
+        <TouchableOpacity
+          style={[styles.whatsappCard, { borderColor: '#f59e0b', borderWidth: 1 }]}
+          onPress={handleSendReminder}
+        >
+          <View style={[styles.whatsappIcon, { backgroundColor: '#f59e0b' }]}>
+            <Icon name="bell-ring-outline" size={20} color="#fff" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.whatsappTitle}>Send Payment Reminder</Text>
+            <Text style={styles.whatsappSub}>Remind client via WhatsApp</Text>
+          </View>
+          <Icon name="chevron-right" size={22} color={ui.muted} />
+        </TouchableOpacity>
+      )}
+
+      {/* Share PDF */}
       <TouchableOpacity
         style={styles.whatsappCard}
         onPress={() => generateAndSharePdf(true)}
         disabled={pdfLoading}
       >
-        <View style={styles.whatsappIcon}>
-          <Icon name="whatsapp" size={20} color="#fff" />
+        <View style={[styles.whatsappIcon, { backgroundColor: ui.purple }]}>
+          <Icon name="file-pdf-box" size={20} color="#fff" />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={styles.whatsappTitle}>Share via WhatsApp</Text>
-          <Text style={styles.whatsappSub}>Send PDF to client directly</Text>
+          <Text style={styles.whatsappTitle}>Share PDF via WhatsApp</Text>
+          <Text style={styles.whatsappSub}>Send PDF attachment to client</Text>
         </View>
         <Icon name="chevron-right" size={22} color={ui.muted} />
       </TouchableOpacity>
+
+      {/* Activity Timeline */}
+      <View style={styles.timelineCard}>
+        <Text style={styles.timelineTitle}>Activity</Text>
+        {[
+          invoice.createdAt && { icon: 'file-plus-outline', color: ui.purple, text: 'Invoice created', date: invoice.createdAt },
+          invoice.sentAt && { icon: 'send-check', color: ui.blue, text: 'Sent to client via WhatsApp', date: invoice.sentAt },
+          ...(invoice.payments || []).map((p: any) => ({
+            icon: 'cash-check', color: ui.green,
+            text: `Payment recorded — AED ${(p.amountPaid || p.amount || 0).toLocaleString()}${p.notes ? ` (${p.notes})` : ''}`,
+            date: p.date || p.paymentDate,
+          })),
+          invoice.lastReminderAt && { icon: 'bell-ring-outline', color: '#f59e0b', text: `Reminder sent${invoice.reminderCount > 1 ? ` (${invoice.reminderCount}×)` : ''}`, date: invoice.lastReminderAt },
+        ].filter(Boolean).sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((item: any, i: number) => (
+          <View key={i} style={styles.timelineRow}>
+            <View style={[styles.timelineDot, { backgroundColor: item.color }]}>
+              <Icon name={item.icon} size={12} color="#fff" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.timelineText}>{item.text}</Text>
+              <Text style={styles.timelineDate}>{new Date(item.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</Text>
+            </View>
+          </View>
+        ))}
+        {invoice.notes ? (
+          <View style={styles.notesBox}>
+            <Text style={styles.notesLabel}>Notes</Text>
+            <Text style={styles.notesText}>{invoice.notes}</Text>
+          </View>
+        ) : null}
+      </View>
 
       {/* Edit / Delete */}
       <View style={styles.footerRow}>
@@ -347,6 +587,113 @@ const InvoiceDetailScreen = ({ route, navigation }: any) => {
           <Text style={styles.deleteText}>Delete</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Record Payment Modal */}
+      <Modal visible={showPaymentModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Record Payment</Text>
+            <Text style={{ fontSize: 12, color: ui.muted, marginBottom: 12 }}>Balance: AED {balance.toLocaleString()}</Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Amount (AED)"
+              value={paymentAmount}
+              onChangeText={setPaymentAmount}
+              keyboardType="numeric"
+              placeholderTextColor={ui.muted}
+            />
+            <View style={styles.methodRow}>
+              {['bank_transfer', 'cash', 'check'].map(m => (
+                <TouchableOpacity
+                  key={m}
+                  style={[styles.methodChip, paymentMethod === m && styles.methodChipActive]}
+                  onPress={() => setPaymentMethod(m)}
+                >
+                  <Text style={[styles.methodText, paymentMethod === m && { color: '#fff' }]}>
+                    {m === 'bank_transfer' ? 'Bank' : m === 'cash' ? 'Cash' : 'Check'}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <TextInput
+              style={[styles.modalInput, { height: 60 }]}
+              placeholder="Note (optional)"
+              value={paymentNote}
+              onChangeText={setPaymentNote}
+              multiline
+              placeholderTextColor={ui.muted}
+            />
+            <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
+              <TouchableOpacity style={styles.modalCancel} onPress={() => setShowPaymentModal(false)}>
+                <Text style={{ color: ui.muted, fontFamily: fonts.semiBold }}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.modalConfirm} onPress={handleRecordPayment}>
+                <Text style={{ color: '#fff', fontFamily: fonts.semiBold }}>Save Payment</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Receipt sharing */}
+      <Modal visible={showReceiptModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Payment receipt</Text>
+            <Text style={{ fontSize: 12, color: ui.muted, marginBottom: 4 }}>
+              {receipt?.receipt?.receiptNumber
+                ? `${receipt.receipt.receiptNumber} · AED ${Number(receipt.receipt.amount || 0).toLocaleString()}`
+                : 'Preparing receipt…'}
+            </Text>
+            {!!receipt?.clientPhone && (
+              <Text style={{ fontSize: 12, color: ui.muted, marginBottom: 12 }}>
+                Client: {receipt.clientPhone}
+              </Text>
+            )}
+
+            <TouchableOpacity
+              style={[styles.receiptAction, { backgroundColor: '#25D366' }]}
+              onPress={sendReceiptOnWhatsApp}
+              disabled={!receipt?.whatsappUrl}
+            >
+              <Icon name="whatsapp" size={18} color="#fff" />
+              <Text style={styles.receiptActionText}>Send on WhatsApp</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.receiptAction, { backgroundColor: ui.purple }]}
+              onPress={shareReceiptPdf}
+              disabled={receiptLoading || !receipt?.html}
+            >
+              <Icon name="file-pdf-box" size={18} color="#fff" />
+              <Text style={styles.receiptActionText}>
+                {receiptLoading ? 'Preparing…' : 'Share PDF file'}
+              </Text>
+            </TouchableOpacity>
+
+            <Text style={styles.receiptHint}>
+              WhatsApp sends a link to the receipt. Use “Share PDF file” to attach the
+              PDF itself in WhatsApp, email, or anywhere else.
+            </Text>
+
+            <View style={{ flexDirection: 'row', gap: 16, marginTop: 14 }}>
+              <TouchableOpacity onPress={copyReceiptLink} disabled={!receipt?.publicUrl}>
+                <Text style={styles.receiptLinkBtn}>Copy link</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={copyReceiptMessage} disabled={!receipt?.shareMessage}>
+                <Text style={styles.receiptLinkBtn}>Copy message</Text>
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.modalCancel, { marginTop: 16 }]}
+              onPress={() => setShowReceiptModal(false)}
+            >
+              <Text style={{ color: ui.muted, fontFamily: fonts.semiBold }}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       <View style={{ height: 32 }} />
     </ScrollView>
@@ -379,7 +726,7 @@ const styles = StyleSheet.create({
   totalValue: { fontSize: 28, fontFamily: fonts.bold, color: ui.purple, letterSpacing: -0.5 },
   subTotalRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   subTotalText: { fontSize: 13, fontFamily: fonts.semiBold, textAlign: 'right' },
-  actionsWrap: { paddingHorizontal: 20, marginTop: 16 },
+  actionsWrap: { paddingHorizontal: 20, marginTop: 16, marginBottom: 8 },
   actionsRow: { flexDirection: 'row', gap: 10 },
   primaryBtn: {
     flex: 1, padding: 14, borderRadius: 14, backgroundColor: ui.purple,
@@ -409,9 +756,50 @@ const styles = StyleSheet.create({
   },
   whatsappTitle: { fontSize: 14, fontFamily: fonts.semiBold, color: ui.ink },
   whatsappSub: { fontSize: 12, color: ui.muted, fontFamily: fonts.regular, marginTop: 1 },
-  footerRow: { flexDirection: 'row', justifyContent: 'center', gap: 24 },
+  footerRow: { flexDirection: 'row', justifyContent: 'center', gap: 24, marginTop: 10 },
   editText: { color: ui.purple, fontSize: 13, fontFamily: fonts.semiBold },
   deleteText: { color: ui.red, fontSize: 13, fontFamily: fonts.semiBold },
+  recordPayBtn: {
+    padding: 14, borderRadius: 14, backgroundColor: ui.purpleTint,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+  },
+  timelineCard: {
+    marginHorizontal: 20, marginTop: 14, backgroundColor: '#fff',
+    borderRadius: 14, padding: 16, borderWidth: 1, borderColor: ui.cardBorder,
+  },
+  timelineTitle: { fontSize: 14, fontFamily: fonts.bold, color: ui.ink, marginBottom: 12 },
+  timelineRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 12 },
+  timelineDot: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginTop: 2 },
+  timelineText: { fontSize: 13, fontFamily: fonts.medium, color: ui.ink },
+  timelineDate: { fontSize: 11, color: ui.muted, fontFamily: fonts.regular, marginTop: 2 },
+  notesBox: { marginTop: 8, padding: 10, backgroundColor: '#f8fafc', borderRadius: 8, borderLeftWidth: 3, borderLeftColor: ui.purple },
+  notesLabel: { fontSize: 10, fontFamily: fonts.semiBold, color: ui.muted, textTransform: 'uppercase', marginBottom: 3 },
+  notesText: { fontSize: 12, fontFamily: fonts.regular, color: ui.ink, lineHeight: 18 },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
+  modalContent: { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24 },
+  modalTitle: { fontSize: 18, fontFamily: fonts.bold, color: ui.ink, marginBottom: 4 },
+  modalInput: {
+    borderWidth: 1, borderColor: ui.border, borderRadius: 10,
+    padding: 12, fontSize: 14, color: ui.ink, marginBottom: 10,
+  },
+  methodRow: { flexDirection: 'row', gap: 8, marginBottom: 10 },
+  methodChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 99, borderWidth: 1, borderColor: ui.border },
+  methodChipActive: { backgroundColor: ui.purple, borderColor: ui.purple },
+  methodText: { fontSize: 12, fontFamily: fonts.semiBold, color: ui.ink },
+  modalCancel: { flex: 1, padding: 14, borderRadius: 12, alignItems: 'center', backgroundColor: '#f1f5f9' },
+  modalConfirm: { flex: 1, padding: 14, borderRadius: 12, alignItems: 'center', backgroundColor: ui.purple },
+  receiptBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    backgroundColor: ui.purple, borderRadius: 12, paddingVertical: 13, marginTop: 12,
+  },
+  receiptBtnText: { fontSize: 14, fontFamily: fonts.bold, color: '#fff' },
+  receiptAction: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    borderRadius: 12, paddingVertical: 14, marginTop: 10,
+  },
+  receiptActionText: { fontSize: 14, fontFamily: fonts.bold, color: '#fff' },
+  receiptHint: { fontSize: 11, color: ui.muted, fontFamily: fonts.regular, marginTop: 12, lineHeight: 16 },
+  receiptLinkBtn: { fontSize: 13, fontFamily: fonts.semiBold, color: ui.purple },
 });
 
 export default InvoiceDetailScreen;

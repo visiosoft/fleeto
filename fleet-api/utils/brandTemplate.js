@@ -22,7 +22,7 @@ const brandCss = `
   .brand-logo svg { width: 92px; height: auto; }
   .brand-title { font-size: 18px; font-weight: 800; color: #16181D; letter-spacing: 0.3px; }
   .brand-tagline { font-size: 12px; color: #232B38; letter-spacing: 6px; margin-top: 5px; font-weight: 500; }
-  .brand-footer { position: relative; background: #fff; padding: 28px 40px 0; overflow: hidden; min-height: 140px; margin-top: 28px; }
+  .brand-footer { position: relative; background: #fff; padding: 28px 40px 90px; overflow: hidden; margin-top: 28px; }
   .f-contacts { position: relative; z-index: 2; display: grid; grid-template-columns: 1fr 1fr; gap: 12px 28px; max-width: 580px; margin: 0 auto; }
   .f-item { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #555; }
   .f-ic { width: 24px; height: 24px; border-radius: 50%; background: #16181D; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }

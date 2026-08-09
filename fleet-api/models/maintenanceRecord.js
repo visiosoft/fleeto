@@ -31,18 +31,29 @@ const maintenanceRecordSchema = new mongoose.Schema({
     },
     mileage: {
         type: Number,
-        required: true
+        default: 0
     },
     cost: {
         type: Number,
-        required: true
+        default: 0
     },
     technician: {
         type: String,
-        required: true
+        default: ''
     },
     notes: {
         type: String
+    },
+    // For advance scheduling: repeat monthly/yearly (oil change, tyre change, etc.)
+    recurrence: {
+        type: String,
+        enum: ['none', 'monthly', 'yearly'],
+        default: 'none'
+    },
+    // Days before the due date to start reminding
+    remindDaysBefore: {
+        type: Number,
+        default: 3
     }
 }, {
     timestamps: true

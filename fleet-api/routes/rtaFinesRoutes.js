@@ -12,6 +12,12 @@ router.get('/total', RtaFinesController.getTotalFines);
 // Get all fines from rta_fines collection
 router.get('/all', RtaFinesController.getAllFines);
 
+// Get all fines matched to the renting client, with WhatsApp reminder links
+router.get('/with-clients', RtaFinesController.getFinesWithClients);
+
+// Record that a reminder was sent for a fine
+router.post('/:id/reminder-sent', RtaFinesController.markReminderSent);
+
 // Get fines by vehicle
 router.get('/vehicle/:vehicleInfo', RtaFinesController.getFinesByVehicle);
 

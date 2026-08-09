@@ -32,9 +32,14 @@ const invoiceRoutes = require('./routes/invoiceRoutes');
 const companyRoutes = require('./routes/companyRoutes');
 const receiptRoutes = require('./routes/receiptRoutes');
 const letterheadRoutes = require('./routes/letterheadRoutes');
+const letterRoutes = require('./routes/letterRoutes');
+const staffAccountRoutes = require('./routes/staffAccountRoutes');
+const templateRoutes = require('./routes/templateRoutes');
 const whatsappRoutes = require('./routes/whatsappRoutes');
 const twilioWhatsAppRoutes = require('./routes/twilioWhatsAppRoutes');
 const rtaFinesRoutes = require('./routes/rtaFinesRoutes');
+const uploadRoutes = require('./routes/uploadRoutes');
+const { signingPageRouter, signingApiRouter } = require('./routes/contractSignatureRoutes');
 
 // Initialize Express app
 const app = express();
@@ -47,6 +52,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Serve static files from the public directory
 app.use(express.static(path.join(__dirname, '../public')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Root route - API Documentation Homepage
 app.get('/', (req, res) => {
@@ -462,11 +468,22 @@ app.use('/api/expenses', expenseRoutes);
 app.use('/api/payroll', payrollRoutes);
 app.use('/api/companies', companyRoutes);
 app.use('/api/letterheads', letterheadRoutes);
+app.use('/api/letters', letterRoutes);
+app.use('/api/staff-accounts', staffAccountRoutes);
+app.use('/api/templates', templateRoutes);
 app.use('/api/maintenance', maintenanceRoutes);
 app.use('/api/contracts', contractRoutes);
 app.use('/api/contract-templates', contractTemplateRoutes);
 app.use('/api/whatsapp', whatsappRoutes);
 app.use('/api/rta-fines', rtaFinesRoutes);
+app.use('/api/upload', uploadRoutes);
+
+// Public contract e-signature routes (token in the URL is the credential)
+app.use('/sign', signingPageRouter);
+app.use('/api/contract-signing', signingApiRouter);
+
+// Public payment receipt page (token in the URL is the credential)
+app.get('/receipt/:token', require('./controllers/paymentReceiptController').renderPublicReceipt);
 
 // Generic API routes for other collections
 const COLLECTIONS = db.COLLECTIONS;

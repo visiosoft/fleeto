@@ -1,30 +1,71 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform, Image, Linking } from 'react-native';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { costService } from '../../services/financeService';
+import { vehicleService } from '../../services/vehicleService';
 import Card from '../../components/common/Card';
 import LoadingScreen from '../../components/common/LoadingScreen';
 import { colors, spacing, borderRadius, fontSize, shadows, fonts } from '../../config/theme';
+import { API_BASE_URL } from '../../config/api';
 
 const CostDetailScreen = ({ route, navigation }: any) => {
   const { id } = route.params;
   const [cost, setCost] = useState<any>(route.params.cost || null);
+  const [vehicleName, setVehicleName] = useState<string | null>(null);
   const [loading, setLoading] = useState(!route.params.cost);
 
+  const fetchCost = async () => {
+    try {
+      const res = await costService.getById(id);
+      setCost(res.data?.data || res.data);
+    } catch (e) { console.error(e); }
+    finally { setLoading(false); }
+  };
+
   useEffect(() => {
-    if (!route.params.cost) {
-      setCost(route.params.cost);
-      setLoading(false);
-    }
+    if (!route.params.cost) fetchCost();
   }, []);
 
-  const handleDelete = () => Alert.alert('Delete Cost', 'Are you sure?', [
-    { text: 'Cancel', style: 'cancel' },
-    { text: 'Delete', style: 'destructive', onPress: async () => {
+  useEffect(() => {
+    const unsub = navigation.addListener('focus', () => {
+      if (route.params.cost) fetchCost();
+    });
+    return unsub;
+  }, [navigation]);
+
+  useEffect(() => {
+    if (!cost?.vehicleId) return;
+    if (cost.vehicleName || cost.vehiclePlate) {
+      setVehicleName(cost.vehicleName || cost.vehiclePlate);
+      return;
+    }
+    vehicleService.getById(cost.vehicleId).then((res: any) => {
+      const v = res.data?.data || res.data;
+      if (v) {
+        const plate = v.plateNumber || v.licensePlate || '';
+        const name = v.name || v.vehicleName || [v.make, v.model].filter(Boolean).join(' ') || '';
+        setVehicleName(plate && name ? `${plate} - ${name}` : plate || name || 'Vehicle');
+      }
+    }).catch(() => { });
+  }, [cost]);
+
+  const handleDelete = () => {
+    const doDelete = async () => {
       try { await costService.delete(id); navigation.goBack(); }
-      catch { Alert.alert('Error', 'Failed to delete'); }
-    }},
-  ]);
+      catch {
+        if (Platform.OS === 'web') window.alert('Failed to delete');
+        else Alert.alert('Error', 'Failed to delete');
+      }
+    };
+    if (Platform.OS === 'web') {
+      if (window.confirm('Delete this expense?')) doDelete();
+    } else {
+      Alert.alert('Delete Cost', 'Are you sure?', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', style: 'destructive', onPress: doDelete },
+      ]);
+    }
+  };
 
   if (loading || !cost) return <LoadingScreen />;
 
@@ -34,8 +75,8 @@ const CostDetailScreen = ({ route, navigation }: any) => {
     { label: 'Category', value: cost.category },
     { label: 'Date', value: cost.date },
     { label: 'Payment Method', value: cost.paymentMethod },
-    { label: 'Vehicle', value: cost.vehiclePlate || cost.vehicleId },
-    { label: 'Driver', value: cost.driverName || cost.driverId },
+    { label: 'Vehicle', value: vehicleName },
+    { label: 'Driver', value: cost.driverName || (cost.driverId ? undefined : null) },
   ].filter(r => r.value);
 
   return (
@@ -66,6 +107,33 @@ const CostDetailScreen = ({ route, navigation }: any) => {
           </View>
         ))}
       </Card>
+
+      {/* Receipts / Attachments */}
+      {(cost.receipts?.length > 0 || cost.receiptUrl) && (
+        <Card style={{ marginHorizontal: spacing.md, marginTop: spacing.md }}>
+          <Text style={styles.sectionTitle}>Receipts</Text>
+          <View style={styles.receiptGrid}>
+            {cost.receipts?.map((r: any, i: number) => {
+              const imgUrl = r.url?.startsWith('http') ? r.url : `${API_BASE_URL.replace('/api', '')}${r.url}`;
+              return (
+                <TouchableOpacity key={i} onPress={() => Linking.openURL(imgUrl)} activeOpacity={0.8}>
+                  <Image source={{ uri: imgUrl }} style={styles.receiptImg} />
+                  {r.fileName && <Text style={styles.receiptName} numberOfLines={1}>{r.fileName}</Text>}
+                </TouchableOpacity>
+              );
+            })}
+            {!cost.receipts?.length && cost.receiptUrl && (() => {
+              const imgUrl = cost.receiptUrl.startsWith('http') ? cost.receiptUrl : `${API_BASE_URL.replace('/api', '')}${cost.receiptUrl}`;
+              return (
+                <TouchableOpacity onPress={() => Linking.openURL(imgUrl)} activeOpacity={0.8}>
+                  <Image source={{ uri: imgUrl }} style={styles.receiptImg} />
+                </TouchableOpacity>
+              );
+            })()}
+          </View>
+        </Card>
+      )}
+
       <View style={{ height: spacing.xxl }} />
     </ScrollView>
   );
@@ -84,7 +152,7 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: fontSize.lg, fontFamily: fonts.semiBold, color: 'rgba(255,255,255,0.8)' },
   amount: { fontSize: 28, fontFamily: fonts.extraBold, color: colors.white, marginTop: 4 },
-  actions: { flexDirection: 'row', justifyContent: 'center', padding: spacing.md, gap: spacing.sm, marginTop: -spacing.md },
+  actions: { flexDirection: 'row', justifyContent: 'center', padding: spacing.md, gap: spacing.sm, marginTop: spacing.md, marginBottom: spacing.sm },
   editBtn: {
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: colors.primary, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm,
@@ -102,6 +170,9 @@ const styles = StyleSheet.create({
   border: { borderBottomWidth: 1, borderBottomColor: colors.divider },
   label: { fontSize: fontSize.sm, fontFamily: fonts.regular, color: colors.textSecondary },
   val: { fontSize: fontSize.sm, fontFamily: fonts.semiBold, color: colors.text },
+  receiptGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  receiptImg: { width: 100, height: 100, borderRadius: borderRadius.md, backgroundColor: colors.divider },
+  receiptName: { fontSize: 11, fontFamily: fonts.regular, color: colors.textSecondary, width: 100, marginTop: 4 },
 });
 
 export default CostDetailScreen;

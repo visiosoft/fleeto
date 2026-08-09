@@ -79,10 +79,12 @@ exports.createMaintenanceRecord = async (req, res) => {
             service: req.body.service,
             date: req.body.date,
             status: req.body.status || MAINTENANCE_STATUS.PENDING,
-            mileage: req.body.mileage,
-            cost: req.body.cost,
-            technician: req.body.technician,
-            notes: req.body.notes
+            mileage: req.body.mileage || 0,
+            cost: req.body.cost || 0,
+            technician: req.body.technician || '',
+            notes: req.body.notes,
+            recurrence: req.body.recurrence || 'none',
+            remindDaysBefore: req.body.remindDaysBefore ?? 3
         });
         const savedRecord = await newRecord.save();
         res.status(201).json(savedRecord);
@@ -104,9 +106,27 @@ exports.updateMaintenanceStatus = async (req, res) => {
             { status },
             { new: true }
         );
-        
+
         if (!updatedRecord) {
             return res.status(404).json({ message: 'Maintenance record not found' });
+        }
+
+        // Recurring maintenance: completing it schedules the next occurrence
+        if (status === MAINTENANCE_STATUS.COMPLETED && updatedRecord.recurrence && updatedRecord.recurrence !== 'none') {
+            const nextDate = new Date(updatedRecord.date);
+            if (updatedRecord.recurrence === 'monthly') nextDate.setMonth(nextDate.getMonth() + 1);
+            else nextDate.setFullYear(nextDate.getFullYear() + 1);
+            await new MaintenanceRecord({
+                vehicleName: updatedRecord.vehicleName,
+                service: updatedRecord.service,
+                date: nextDate,
+                status: MAINTENANCE_STATUS.SCHEDULED,
+                mileage: 0,
+                cost: 0,
+                technician: updatedRecord.technician || '',
+                notes: updatedRecord.notes,
+                recurrence: updatedRecord.recurrence
+            }).save();
         }
         res.status(200).json(updatedRecord);
     } catch (error) {

@@ -1,28 +1,28 @@
 {
   "expo": {
-    "name": "Efficient Fleet Manager",
+    "name": "FleetOZ",
     "slug": "fleeto-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-    "scheme": "fleeto",
+    "scheme": "fleetoz",
     "splash": {
-      "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#1976D2"
+      "backgroundColor": "#1A0B33"
     },
+    "backgroundColor": "#1A0B33",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.fleeto.mobile"
+      "bundleIdentifier": "com.fleetoz.mobile"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#1976D2"
+        "backgroundColor": "#1A0B33"
       },
-      "package": "com.fleeto.mobile"
+      "package": "com.fleetoz.mobile"
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -30,7 +30,8 @@
     },
     "plugins": [
       "expo-font",
-      "expo-asset"
+      "expo-asset",
+      "@react-native-community/datetimepicker"
     ],
     "extra": {
       "eas": {

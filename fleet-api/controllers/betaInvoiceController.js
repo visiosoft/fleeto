@@ -184,7 +184,7 @@ exports.createInvoice = async (req, res) => {
             });
         }
 
-        const { contractId, invoiceNumber, issueDate, dueDate, items, includeVat, notes } = req.body;
+        const { contractId, invoiceNumber, issueDate, dueDate, items, includeVat, notes, termsAndConditions, customerNotes } = req.body;
 
         // Validate required fields
         if (!contractId || !invoiceNumber || !items || items.length === 0) {
@@ -236,6 +236,8 @@ exports.createInvoice = async (req, res) => {
             total,
             includeVat: includeVat !== false,
             notes: notes || '',
+            termsAndConditions: termsAndConditions || '',
+            customerNotes: customerNotes || '',
             status: 'draft',
             payments: [],
             totalPaid: 0,
@@ -289,7 +291,7 @@ exports.updateInvoice = async (req, res) => {
             });
         }
 
-        const allowedUpdates = ['items', 'includeVat', 'notes', 'status', 'issueDate', 'dueDate'];
+        const allowedUpdates = ['items', 'includeVat', 'notes', 'termsAndConditions', 'customerNotes', 'status', 'issueDate', 'dueDate'];
         const updates = Object.keys(req.body).filter(key => allowedUpdates.includes(key));
 
         const updateData = {};
@@ -748,13 +750,13 @@ exports.generatePdf = async (req, res) => {
   @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&display=swap');
   @page { margin: 0; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Bricolage Grotesque', serif; color: #333; }
+  body { font-family: 'Bricolage Grotesque', serif; color: #333; min-height: 100vh; display: flex; flex-direction: column; }
 
   /* === BRAND HEADER/FOOTER === */
   ${brandCss}
 
   /* === BODY === */
-  .body { padding: 36px 40px 20px; }
+  .body { flex: 1; padding: 36px 40px 20px; }
 
   /* === INVOICE TITLE + COMPANY INFO === */
   .title-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px; }

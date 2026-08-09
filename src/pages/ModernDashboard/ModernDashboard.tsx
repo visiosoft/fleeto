@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { parse } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import { sortFinesNewestFirst } from '../../utils/fineDate';
 import { DashboardLayout } from '../../components/modern/DashboardLayout';
 import { KPICard } from '../../components/modern/KPICard';
 import { ChartCard } from '../../components/modern/ChartCard';
@@ -301,9 +301,7 @@ export const ModernDashboard: React.FC = () => {
         if (response.data?.status === 'success' && response.data.data?.fines) {
           const fines = response.data.data.fines || [];
 
-          const latestThree = [...fines] // prevent mutation
-            .sort((a, b) => new Date(b.date_time).getTime() - new Date(a.date_time).getTime())
-            .slice(0, 3);
+          const latestThree = sortFinesNewestFirst(fines).slice(0, 3);
 
           setRecentFines(latestThree);
         }
@@ -487,15 +485,8 @@ export const ModernDashboard: React.FC = () => {
   ];
 
   // Map recent fines to alerts format
-  // Helper to parse date_time string (e.g. '19 Feb 2026, 9:57 am')
-  // Robust date parser for 'dd MMM yyyy, h:mm a' format
-  const parseDateTime = (dt: string): number => {
-    if (!dt) return 0;
-    const parsed = parse(dt, 'dd MMM yyyy, h:mm a', new Date());
-    return isNaN(parsed.getTime()) ? 0 : parsed.getTime();
-  };
-  const sortedFines = recentFines;
-  console.log(recentFines)
+  // date_time arrives as a display string (e.g. '19 Feb 2026, 9:57 am'), so sort on parsed dates
+  const sortedFines = sortFinesNewestFirst(recentFines);
   const alerts = sortedFines.length > 0 ? sortedFines.map((fine, index) => ({
     id: fine._id || `fine-${index}`,
     type: 'error' as const,

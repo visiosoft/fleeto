@@ -2,10 +2,20 @@ const express = require('express');
 const router = express.Router();
 const invoiceController = require('../controllers/invoiceController');
 const betaInvoiceController = require('../controllers/betaInvoiceController');
+const invoiceWhatsAppController = require('../controllers/invoiceWhatsAppController');
+const paymentReceiptController = require('../controllers/paymentReceiptController');
 const { authenticate } = require('../middleware/auth');
 
-// Apply authentication middleware to all invoice routes
+// Public route — allows clients to view invoice via shared link
+router.get('/beta/:id/html', betaInvoiceController.getInvoiceHtml);
+
+// Apply authentication middleware to all other invoice routes
 router.use(authenticate);
+
+// Upcoming invoices & WhatsApp
+router.get('/upcoming', invoiceWhatsAppController.getUpcoming);
+router.post('/:invoiceId/whatsapp/send', invoiceWhatsAppController.sendViaWhatsApp);
+router.post('/:invoiceId/whatsapp/remind', invoiceWhatsAppController.sendReminder);
 
 // Beta Invoice Routes (new system with proper calculations)
 router.get('/beta/stats', betaInvoiceController.getInvoiceStats);
@@ -17,6 +27,8 @@ router.delete('/beta/:id', betaInvoiceController.deleteInvoice);
 router.get('/beta/:id/pdf', betaInvoiceController.generatePdf);
 router.get('/beta/:id/html', betaInvoiceController.getInvoiceHtml);
 router.post('/beta/:id/payments', betaInvoiceController.addPayment);
+// Issue a shareable receipt for a payment (defaults to the most recent one)
+router.post('/beta/:id/receipt', paymentReceiptController.createReceiptForPayment);
 router.put('/beta/:id/payments/:paymentId', betaInvoiceController.updatePayment);
 router.delete('/beta/:id/payments/:paymentId', betaInvoiceController.deletePayment);
 

@@ -1,7 +1,7 @@
 {
-  "name": "Fleet Management System",
-  "short_name": "Fleet",
-  "description": "Fleet management system for vehicle tracking and monitoring",
+  "name": "FleetOZ",
+  "short_name": "FleetOZ",
+  "description": "FleetOZ - Fleet management system for vehicle tracking and monitoring",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -58,6 +58,9 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["business", "productivity"],
+  "categories": [
+    "business",
+    "productivity"
+  ],
   "prefer_related_applications": false
 }

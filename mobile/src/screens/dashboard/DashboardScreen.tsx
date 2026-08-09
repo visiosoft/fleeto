@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Linking,
+  View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Linking, DeviceEventEmitter, Modal, FlatList,
 } from 'react-native';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { dashboardService } from '../../services/dashboardService';
 import { contractService } from '../../services/contractService';
+import { rtaFinesService, letterService, maintenanceService, staffAccountService } from '../../services/otherServices';
+import { sortFinesNewestFirst } from '../../utils/fineDate';
+import { invoiceService } from '../../services/financeService';
 import { useAuth } from '../../contexts/AuthContext';
 import LoadingScreen from '../../components/common/LoadingScreen';
 import { colors, spacing, fonts } from '../../config/theme';
@@ -26,18 +29,55 @@ const DashboardScreen = ({ navigation }: any) => {
   const [invoiceStats, setInvoiceStats] = useState<any>(null);
   const [monthlyExpenses, setMonthlyExpenses] = useState(0);
   const [reminders, setReminders] = useState<any[]>([]);
+  const [recentFines, setRecentFines] = useState<any[]>([]);
+  const [recentLetters, setRecentLetters] = useState<any[]>([]);
+  const [dueMaintenance, setDueMaintenance] = useState<any[]>([]);
+  const [staffCash, setStaffCash] = useState(0);
+  const [upcomingInvoices, setUpcomingInvoices] = useState<any[]>([]);
+  const [unpaidInvoices, setUnpaidInvoices] = useState<any[]>([]);
+  const [showRemindersModal, setShowRemindersModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
-      const [countsRes, contractRes, invoiceRes, expenseRes, contractsRes] = await Promise.all([
+      const [countsRes, contractRes, invoiceRes, expenseRes, contractsRes, upcomingRes, finesRes] = await Promise.all([
         dashboardService.getActiveCounts(),
         dashboardService.getContractStats(),
         dashboardService.getInvoiceStats().catch(() => null),
         dashboardService.getExpenseSummary().catch(() => null),
         contractService.getAll().catch(() => null),
+        invoiceService.getUpcoming().catch(() => null),
+        rtaFinesService.getWithClients().catch(() => null),
       ]);
+      const lettersRes = await letterService.getAll().catch(() => null);
+
+      // Total company cash currently held by staff
+      const staffRes = await staffAccountService.getAll().catch(() => null);
+      const staffList = staffRes?.data?.data || staffRes?.data || [];
+      if (Array.isArray(staffList)) {
+        setStaffCash(staffList.reduce((sum: number, s: any) => sum + (Number(s.balance) || 0), 0));
+      }
+
+      // Scheduled maintenance that is due soon or overdue
+      const maintRes = await maintenanceService.getAll().catch(() => null);
+      const maintList = maintRes?.data?.data || maintRes?.data || [];
+      if (Array.isArray(maintList)) {
+        const soon = new Date();
+        soon.setDate(soon.getDate() + 7);
+        setDueMaintenance(
+          maintList
+            .filter((m: any) => ['Scheduled', 'Pending', 'In Progress'].includes(m.status) && new Date(m.date) <= soon)
+            .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())
+            .slice(0, 4)
+        );
+      }
+
+      const allFines = sortFinesNewestFirst(finesRes?.data?.data?.fines || []);
+      setRecentFines(allFines.slice(0, 3));
+
+      const allLetters = lettersRes?.data?.data || lettersRes?.data || [];
+      setRecentLetters(Array.isArray(allLetters) ? allLetters.slice(0, 3) : []);
       const counts = countsRes.data?.data || countsRes.data || {};
       setStats({
         totalVehicles: counts.totalActiveVehicles ?? (Array.isArray(counts.activeVehicles) ? counts.activeVehicles.length : counts.activeVehicles) ?? 0,
@@ -65,6 +105,25 @@ const DashboardScreen = ({ navigation }: any) => {
           .slice(0, 4);
         setReminders(ending);
       }
+
+      // Upcoming invoices
+      const upcomingData = upcomingRes?.data?.data || upcomingRes?.data || [];
+      setUpcomingInvoices(Array.isArray(upcomingData) ? upcomingData.slice(0, 5) : []);
+
+      // Unpaid invoices from this month onwards
+      try {
+        const invRes = await invoiceService.getAll();
+        const allInvoices = invRes.data?.data || invRes.data || [];
+        const now = new Date();
+        const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const unpaid = allInvoices.filter((inv: any) => {
+          const s = (inv.status || '').toLowerCase();
+          if (s === 'paid' || s === 'draft') return false;
+          const invDate = new Date(inv.issueDate || inv.createdAt);
+          return invDate >= thisMonth;
+        });
+        setUnpaidInvoices(unpaid);
+      } catch { }
     } catch (error) {
       console.error('Dashboard fetch error:', error);
     } finally {
@@ -74,6 +133,13 @@ const DashboardScreen = ({ navigation }: any) => {
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  // Top-bar bell opens the reminders modal
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener('openReminders', () => setShowRemindersModal(true));
+    return () => sub.remove();
+  }, []);
+  useEffect(() => { const unsub = navigation.addListener('focus', fetchData); return unsub; }, [navigation, fetchData]);
   const onRefresh = () => { setRefreshing(true); fetchData(); };
 
   if (loading) return <LoadingScreen message="Loading dashboard..." />;
@@ -87,10 +153,14 @@ const DashboardScreen = ({ navigation }: any) => {
   const fmtK = (n: number) => n >= 1000 ? `${(n / 1000).toFixed(0)}K` : n.toLocaleString();
 
   const quickActions = [
-    { icon: 'file-document-outline', label: 'New Contract', sub: 'Create & send', screen: 'Contracts', color: ui.purple, bg: ui.purpleTint },
-    { icon: 'currency-usd', label: 'New Invoice', sub: 'Generate bill', screen: 'Invoices', color: ui.green, bg: ui.greenTint },
-    { icon: 'flag-outline', label: 'Add Expense', sub: 'Log cost', screen: 'Costs', color: ui.orange, bg: ui.orangeTint },
-    { icon: 'check-circle-outline', label: 'Maintenance', sub: 'Schedule', screen: 'Maintenance', color: ui.blue, bg: ui.blueTint },
+    // These open list screens, so they are named for where they go rather than
+    // for an action they do not perform.
+    { icon: 'file-document-outline', label: 'Contracts', sub: 'View all', screen: 'Contracts', color: ui.purple, bg: ui.purpleTint },
+    { icon: 'currency-usd', label: 'Invoices', sub: 'View all', screen: 'Invoices', color: ui.green, bg: ui.greenTint },
+    { icon: 'flag-outline', label: 'Expenses', sub: 'View all', screen: 'Costs', color: ui.orange, bg: ui.orangeTint },
+    { icon: 'check-circle-outline', label: 'Maintenance', sub: 'View all', screen: 'Maintenance', color: ui.blue, bg: ui.blueTint },
+    { icon: 'email-edit-outline', label: 'Letterhead', sub: 'Write letter', screen: 'Letterheads', color: ui.purple, bg: ui.lilac },
+    { icon: 'account-cash-outline', label: 'Accounts', sub: 'Staff cash', screen: 'StaffAccounts', color: '#0891b2', bg: 'rgba(8,145,178,0.08)' },
   ];
 
   const fmtEnd = (d: any) => {
@@ -110,7 +180,25 @@ const DashboardScreen = ({ navigation }: any) => {
     const url = phone
       ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`
       : `https://wa.me/?text=${encodeURIComponent(msg)}`;
-    Linking.openURL(url).catch(() => {});
+    Linking.openURL(url).catch(() => { });
+  };
+
+  const sendInvoiceWhatsApp = (item: any) => {
+    const phone = String(item.contactPhone || '').replace(/[^\d]/g, '');
+    const msg = `Dear ${item.contactPerson || item.companyName || 'Client'},\n\nYour invoice for ${item.month} (AED ${item.amount?.toLocaleString()}) is due. Please arrange payment.\n\nThank you,\nEfficient Move`;
+    const url = phone
+      ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`
+      : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+    Linking.openURL(url).catch(() => { });
+  };
+
+  const sendInvoiceReminder = (item: any) => {
+    const phone = String(item.contactPhone || '').replace(/[^\d]/g, '');
+    const msg = `Dear ${item.contactPerson || item.companyName || 'Client'},\n\nFriendly reminder: your invoice for ${item.month} (AED ${item.amount?.toLocaleString()}) is still pending. Kindly arrange payment.\n\nThank you,\nEfficient Move`;
+    const url = phone
+      ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`
+      : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+    Linking.openURL(url).catch(() => { });
   };
 
   return (
@@ -124,44 +212,6 @@ const DashboardScreen = ({ navigation }: any) => {
         <View>
           <Text style={styles.greeting}>{greeting()}</Text>
           <Text style={styles.companyTitle}>{company?.name || 'My Fleet'}</Text>
-        </View>
-        <View style={styles.headerActions}>
-          <TouchableOpacity style={styles.bellBtn}>
-            <Icon name="bell-outline" size={18} color={ui.purple} />
-          </TouchableOpacity>
-          <LinearGradient colors={['#5B2BC9', '#7C4DFF']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.avatar}>
-            <Text style={styles.avatarText}>{(user?.name || 'U')[0].toUpperCase()}</Text>
-          </LinearGradient>
-        </View>
-      </View>
-
-      {/* Company Selector */}
-      <View style={styles.companyCard}>
-        <View style={styles.companyLeft}>
-          <View style={styles.companyIcon}>
-            <Icon name="home-outline" size={15} color={colors.white} />
-          </View>
-          <View>
-            <Text style={styles.companyName}>{company?.name || 'My Company'}</Text>
-            <Text style={styles.companySub}>Active company</Text>
-          </View>
-        </View>
-        <Icon name="chevron-down" size={18} color={ui.muted} />
-      </View>
-
-      {/* Stats Row */}
-      <View style={styles.statsRow}>
-        <View style={styles.statCard}>
-          <Text style={[styles.statNum, { color: ui.purple }]}>{stats?.totalVehicles ?? 0}</Text>
-          <Text style={styles.statLabel}>Active vans</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statNum}>{stats?.totalDrivers ?? 0}</Text>
-          <Text style={styles.statLabel}>Drivers</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statNum}>{activeContracts}</Text>
-          <Text style={styles.statLabel}>Contracts</Text>
         </View>
       </View>
 
@@ -182,18 +232,18 @@ const DashboardScreen = ({ navigation }: any) => {
           <Text style={styles.revenueBadgeText}>vs last month</Text>
         </View>
         <View style={styles.revenueStatsRow}>
-          <View style={styles.revenueStatBox}>
+          <TouchableOpacity style={styles.revenueStatBox} onPress={() => navigation.navigate('Contracts')} activeOpacity={0.7}>
             <Text style={styles.revenueStatLabel}>Contracts</Text>
             <Text style={styles.revenueStatValue}>{activeContracts}</Text>
-          </View>
-          <View style={styles.revenueStatBox}>
-            <Text style={styles.revenueStatLabel}>Invoices Due</Text>
-            <Text style={styles.revenueStatValue}>{invoicesDue}</Text>
-          </View>
-          <View style={styles.revenueStatBox}>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.revenueStatBox} onPress={() => navigation.navigate('StaffAccounts')} activeOpacity={0.7}>
+            <Text style={styles.revenueStatLabel}>Cash with Staff</Text>
+            <Text style={styles.revenueStatValue}>{fmtK(staffCash)}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.revenueStatBox} onPress={() => navigation.navigate('CostForm')} activeOpacity={0.7}>
             <Text style={styles.revenueStatLabel}>Expenses</Text>
             <Text style={styles.revenueStatValue}>{fmtK(monthlyExpenses)}</Text>
-          </View>
+          </TouchableOpacity>
         </View>
       </LinearGradient>
 
@@ -218,8 +268,69 @@ const DashboardScreen = ({ navigation }: any) => {
         ))}
       </View>
 
+      {/* Upcoming Invoices */}
+      <Text style={styles.sectionTitle}>Upcoming Invoices</Text>
+      <View style={{ gap: 8 }}>
+        {upcomingInvoices.length === 0 ? (
+          <View style={styles.activityCard}>
+            <View style={[styles.activityIcon, { backgroundColor: ui.greenTint }]}>
+              <Icon name="check-circle-outline" size={16} color={ui.green} />
+            </View>
+            <View style={styles.activityInfo}>
+              <Text style={styles.activityText}>No upcoming invoices</Text>
+              <Text style={styles.activityTime}>All invoices are up to date</Text>
+            </View>
+          </View>
+        ) : upcomingInvoices.map((item, i) => {
+          const isPaid = item.invoiceStatus === 'paid';
+          const isSent = item.invoiceStatus === 'sent';
+          const isGenerated = item.invoiceExists && !isSent && !isPaid;
+          const statusLabel = isPaid ? 'Paid' : isSent ? 'Sent' : isGenerated ? 'Invoice Generated' : 'Pending';
+          const iconBg = isPaid ? ui.greenTint : isSent ? ui.blueTint : isGenerated ? '#e0f2fe' : ui.amberTint;
+          const iconColor = isPaid ? ui.green : isSent ? ui.blue : isGenerated ? '#0284c7' : ui.amber;
+          const iconName = isPaid ? 'check-circle' : isSent ? 'send-check' : isGenerated ? 'file-document-check-outline' : 'file-clock-outline';
+
+          return (
+            <TouchableOpacity
+              key={`${item.contractId}-${i}`}
+              style={[styles.activityCard, isGenerated && { borderColor: '#bae6fd', borderWidth: 1 }]}
+              onPress={() => item.invoiceId
+                ? navigation.navigate('InvoiceDetail', { id: item.invoiceId })
+                : navigation.navigate('InvoiceForm', { contractId: item.contractId })
+              }
+              activeOpacity={0.7}
+            >
+              <View style={[styles.activityIcon, { backgroundColor: iconBg }]}>
+                <Icon name={iconName} size={16} color={iconColor} />
+              </View>
+              <View style={styles.activityInfo}>
+                <Text style={styles.activityText} numberOfLines={1}>
+                  {item.companyName} — {item.month}
+                </Text>
+                <Text style={styles.activityTime} numberOfLines={1}>
+                  AED {item.amount?.toLocaleString()} • Due {new Date(item.dueDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} • {statusLabel}
+                </Text>
+              </View>
+              {isPaid ? (
+                <View style={[styles.activityIcon, { backgroundColor: ui.greenTint }]}>
+                  <Icon name="check" size={18} color={ui.green} />
+                </View>
+              ) : !item.invoiceExists ? (
+                <View style={[styles.activityIcon, { backgroundColor: ui.purpleTint }]}>
+                  <Icon name="plus-circle-outline" size={18} color={ui.purple} />
+                </View>
+              ) : (
+                <View style={[styles.activityIcon, { backgroundColor: ui.blueTint }]}>
+                  <Icon name="eye-outline" size={18} color={ui.blue} />
+                </View>
+              )}
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
       {/* Reminders — contracts ending soon */}
-      <Text style={styles.sectionTitle}>Reminders</Text>
+      <Text style={styles.sectionTitle}>Contract Expiry Reminders</Text>
       <View style={{ gap: 8 }}>
         {reminders.length === 0 ? (
           <View style={styles.activityCard}>
@@ -257,7 +368,211 @@ const DashboardScreen = ({ navigation }: any) => {
         ))}
       </View>
 
+      {/* Recent Fines */}
+      <View style={styles.sectionRow}>
+        <Text style={[styles.sectionTitle, { marginTop: 0, marginBottom: 0 }]}>Recent Fines</Text>
+        <TouchableOpacity onPress={() => navigation.navigate('RTAFines')}>
+          <Text style={styles.seeAll}>See all</Text>
+        </TouchableOpacity>
+      </View>
+      <View style={{ gap: 8 }}>
+        {recentFines.length === 0 ? (
+          <View style={styles.activityCard}>
+            <View style={[styles.activityIcon, { backgroundColor: ui.greenTint }]}>
+              <Icon name="check-circle-outline" size={16} color={ui.green} />
+            </View>
+            <View style={styles.activityInfo}>
+              <Text style={styles.activityText}>No fines</Text>
+              <Text style={styles.activityTime}>All clear — no RTA fines recorded</Text>
+            </View>
+          </View>
+        ) : recentFines.map((f: any, i: number) => (
+          <TouchableOpacity
+            key={f._id || i}
+            style={styles.activityCard}
+            onPress={() => navigation.navigate('RTAFines')}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.activityIcon, { backgroundColor: ui.redTint }]}>
+              <Icon name="car-emergency" size={16} color={ui.red} />
+            </View>
+            <View style={styles.activityInfo}>
+              <Text style={styles.activityText} numberOfLines={1}>
+                {f.matchedVehicle?.licensePlate || f.displayPlate || f.number_plate || 'Vehicle'}
+              </Text>
+              <Text style={styles.activityTime} numberOfLines={1}>
+                {[f.vehicle_info || f.source, f.date_time].filter(Boolean).join(' • ') || 'RTA fine'}
+              </Text>
+            </View>
+            <Text style={styles.fineAmount}>
+              AED {(() => { const m = String(f.amountValue ?? f.amount ?? '').match(/([\d,]+(?:\.\d+)?)/); return m ? parseFloat(m[1].replace(/,/g, '')).toLocaleString() : '0'; })()}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {/* Scheduled Maintenance alerts */}
+      <View style={styles.sectionRow}>
+        <Text style={[styles.sectionTitle, { marginTop: 0, marginBottom: 0 }]}>Scheduled Tasks</Text>
+        <TouchableOpacity onPress={() => navigation.navigate('Maintenance')}>
+          <Text style={styles.seeAll}>See all</Text>
+        </TouchableOpacity>
+      </View>
+      <View style={{ gap: 8 }}>
+        {dueMaintenance.length === 0 ? (
+          <TouchableOpacity style={styles.activityCard} onPress={() => navigation.navigate('Maintenance')} activeOpacity={0.7}>
+            <View style={[styles.activityIcon, { backgroundColor: ui.greenTint }]}>
+              <Icon name="check-circle-outline" size={16} color={ui.green} />
+            </View>
+            <View style={styles.activityInfo}>
+              <Text style={styles.activityText}>No tasks due</Text>
+              <Text style={styles.activityTime}>Nothing scheduled in the next 7 days</Text>
+            </View>
+          </TouchableOpacity>
+        ) : dueMaintenance.map((m: any, i: number) => {
+          const days = Math.ceil((new Date(m.date).getTime() - Date.now()) / 86400000);
+          const late = days < 0;
+          return (
+            <TouchableOpacity
+              key={m._id || i}
+              style={styles.activityCard}
+              onPress={() => navigation.navigate('Maintenance')}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.activityIcon, { backgroundColor: late ? ui.redTint : ui.amberTint }]}>
+                <Icon name="wrench-clock" size={16} color={late ? ui.red : ui.amber} />
+              </View>
+              <View style={styles.activityInfo}>
+                <Text style={styles.activityText} numberOfLines={1}>{m.service} — {m.vehicleName}</Text>
+                <Text style={[styles.activityTime, late && { color: ui.red }]} numberOfLines={1}>
+                  {late
+                    ? `Overdue by ${Math.abs(days)} day${Math.abs(days) !== 1 ? 's' : ''}`
+                    : days === 0 ? 'Due today' : `Due in ${days} day${days !== 1 ? 's' : ''}`}
+                  {' • '}{fmtEnd(m.date)}
+                </Text>
+              </View>
+              <View style={[styles.statusPill, { backgroundColor: late ? ui.redTint : ui.amberTint }]}>
+                <Text style={[styles.statusText, { color: late ? ui.red : ui.amber }]}>
+                  {late ? 'Overdue' : 'Due'}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      {/* Recent Letters */}
+      <View style={styles.sectionRow}>
+        <Text style={[styles.sectionTitle, { marginTop: 0, marginBottom: 0 }]}>Recent Letters</Text>
+        <TouchableOpacity onPress={() => navigation.navigate('Letterheads')}>
+          <Text style={styles.seeAll}>See all</Text>
+        </TouchableOpacity>
+      </View>
+      <View style={{ gap: 8 }}>
+        {recentLetters.length === 0 ? (
+          <TouchableOpacity style={styles.activityCard} onPress={() => navigation.navigate('Letterheads')} activeOpacity={0.7}>
+            <View style={[styles.activityIcon, { backgroundColor: ui.lilac }]}>
+              <Icon name="email-edit-outline" size={16} color={ui.purple} />
+            </View>
+            <View style={styles.activityInfo}>
+              <Text style={styles.activityText}>No letters yet</Text>
+              <Text style={styles.activityTime}>Tap to write a letter on your letterhead</Text>
+            </View>
+          </TouchableOpacity>
+        ) : recentLetters.map((l: any, i: number) => (
+          <TouchableOpacity
+            key={l._id || i}
+            style={styles.activityCard}
+            onPress={() => navigation.navigate('Letterheads')}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.activityIcon, { backgroundColor: ui.lilac }]}>
+              <Icon name="email-outline" size={16} color={ui.purple} />
+            </View>
+            <View style={styles.activityInfo}>
+              <Text style={styles.activityText} numberOfLines={1}>{l.subject || 'Letter'}</Text>
+              <Text style={styles.activityTime} numberOfLines={1}>
+                {[l.recipient?.companyName, fmtEnd(l.letterDate || l.createdAt)].filter(Boolean).join(' • ')}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        ))}
+      </View>
+
       <View style={{ height: spacing.xxl }} />
+
+      {/* Reminders Modal */}
+      <Modal visible={showRemindersModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Pending Reminders</Text>
+              <TouchableOpacity onPress={() => setShowRemindersModal(false)}>
+                <Icon name="close" size={24} color={ui.ink} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Unpaid invoices from this month */}
+            {unpaidInvoices.length > 0 && (
+              <Text style={styles.modalSectionTitle}>Unpaid Invoices</Text>
+            )}
+            {unpaidInvoices.map((inv, i) => {
+              const invContract = inv.contract || {};
+              const invBalance = (inv.total || 0) - (inv.totalPaid || 0);
+              const phone = String(invContract.contactPhone || '').replace(/[^\d]/g, '');
+              return (
+                <TouchableOpacity
+                  key={`unpaid-${i}`}
+                  style={styles.reminderItem}
+                  onPress={() => { setShowRemindersModal(false); navigation.navigate('InvoiceDetail', { id: inv._id }); }}
+                >
+                  <View style={[styles.reminderDot, { backgroundColor: inv.status === 'partial' ? '#d97706' : new Date(inv.dueDate) < new Date() ? '#dc2626' : ui.blue }]} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.reminderText}>{invContract.companyName || inv.customerName || `#${inv.invoiceNumber}`}</Text>
+                    <Text style={styles.reminderSub}>AED {invBalance.toLocaleString()} due • {inv.status === 'partial' ? 'Partially paid' : new Date(inv.dueDate) < new Date() ? 'Overdue' : 'Sent'}</Text>
+                  </View>
+                  <TouchableOpacity onPress={() => {
+                    const msg = `Dear ${invContract.contactPerson || invContract.companyName || 'Client'},\n\nReminder: Invoice #${inv.invoiceNumber}\nBalance Due: AED ${invBalance.toLocaleString()}\n\nPlease arrange payment.\n\nThank you,\nEfficient Move`;
+                    const url = phone ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}` : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+                    Linking.openURL(url).catch(() => { });
+                    setShowRemindersModal(false);
+                  }}>
+                    <Icon name="whatsapp" size={22} color={ui.whatsapp} />
+                  </TouchableOpacity>
+                </TouchableOpacity>
+              );
+            })}
+
+            {/* Contract expiry */}
+            {reminders.length > 0 && (
+              <Text style={[styles.modalSectionTitle, { marginTop: 16 }]}>Contracts Expiring</Text>
+            )}
+            {reminders.map((c, i) => (
+              <TouchableOpacity
+                key={`con-${i}`}
+                style={styles.reminderItem}
+                onPress={() => { setShowRemindersModal(false); navigation.navigate('ContractDetail', { id: c._id, contract: c }); }}
+              >
+                <View style={[styles.reminderDot, { backgroundColor: '#f59e0b' }]} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.reminderText}>{c.companyName || 'Client'}</Text>
+                  <Text style={styles.reminderSub}>Ends {daysLeft(c.endDate)} • {fmtEnd(c.endDate)}</Text>
+                </View>
+                <TouchableOpacity onPress={() => { setShowRemindersModal(false); sendWhatsAppReminder(c); }}>
+                  <Icon name="whatsapp" size={22} color={ui.whatsapp} />
+                </TouchableOpacity>
+              </TouchableOpacity>
+            ))}
+
+            {unpaidInvoices.length === 0 && reminders.length === 0 && (
+              <View style={{ alignItems: 'center', paddingVertical: 30 }}>
+                <Icon name="check-circle-outline" size={40} color={ui.green} />
+                <Text style={{ marginTop: 10, fontFamily: fonts.semiBold, color: ui.muted }}>All caught up!</Text>
+              </View>
+            )}
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
@@ -351,6 +666,33 @@ const styles = StyleSheet.create({
     borderRadius: 99,
   },
   waBtnText: { fontSize: 11, fontFamily: fonts.semiBold, color: colors.white },
+  sectionRow: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    marginTop: 18, marginBottom: 12,
+  },
+  seeAll: { fontSize: 12, fontFamily: fonts.semiBold, color: ui.purple },
+  fineAmount: { fontSize: 14, fontFamily: fonts.bold, color: ui.red },
+  bellBadge: {
+    position: 'absolute', top: -4, right: -4,
+    width: 16, height: 16, borderRadius: 8, backgroundColor: '#ef4444',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  bellBadgeText: { fontSize: 9, fontFamily: fonts.bold, color: '#fff' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
+  modalContent: {
+    backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20,
+    padding: 20, maxHeight: '75%',
+  },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  modalTitle: { fontSize: 18, fontFamily: fonts.bold, color: ui.ink },
+  modalSectionTitle: { fontSize: 12, fontFamily: fonts.semiBold, color: ui.muted, textTransform: 'uppercase', marginBottom: 8 },
+  reminderItem: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: ui.border,
+  },
+  reminderDot: { width: 10, height: 10, borderRadius: 5 },
+  reminderText: { fontSize: 14, fontFamily: fonts.semiBold, color: ui.ink },
+  reminderSub: { fontSize: 12, color: ui.muted, fontFamily: fonts.regular, marginTop: 2 },
 });
 
 export default DashboardScreen;
