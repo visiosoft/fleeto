@@ -92,6 +92,7 @@ exports.createContract = async (req, res) => {
             contactPerson: req.body.contactPerson,
             contactEmail: req.body.contactEmail,
             contactPhone: req.body.contactPhone,
+            contacts: Array.isArray(req.body.contacts) ? req.body.contacts : [],
             status: req.body.status || CONTRACT_STATUS.PENDING,
             documents: req.body.documents || [],
             notes: req.body.notes,

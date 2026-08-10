@@ -34,8 +34,19 @@ const ContractFormScreen = ({ route, navigation }: any) => {
     contactPhone: existing?.contactPhone || '',
     notes: existing?.notes || '',
   });
+  // Extra contacts beyond the primary one above - e.g. the driver, a site
+  // manager - so maintenance/invoice reminders can be sent to whoever
+  // actually needs them.
+  const [contacts, setContacts] = useState<Array<{ name: string; phone: string; role: string }>>(
+    Array.isArray(existing?.contacts) ? existing.contacts.map((c: any) => ({ name: c.name || '', phone: c.phone || '', role: c.role || '' })) : []
+  );
   const [loading, setLoading] = useState(false);
   const u = (f: string) => (v: string) => setForm(p => ({ ...p, [f]: v }));
+
+  const addContact = () => setContacts(p => [...p, { name: '', phone: '', role: '' }]);
+  const removeContact = (i: number) => setContacts(p => p.filter((_, idx) => idx !== i));
+  const updateContact = (i: number, field: 'name' | 'phone' | 'role', v: string) =>
+    setContacts(p => p.map((c, idx) => (idx === i ? { ...c, [field]: v } : c)));
 
   useEffect(() => {
     vehicleService.getAll().then((res: any) => {
@@ -67,6 +78,7 @@ const ContractFormScreen = ({ route, navigation }: any) => {
         ...form,
         amount: form.amount ? parseFloat(form.amount) : 0,
         securityDeposit: form.securityDeposit ? parseFloat(form.securityDeposit) : 0,
+        contacts: contacts.filter(c => c.name.trim() || c.phone.trim()),
       };
       let savedContract;
       if (isEdit) {
@@ -94,6 +106,30 @@ const ContractFormScreen = ({ route, navigation }: any) => {
       <FormInput label="Trade License No." value={form.tradeLicenseNo} onChangeText={u('tradeLicenseNo')} placeholder="e.g. 123456" required />
       <FormInput label="Contact Person" value={form.contactPerson} onChangeText={u('contactPerson')} placeholder="Contact person name" />
       <FormInput label="Contact Phone" value={form.contactPhone} onChangeText={u('contactPhone')} placeholder="+971 XX XXX XXXX" keyboardType="phone-pad" />
+
+      {/* Additional contacts (driver, site manager, etc.) - so maintenance
+          and invoice reminders can be routed to whoever is relevant, not
+          always the primary contact above. */}
+      <View style={styles.contactsHeader}>
+        <Text style={styles.label}>Additional Contacts</Text>
+        <TouchableOpacity style={styles.addContactBtn} onPress={addContact}>
+          <Icon name="plus" size={14} color={colors.primary} />
+          <Text style={styles.addContactText}>Add Contact</Text>
+        </TouchableOpacity>
+      </View>
+      {contacts.map((c, i) => (
+        <View key={i} style={styles.contactCard}>
+          <View style={styles.contactCardHeader}>
+            <Text style={styles.contactCardTitle}>Contact {i + 1}</Text>
+            <TouchableOpacity onPress={() => removeContact(i)}>
+              <Icon name="close-circle-outline" size={20} color={colors.error || '#ef4444'} />
+            </TouchableOpacity>
+          </View>
+          <FormInput label="Name" value={c.name} onChangeText={(v: string) => updateContact(i, 'name', v)} placeholder="e.g. Driver name" />
+          <FormInput label="Phone" value={c.phone} onChangeText={(v: string) => updateContact(i, 'phone', v)} placeholder="+971 XX XXX XXXX" keyboardType="phone-pad" />
+          <FormInput label="Role (optional)" value={c.role} onChangeText={(v: string) => updateContact(i, 'role', v)} placeholder="e.g. Driver, Manager" />
+        </View>
+      ))}
 
       {/* Vehicle Picker */}
       <Text style={styles.label}>Vehicle</Text>
@@ -200,6 +236,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md, paddingVertical: 14,
     borderWidth: 1, borderColor: colors.divider, marginBottom: spacing.sm,
   },
+  contactsHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+  addContactBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 4, paddingHorizontal: 8 },
+  addContactText: { fontSize: fontSize.xs, fontFamily: fonts.semiBold, color: colors.primary },
+  contactCard: {
+    backgroundColor: colors.surface, borderRadius: borderRadius.md,
+    borderWidth: 1, borderColor: colors.divider, padding: spacing.sm, marginBottom: spacing.sm,
+  },
+  contactCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
+  contactCardTitle: { fontSize: fontSize.xs, fontFamily: fonts.semiBold, color: colors.textSecondary, textTransform: 'uppercase' },
   pickerText: { flex: 1, fontSize: fontSize.sm, fontFamily: fonts.medium, color: colors.text },
   pickerPlaceholder: { color: colors.textLight },
   dateRow: { flexDirection: 'row', marginBottom: spacing.xs },

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, FlatList, RefreshControl, TouchableOpacity, Alert, TextInput, Platform, ScrollView, Linking } from 'react-native';
+import { View, Text, StyleSheet, FlatList, RefreshControl, TouchableOpacity, Alert, TextInput, Platform, ScrollView, Linking, Modal } from 'react-native';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { maintenanceService } from '../../services/otherServices';
@@ -169,18 +169,74 @@ const MaintenanceListScreen = ({ navigation }: any) => {
     return matches.find((c: any) => (c.status || '').toLowerCase() === 'active') || matches[0] || null;
   };
 
-  const notifyClient = (record: any) => {
+  // All the people who could be notified for this record's contract: the
+  // primary contact plus any extra contacts (driver, site manager, etc.)
+  // added when the contract was signed.
+  const recipientsForRecord = (record: any) => {
     const client = clientForRecord(record);
-    const phone = String(client?.contactPhone || '').replace(/[^\d]/g, '');
-    const msg = `Dear ${client?.contactPerson || client?.companyName || 'Customer'},\n\n`
+    if (!client) return [];
+    const list: Array<{ name: string; phone: string; role: string }> = [];
+    if (client.contactPerson || client.contactPhone) {
+      list.push({ name: client.contactPerson || client.companyName || 'Customer', phone: client.contactPhone || '', role: 'Primary' });
+    }
+    if (Array.isArray(client.contacts)) {
+      client.contacts.forEach((c: any) => {
+        if (c?.name || c?.phone) list.push({ name: c.name || 'Contact', phone: c.phone || '', role: c.role || 'Contact' });
+      });
+    }
+    return list;
+  };
+
+  const [notifyModal, setNotifyModal] = useState<{ record: any; recipients: any[]; selected: Set<number> } | null>(null);
+
+  const notifyClient = (record: any) => {
+    const recipients = recipientsForRecord(record);
+    if (recipients.length === 0) {
+      notify('No contact', 'This contract has no contact phone number to notify.');
+      return;
+    }
+    if (recipients.length === 1) {
+      sendWhatsApp(record, [recipients[0]]);
+      return;
+    }
+    // Multiple contacts on the contract - let the user pick who to notify.
+    setNotifyModal({ record, recipients, selected: new Set([0]) });
+  };
+
+  const sendWhatsApp = (record: any, recipients: Array<{ name: string; phone: string }>) => {
+    const msg = (name: string) => `Dear ${name},\n\n`
       + `This is a reminder that the ${String(record.service).toLowerCase()} for vehicle ${record.vehicleName} `
       + `is due on ${fmt(record.date)}.\n\n`
       + `Please contact the company to arrange it, or bring the vehicle to our garage at your convenience.\n\n`
       + `Thank you,\nEfficient Move`;
-    const url = phone
-      ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`
-      : `https://wa.me/?text=${encodeURIComponent(msg)}`;
-    Linking.openURL(url).catch(() => notify('WhatsApp', 'Could not open WhatsApp.'));
+    recipients.forEach((r, i) => {
+      const phone = String(r.phone || '').replace(/[^\d]/g, '');
+      const url = phone
+        ? `https://wa.me/${phone}?text=${encodeURIComponent(msg(r.name))}`
+        : `https://wa.me/?text=${encodeURIComponent(msg(r.name))}`;
+      // Stagger openURL calls slightly so each WhatsApp chat opens in turn
+      // instead of the app only handling the last request.
+      setTimeout(() => {
+        Linking.openURL(url).catch(() => notify('WhatsApp', 'Could not open WhatsApp.'));
+      }, i * 900);
+    });
+  };
+
+  const toggleRecipient = (i: number) => {
+    setNotifyModal(prev => {
+      if (!prev) return prev;
+      const selected = new Set(prev.selected);
+      if (selected.has(i)) selected.delete(i); else selected.add(i);
+      return { ...prev, selected };
+    });
+  };
+
+  const confirmNotify = () => {
+    if (!notifyModal) return;
+    const chosen = notifyModal.recipients.filter((_, i) => notifyModal.selected.has(i));
+    if (chosen.length === 0) { notify('Select a contact', 'Choose at least one person to notify.'); return; }
+    sendWhatsApp(notifyModal.record, chosen);
+    setNotifyModal(null);
   };
 
   const deleteRecord = (id: string) => {
@@ -462,6 +518,9 @@ const MaintenanceListScreen = ({ navigation }: any) => {
                       <View style={{ flex: 1 }}>
                         <Text style={styles.clientName} numberOfLines={1}>
                           {client ? (client.contactPerson || client.companyName) : 'No client on contract'}
+                          {Array.isArray(client?.contacts) && client.contacts.length > 0
+                            ? ` +${client.contacts.length} more`
+                            : ''}
                         </Text>
                         {!!client?.contactPhone && (
                           <Text style={styles.clientPhone} numberOfLines={1}>{client.contactPhone}</Text>
@@ -484,6 +543,39 @@ const MaintenanceListScreen = ({ navigation }: any) => {
           />
         </>
       )}
+
+      {/* Pick who to notify when a contract has more than one contact */}
+      <Modal visible={!!notifyModal} transparent animationType="fade" onRequestClose={() => setNotifyModal(null)}>
+        <View style={styles.notifyBackdrop}>
+          <View style={styles.notifyCard}>
+            <Text style={styles.notifyTitle}>Notify who?</Text>
+            <Text style={styles.notifySub}>Choose one or more contacts for this contract.</Text>
+            <ScrollView style={{ maxHeight: 260 }} nestedScrollEnabled>
+              {notifyModal?.recipients.map((r, i) => {
+                const checked = notifyModal.selected.has(i);
+                return (
+                  <TouchableOpacity key={i} style={styles.notifyRow} onPress={() => toggleRecipient(i)} activeOpacity={0.7}>
+                    <Icon name={checked ? 'checkbox-marked' : 'checkbox-blank-outline'} size={20} color={checked ? ui.purple : ui.muted} />
+                    <View style={{ flex: 1, marginLeft: 10 }}>
+                      <Text style={styles.notifyName}>{r.name}{r.role ? ` · ${r.role}` : ''}</Text>
+                      {!!r.phone && <Text style={styles.notifyPhone}>{r.phone}</Text>}
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+            <View style={styles.notifyActions}>
+              <TouchableOpacity style={styles.notifyCancelBtn} onPress={() => setNotifyModal(null)}>
+                <Text style={styles.notifyCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.notifySendBtn} onPress={confirmNotify}>
+                <Icon name="whatsapp" size={16} color="#FFFFFF" />
+                <Text style={styles.notifySendText}>Send</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -612,6 +704,27 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3, shadowRadius: 24, elevation: 6,
   },
   saveText: { color: '#FFFFFF', fontSize: 15, fontFamily: fonts.bold },
+  notifyBackdrop: { flex: 1, backgroundColor: 'rgba(20,8,31,0.45)', justifyContent: 'center', padding: 24 },
+  notifyCard: { backgroundColor: '#FFFFFF', borderRadius: 18, padding: 20 },
+  notifyTitle: { fontSize: 17, fontFamily: fonts.bold, color: ui.ink },
+  notifySub: { fontSize: 12, fontFamily: fonts.regular, color: ui.muted, marginTop: 4, marginBottom: 12 },
+  notifyRow: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: ui.border,
+  },
+  notifyName: { fontSize: 13.5, fontFamily: fonts.semiBold, color: ui.ink },
+  notifyPhone: { fontSize: 12, fontFamily: fonts.regular, color: ui.muted, marginTop: 2 },
+  notifyActions: { flexDirection: 'row', gap: 10, marginTop: 16 },
+  notifyCancelBtn: {
+    flex: 1, alignItems: 'center', justifyContent: 'center',
+    paddingVertical: 12, borderRadius: 12, backgroundColor: ui.grayTint,
+  },
+  notifyCancelText: { fontSize: 14, fontFamily: fonts.semiBold, color: ui.ink },
+  notifySendBtn: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+    paddingVertical: 12, borderRadius: 12, backgroundColor: ui.whatsapp || '#25D366',
+  },
+  notifySendText: { fontSize: 14, fontFamily: fonts.semiBold, color: '#FFFFFF' },
 });
 
 export default MaintenanceListScreen;

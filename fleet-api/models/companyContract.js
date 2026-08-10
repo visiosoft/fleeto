@@ -180,6 +180,14 @@ const companyContractSchema = new mongoose.Schema({
         required: false,
         trim: true
     },
+    // Additional contacts beyond the primary one above - e.g. the driver, a
+    // site manager - so maintenance/invoice reminders can be routed to
+    // whoever actually needs them instead of always the primary contact.
+    contacts: [{
+        name: { type: String, trim: true },
+        phone: { type: String, trim: true },
+        role: { type: String, trim: true }
+    }],
     status: {
         type: String,
         required: true,

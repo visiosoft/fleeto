@@ -3,6 +3,7 @@ const router = express.Router();
 const driverController = require('../controllers/driverController');
 const { authenticate } = require('../middleware/auth');
 const uploadDriver = require('../middleware/uploadDriver');
+const driverHoursController = require('../controllers/driverHoursController');
 
 /**
  * Driver API Routes
@@ -32,6 +33,11 @@ router.put('/:id', driverController.updateDriver);
 router.delete('/:id', driverController.deleteDriver);
 
 // Document management routes
+// Daily hours worked, feeding the payroll overtime total
+router.get('/:id/hours', driverHoursController.getDriverHours);
+router.post('/:id/hours', driverHoursController.addDriverHours);
+router.delete('/:id/hours/:entryId', driverHoursController.deleteDriverHours);
+
 router.post('/:id/upload-document', uploadDriver.single('document'), driverController.uploadDocument);
 router.get('/:id/get-documents', driverController.getDocuments);
 router.delete('/:id/delete-document/:documentId', driverController.deleteDocument);

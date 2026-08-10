@@ -49,4 +49,10 @@ export const driverService = {
     }),
   deleteDocument: (driverId: string, docId: string) =>
     api.delete(`/drivers/${driverId}/delete-document/${docId}`),
+
+  // Daily hours worked
+  getHours: (id: string, params?: { month?: number; year?: number }) =>
+    api.get(`/drivers/${id}/hours`, { params }),
+  addHours: (id: string, data: any) => api.post(`/drivers/${id}/hours`, data),
+  deleteHours: (id: string, entryId: string) => api.delete(`/drivers/${id}/hours/${entryId}`),
 };

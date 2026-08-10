@@ -79,11 +79,17 @@ const DriverListScreen = ({ navigation }: any) => {
           <Card onPress={() => navigation.navigate('DriverDetail', { id: item._id, driver: item })}>
             <View style={styles.cardRow}>
               <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{(item.name || 'D')[0].toUpperCase()}</Text>
+                <Text style={styles.avatarText}>
+                  {((item.name || item.firstName || 'D')[0] || 'D').toUpperCase()}
+                </Text>
               </View>
               <View style={styles.info}>
-                <Text style={styles.name}>{item.name || item.firstName || 'Driver'}</Text>
-                <Text style={styles.sub}>{item.phone || item.licenseNumber || 'No details'}</Text>
+                <Text style={styles.name}>
+                  {item.name || [item.firstName, item.lastName].filter(Boolean).join(' ') || 'Driver'}
+                </Text>
+                <Text style={styles.sub}>
+                  {item.contact?.phone || item.phone || item.licenseNumber || 'No details'}
+                </Text>
                 <View style={styles.chipRow}>
                   {item.status && <StatusBadge status={item.status} />}
                   {item.vehiclePlate && (
