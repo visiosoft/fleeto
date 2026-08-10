@@ -78,19 +78,41 @@ const documentCss = `
   body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; color: #333; }
   ${brandCss}
   .doc-body { padding: 30px 40px 16px; }
-  .doc-title { font-size: 24px; font-weight: 800; color: #232B38; text-transform: uppercase; }
+  .doc-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+  .doc-title { font-size: 24px; font-weight: 800; color: #232B38; text-transform: uppercase; letter-spacing: 0.4px; }
   .doc-num { font-size: 12px; color: #666; margin-top: 2px; margin-bottom: 22px; }
-  .doc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 40px; border-top: 2px solid #eee; padding-top: 8px; }
+  .status-pill { flex-shrink: 0; padding: 6px 14px; border-radius: 999px; font-size: 11px; font-weight: 700;
+                 letter-spacing: 0.6px; text-transform: uppercase; white-space: nowrap; }
+  .status-active { background: #E9F9EE; color: #16a34a; }
+  .status-pending { background: #FEF6E7; color: #d97706; }
+  .status-expired { background: #F1F2F4; color: #6b7280; }
+  .status-terminated { background: #FDECEC; color: #dc2626; }
+  .status-renewed { background: #EAF3FF; color: #2563eb; }
+
+  .parties { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 4px 0 24px; }
+  .party-card { border: 1px solid #E4E6EA; border-radius: 10px; padding: 16px 18px; background: #FAFBFC; }
+  .party-tag { font-size: 10px; font-weight: 800; color: #35A3EF; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 8px; }
+  .party-name { font-size: 15px; font-weight: 700; color: #1a1f29; }
+  .party-line { font-size: 12px; color: #555; margin-top: 4px; line-height: 1.5; }
+  .party-sub { font-size: 10px; color: #999; text-transform: uppercase; letter-spacing: 0.4px; margin-top: 10px; }
+  .party-contact { font-size: 12px; color: #444; margin-top: 3px; }
+  .party-contact b { color: #222; font-weight: 600; }
+
+  .doc-section { font-size: 13px; font-weight: 800; color: #232B38; margin: 26px 0 10px;
+                 text-transform: uppercase; letter-spacing: 0.6px; }
+  .doc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 40px; border-top: 2px solid #eee; padding-top: 4px; }
   .doc-field { padding: 11px 0; border-bottom: 1px solid #eee; }
   .doc-field .lbl { font-size: 10px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 1px; }
   .doc-field .value { font-size: 14px; font-weight: 600; color: #222; margin-top: 3px; word-break: break-word; }
-  .doc-highlight { background: #F4F9FE; border: 1px solid #d8ecfb; border-radius: 8px;
-                   padding: 16px 20px; margin: 22px 0; display: flex; justify-content: space-between; gap: 20px; }
-  .doc-highlight .lbl { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 1px; }
-  .doc-highlight .value { font-size: 17px; font-weight: 800; color: #232B38; margin-top: 3px; }
-  .doc-section { font-size: 14px; font-weight: 700; color: #232B38; margin: 22px 0 8px; }
-  .doc-text { font-size: 13px; line-height: 1.65; color: #444; }
-  .sign-row { display: flex; justify-content: space-between; margin-top: 38px; gap: 48px; }
+
+  .doc-highlight { background: linear-gradient(135deg, #232B38, #2f3a4c); border-radius: 10px;
+                   padding: 18px 22px; margin: 22px 0; display: flex; justify-content: space-between; gap: 20px; }
+  .doc-highlight .lbl { font-size: 10px; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 1px; }
+  .doc-highlight .value { font-size: 18px; font-weight: 800; color: #fff; margin-top: 4px; }
+  .doc-highlight .value span { color: rgba(255,255,255,0.65); }
+
+  .doc-text { font-size: 13px; line-height: 1.7; color: #444; }
+  .sign-row { display: flex; justify-content: space-between; margin-top: 40px; gap: 48px; page-break-inside: avoid; }
   .sign-box { flex: 1; }
   .sign-area { height: 84px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 4px; }
   .sign-area img { max-height: 78px; max-width: 100%; }
@@ -126,6 +148,14 @@ const renderTerms = (contract) => {
     </div>`;
 };
 
+const STATUS_CLASS = {
+    active: 'status-active',
+    pending: 'status-pending',
+    expired: 'status-expired',
+    terminated: 'status-terminated',
+    renewed: 'status-renewed',
+};
+
 /**
  * @param {Object} contract - contract record
  * @param {Object} [options]
@@ -136,16 +166,39 @@ const renderContractDocument = (contract, options = {}) => {
     const signature = options.signature || null;
     const isSigned = !!(signature && signature.signatureImage);
 
+    const statusKey = String(contract.status || 'pending').toLowerCase();
+    const statusPill = `<span class="status-pill ${STATUS_CLASS[statusKey] || 'status-pending'}">${escapeHtml(contract.status || 'Pending')}</span>`;
+
+    const extraContacts = Array.isArray(contract.contacts) ? contract.contacts.filter(c => c && (c.name || c.phone)) : [];
+    const extraContactsHtml = extraContacts.length
+        ? `<div class="party-sub">Additional Contacts</div>` + extraContacts.map(c => `
+            <div class="party-contact"><b>${escapeHtml(c.name || 'Contact')}</b>${c.role ? ` · ${escapeHtml(c.role)}` : ''}${c.phone ? ` — ${escapeHtml(c.phone)}` : ''}</div>`).join('')
+        : '';
+
+    const partiesHtml = `
+    <div class="parties">
+      <div class="party-card">
+        <div class="party-tag">Lessor</div>
+        <div class="party-name">${escapeHtml(BRAND.name)}</div>
+        <div class="party-line">${escapeHtml(BRAND.city)}</div>
+        <div class="party-line">${escapeHtml(BRAND.phone)} · ${escapeHtml(BRAND.email)}</div>
+      </div>
+      <div class="party-card">
+        <div class="party-tag">Lessee</div>
+        <div class="party-name">${escapeHtml(contract.companyName || '—')}</div>
+        ${contract.tradeLicenseNo ? `<div class="party-line">Trade License: ${escapeHtml(contract.tradeLicenseNo)}</div>` : ''}
+        ${(contract.contactPerson || contract.contactPhone) ? `<div class="party-line">${escapeHtml(contract.contactPerson || 'Contact')}${contract.contactPhone ? ` — ${escapeHtml(contract.contactPhone)}` : ''}</div>` : ''}
+        ${extraContactsHtml}
+      </div>
+    </div>`;
+
     const fields = [
-        ['Client', contract.companyName],
-        ['Contact Person', contract.contactPerson],
-        ['Trade License No.', contract.tradeLicenseNo],
         ['Contract Type', contractTypeLabel(contract.contractType)],
         ['Vehicle', contract.vehicleName],
-        ['Contact Phone', contract.contactPhone],
         ['Start Date', formatDate(contract.startDate)],
         ['End Date', formatDate(contract.endDate)],
         ['Contract Duration', termLength(contract)],
+        ['Billing Cycle', contract.billingCycle ? contract.billingCycle.charAt(0).toUpperCase() + contract.billingCycle.slice(1) : null],
     ]
         .filter(([, value]) => value !== undefined && value !== null && value !== '' && value !== '—')
         .map(([label, value]) => `
@@ -176,24 +229,35 @@ const renderContractDocument = (contract, options = {}) => {
 </head><body>
   ${brandHeaderHtml}
   <div class="doc-body">
-    <div class="doc-title">Contract Agreement</div>
-    <div class="doc-num">#${escapeHtml(contract.contractNumber || contract._id || '')}</div>
+    <div class="doc-title-row">
+      <div>
+        <div class="doc-title">Rental Agreement</div>
+        <div class="doc-num">#${escapeHtml(contract.contractNumber || contract._id || '')}</div>
+      </div>
+      ${statusPill}
+    </div>
 
+    ${partiesHtml}
+
+    <div class="doc-section">Agreement Details</div>
     <div class="doc-grid">${fields}</div>
 
     <div class="doc-highlight">
       <div>
         <div class="lbl">${escapeHtml(rateInfo(contract.rateUnit).rate)}</div>
         <div class="value">${formatMoney(contract.amount ?? contract.value)}
-          <span style="font-size:12px;font-weight:600;color:#666">
-            ${escapeHtml(rateInfo(contract.rateUnit).per)}
-          </span>
+          <span>${escapeHtml(rateInfo(contract.rateUnit).per)}</span>
         </div>
       </div>
       <div>
         <div class="lbl">Security Deposit</div>
         <div class="value">${formatMoney(contract.securityDeposit)}</div>
       </div>
+      ${contract.value || contract.totalValue ? `
+      <div>
+        <div class="lbl">Total Contract Value</div>
+        <div class="value">${formatMoney(contract.totalValue ?? contract.value)}</div>
+      </div>` : ''}
     </div>
 
     ${renderTerms(contract)}

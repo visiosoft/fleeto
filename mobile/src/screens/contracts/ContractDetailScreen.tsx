@@ -11,6 +11,7 @@ import * as Clipboard from 'expo-clipboard';
 import * as DocumentPicker from 'expo-document-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { contractService } from '../../services/contractService';
+import { vehicleService } from '../../services/vehicleService';
 import Card from '../../components/common/Card';
 import StatusBadge from '../../components/common/StatusBadge';
 import LoadingScreen from '../../components/common/LoadingScreen';
@@ -28,7 +29,7 @@ const fmtDate = (d: any) => {
   return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 };
 
-const generateContractHtml = (contract: any) => `<!DOCTYPE html>
+const generateContractHtml = (contract: any, vehicleLabelOverride?: string | null) => `<!DOCTYPE html>
 <html><head><meta charset="utf-8">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&display=swap');
@@ -57,7 +58,7 @@ const generateContractHtml = (contract: any) => `<!DOCTYPE html>
       <div class="field"><div class="lbl">Client</div><div class="value">${contract.companyName || contract.customerName || '—'}</div></div>
       <div class="field"><div class="lbl">Contact Person</div><div class="value">${contract.contactPerson || '—'}</div></div>
       <div class="field"><div class="lbl">Contract Type</div><div class="value">${normaliseContractType(contract.contractType)}</div></div>
-      <div class="field"><div class="lbl">Vehicle</div><div class="value">${contract.vehicleName || contract.vehiclePlate || contract.vehicleInfo || '—'}</div></div>
+      <div class="field"><div class="lbl">Vehicle</div><div class="value">${contract.vehicleName || contract.vehiclePlate || contract.vehicleInfo || vehicleLabelOverride || '—'}</div></div>
       <div class="field"><div class="lbl">Start Date</div><div class="value">${fmtDate(contract.startDate)}</div></div>
       <div class="field"><div class="lbl">End Date</div><div class="value">${fmtDate(contract.endDate)}</div></div>
       <div class="field"><div class="lbl">Duration</div><div class="value">${termLength(contract) || '—'}</div></div>
@@ -65,7 +66,7 @@ const generateContractHtml = (contract: any) => `<!DOCTYPE html>
       <div class="field"><div class="lbl">Status</div><div class="value">${(contract.status || 'active').toUpperCase()}</div></div>
     </div>
     <div class="highlight">
-      <div class="h-item"><div class="lbl">${rateLabel(contract.rateUnit)}</div><div class="value">AED ${Number(contract.monthlyRate || contract.amount || 0).toLocaleString()} <span style="font-size:11px;font-weight:600;color:#666">${ratePer(contract.rateUnit)}</span></div></div>
+      <div class="h-item"><div class="lbl">${rateLabel(contract.rateUnit)}</div><div class="value">AED ${Number(contract.amount || contract.monthlyRate || 0).toLocaleString()} <span style="font-size:11px;font-weight:600;color:#666">${ratePer(contract.rateUnit)}</span></div></div>
       <div class="h-item"><div class="lbl">Total Contract Value</div><div class="value">AED ${Number(contract.totalValue || contract.value || 0).toLocaleString()}</div></div>
     </div>
     <div class="sign-row">
@@ -98,6 +99,9 @@ const ContractDetailScreen = ({ route, navigation }: any) => {
   const [notifyPhone, setNotifyPhone] = useState('');
   const [uploading, setUploading] = useState(false);
   const [documents, setDocuments] = useState<any[]>([]);
+  // Older contracts only stored vehicleId with no cached name/plate — look it
+  // up live so the vehicle still shows instead of a blank field.
+  const [linkedVehicle, setLinkedVehicle] = useState<any>(null);
 
   const fetchDocuments = async () => {
     try {
@@ -130,7 +134,17 @@ const ContractDetailScreen = ({ route, navigation }: any) => {
     let webWin: any = null;
     if (Platform.OS === 'web') webWin = window.open('', '_blank');
     try {
-      const html = generateContractHtml(contract);
+      // The server renders the same polished, branded document used for the
+      // e-signature flow (parties, terms, signature status) - prefer that
+      // over the plainer local template, falling back only if offline.
+      let html: string;
+      try {
+        const res = await contractService.getSignedDocument(id);
+        html = res.data?.data?.html;
+        if (!html) throw new Error('Empty document');
+      } catch {
+        html = generateContractHtml(contract, vehicleLabel);
+      }
       if (Platform.OS === 'web') {
         if (!webWin) { window.alert('Please allow pop-ups to download the contract PDF.'); return; }
         webWin.document.write(html);
@@ -161,6 +175,15 @@ const ContractDetailScreen = ({ route, navigation }: any) => {
   };
 
   useEffect(() => { fetchContract(); fetchDocuments(); }, [id]);
+
+  useEffect(() => {
+    if (contract?.vehicleName || !contract?.vehicleId) { setLinkedVehicle(null); return; }
+    let cancelled = false;
+    vehicleService.getById(contract.vehicleId)
+      .then((res: any) => { if (!cancelled) setLinkedVehicle(res.data?.data || res.data); })
+      .catch(() => { if (!cancelled) setLinkedVehicle(null); });
+    return () => { cancelled = true; };
+  }, [contract?.vehicleId, contract?.vehicleName]);
 
   // Re-fetch when returning from edit form
   useEffect(() => {
@@ -277,13 +300,24 @@ const ContractDetailScreen = ({ route, navigation }: any) => {
 
   if (loading || !contract) return <LoadingScreen />;
 
+  const vehicleLabel = (() => {
+    if (contract.vehicleName) return contract.vehicleName;
+    if (contract.vehiclePlate) return contract.vehiclePlate;
+    if (linkedVehicle) {
+      const plate = linkedVehicle.licensePlate || linkedVehicle.plateNumber || '';
+      const name = [linkedVehicle.make, linkedVehicle.model].filter((p: any) => p && p !== 'Unknown').join(' ');
+      return [plate, name].filter(Boolean).join(' — ') || null;
+    }
+    return contract.vehicleId ? 'Loading…' : null;
+  })();
+
   const rows = [
     { icon: 'pound', label: 'Contract #', value: contract.contractNumber },
     { icon: 'domain', label: 'Company', value: contract.companyName },
     { icon: 'card-account-details-outline', label: 'Trade License', value: contract.tradeLicenseNo },
     { icon: 'account-outline', label: 'Contact Person', value: contract.contactPerson },
     { icon: 'phone-outline', label: 'Contact Phone', value: contract.contactPhone },
-    { icon: 'car-outline', label: 'Vehicle', value: contract.vehicleName || contract.vehiclePlate },
+    { icon: 'car-outline', label: 'Vehicle', value: vehicleLabel },
     {
       icon: normaliseContractType(contract.contractType) === 'With Driver' ? 'account-tie' : 'steering',
       label: 'Contract Type',
