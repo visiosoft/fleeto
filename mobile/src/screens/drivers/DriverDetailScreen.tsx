@@ -11,6 +11,7 @@ import { buildDriverReportHtml } from '../../utils/driverReport';
 import Card from '../../components/common/Card';
 import StatusBadge from '../../components/common/StatusBadge';
 import LoadingScreen from '../../components/common/LoadingScreen';
+import DatePickerField from '../../components/common/DatePickerField';
 import { colors, spacing, borderRadius, fontSize, shadows, fonts } from '../../config/theme';
 import { ui } from '../../config/ui';
 import api from '../../config/api';
@@ -353,13 +354,11 @@ const DriverDetailScreen = ({ route, navigation }: any) => {
           <View style={styles.hourForm}>
             <View style={styles.hourFormRow}>
               <View style={{ flex: 1 }}>
-                <Text style={styles.hourFieldLabel}>Date</Text>
-                <TextInput
-                  style={styles.hourInput}
+                <DatePickerField
+                  label="Date"
                   value={hourForm.date}
-                  onChangeText={v => setHourForm(p => ({ ...p, date: v }))}
-                  placeholder="YYYY-MM-DD"
-                  placeholderTextColor={ui.muted}
+                  onChange={v => setHourForm(p => ({ ...p, date: v }))}
+                  placeholder="Select date"
                 />
               </View>
               <View style={{ width: 96 }}>
