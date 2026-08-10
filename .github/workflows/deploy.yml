@@ -1,0 +1,28 @@
+name: Deploy fleet-api
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'fleet-api/**'
+      - '.github/workflows/deploy.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT }}
+          script: |
+            set -e
+            cd "${{ secrets.DEPLOY_PATH }}"
+            git fetch origin master
+            git reset --hard origin/master
+            npm install --omit=dev
+            pm2 reload "${{ secrets.PM2_APP_NAME }}" --update-env
+            pm2 save
