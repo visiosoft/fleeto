@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, RefreshControl, TouchableOpacity, ScrollView } from 'react-native';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { contractService } from '../../services/contractService';
+import { vehicleService } from '../../services/vehicleService';
 import LoadingScreen from '../../components/common/LoadingScreen';
 import EmptyState from '../../components/common/EmptyState';
 import { colors, spacing, fonts } from '../../config/theme';
@@ -47,12 +48,29 @@ const ContractListScreen = ({ navigation }: any) => {
   const [activeTab, setActiveTab] = useState('All');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  // Older contracts only stored vehicleId, no cached name/plate — look those
+  // up once so the card can still show the actual vehicle.
+  const [vehicleMap, setVehicleMap] = useState<Record<string, string>>({});
 
   const fetchContracts = useCallback(async () => {
     try {
-      const res = await contractService.getAll();
+      const [res, vRes] = await Promise.all([
+        contractService.getAll(),
+        vehicleService.getAll().catch(() => null),
+      ]);
       const data = res.data?.data || res.data || [];
       setContracts(data);
+
+      const vehicles = vRes?.data?.data || vRes?.data || [];
+      if (Array.isArray(vehicles)) {
+        const map: Record<string, string> = {};
+        vehicles.forEach((v: any) => {
+          const plate = v.licensePlate || v.plateNumber || '';
+          const name = [v.make, v.model].filter((p: any) => p && p !== 'Unknown').join(' ');
+          map[String(v._id)] = [plate, name].filter(Boolean).join(' — ') || 'Vehicle';
+        });
+        setVehicleMap(map);
+      }
     } catch (err) { console.error(err); }
     finally { setLoading(false); setRefreshing(false); }
   }, []);
@@ -127,12 +145,16 @@ const ContractListScreen = ({ navigation }: any) => {
                 </View>
               </View>
 
+              {/* Vehicle */}
+              <View style={styles.vehicleRow}>
+                <Icon name="van-utility" size={14} color={ui.purple} />
+                <Text style={styles.vehicleText} numberOfLines={1}>
+                  {item.vehicleName || item.vehiclePlate || vehicleMap[String(item.vehicleId)] || 'No vehicle assigned'}
+                </Text>
+              </View>
+
               {/* Info Chips */}
               <View style={styles.chipRow}>
-                <View style={[styles.infoChip, { backgroundColor: ui.purpleTint }]}>
-                  <Text style={styles.chipLabel}>VEHICLES</Text>
-                  <Text style={[styles.chipValue, { color: ui.purple }]}>{item.vehicleCount || item.vehicles?.length || 1}</Text>
-                </View>
                 <View style={[styles.infoChip, { backgroundColor: ui.sandTint }]}>
                   <Text style={styles.chipLabel}>TYPE</Text>
                   <Text style={styles.chipValueSm}>
@@ -213,7 +235,9 @@ const styles = StyleSheet.create({
   contractNum: { fontSize: 12, fontFamily: fonts.regular, color: ui.muted, marginTop: 3 },
   statusPill: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 99 },
   statusText: { fontSize: 11, fontFamily: fonts.semiBold },
-  chipRow: { flexDirection: 'row', gap: 8, marginTop: 14 },
+  vehicleRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10 },
+  vehicleText: { flex: 1, fontSize: 12, fontFamily: fonts.medium, color: ui.ink },
+  chipRow: { flexDirection: 'row', gap: 8, marginTop: 10 },
   infoChip: { flex: 1, borderRadius: 10, padding: 10 },
   chipLabel: { fontSize: 10, fontFamily: fonts.regular, color: ui.muted, letterSpacing: 0.6, textTransform: 'uppercase' },
   chipValue: { fontSize: 16, fontFamily: fonts.bold, color: ui.ink, marginTop: 2 },

@@ -105,123 +105,154 @@ interface Props {
 
 // Export the default template
 export const defaultTemplate = `
+<div style="font-family: 'Plus Jakarta Sans', system-ui, sans-serif; color: #14081F; font-size: 12px; line-height: 1.45;">
 
-<h1 class="document-title">VEHICLE RENTAL AGREEMENT</h1>
+  <div style="display: flex; align-items: baseline; justify-content: space-between; border-bottom: 2px solid #14081F; padding-bottom: 12px; margin-bottom: 16px;">
+    <div>
+      <div style="text-transform: uppercase; letter-spacing: 0.14em; font-weight: 700; font-size: 9px; color: #4A1FA0; margin-bottom: 4px;">Vehicle Rental Agreement</div>
+      <h1 style="font-family: 'Bricolage Grotesque', serif; font-weight: 800; font-size: 24px; letter-spacing: -0.02em; margin: 0; color: #1A0B33;">Rental Agreement</h1>
+    </div>
+    <div style="text-align: right; font-size: 10px; color: #756E80; font-weight: 500;">
+      <div>Dubai, UAE</div>
+      <div>Entered into [Start Date]</div>
+    </div>
+  </div>
 
-<p>This Vehicle Rental Agreement (the "Agreement") is made and entered into on [Start Date] in Dubai, United Arab Emirates.</p>
+  <p style="margin: 0 0 14px; color: #4A4357;">This Vehicle Rental Agreement (the &ldquo;Agreement&rdquo;) is made and entered into on <strong style="color: #14081F;">[Start Date]</strong> in Dubai, United Arab Emirates.</p>
 
-<h2 class="section-title">PARTIES:</h2>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;">
+    <div style="border: 1px solid rgba(20,8,31,.14); border-radius: 8px; padding: 12px 14px;">
+      <div style="text-transform: uppercase; letter-spacing: 0.1em; font-size: 9px; font-weight: 700; color: #756E80; margin-bottom: 4px;">Company</div>
+      <div style="font-weight: 700; font-size: 12px; margin-bottom: 2px;">Efficient Move New Used Furniture Removal L.L.C</div>
+      <div style="color: #4A4357; font-size: 11px;">UAE &middot; TL# 1383686 &middot; Dubai</div>
+    </div>
+    <div style="border: 1px solid rgba(20,8,31,.14); border-radius: 8px; padding: 12px 14px;">
+      <div style="text-transform: uppercase; letter-spacing: 0.1em; font-size: 9px; font-weight: 700; color: #756E80; margin-bottom: 4px;">Client</div>
+      <div style="font-weight: 700; font-size: 12px; margin-bottom: 2px;">[Client Company Name]</div>
+      <div style="color: #4A4357; font-size: 11px;">TL# [Client Trade License No] &middot; [Contact Person]</div>
+    </div>
+  </div>
 
-<p>1. Efficient Move New Used Furniture Removal L.L.C, a company registered under the laws of UAE 
-with Trade License No. 1383686, having its registered office at Dubai, UAE 
-(hereinafter referred to as the "Company")</p>
+  <div style="border: 1px solid #DDD0FF; background: #F7F3FF; border-radius: 8px; padding: 14px 16px; margin-bottom: 16px;">
+    <div style="text-transform: uppercase; letter-spacing: 0.1em; font-size: 9px; font-weight: 700; color: #4A1FA0; margin-bottom: 10px;">Key Terms at a Glance</div>
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 16px;">
+      <div>
+        <div style="font-size: 9px; color: #756E80; margin-bottom: 2px;">Vehicle</div>
+        <div style="font-weight: 700; font-size: 11px;">[Vehicle Make] [Vehicle Model] [Vehicle Year]</div>
+        <div style="font-size: 10px; color: #4A4357;">Plate [Vehicle License Plate]</div>
+      </div>
+      <div>
+        <div style="font-size: 9px; color: #756E80; margin-bottom: 2px;">Duration</div>
+        <div style="font-weight: 700; font-size: 11px;">[Start Date] &ndash; [End Date]</div>
+      </div>
+      <div>
+        <div style="font-size: 9px; color: #756E80; margin-bottom: 2px;">Total Rental Value</div>
+        <div style="font-weight: 700; font-size: 11px;">AED [Value]</div>
+      </div>
+      <div>
+        <div style="font-size: 9px; color: #756E80; margin-bottom: 2px;">Security Deposit</div>
+        <div style="font-weight: 700; font-size: 11px;">AED [Security Deposit]</div>
+      </div>
+      <div>
+        <div style="font-size: 9px; color: #756E80; margin-bottom: 2px;">Payment Method</div>
+        <div style="font-weight: 700; font-size: 11px;">[Payment Method]</div>
+      </div>
+      <div>
+        <div style="font-size: 9px; color: #756E80; margin-bottom: 2px;">Mileage Cap</div>
+        <div style="font-weight: 700; font-size: 11px;">[Mileage Cap] km / month</div>
+      </div>
+    </div>
+  </div>
 
-<p>2. [Client Company Name], a company registered under the laws of UAE with Trade License No. 
-[Client Trade License No], represented by [Contact Person] 
-(hereinafter referred to as the "Client")</p>
+  <h2 style="font-family: 'Bricolage Grotesque', serif; font-weight: 700; font-size: 15px; color: #1A0B33; margin: 0 0 6px;">Vehicle Information</h2>
+  <p style="margin: 0 0 4px; color: #4A4357;">The Company hereby rents to the Client the following vehicle without driver:</p>
+  <div style="margin: 0 0 16px 18px; color: #14081F;">
+    <div>License Plate: <strong>[Vehicle License Plate]</strong> &middot; Make/Model/Year: <strong>[Vehicle Make] [Vehicle Model] [Vehicle Year]</strong></div>
+  </div>
 
-<h2 class="section-title">VEHICLE INFORMATION:</h2>
+  <h2 style="font-family: 'Bricolage Grotesque', serif; font-weight: 700; font-size: 15px; color: #1A0B33; margin: 0 0 10px;">Terms and Conditions</h2>
 
-<p>The Company hereby rents to the Client the following vehicle without driver:</p>
+  <h3 style="font-size: 11px; font-weight: 700; color: #4A1FA0; text-transform: uppercase; letter-spacing: 0.04em; margin: 0 0 6px;">Contract Duration and Value</h3>
+  <div style="margin: 0 0 8px 18px;">
+    <div>Duration: From [Start Date] to [End Date] &middot; Renewal: mutual written consent only</div>
+    <div>Total Rental Value: AED [Value] &middot; Security Deposit: AED [Security Deposit] &middot; Payment: [Payment Method]</div>
+  </div>
+  <p style="margin: 0 0 12px; color: #4A4357; font-size: 11px;">Security Deposit refundable within 21 days after vehicle return, subject to inspection, clearance of fines, Salik charges, and settlement of all outstanding dues. The Company reserves the right to deduct unpaid amounts, damages, fines, repair costs, or other liabilities from the deposit.</p>
 
-<ul class="document-list">
-<li>License Plate: [Vehicle License Plate]</li>
-<li>Make / Model / Year : [Vehicle Make]  [Vehicle Model]  [Vehicle Year]</li>
-</ul>
+  <h3 style="font-size: 11px; font-weight: 700; color: #4A1FA0; text-transform: uppercase; letter-spacing: 0.04em; margin: 0 0 6px;">Vehicle Handover and Condition</h3>
+  <p style="margin: 0 0 12px; color: #4A4357;">The Vehicle shall be delivered in good working and roadworthy condition. A vehicle handover report shall be signed by both Parties at delivery and return. The Client confirms receipt of the Vehicle in satisfactory condition.</p>
 
-<h2 class="section-title">TERMS AND CONDITIONS:</h2>
+  <h3 style="font-size: 11px; font-weight: 700; color: #4A1FA0; text-transform: uppercase; letter-spacing: 0.04em; margin: 0 0 6px;">Payment Default</h3>
+  <p style="margin: 0 0 12px; color: #4A4357;">In case of cheque dishonor or delayed payment, the Company reserves the right to immediately repossess the Vehicle without prior notice and pursue legal remedies under UAE law.</p>
 
-<ul class="document-list">
+  <h3 style="font-size: 11px; font-weight: 700; color: #4A1FA0; text-transform: uppercase; letter-spacing: 0.04em; margin: 0 0 6px;">Client Responsibilities</h3>
+  <ul style="margin: 0 0 6px; padding-left: 18px; color: #4A4357;">
+    <li>Fuel and petrol costs</li>
+    <li>Salik (toll) charges</li>
+    <li>Traffic fines, black points, parking violations, and impound charges &mdash; must be paid within 3 days</li>
+    <li>Compliance with all UAE traffic laws and regulations</li>
+  </ul>
+  <p style="margin: 0 0 12px; color: #4A4357;">The Client shall ensure that only legally licensed drivers operate the Vehicle.</p>
 
-<li><b>CONTRACT DURATION AND VALUE</b>
-   <ul class="document-list">
-   <li>Duration: From [Start Date] to [End Date]</li>
-   <li>Renewal: Only upon mutual written consent of both Parties</li>
-   <li>Total Rental Value: AED [Value]</li>
-   <li>Security Deposit: AED 1,000</li>
-   <li>Payment Method: Post-Dated Cheque (PDC) for full rental amount</li>
-   </ul>
-   <p>The Security Deposit shall be refundable within 21 days after vehicle return, subject to inspection, clearance of fines, Salik charges, and settlement of all outstanding dues. The Company reserves the right to deduct unpaid amounts, damages, fines, repair costs, or other liabilities from the deposit.</p>
-</li>
+  <h3 style="font-size: 11px; font-weight: 700; color: #4A1FA0; text-transform: uppercase; letter-spacing: 0.04em; margin: 0 0 6px;">Maintenance and Repairs</h3>
+  <div style="margin: 0 0 12px; color: #4A4357;">
+    <p style="margin: 0 0 4px;"><strong style="color: #14081F;">Routine Maintenance:</strong> Client responsible for all routine/preventive maintenance (monthly oil change, filters, brake inspection, tire rotation) at reputable garages using manufacturer-approved parts.</p>
+    <p style="margin: 0 0 4px;"><strong style="color: #14081F;">Operational Liability:</strong> Client assumes full financial responsibility for damages from accidents, negligence, misuse, overloading, overheating, or failure to maintain.</p>
+    <p style="margin: 0 0 4px;"><strong style="color: #14081F;">Major Repairs:</strong> Company responsible only for major mechanical defects from normal wear and tear, not caused by misuse or negligence.</p>
+    <p style="margin: 0 0 4px;"><strong style="color: #14081F;">Accidents:</strong> Valid Dubai Police report mandatory. Insurance deductible borne by Client. Damage without police report fully payable by Client.</p>
+    <p style="margin: 0 0 4px;"><strong style="color: #14081F;">Authorization:</strong> No non-routine repair without prior written Company approval. Unauthorized repairs not reimbursed.</p>
+    <p style="margin: 0;"><strong style="color: #14081F;">Records:</strong> Client shall maintain proper maintenance records and provide upon request.</p>
+  </div>
 
-<li><b>VEHICLE HANDOVER AND CONDITION</b>
-   <p>The Vehicle shall be delivered in good working and roadworthy condition. A vehicle handover report shall be signed by both Parties at delivery and return. The Client confirms receipt of the Vehicle in satisfactory condition.</p>
-</li>
+  <div style="border: 1.5px solid #B45309; background: #FEF6E7; border-radius: 8px; padding: 12px 14px; margin: 0 0 14px;">
+    <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+      <span style="width: 6px; height: 6px; border-radius: 999px; background: #B45309; display: inline-block;"></span>
+      <span style="text-transform: uppercase; letter-spacing: 0.08em; font-size: 10px; font-weight: 700; color: #92400E;">Mileage Limit and Excess Charges</span>
+    </div>
+    <p style="margin: 0; color: #78350F; font-weight: 500; font-size: 11px;">Maximum [Mileage Cap] km per month. Excess charged at [Excess Mileage Rate] AED per additional km. Odometer recorded at start/end of each month; excess invoiced separately and payable within 7 days.</p>
+  </div>
 
-<li><b>PAYMENT DEFAULT</b>
-   <p>In case of cheque dishonor or delayed payment, the Company reserves the right to immediately repossess the Vehicle without prior notice and pursue legal remedies under UAE law.</p>
+  <h3 style="font-size: 11px; font-weight: 700; color: #4A1FA0; text-transform: uppercase; letter-spacing: 0.04em; margin: 0 0 6px;">Prohibited Use</h3>
+  <p style="margin: 0 0 12px; color: #4A4357;">The Vehicle shall not be used for illegal activities, racing, reckless driving, sub-renting, or transport outside Dubai without written Company consent.</p>
 
-   </li>
+  <h3 style="font-size: 11px; font-weight: 700; color: #4A1FA0; text-transform: uppercase; letter-spacing: 0.04em; margin: 0 0 6px;">Termination</h3>
+  <ul style="margin: 0 0 12px; padding-left: 18px; color: #4A4357;">
+    <li>Early termination requires 30 days written notice and full settlement of remaining rental value.</li>
+    <li>Either Party may terminate for material breach with 30 days written notice.</li>
+    <li>Upon termination, Vehicle must be returned immediately and all dues settled.</li>
+  </ul>
 
-<li><b>CLIENT RESPONSIBILITIES</b>
-   <ul class="document-list">
-   <li>Fuel and petrol costs</li>
-   <li>Salik (toll) charges</li>
-   <li>Traffic fines, black points, parking violations, and impound charges. It must be paid within 3 days of fines violation.</li>
-   <li>Compliance with all UAE traffic laws and regulations</li>
-   </ul>
-   <p>The Client shall ensure that only legally licensed drivers operate the Vehicle.</p>
-</li>
+  <h3 style="font-size: 11px; font-weight: 700; color: #4A1FA0; text-transform: uppercase; letter-spacing: 0.04em; margin: 0 0 6px;">Vehicle Return</h3>
+  <p style="margin: 0 0 12px; color: #4A4357;">Vehicle shall be returned to Company premises or agreed location in clean condition with all keys and documents. Failure to return may result in legal action.</p>
 
-<li><b>MAINTENANCE AND REPAIRS</b>
-   <ul class="document-list" type="a">
-   <li><b>Routine Maintenance:</b> The Client shall be responsible for all routine and preventive maintenance including monthly engine oil change, oil filter, air filter, brake inspection, and tire rotation, performed at reputable garages using manufacturer-approved parts.</li>
-   <li><b>Operational Liability:</b> The Client assumes full financial responsibility for damages resulting from accidents, driver negligence, misuse, overloading, overheating, or failure to perform required maintenance.</li>
-   <li><b>Major Repairs:</b> The Company shall be responsible only for major mechanical defects caused by normal wear and tear, provided such defects are not due to misuse or negligence by the Client.</li>
-   <li><b>Accidents:</b> In case of accident, a valid Dubai Police report is mandatory. Insurance deductible/excess shall be borne by the Client. Damage without police report shall be fully payable by the Client.</li>
-   <li><b>Authorization:</b> No non-routine repair shall be carried out without prior written approval from the Company. Unauthorized repairs shall not be reimbursed.</li>
-   <li><b>Records:</b> The Client shall maintain proper maintenance records and provide them upon request.</li>
-   </ul>
-</li>
+  <h3 style="font-size: 11px; font-weight: 700; color: #4A1FA0; text-transform: uppercase; letter-spacing: 0.04em; margin: 0 0 6px;">Governing Law and Jurisdiction</h3>
+  <p style="margin: 0 0 12px; color: #4A4357;">Governed by the laws of the UAE. Courts of Dubai have exclusive jurisdiction.</p>
 
+  <h3 style="font-size: 11px; font-weight: 700; color: #4A1FA0; text-transform: uppercase; letter-spacing: 0.04em; margin: 0 0 6px;">Entire Agreement</h3>
+  <p style="margin: 0 0 20px; color: #4A4357;">This Agreement constitutes the entire understanding between the Parties and supersedes all prior agreements. Any amendment must be in writing and signed by both Parties.</p>
 
-<li style="background-color: #FFFF00; border: 2px solid #FF0000; padding: 10px;">
-   <b>MILEAGE LIMIT AND EXCESS CHARGES</b>
-   <p><b style="color: #FF0000; font-size: 14px;">The maximum distance the Vehicle may be driven is 5,000 km per month. Any distance exceeding 5,000 km in a calendar month shall be charged at a rate of 1 AED per additional kilometer driven. The odometer reading shall be recorded at the beginning and end of each month, and excess mileage charges shall be invoiced separately and are payable within 7 days of invoice date.</b></p>
-</li>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+    <div>
+      <div style="font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #1A0B33; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px solid rgba(20,8,31,.14);">For Efficient Move New Used Furniture Removal L.L.C</div>
+      <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12px; color: #4A4357;">
+        <div>Name: <span style="display: inline-block; border-bottom: 1px dotted #756E80; width: 58%;">&nbsp;</span></div>
+        <div>License No: <strong style="color: #14081F;">1383686</strong></div>
+        <div>Signature: <span style="display: inline-block; border-bottom: 1px dotted #756E80; width: 58%;">&nbsp;</span></div>
+        <div>Date: <span style="display: inline-block; border-bottom: 1px dotted #756E80; width: 58%;">&nbsp;</span></div>
+      </div>
+    </div>
+    <div>
+      <div style="font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #1A0B33; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px solid rgba(20,8,31,.14);">For [Client Company Name]</div>
+      <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12px; color: #4A4357;">
+        <div>Name: <strong style="color: #14081F;">[Contact Person]</strong></div>
+        <div>License No: <strong style="color: #14081F;">[Client Trade License No]</strong></div>
+        <div>Signature: <span style="display: inline-block; border-bottom: 1px dotted #756E80; width: 58%;">&nbsp;</span></div>
+        <div>Date: <span style="display: inline-block; border-bottom: 1px dotted #756E80; width: 58%;">&nbsp;</span></div>
+      </div>
+    </div>
+  </div>
 
-<li><b>PROHIBITED USE</b>
-   <p>The Vehicle shall not be used for illegal activities, racing, reckless driving, sub-renting, or transport outside the Dubai without written consent of the Company.</p>
-</li>
-
-<li><b>TERMINATION</b>
-   <ul class="document-list">
-   <li> Early termination by the Client requires 30 days written notice and full settlement of remaining rental value unless otherwise agreed.</li>
-   <li> Either Party may terminate for material breach with 30 days written notice.</li>
-   <li> Upon termination, the Vehicle must be returned immediately and all dues settled.</li>
-   </ul>
-</li>
-
-<li><b>VEHICLE RETURN</b>
-   <p>The Vehicle shall be returned to the Company premises or agreed location in clean condition along with all keys and documents. Failure to return the Vehicle may result in legal action.</p>
-</li>
-
-<li><b>GOVERNING LAW AND JURISDICTION</b>
-   <p>This Agreement shall be governed by the laws of the United Arab Emirates. The Courts of Dubai shall have exclusive jurisdiction over any dispute arising from this Agreement.</p>
-</li>
-
-<li><b>ENTIRE AGREEMENT</b>
-   <p>This Agreement constitutes the entire understanding between the Parties and supersedes all prior agreements. Any amendment must be in writing and signed by both Parties.</p>
-</li>
-
-</ul>
-
-<p>For Efficient Move New Used Furniture Removal L.L.C:<br/>
-Name: ____________________<br/>
-Title: ____________________<br/>
-License No: 1383686<br/>
-Signature: ________________<br/>
-Date: ____________________<br/>
-Company Stamp:</p>
-
-<p>For [Client Company Name]:<br/>
-Name: [Contact Person]<br/>
-Title: ____________________<br/>
-License No: [Client Trade License No]<br/>
-Signature: ________________<br/>
-Date: ____________________<br/>
-Company Stamp:</p>
-
+</div>
 `;
 
 const ContractTemplateEditor: React.FC<Props> = ({
@@ -302,6 +333,10 @@ const ContractTemplateEditor: React.FC<Props> = ({
         year: 'numeric'
       }) : '')
       .replace(/\[Value\]/g, contract.value?.toLocaleString('en-AE') || '0')
+      .replace(/\[Security Deposit\]/g, ((contract as any).securityDeposit || 1000).toLocaleString('en-AE'))
+      .replace(/\[Payment Method\]/g, (contract as any).paymentMethod || 'Post-Dated Cheque')
+      .replace(/\[Mileage Cap\]/g, ((contract as any).mileageCap || 5000).toLocaleString('en-AE'))
+      .replace(/\[Excess Mileage Rate\]/g, ((contract as any).excessMileageRate || 1).toString())
       .replace(/\[Contact Person\]/g, contract.contactPerson || '')
       .replace(/\[Client Trade License No\]/g, contract.tradeLicenseNo || '')
       .replace(/\[Vehicle License Plate\]/g, vehicle?.licensePlate || '')
@@ -507,6 +542,9 @@ const ContractTemplateEditor: React.FC<Props> = ({
       let isFirstPage = true;
 
       while (sourceY < fullCanvas.height) {
+        const remainingPx = fullCanvas.height - sourceY;
+        if (!isFirstPage && remainingPx < 50) break;
+
         if (!isFirstPage) {
           pdf.addPage();
         }
@@ -633,6 +671,10 @@ const ContractTemplateEditor: React.FC<Props> = ({
       let isFirstPage = true;
 
       while (sourceY < fullCanvas.height) {
+        // Skip if remaining content is negligible (< 50px of source content)
+        const remainingPx = fullCanvas.height - sourceY;
+        if (!isFirstPage && remainingPx < 50) break;
+
         if (!isFirstPage) {
           pdf.addPage();
         }

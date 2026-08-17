@@ -1,6 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity, DeviceEventEmitter } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
+import {
+  navigationRef, registerQuickActions, listenForQuickActions, consumeInitialQuickAction,
+} from '../utils/quickActions';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createDrawerNavigator, DrawerContentScrollView } from '@react-navigation/drawer';
@@ -342,10 +345,17 @@ const AuthStack = () => (
 const AppNavigator: React.FC = () => {
   const { isAuthenticated, isLoading, companies, selectedCompanyId } = useAuth();
 
+  useEffect(() => {
+    registerQuickActions();
+    const unsubscribe = listenForQuickActions();
+    consumeInitialQuickAction();
+    return unsubscribe;
+  }, []);
+
   if (isLoading) return <SplashScreen message="Signing you in" />;
 
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
       {!isAuthenticated ? (
         <AuthStack />
       ) : companies.length > 0 && !selectedCompanyId ? (

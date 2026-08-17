@@ -160,6 +160,24 @@ const companyContractSchema = new mongoose.Schema({
         required: false,
         min: 0
     },
+    paymentMethod: {
+        type: String,
+        required: false,
+        trim: true,
+        default: 'Post-Dated Cheque'
+    },
+    mileageCap: {
+        type: Number,
+        required: false,
+        min: 0,
+        default: 5000
+    },
+    excessMileageRate: {
+        type: Number,
+        required: false,
+        min: 0,
+        default: 1
+    },
     value: {
         type: Number,
         required: false,

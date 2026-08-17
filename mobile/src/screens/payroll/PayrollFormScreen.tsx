@@ -96,6 +96,23 @@ const PayrollFormScreen = ({ route, navigation }: any) => {
     setDriverOpen(false);
   };
 
+  // Hours the driver logged day by day, for the selected month
+  const [loggedHours, setLoggedHours] = useState<number | null>(null);
+
+  useEffect(() => {
+    const [y, m] = (form.month || '').split('-');
+    if (!form.driverId || !y || !m) { setLoggedHours(null); return; }
+    let cancelled = false;
+    driverService.getHours(form.driverId, { month: Number(m), year: Number(y) })
+      .then((res) => {
+        if (cancelled) return;
+        const total = (res.data?.data || res.data || {}).totalHours;
+        setLoggedHours(typeof total === 'number' ? total : null);
+      })
+      .catch(() => { if (!cancelled) setLoggedHours(null); });
+    return () => { cancelled = true; };
+  }, [form.driverId, form.month]);
+
   // Live totals — mirrors the server: net = base + OT + bonus − deductions − advances
   const base = num(form.baseSalary);
   const hours = num(form.overtimeHours);
@@ -246,6 +263,21 @@ const PayrollFormScreen = ({ route, navigation }: any) => {
         </View>
       </View>
 
+      {/* Pull the hours the driver logged day by day for this month */}
+      {loggedHours !== null && loggedHours > 0 && String(loggedHours) !== form.overtimeHours && (
+        <TouchableOpacity
+          style={styles.loggedHoursBanner}
+          onPress={() => setForm(p => ({ ...p, overtimeHours: String(loggedHours) }))}
+          activeOpacity={0.8}
+        >
+          <Icon name="clock-check-outline" size={17} color={ui.purple} />
+          <Text style={styles.loggedHoursText}>
+            {loggedHours} hours logged this month — tap to use
+          </Text>
+          <Icon name="chevron-right" size={18} color={ui.purple} />
+        </TouchableOpacity>
+      )}
+
       <View style={styles.row}>
         <View style={{ flex: 1 }}>
           <Text style={styles.sectionLabel}>Bonuses (AED)</Text>
@@ -370,6 +402,12 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: ui.border, backgroundColor: ui.bg,
   },
 
+  loggedHoursBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: ui.lilac, borderRadius: 12, padding: 12, marginTop: 12,
+    borderWidth: 1, borderColor: 'rgba(91,43,201,0.2)',
+  },
+  loggedHoursText: { flex: 1, fontSize: 12, fontFamily: fonts.semiBold, color: ui.purple },
   fieldCard: {
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: '#FFFFFF', borderRadius: 14, padding: 14,

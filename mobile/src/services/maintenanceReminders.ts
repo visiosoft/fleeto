@@ -1,5 +1,12 @@
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
+
+// Expo Go dropped Android notification support in SDK 53, so scheduling there
+// throws. Reminders work in a dev build or a released app; in Expo Go we skip
+// them quietly and rely on the dashboard's "Scheduled Tasks" section instead.
+const isExpoGo = Constants.executionEnvironment === 'storeClient';
+const notificationsAvailable = Platform.OS !== 'web' && !isExpoGo;
 
 // Local reminders for scheduled maintenance:
 //   • one reminder N days before the due date (default 3)
@@ -11,17 +18,19 @@ import * as Notifications from 'expo-notifications';
 
 const DAILY_NAG_DAYS = 14; // how far past the due date we keep reminding
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
+if (notificationsAvailable) {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowBanner: true,
+      shouldShowList: true,
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+    }),
+  });
+}
 
 export const requestNotificationPermission = async (): Promise<boolean> => {
-  if (Platform.OS === 'web') return false;
+  if (!notificationsAvailable) return false;
   try {
     const { status: existing } = await Notifications.getPermissionsAsync();
     if (existing === 'granted') return true;
@@ -43,7 +52,7 @@ const atNineAm = (date: Date) => {
  * for every record that is still open (not completed/cancelled).
  */
 export const syncMaintenanceReminders = async (records: any[]) => {
-  if (Platform.OS === 'web') return;
+  if (!notificationsAvailable) return;
   const granted = await requestNotificationPermission();
   if (!granted) return;
 
@@ -110,7 +119,7 @@ export const syncMaintenanceReminders = async (records: any[]) => {
 
 /** Cancels every reminder belonging to one maintenance record (after marking done). */
 export const cancelRemindersFor = async (recordId: string) => {
-  if (Platform.OS === 'web') return;
+  if (!notificationsAvailable) return;
   try {
     const scheduled = await Notifications.getAllScheduledNotificationsAsync();
     await Promise.all(

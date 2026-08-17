@@ -10,7 +10,6 @@ import { vehicleService } from '../../services/vehicleService';
 import { contractService } from '../../services/contractService';
 import LoadingScreen from '../../components/common/LoadingScreen';
 import EmptyState from '../../components/common/EmptyState';
-import SearchBar from '../../components/common/SearchBar';
 import { colors, spacing, fonts } from '../../config/theme';
 import { ui } from '../../config/ui';
 
@@ -292,25 +291,26 @@ const CostListScreen = ({ navigation }: any) => {
 
   if (loading) return <LoadingScreen />;
 
-  return (
-    <View style={styles.container}>
-      {/* Header */}
+  // Everything above the list scrolls with it, so the whole page is usable
+  // for browsing rather than losing half the screen to fixed chrome.
+  const ListHeader = (
+    <View>
       <View style={styles.header}>
         <Text style={styles.title}>Expenses</Text>
         <View style={styles.headerBtns}>
           <TouchableOpacity style={styles.toolBtn} onPress={() => exportReport(false)}>
-            <Icon name="file-pdf-box" size={18} color={ui.purple} />
+            <Icon name="file-pdf-box" size={17} color={ui.purple} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.toolBtn} onPress={() => exportReport(true)}>
-            <Icon name="share-variant-outline" size={17} color={ui.purple} />
+            <Icon name="share-variant-outline" size={16} color={ui.purple} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.addBtn} onPress={() => navigation.navigate('CostForm')}>
-            <Icon name="plus" size={20} color={colors.white} />
+            <Icon name="plus" size={19} color={colors.white} />
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* Period Selector (segmented) */}
+      {/* Period selector */}
       <View style={styles.segmentWrap}>
         {timeTabs.map(tab => (
           <TouchableOpacity
@@ -323,25 +323,37 @@ const CostListScreen = ({ navigation }: any) => {
         ))}
       </View>
 
-      {/* Total Card */}
+      {/* Compact total: amount and period on one line, categories beneath */}
       <View style={styles.totalCard}>
-        <Text style={styles.totalLabel}>Total Expenses — {monthName}</Text>
-        <Text style={styles.totalAmount}>AED {totalAmount.toLocaleString()}</Text>
-        <View style={styles.catChipsRow}>
-          {Object.entries(categorySums).map(([cat, amt]) => {
-            const c = categoryStyles[cat] || categoryStyles.other;
-            return (
-              <View key={cat} style={[styles.catChip, { backgroundColor: c.tint }]}>
-                <Text style={[styles.catChipText, { color: c.color }]}>
-                  {cat.charAt(0).toUpperCase() + cat.slice(1)}: {amt.toLocaleString()}
-                </Text>
-              </View>
-            );
-          })}
+        <View style={styles.totalTopRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.totalLabel}>{monthName}</Text>
+            <Text style={styles.totalAmount}>AED {totalAmount.toLocaleString()}</Text>
+          </View>
+          <Text style={styles.totalCount}>
+            {filtered.length} item{filtered.length !== 1 ? 's' : ''}
+          </Text>
         </View>
+        {Object.keys(categorySums).length > 0 && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.catChipsRow}
+          >
+            {Object.entries(categorySums).map(([cat, amt]) => {
+              const c = categoryStyles[cat] || categoryStyles.other;
+              return (
+                <View key={cat} style={[styles.catChip, { backgroundColor: c.tint }]}>
+                  <Text style={[styles.catChipText, { color: c.color }]}>
+                    {cat.charAt(0).toUpperCase() + cat.slice(1)}: {amt.toLocaleString()}
+                  </Text>
+                </View>
+              );
+            })}
+          </ScrollView>
+        )}
       </View>
 
-      {/* Filter pills */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll} contentContainerStyle={styles.filterRow}>
         {filterTabs.map(tab => (
           <TouchableOpacity
@@ -354,9 +366,8 @@ const CostListScreen = ({ navigation }: any) => {
         ))}
       </ScrollView>
 
-      {/* Vehicle dropdown (shown when filtering by vehicle) */}
       {filterTab === 'By Vehicle' && vehicleOptions.length > 1 && (
-        <View style={styles.dropdownWrap}>
+        <View style={[styles.dropdownWrap, { marginBottom: 12 }]}>
           <Dropdown
             style={styles.dropdown}
             containerStyle={styles.dropdownList}
@@ -378,18 +389,18 @@ const CostListScreen = ({ navigation }: any) => {
           />
         </View>
       )}
+    </View>
+  );
 
-      <SearchBar
-        value={search}
-        onChangeText={setSearch}
-        placeholder="Search vehicle, contract or category..."
-      />
-
-      {/* Expense List */}
+  return (
+    <View style={styles.container}>
       <FlatList
         data={listData}
         keyExtractor={(item) => item._type === 'header' ? item._id : item._id}
         contentContainerStyle={styles.list}
+        ListHeaderComponent={ListHeader}
+        stickyHeaderIndices={undefined}
+        keyboardShouldPersistTaps="handled"
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchCosts(); }} />}
         ListEmptyComponent={<EmptyState icon="cash-remove" title="No expenses found" actionLabel="Add Expense" onAction={() => navigation.navigate('CostForm')} />}
         ListFooterComponent={filtered.length > 0 ? (
@@ -416,7 +427,7 @@ const CostListScreen = ({ navigation }: any) => {
               activeOpacity={0.7}
             >
               <View style={[styles.iconBox, { backgroundColor: cat.tint }]}>
-                <Icon name={cat.icon as any} size={20} color={cat.color} />
+                <Icon name={cat.icon as any} size={17} color={cat.color} />
               </View>
               <View style={styles.info}>
                 <Text style={styles.cardTitle} numberOfLines={1}>{item.description || catName(item)}</Text>
@@ -440,7 +451,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: ui.bg },
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingHorizontal: 20, paddingTop: spacing.md, paddingBottom: 4,
+    paddingHorizontal: 20, paddingTop: spacing.sm, paddingBottom: 2,
   },
   title: { fontSize: 24, fontFamily: fonts.bold, color: ui.ink, letterSpacing: -0.48 },
   headerBtns: { flexDirection: 'row', alignItems: 'center', gap: 8 },
@@ -454,28 +465,30 @@ const styles = StyleSheet.create({
     backgroundColor: ui.purple, justifyContent: 'center', alignItems: 'center',
   },
   segmentWrap: {
-    flexDirection: 'row', marginHorizontal: 20, marginTop: 12,
-    backgroundColor: colors.white, borderRadius: 12, padding: 4,
+    flexDirection: 'row', marginHorizontal: 20, marginTop: 8,
+    backgroundColor: colors.white, borderRadius: 10, padding: 3,
     borderWidth: 1, borderColor: ui.cardBorder,
   },
-  segment: { flex: 1, paddingVertical: 8, borderRadius: 10, alignItems: 'center' },
+  segment: { flex: 1, paddingVertical: 6, borderRadius: 8, alignItems: 'center' },
   segmentActive: { backgroundColor: ui.purple },
-  segmentText: { fontSize: 13, fontFamily: fonts.medium, color: ui.muted },
+  segmentText: { fontSize: 12, fontFamily: fonts.medium, color: ui.muted },
   segmentTextActive: { color: colors.white, fontFamily: fonts.semiBold },
   totalCard: {
-    marginHorizontal: 20, marginTop: 16,
-    backgroundColor: colors.white, borderRadius: 16, padding: 20,
+    marginHorizontal: 20, marginTop: 10,
+    backgroundColor: colors.white, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12,
     borderWidth: 1, borderColor: ui.cardBorder,
   },
-  totalLabel: { fontSize: 12, fontFamily: fonts.medium, color: ui.muted },
-  totalAmount: { fontSize: 36, fontFamily: fonts.bold, color: ui.ink, letterSpacing: -1, marginTop: 4 },
-  catChipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
-  catChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 99 },
-  catChipText: { fontSize: 12, fontFamily: fonts.semiBold },
-  filterScroll: { flexGrow: 0, minHeight: 48, marginTop: 8 },
-  filterRow: { paddingHorizontal: 20, gap: 8, alignItems: 'center', paddingVertical: 6 },
+  totalTopRow: { flexDirection: 'row', alignItems: 'flex-end' },
+  totalLabel: { fontSize: 11, fontFamily: fonts.medium, color: ui.muted },
+  totalAmount: { fontSize: 26, fontFamily: fonts.bold, color: ui.ink, letterSpacing: -0.6, marginTop: 1 },
+  totalCount: { fontSize: 11, fontFamily: fonts.medium, color: ui.muted, marginBottom: 3 },
+  catChipsRow: { flexDirection: 'row', gap: 6, marginTop: 10, paddingRight: 4 },
+  catChip: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 99 },
+  catChipText: { fontSize: 11, fontFamily: fonts.semiBold },
+  filterScroll: { flexGrow: 0, minHeight: 40 },
+  filterRow: { paddingHorizontal: 20, gap: 6, alignItems: 'center', paddingVertical: 4 },
   filterTab: {
-    paddingHorizontal: 16, paddingVertical: 8,
+    paddingHorizontal: 13, paddingVertical: 6,
     borderRadius: 99, backgroundColor: colors.white,
     borderWidth: 1, borderColor: ui.border,
   },
@@ -499,23 +512,24 @@ const styles = StyleSheet.create({
   },
   totalRowLabel: { fontSize: 13, fontFamily: fonts.medium, color: 'rgba(255,255,255,0.7)' },
   totalRowValue: { fontSize: 18, fontFamily: fonts.bold, color: colors.white },
-  list: { paddingHorizontal: 20, paddingTop: 14, paddingBottom: 80 },
+  list: { paddingHorizontal: 20, paddingBottom: 80 },
   dayHeader: {
-    fontSize: 12, fontFamily: fonts.semiBold, color: ui.muted,
-    textTransform: 'uppercase', letterSpacing: 0.7, paddingVertical: 4, marginTop: 4,
+    fontSize: 11, fontFamily: fonts.semiBold, color: ui.muted,
+    textTransform: 'uppercase', letterSpacing: 0.7, paddingTop: 10, paddingBottom: 4,
   },
   card: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: colors.white, borderRadius: 14, padding: 14, marginBottom: 8,
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    backgroundColor: colors.white, borderRadius: 12,
+    paddingHorizontal: 12, paddingVertical: 10, marginBottom: 6,
     borderWidth: 1, borderColor: ui.cardBorder,
   },
-  iconBox: { width: 44, height: 44, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+  iconBox: { width: 36, height: 36, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
   info: { flex: 1 },
-  cardTitle: { fontSize: 14, fontFamily: fonts.semiBold, color: ui.ink },
-  cardSub: { fontSize: 12, fontFamily: fonts.regular, color: ui.muted, marginTop: 1 },
+  cardTitle: { fontSize: 13, fontFamily: fonts.semiBold, color: ui.ink },
+  cardSub: { fontSize: 11, fontFamily: fonts.regular, color: ui.muted, marginTop: 1 },
   amountSection: { alignItems: 'flex-end' },
-  amount: { fontSize: 15, fontFamily: fonts.bold, color: ui.ink },
-  receiptText: { fontSize: 11, fontFamily: fonts.regular, color: ui.muted, marginTop: 1 },
+  amount: { fontSize: 14, fontFamily: fonts.bold, color: ui.ink },
+  receiptText: { fontSize: 10, fontFamily: fonts.regular, color: ui.muted, marginTop: 1 },
 });
 
 export default CostListScreen;

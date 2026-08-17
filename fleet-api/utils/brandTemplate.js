@@ -1,14 +1,14 @@
 // Efficient Move brand header/footer for PDF documents (invoices, contracts)
 const BRAND = {
-    name: 'EFFICIENT MOVE NEW & USED FURNITURE REMOVAL L.L.C',
-    shortName: 'Efficient Move',
-    subName: 'New & Used Furniture Removal L.L.C',
-    tagline: 'MOVING & PASSENGER TRANSPORT',
-    social: '@efficientmove',
-    website: 'www.efficientmove.ae',
-    email: 'info@efficientmove.ae',
-    phone: '+971 - 569420950',
-    city: 'Dubai, UAE',
+  name: 'EFFICIENT MOVE NEW & USED FURNITURE REMOVAL L.L.C',
+  shortName: 'Efficient Move',
+  subName: 'New & Used Furniture Removal L.L.C',
+  tagline: 'MOVING & PASSENGER TRANSPORT',
+  social: '@efficientmove',
+  website: 'www.efficientmove.ae',
+  email: 'info@efficientmove.ae',
+  phone: '+971 - 569420950',
+  city: 'Dubai, UAE',
 };
 
 const brandCss = `
@@ -22,11 +22,11 @@ const brandCss = `
   .brand-logo svg { width: 92px; height: auto; }
   .brand-title { font-size: 18px; font-weight: 800; color: #16181D; letter-spacing: 0.3px; }
   .brand-tagline { font-size: 12px; color: #232B38; letter-spacing: 6px; margin-top: 5px; font-weight: 500; }
-  .brand-footer { position: relative; background: #fff; padding: 28px 40px 90px; overflow: hidden; margin-top: 28px; }
-  .f-contacts { position: relative; z-index: 2; display: grid; grid-template-columns: 1fr 1fr; gap: 12px 28px; max-width: 580px; margin: 0 auto; }
-  .f-item { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #555; }
-  .f-ic { width: 24px; height: 24px; border-radius: 50%; background: #16181D; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
-  .ft-shape { position: absolute; bottom: 0; left: 0; right: 0; height: 76px; }
+  .brand-footer { position: relative; background: #fff; padding: 14px 40px 50px; overflow: hidden; margin-top: 14px; }
+  .f-contacts { position: relative; z-index: 2; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 20px; max-width: 520px; margin: 0 auto; }
+  .f-item { display: flex; align-items: center; gap: 6px; font-size: 10px; color: #555; }
+  .f-ic { width: 18px; height: 18px; border-radius: 50%; background: #16181D; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 9px; flex-shrink: 0; }
+  .ft-shape { position: absolute; bottom: 0; left: 0; right: 0; height: 40px; }
   .ft-dark { background: #232B38; clip-path: polygon(0 40%, 14% 0, 26% 100%, 0 100%); }
   .ft-blue { background: #35A3EF; clip-path: polygon(12% 55%, 24% 8%, 46% 100%, 22% 100%); }
   .ft-gray { background: #9CA3AB; clip-path: polygon(36% 65%, 46% 25%, 64% 100%, 44% 100%); }

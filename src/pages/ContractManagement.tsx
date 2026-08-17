@@ -111,6 +111,10 @@ interface Contract {
   contactEmail: string;
   contactPhone: string;
   notes: string;
+  securityDeposit?: number;
+  paymentMethod?: string;
+  mileageCap?: number;
+  excessMileageRate?: number;
   vehicleId?: string;
   template?: {
     content: string;
@@ -151,6 +155,10 @@ const emptyContract: Partial<Contract> = {
   contactEmail: '',
   contactPhone: '',
   notes: '',
+  securityDeposit: 1000,
+  paymentMethod: 'Post-Dated Cheque',
+  mileageCap: 5000,
+  excessMileageRate: 1,
   vehicleId: '',
 };
 
@@ -788,6 +796,48 @@ const ContractManagement: React.FC = () => {
           helperText={formErrors.value}
           required
           InputProps={{ inputProps: { min: 0, step: 0.01 } }}
+        />
+      </Grid>
+      <Grid item xs={12} sm={6}>
+        <TextField
+          fullWidth
+          label="Security Deposit (AED)"
+          name="securityDeposit"
+          type="number"
+          value={currentContract.securityDeposit ?? 1000}
+          onChange={handleTextFieldChange}
+          InputProps={{ inputProps: { min: 0, step: 1 } }}
+        />
+      </Grid>
+      <Grid item xs={12} sm={6}>
+        <TextField
+          fullWidth
+          label="Payment Method"
+          name="paymentMethod"
+          value={currentContract.paymentMethod ?? 'Post-Dated Cheque'}
+          onChange={handleTextFieldChange}
+        />
+      </Grid>
+      <Grid item xs={12} sm={6}>
+        <TextField
+          fullWidth
+          label="Mileage Cap (km/month)"
+          name="mileageCap"
+          type="number"
+          value={currentContract.mileageCap ?? 5000}
+          onChange={handleTextFieldChange}
+          InputProps={{ inputProps: { min: 0, step: 100 } }}
+        />
+      </Grid>
+      <Grid item xs={12} sm={6}>
+        <TextField
+          fullWidth
+          label="Excess Mileage Rate (AED/km)"
+          name="excessMileageRate"
+          type="number"
+          value={currentContract.excessMileageRate ?? 1}
+          onChange={handleTextFieldChange}
+          InputProps={{ inputProps: { min: 0, step: 0.1 } }}
         />
       </Grid>
       <Grid item xs={12} sm={6}>
