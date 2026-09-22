@@ -46,6 +46,10 @@ const letterheadSchema = new mongoose.Schema({
         }
     },
     footer: {
+        image: {
+            type: String, // Base64 encoded image or URL, overrides the default footer banner
+            default: ''
+        },
         text: String,
         includePageNumbers: {
             type: Boolean,

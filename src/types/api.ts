@@ -234,6 +234,7 @@ export interface Letterhead {
     };
   };
   footer: {
+    image?: string;
     text?: string;
     includePageNumbers: boolean;
     includeDate: boolean;
@@ -258,4 +259,24 @@ export interface Letterhead {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface LetterHistoryEntry {
+  _id: string;
+  companyId: string;
+  letterheadId: string;
+  letterheadName: string;
+  title: string;
+  letterContent: {
+    date?: string;
+    to?: string;
+    subject?: string;
+    body?: string;
+    closing?: string;
+    signature?: string;
+  };
+  filename: string;
+  url: string;
+  createdBy?: string;
+  createdAt: string;
 }

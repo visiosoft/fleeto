@@ -196,7 +196,7 @@ const LetterheadPreview: React.FC<LetterheadPreviewProps> = ({ letterhead }) => 
               }}
             >
               <img
-                src="/bannerfooter2.png"
+                src={letterhead.footer?.image || '/bannerfooter2.png'}
                 alt="Footer Banner"
                 style={{
                   width: '100%',

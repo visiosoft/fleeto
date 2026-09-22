@@ -57,6 +57,7 @@ const LetterheadForm: React.FC<LetterheadFormProps> = ({
       },
     },
     footer: {
+      image: '',
       text: '',
       includePageNumbers: true,
       includeDate: true,
@@ -120,6 +121,22 @@ const LetterheadForm: React.FC<LetterheadFormProps> = ({
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleFooterImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        handleInputChange('footer.image', result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveFooterImage = () => {
+    handleInputChange('footer.image', '');
   };
 
   const validateForm = (): boolean => {
@@ -202,7 +219,7 @@ const LetterheadForm: React.FC<LetterheadFormProps> = ({
             <CardHeader title="Header & Footer" />
             <CardContent>
               <Alert severity="info" sx={{ mb: 2 }}>
-                This template uses static header and footer images. The header image is loaded from <code>/bannerheader.png</code> and footer from <code>/bannerfooter2.png</code>.
+                The header uses the default <code>/bannerheader.png</code> banner. The footer uses the default <code>/bannerfooter2.png</code> banner unless you upload a custom footer image below.
               </Alert>
               <Grid container spacing={2}>
                 <Grid item xs={12} md={6}>
@@ -224,7 +241,7 @@ const LetterheadForm: React.FC<LetterheadFormProps> = ({
                   <Box sx={{ textAlign: 'center', p: 2, border: '1px dashed #ccc', borderRadius: 1 }}>
                     <Typography variant="h6" gutterBottom>Footer Preview</Typography>
                     <img
-                      src="/bannerfooter2.png"
+                      src={formData.footer?.image || '/bannerfooter2.png'}
                       alt="Footer Banner Preview"
                       style={{
                         maxWidth: '100%',
@@ -233,6 +250,27 @@ const LetterheadForm: React.FC<LetterheadFormProps> = ({
                         border: '1px solid #ddd',
                       }}
                     />
+                    <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, mt: 1 }}>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        component="label"
+                        startIcon={<UploadIcon />}
+                      >
+                        Update Footer
+                        <input
+                          type="file"
+                          hidden
+                          accept="image/*"
+                          onChange={handleFooterImageUpload}
+                        />
+                      </Button>
+                      {formData.footer?.image && (
+                        <Button size="small" color="error" onClick={handleRemoveFooterImage}>
+                          Reset to Default
+                        </Button>
+                      )}
+                    </Box>
                   </Box>
                 </Grid>
               </Grid>
