@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { Company } from '../types/api';
 import { API_CONFIG } from '../config/api';
+import { handleUnauthorized } from '../utils/sessionGuard';
 
 const BASE_URL = API_CONFIG.BASE_URL;
 const MAX_RETRIES = 3;
@@ -37,6 +38,10 @@ class CompanyService {
     this.axiosInstance.interceptors.response.use(
       (response) => response,
       (error) => {
+        // Checked before the error is reshaped below, which would drop the status code.
+        if (error.response?.status === 401) {
+          handleUnauthorized();
+        }
         if (error.code === 'ECONNABORTED') {
           console.error('Request timed out');
           return Promise.reject(new Error('Request timed out. Please try again.'));

@@ -5,6 +5,7 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import * as serviceWorkerRegistration from './serviceWorkerRegistration';
 import axios from 'axios';
+import { installGlobalAxiosGuard, installGlobalFetchGuard } from './utils/sessionGuard';
 
 // Add axios interceptor to include the token in all requests
 axios.interceptors.request.use(
@@ -19,6 +20,10 @@ axios.interceptors.request.use(
     return Promise.reject(error);
   }
 );
+
+// An expired session must end the session, not render an empty dashboard.
+installGlobalAxiosGuard(axios);
+installGlobalFetchGuard();
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement

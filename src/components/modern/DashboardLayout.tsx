@@ -1,18 +1,19 @@
 import React, { useState } from 'react';
-import { Sidebar } from './Sidebar';
+import { Sidebar, SidebarGroup } from './Sidebar';
 import { Header } from './Header';
 import {
-  DirectionsCar as VehicleIcon,
-  Person as DriverIcon,
-  Description as ContractIcon,
-  Receipt as ExpenseIcon,
-  LocalParking as FineIcon,
-  Assessment as ReportsIcon,
-  Settings as SettingsIcon,
-  Dashboard as DashboardIcon,
-  ReceiptLong as InvoiceIcon,
-  Receipt as ReceiptIcon,
-  LocationOn as TrackingIcon,
+  DirectionsCarOutlined as VehicleIcon,
+  PersonOutline as DriverIcon,
+  DescriptionOutlined as ContractIcon,
+  PaymentsOutlined as ExpenseIcon,
+  GavelOutlined as FineIcon,
+  InsightsOutlined as ReportsIcon,
+  SettingsOutlined as SettingsIcon,
+  SpaceDashboardOutlined as DashboardIcon,
+  ReceiptLongOutlined as InvoiceIcon,
+  ReceiptOutlined as ReceiptIcon,
+  RoomOutlined as TrackingIcon,
+  DrawOutlined as LetterheadIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -25,78 +26,50 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, titl
   const { user } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  const sidebarItems = [
+  // Grouped by what the user is doing, rather than one flat list of twelve links.
+  const sidebarGroups: SidebarGroup[] = [
     {
-      id: 'dashboard',
-      label: 'Dashboard',
-      icon: <DashboardIcon />,
-      path: '/dashboard',
+      id: 'overview',
+      items: [{ id: 'dashboard', label: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' }],
     },
     {
-      id: 'vehicles',
-      label: 'Vehicles',
-      icon: <VehicleIcon />,
-      path: '/vehicles',
+      id: 'fleet',
+      label: 'Fleet',
+      items: [
+        { id: 'vehicles', label: 'Vehicles', icon: <VehicleIcon />, path: '/vehicles' },
+        { id: 'drivers', label: 'Drivers', icon: <DriverIcon />, path: '/drivers' },
+        { id: 'tracking', label: 'Tracking', icon: <TrackingIcon />, path: '/tracking' },
+      ],
     },
     {
-      id: 'drivers',
-      label: 'Drivers',
-      icon: <DriverIcon />,
-      path: '/drivers',
+      id: 'operations',
+      label: 'Operations',
+      items: [
+        { id: 'contracts', label: 'Contracts', icon: <ContractIcon />, path: '/contracts' },
+        { id: 'fines', label: 'Fines', icon: <FineIcon />, path: '/fines-search' },
+      ],
     },
     {
-      id: 'contracts',
-      label: 'Contracts',
-      icon: <ContractIcon />,
-      path: '/contracts',
+      id: 'finance',
+      label: 'Finance',
+      items: [
+        { id: 'invoices', label: 'Invoices', icon: <InvoiceIcon />, path: '/beta-invoices' },
+        { id: 'receipts', label: 'Receipts', icon: <ReceiptIcon />, path: '/receipts' },
+        { id: 'expenses', label: 'Expenses', icon: <ExpenseIcon />, path: '/costs' },
+      ],
     },
     {
-      id: 'tracking',
-      label: 'Tracking',
-      icon: <TrackingIcon />,
-      path: '/tracking',
+      id: 'insights',
+      label: 'Insights',
+      items: [{ id: 'reports', label: 'Reports', icon: <ReportsIcon />, path: '/reports' }],
     },
     {
-      id: 'letterheads',
-      label: 'Letterhead Templates',
-      icon: <ContractIcon />,
-      path: '/letterheads',
-    },
-    {
-      id: 'invoices',
-      label: 'Invoices',
-      icon: <InvoiceIcon />,
-      path: '/beta-invoices',
-    },
-    {
-      id: 'receipts',
-      label: 'Receipts',
-      icon: <ReceiptIcon />,
-      path: '/receipts',
-    },
-    {
-      id: 'expenses',
-      label: 'Expenses',
-      icon: <ExpenseIcon />,
-      path: '/costs',
-    },
-    {
-      id: 'fines',
-      label: 'Fines',
-      icon: <FineIcon />,
-      path: '/fines-search',
-    },
-    {
-      id: 'reports',
-      label: 'Reports',
-      icon: <ReportsIcon />,
-      path: '/reports',
-    },
-    {
-      id: 'settings',
-      label: 'Settings',
-      icon: <SettingsIcon />,
-      path: '/settings',
+      id: 'configuration',
+      label: 'Configuration',
+      items: [
+        { id: 'letterheads', label: 'Letterheads', icon: <LetterheadIcon />, path: '/letterheads' },
+        { id: 'settings', label: 'Settings', icon: <SettingsIcon />, path: '/settings' },
+      ],
     },
   ];
 
@@ -110,7 +83,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, titl
       </a>
 
       {/* Sidebar */}
-      <Sidebar items={sidebarItems} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      <Sidebar groups={sidebarGroups} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
       {/* Main Content - min-w-0 so wide tables scroll inside instead of stretching the shell */}
       <div className="md:ml-64 min-w-0">

@@ -1,7 +1,13 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import AuthService from '../services/AuthService';
 import { NavigateFunction } from 'react-router-dom';
 import { User, LoginResponse } from '../types/api';
+import {
+  clearAuthStorage,
+  getTokenExpiry,
+  isTokenExpired,
+  SESSION_EXPIRED_FLAG,
+} from '../utils/sessionGuard';
 
 interface Company {
   _id: string;
@@ -37,6 +43,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, navigate }
   const [companies, setCompanies] = useState<Company[]>([]);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
+  const expiryTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     // Load saved auth state from localStorage
@@ -44,6 +51,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, navigate }
     const savedUser = localStorage.getItem('user');
     const savedCompanies = localStorage.getItem('companies');
     const savedSelectedCompanyId = localStorage.getItem('selectedCompanyId');
+
+    // A stored token that has already expired is not a session. Drop it rather than
+    // restoring state the API will reject on every request.
+    if (savedToken && isTokenExpired(savedToken)) {
+      clearAuthStorage();
+      setIsLoading(false);
+      return;
+    }
 
     if (savedToken && savedUser && savedCompanies) {
       try {
@@ -78,6 +93,47 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, navigate }
     // Set loading to false after attempting to load auth state
     setIsLoading(false);
   }, []);
+
+  const endExpiredSession = () => {
+    setUser(null);
+    setToken(null);
+    setCompanies([]);
+    setSelectedCompany(null);
+    setSelectedCompanyId(null);
+    clearAuthStorage();
+    sessionStorage.setItem(SESSION_EXPIRED_FLAG, '1');
+    navigate('/login');
+  };
+
+  // End the session the moment the token lapses, so a tab left open overnight lands on
+  // the login page instead of a dashboard whose every request is being rejected.
+  useEffect(() => {
+    if (expiryTimerRef.current) {
+      window.clearTimeout(expiryTimerRef.current);
+      expiryTimerRef.current = null;
+    }
+
+    if (!token) return;
+
+    const expiresAt = getTokenExpiry(token);
+    if (expiresAt === null) return;
+
+    const msRemaining = expiresAt - Date.now();
+    if (msRemaining <= 0) {
+      endExpiredSession();
+      return;
+    }
+
+    expiryTimerRef.current = window.setTimeout(endExpiredSession, msRemaining);
+
+    return () => {
+      if (expiryTimerRef.current) {
+        window.clearTimeout(expiryTimerRef.current);
+        expiryTimerRef.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
 
   const login = async (email: string, password: string) => {
     try {

@@ -18,6 +18,7 @@ import {
   VisibilityOff as VisibilityOffIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
+import { SESSION_EXPIRED_FLAG } from '../../utils/sessionGuard';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -27,6 +28,12 @@ const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  // Set by the session guard when an expired token forced a redirect here.
+  const [sessionExpired] = useState(() => {
+    const expired = sessionStorage.getItem(SESSION_EXPIRED_FLAG) === '1';
+    if (expired) sessionStorage.removeItem(SESSION_EXPIRED_FLAG);
+    return expired;
+  });
   const { login } = useAuth();
 
   // Get the redirect path from location state or default to dashboard
@@ -140,6 +147,12 @@ const Login: React.FC = () => {
             >
               sign in to your fleet management account
             </Typography>
+
+            {sessionExpired && !error && (
+              <Alert severity="info" sx={{ mb: 3, borderRadius: '12px' }}>
+                Your session expired. Please sign in again.
+              </Alert>
+            )}
 
             {error && (
               <Alert

@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { Receipt } from '../types/api';
 import { API_CONFIG } from '../config/api';
+import { attachAuthInterceptor } from '../utils/sessionGuard';
 
 // Shared base so the `/api` prefix can't drift per-service (it did: this used to 404).
 const BASE_URL = API_CONFIG.BASE_URL;
@@ -35,6 +36,8 @@ class ReceiptService {
         return Promise.reject(error);
       }
     );
+
+    attachAuthInterceptor(this.axiosInstance);
   }
 
   public static getInstance(): ReceiptService {

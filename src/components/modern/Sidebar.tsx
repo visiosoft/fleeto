@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Close as CloseIcon } from '@mui/icons-material';
 
-interface SidebarItem {
+export interface SidebarItem {
   id: string;
   label: string;
   icon: React.ReactNode;
@@ -10,13 +10,20 @@ interface SidebarItem {
   badge?: number;
 }
 
-interface SidebarProps {
+export interface SidebarGroup {
+  id: string;
+  /** Omitted for the leading group, which needs no heading above it. */
+  label?: string;
   items: SidebarItem[];
+}
+
+interface SidebarProps {
+  groups: SidebarGroup[];
   isOpen: boolean;
   onClose: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ items, isOpen, onClose }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ groups, isOpen, onClose }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -67,44 +74,59 @@ export const Sidebar: React.FC<SidebarProps> = ({ items, isOpen, onClose }) => {
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-3" aria-label="Main navigation">
-        <ul className="space-y-0.5 px-3">
-          {items.map((item) => {
-            const active = isActive(item.path);
-            return (
-              <li key={item.id}>
-                <button
-                  onClick={() => handleNavigate(item.path)}
-                  aria-current={active ? 'page' : undefined}
-                  className={`w-full flex items-center gap-3 pl-3 pr-3 py-2.5 rounded-lg transition-colors duration-150 group ${
-                    active
-                      ? 'bg-accent-50 text-accent-700 font-semibold'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                  }`}
-                >
-                  <span
-                    aria-hidden="true"
-                    className={`h-5 w-[3px] rounded-full flex-shrink-0 transition-colors ${
-                      active ? 'bg-accent-600' : 'bg-transparent'
-                    }`}
-                  />
-                  <span
-                    className={`flex-shrink-0 w-5 h-5 ${
-                      active ? 'text-accent-600' : 'text-gray-400 group-hover:text-gray-600'
-                    }`}
-                  >
-                    {item.icon}
-                  </span>
-                  <span className="flex-1 text-left text-sm">{item.label}</span>
-                  {item.badge !== undefined && item.badge > 0 && (
-                    <span className="flex-shrink-0 min-w-[20px] h-5 px-1.5 bg-red-500 text-white text-xs font-semibold rounded-md flex items-center justify-center tabular-figures">
-                      {item.badge > 99 ? '99+' : item.badge}
-                    </span>
-                  )}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
+        {groups.map((group, groupIndex) => (
+          <div key={group.id} className={groupIndex === 0 ? '' : 'mt-5'}>
+            {group.label && (
+              <p
+                id={`nav-group-${group.id}`}
+                className="px-6 pb-1.5 text-[10.5px] font-semibold uppercase tracking-[0.07em] text-gray-400"
+              >
+                {group.label}
+              </p>
+            )}
+            <ul
+              className="space-y-0.5 px-3"
+              aria-labelledby={group.label ? `nav-group-${group.id}` : undefined}
+            >
+              {group.items.map((item) => {
+                const active = isActive(item.path);
+                return (
+                  <li key={item.id}>
+                    <button
+                      onClick={() => handleNavigate(item.path)}
+                      aria-current={active ? 'page' : undefined}
+                      className={`w-full flex items-center gap-3 pl-3 pr-3 py-2.5 rounded-lg transition-colors duration-150 group ${
+                        active
+                          ? 'bg-accent-50 text-accent-700 font-semibold'
+                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      }`}
+                    >
+                      <span
+                        aria-hidden="true"
+                        className={`h-5 w-[3px] rounded-full flex-shrink-0 transition-colors ${
+                          active ? 'bg-accent-600' : 'bg-transparent'
+                        }`}
+                      />
+                      <span
+                        className={`flex-shrink-0 w-5 h-5 ${
+                          active ? 'text-accent-600' : 'text-gray-400 group-hover:text-gray-600'
+                        }`}
+                      >
+                        {item.icon}
+                      </span>
+                      <span className="flex-1 text-left text-sm">{item.label}</span>
+                      {item.badge !== undefined && item.badge > 0 && (
+                        <span className="flex-shrink-0 min-w-[20px] h-5 px-1.5 bg-red-500 text-white text-xs font-semibold rounded-md flex items-center justify-center tabular-figures">
+                          {item.badge > 99 ? '99+' : item.badge}
+                        </span>
+                      )}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
       </nav>
 
         {/* Footer */}

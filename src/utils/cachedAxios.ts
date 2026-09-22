@@ -1,5 +1,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { apiCache, generateCacheKey } from './apiCache';
+import { handleUnauthorized } from './sessionGuard';
 
 // URLs that should be cached
 const CACHEABLE_ENDPOINTS = [
@@ -90,6 +91,9 @@ export const createCachedAxios = (): AxiosInstance => {
       // Handle cache hits
       if (error.isCache) {
         return Promise.resolve(error.response);
+      }
+      if (error.response?.status === 401) {
+        handleUnauthorized();
       }
       return Promise.reject(error);
     }
