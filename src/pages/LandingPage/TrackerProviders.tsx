@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Box, Container, Typography } from '@mui/material';
 import Reveal from './Reveal';
 import { COLORS, FONT_DISPLAY, FONT_BODY, RADIUS } from './theme';
@@ -13,12 +13,6 @@ const providers = [
 ];
 
 const TrackerProviders: React.FC = () => {
-  const [reduceMotion, setReduceMotion] = useState(false);
-
-  useEffect(() => {
-    setReduceMotion(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-  }, []);
-
   const track = [...providers, ...providers];
 
   return (
@@ -61,7 +55,8 @@ const TrackerProviders: React.FC = () => {
             width: 'max-content',
             gap: 3,
             px: 3,
-            animation: reduceMotion ? 'none' : 'marquee 28s linear infinite',
+            // Halted under prefers-reduced-motion by the global rule in index.css
+            animation: 'marquee 28s linear infinite',
             '@keyframes marquee': {
               from: { transform: 'translateX(0)' },
               to: { transform: 'translateX(-50%)' },

@@ -19,7 +19,6 @@ import CompanySelection from './pages/CompanySelection/CompanySelection';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { PageSkeleton } from './components/Skeletons';
 import LoadingDemo from './pages/LoadingDemo/LoadingDemo';
-import LandingPage from './pages/LandingPage/LandingPage';
 import ReceiptManagement from './pages/ReceiptManagement/ReceiptManagement';
 import ReceiptForm from './pages/ReceiptManagement/ReceiptForm';
 import LetterheadManagement from './pages/LetterheadManagement/LetterheadManagement';
@@ -29,6 +28,9 @@ import { ModernDashboard } from './pages/ModernDashboard/ModernDashboard';
 import { ModernPageLayout } from './components/modern/ModernPageLayout';
 
 // Lazy load all pages
+// LandingPage included so the marketing page (and the Motion bundle it pulls in)
+// isn't shipped to authenticated users who never see it.
+const LandingPage = React.lazy(() => import('./pages/LandingPage/LandingPage'));
 const VehicleManagement = React.lazy(() => import('./pages/VehicleManagement'));
 const DriverManagement = React.lazy(() => import('./pages/DriverManagement'));
 const Tracking = React.lazy(() => import('./pages/Tracking/Tracking'));
