@@ -156,7 +156,16 @@ const LetterheadManagement: React.FC = () => {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 3,
+          mb: 6,
+        }}
+      >
         <Typography variant="h4">Letterhead Templates</Typography>
         <Button
           variant="contained"
@@ -221,43 +230,49 @@ const LetterheadManagement: React.FC = () => {
                     </Typography>
                   )}
 
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" color="textSecondary" gutterBottom>
-                      Company: {letterhead.header.companyName}
-                    </Typography>
-                    {letterhead.header.tagline && (
-                      <Typography variant="body2" color="textSecondary">
-                        {letterhead.header.tagline}
-                      </Typography>
-                    )}
-                  </Box>
+                  {(letterhead.header.companyName || letterhead.header.tagline) && (
+                    <Box sx={{ mb: 2 }}>
+                      {letterhead.header.companyName && (
+                        <Typography variant="subtitle2" color="textSecondary" gutterBottom>
+                          {letterhead.header.companyName}
+                        </Typography>
+                      )}
+                      {letterhead.header.tagline && (
+                        <Typography variant="body2" color="textSecondary">
+                          {letterhead.header.tagline}
+                        </Typography>
+                      )}
+                    </Box>
+                  )}
 
                   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                     <Chip
-                      label={letterhead.styling.fontFamily}
+                      label={`${letterhead.styling.fontFamily.split(',')[0].replace(/['"]/g, '')} · ${letterhead.styling.fontSize}px`}
                       size="small"
                       variant="outlined"
                     />
-                    <Chip
-                      label={`${letterhead.styling.fontSize}px`}
-                      size="small"
-                      variant="outlined"
-                    />
+                    {letterhead.footer?.image && (
+                      <Chip label="Custom footer" size="small" variant="outlined" />
+                    )}
                   </Box>
                 </CardContent>
 
-                <CardActions>
+                <CardActions sx={{ px: 4, pb: 4, pt: 0, gap: 2, flexWrap: 'wrap' }}>
                   <Button
                     size="small"
+                    variant="outlined"
                     startIcon={<PreviewIcon />}
                     onClick={() => handlePreview(letterhead)}
+                    sx={{ ml: 0 }}
                   >
                     Preview
                   </Button>
                   <Button
                     size="small"
+                    variant="contained"
                     startIcon={<PdfIcon />}
                     onClick={() => navigate(`/letterheads/${letterhead._id}/pdf`)}
+                    sx={{ ml: '0 !important' }}
                   >
                     Generate PDF
                   </Button>

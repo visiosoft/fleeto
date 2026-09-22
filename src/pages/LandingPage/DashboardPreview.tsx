@@ -1,225 +1,90 @@
 import React from 'react';
-import { Box, Container, Typography, Grid, Paper } from '@mui/material';
-import {
-  Speed,
-  DirectionsCar,
-  Warning,
-  CheckCircle,
-} from '@mui/icons-material';
+import { Box, Container, Typography } from '@mui/material';
+import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
+import SpeedIcon from '@mui/icons-material/Speed';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import Reveal from './Reveal';
+import { COLORS, FONT_DISPLAY, FONT_BODY, RADIUS } from './theme';
+
+const stats = [
+  { icon: <DirectionsCarIcon />, value: '248', label: 'Active vehicles' },
+  { icon: <SpeedIcon />, value: '187', label: 'On the move' },
+  { icon: <CheckCircleIcon />, value: '61', label: 'Parked' },
+  { icon: <WarningAmberIcon />, value: '3', label: 'Alerts' },
+];
 
 const DashboardPreview: React.FC = () => {
-  const stats = [
-    {
-      icon: <DirectionsCar />,
-      value: '248',
-      label: 'Active Vehicles',
-      color: '#0B3C5D',
-      bgcolor: '#e8f4f8',
-    },
-    {
-      icon: <Speed />,
-      value: '187',
-      label: 'On the Move',
-      color: '#328B9B',
-      bgcolor: '#e0f7f4',
-    },
-    {
-      icon: <CheckCircle />,
-      value: '61',
-      label: 'Parked',
-      color: '#059669',
-      bgcolor: '#d1fae5',
-    },
-    {
-      icon: <Warning />,
-      value: '3',
-      label: 'Alerts',
-      color: '#dc2626',
-      bgcolor: '#fee2e2',
-    },
-  ];
-
   return (
-    <Box
-      sx={{
-        py: { xs: 8, md: 12 },
-        bgcolor: '#fafafa',
-      }}
-    >
+    <Box sx={{ py: { xs: 8, md: 12 }, bgcolor: COLORS.ink, color: '#fff' }}>
       <Container maxWidth="lg">
-        {/* Section Header */}
-        <Box sx={{ textAlign: 'center', mb: 8 }}>
-          <Typography
-            variant="h2"
-            sx={{
-              fontSize: { xs: '2rem', md: '3rem' },
-              fontWeight: 600,
-              fontFamily: 'SF Pro Display, -apple-system, BlinkMacSystemFont, sans-serif',
-              color: '#1d1d1f',
-              mb: 2,
-              letterSpacing: '-0.015em',
-            }}
-          >
-            Modern dashboard
-            <br />
-            built for performance
-          </Typography>
-          <Typography
-            variant="h6"
-            sx={{
-              fontSize: { xs: '1rem', md: '1.2rem' },
-              color: '#64748b',
-              maxWidth: 700,
-              mx: 'auto',
-              lineHeight: 1.7,
-            }}
-          >
-            Clean, intuitive interface with all critical fleet metrics at your fingertips
-          </Typography>
-        </Box>
-
-        {/* Stats Cards */}
-        <Grid container spacing={3} sx={{ mb: 6 }}>
-          {stats.map((stat, index) => (
-            <Grid item xs={6} md={3} key={index}>
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 3,
-                  bgcolor: 'white',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '16px',
-                  textAlign: 'center',
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    transform: 'translateY(-4px)',
-                    boxShadow: '0 8px 24px rgba(11, 60, 93, 0.1)',
-                  },
-                }}
-              >
-                <Box
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: '12px',
-                    bgcolor: stat.bgcolor,
-                    color: stat.color,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    mx: 'auto',
-                    mb: 2,
-                    '& svg': {
-                      fontSize: 24,
-                    },
-                  }}
-                >
-                  {stat.icon}
-                </Box>
-                <Typography
-                  variant="h3"
-                  sx={{
-                    fontSize: { xs: '1.8rem', md: '2.2rem' },
-                    fontWeight: 700,
-                    color: '#0B3C5D',
-                    mb: 0.5,
-                  }}
-                >
-                  {stat.value}
-                </Typography>
-                <Typography
-                  sx={{
-                    fontSize: '0.9rem',
-                    color: '#64748b',
-                    fontWeight: 500,
-                  }}
-                >
-                  {stat.label}
-                </Typography>
-              </Paper>
-            </Grid>
-          ))}
-        </Grid>
-
-        {/* Dashboard Preview Image */}
         <Box
           sx={{
-            position: 'relative',
-            borderRadius: '20px',
-            overflow: 'hidden',
-            boxShadow: '0 20px 60px rgba(11, 60, 93, 0.15)',
-            border: '1px solid #e2e8f0',
-            bgcolor: 'white',
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: '0.85fr 1.15fr' },
+            gap: { xs: 5, md: 6 },
+            alignItems: 'center',
+            mb: 7,
           }}
         >
-          <Box
-            component="img"
-            src="/images/dash.png"
-            alt="Dashboard Preview"
-            sx={{
-              width: '100%',
-              display: 'block',
-              transition: 'transform 0.5s ease',
-              '&:hover': {
-                transform: 'scale(1.02)',
-              },
-            }}
-          />
-          {/* Overlay gradient for depth */}
-          <Box
-            sx={{
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              height: '30%',
-              background: 'linear-gradient(to top, rgba(0,0,0,0.05) 0%, transparent 100%)',
-              pointerEvents: 'none',
-            }}
-          />
+          <Reveal>
+            <Typography
+              variant="h2"
+              sx={{
+                fontSize: { xs: '1.9rem', md: '2.4rem' },
+                fontWeight: 700,
+                fontFamily: FONT_DISPLAY,
+                mb: 2,
+                letterSpacing: '-0.015em',
+              }}
+            >
+              One dashboard, live all day
+            </Typography>
+            <Typography sx={{ fontSize: '1.05rem', color: 'rgba(255,255,255,0.72)', lineHeight: 1.65, fontFamily: FONT_BODY }}>
+              Fleet status refreshes every 30 seconds, so the number on screen is the number on the road.
+            </Typography>
+          </Reveal>
+
+          <Reveal delay={0.1}>
+            <Box
+              sx={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: { xs: 3, md: 4 },
+                borderTop: '1px solid rgba(255,255,255,0.14)',
+                pt: 3,
+              }}
+            >
+              {stats.map((stat) => (
+                <Box key={stat.label} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 130 }}>
+                  <Box sx={{ color: COLORS.accent, display: 'flex' }}>{stat.icon}</Box>
+                  <Box>
+                    <Typography sx={{ fontSize: '1.5rem', fontWeight: 700, fontFamily: FONT_DISPLAY, lineHeight: 1 }}>
+                      {stat.value}
+                    </Typography>
+                    <Typography sx={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)', fontFamily: FONT_BODY }}>
+                      {stat.label}
+                    </Typography>
+                  </Box>
+                </Box>
+              ))}
+            </Box>
+          </Reveal>
         </Box>
 
-        {/* Feature Highlights */}
-        <Grid container spacing={3} sx={{ mt: 6 }}>
-          {[
-            {
-              title: 'Responsive Design',
-              description: 'Works perfectly on desktop, tablet, and mobile devices',
-            },
-            {
-              title: 'Real-time Updates',
-              description: 'Live data sync every 30 seconds for up-to-date fleet status',
-            },
-            {
-              title: 'Customizable Views',
-              description: 'Personalize your dashboard to show what matters most to you',
-            },
-          ].map((item, index) => (
-            <Grid item xs={12} md={4} key={index}>
-              <Box sx={{ textAlign: 'center', px: 2 }}>
-                <Typography
-                  variant="h6"
-                  sx={{
-                    fontWeight: 700,
-                    color: '#0B3C5D',
-                    mb: 1,
-                  }}
-                >
-                  {item.title}
-                </Typography>
-                <Typography
-                  sx={{
-                    fontSize: '0.95rem',
-                    color: '#64748b',
-                    lineHeight: 1.7,
-                  }}
-                >
-                  {item.description}
-                </Typography>
-              </Box>
-            </Grid>
-          ))}
-        </Grid>
+        <Reveal delay={0.15}>
+          <Box
+            sx={{
+              position: 'relative',
+              borderRadius: RADIUS.lg,
+              overflow: 'hidden',
+              border: '1px solid rgba(255,255,255,0.12)',
+              boxShadow: '0 30px 80px rgba(0,0,0,0.45)',
+            }}
+          >
+            <Box component="img" src="/images/dash.png" alt="FleetOZ dashboard interface" sx={{ width: '100%', display: 'block' }} />
+          </Box>
+        </Reveal>
       </Container>
     </Box>
   );

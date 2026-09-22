@@ -69,6 +69,25 @@ interface DriverFormValues extends Omit<Driver, '_id' | 'licenseExpiry'> {
   licenseExpiry: Moment;
 }
 
+// Some legacy driver records store contact info as a nested { phone, email, address }
+// object instead of the flat strings this UI expects. Normalize before rendering/searching
+// so a mismatched record doesn't crash the page (React can't render an object as a child).
+const getContactText = (driver: Driver): string => {
+  const contact = driver.contact as unknown;
+  if (!contact) return '';
+  if (typeof contact === 'string') return contact;
+  const c = contact as { phone?: string; email?: string };
+  return c.phone || c.email || '';
+};
+
+const getAddressText = (driver: Driver): string => {
+  const address = driver.address as unknown;
+  if (!address) return '';
+  if (typeof address === 'string') return address;
+  const a = address as { address?: string };
+  return a.address || '';
+};
+
 const DriverManagement: React.FC = () => {
   const theme = useTheme();
   const [hoveredRow, setHoveredRow] = useState<string | null>(null);
@@ -122,6 +141,8 @@ const DriverManagement: React.FC = () => {
       const driverData = response.data;
       setFormValues({
         ...driverData,
+        contact: getContactText(driverData),
+        address: getAddressText(driverData),
         licenseExpiry: moment(driverData.licenseExpiry),
       });
       setEditingDriver(driver);
@@ -207,8 +228,8 @@ const DriverManagement: React.FC = () => {
         driver.firstName?.toLowerCase().includes(query) ||
         driver.lastName?.toLowerCase().includes(query) ||
         driver.licenseNumber?.toLowerCase().includes(query) ||
-        driver.contact?.toLowerCase().includes(query) ||
-        driver.address?.toLowerCase().includes(query) ||
+        getContactText(driver).toLowerCase().includes(query) ||
+        getAddressText(driver).toLowerCase().includes(query) ||
         driver.status?.toLowerCase().includes(query)
       );
     }
@@ -333,11 +354,11 @@ const DriverManagement: React.FC = () => {
                         <Typography variant="body2" fontWeight={700}>
                           {`${driver.firstName} ${driver.lastName}`}
                         </Typography>
-                        {driver.address && (
+                        {getAddressText(driver) && (
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
                             <LocationIcon sx={{ fontSize: 12, color: theme.palette.text.disabled }} />
                             <Typography variant="caption" color="text.secondary" noWrap sx={{ maxWidth: 200 }}>
-                              {driver.address}
+                              {getAddressText(driver)}
                             </Typography>
                           </Box>
                         )}
@@ -368,7 +389,7 @@ const DriverManagement: React.FC = () => {
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                     <PhoneIcon sx={{ fontSize: 16, color: theme.palette.success.main }} />
                     <Typography variant="body2">
-                      {driver.contact}
+                      {getContactText(driver)}
                     </Typography>
                   </Box>
                 </TableCell>

@@ -1,241 +1,153 @@
 import React from 'react';
-import { Box, Container, Typography, Grid, Paper } from '@mui/material';
-import {
-  TrendingDown,
-  TrendingUp,
-  Visibility,
-  Notifications,
-  BusinessCenter,
-} from '@mui/icons-material';
+import { Box, Container, Typography } from '@mui/material';
+import TrendingDownIcon from '@mui/icons-material/TrendingDown';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
+import BusinessCenterIcon from '@mui/icons-material/BusinessCenter';
+import Reveal from './Reveal';
+import { COLORS, FONT_DISPLAY, FONT_BODY, RADIUS } from './theme';
+
+const benefits = [
+  {
+    icon: <TrendingDownIcon />,
+    title: 'Lower operational costs',
+    description: 'Cut fuel spend, optimize routes, and reduce idle time and unauthorized vehicle use.',
+  },
+  {
+    icon: <TrendingUpIcon />,
+    title: 'Better driver performance',
+    description: 'Track behavior and speed violations to reduce accidents and reward safe driving.',
+  },
+  {
+    icon: <VisibilityIcon />,
+    title: 'Full fleet visibility',
+    description: 'Live location, complete trip history, and geofencing alerts around the clock.',
+  },
+  {
+    icon: <NotificationsActiveIcon />,
+    title: 'Automated fine monitoring',
+    description: 'Instant UAE traffic fine notifications, routed to the responsible driver.',
+  },
+  {
+    icon: <BusinessCenterIcon />,
+    title: 'Sharper business control',
+    description: 'Reports, maintenance scheduling, and fleet data in one place, not five spreadsheets.',
+    full: true,
+  },
+];
+
+const roiStats = [
+  { value: '25%', label: 'Fuel cost reduction' },
+  { value: '40%', label: 'Less idle time' },
+  { value: '60%', label: 'Faster fine resolution' },
+];
 
 const Benefits: React.FC = () => {
-  const benefits = [
-    {
-      icon: <TrendingDown />,
-      title: 'Reduce Operational Costs',
-      description: 'Cut fuel expenses by up to 25%, optimize routes, minimize idle time, and reduce unauthorized vehicle usage.',
-      color: '#059669',
-      bgcolor: '#d1fae5',
-    },
-    {
-      icon: <TrendingUp />,
-      title: 'Improve Driver Performance',
-      description: 'Track driver behavior, monitor speed violations, reduce accidents, and promote safe driving practices.',
-      color: '#328B9B',
-      bgcolor: '#e0f7f4',
-    },
-    {
-      icon: <Visibility />,
-      title: 'Increase Fleet Visibility',
-      description: 'Real-time location tracking, complete trip history, geofencing alerts, and 24/7 fleet monitoring.',
-      color: '#0B3C5D',
-      bgcolor: '#e8f4f8',
-    },
-    {
-      icon: <Notifications />,
-      title: 'Automated Fine Monitoring',
-      description: 'Instant UAE traffic fine notifications, driver assignment, fine history tracking, and payment reminders.',
-      color: '#dc2626',
-      bgcolor: '#fee2e2',
-    },
-    {
-      icon: <BusinessCenter />,
-      title: 'Better Business Control',
-      description: 'Data-driven insights, comprehensive reports, maintenance scheduling, and complete fleet management from one platform.',
-      color: '#7c3aed',
-      bgcolor: '#ede9fe',
-    },
-  ];
-
   return (
-    <Box
-      sx={{
-        py: { xs: 8, md: 12 },
-        bgcolor: '#ffffff',
-      }}
-    >
+    <Box sx={{ py: { xs: 8, md: 12 }, bgcolor: COLORS.surface }}>
       <Container maxWidth="lg">
-        {/* Section Header */}
-        <Box sx={{ textAlign: 'center', mb: 8 }}>
-          <Typography
-            variant="h2"
-            sx={{
-              fontSize: { xs: '2rem', md: '3rem' },
-              fontWeight: 600,
-              fontFamily: 'SF Pro Display, -apple-system, BlinkMacSystemFont, sans-serif',
-              color: '#1d1d1f',
-              mb: 2,
-              letterSpacing: '-0.015em',
-            }}
-          >
-            Transform your fleet
-            <br />
-            operations
-          </Typography>
-          <Typography
-            variant="h6"
-            sx={{
-              fontSize: { xs: '1rem', md: '1.2rem' },
-              color: '#64748b',
-              maxWidth: 700,
-              mx: 'auto',
-              lineHeight: 1.7,
-            }}
-          >
-            Discover how FleetOZ helps UAE businesses optimize their
-            fleet operations and drive real results
-          </Typography>
-        </Box>
-
-        {/* Benefits Grid */}
-        <Grid container spacing={4}>
-          {benefits.map((benefit, index) => (
-            <Grid
-              item
-              xs={12}
-              md={index === benefits.length - 1 ? 12 : 6}
-              key={index}
+        <Reveal>
+          <Box sx={{ maxWidth: 620, mb: 7 }}>
+            <Typography
+              variant="h2"
+              sx={{
+                fontSize: { xs: '2rem', md: '2.6rem' },
+                fontWeight: 700,
+                fontFamily: FONT_DISPLAY,
+                color: COLORS.ink,
+                mb: 2,
+                letterSpacing: '-0.015em',
+              }}
             >
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 5,
-                  height: '100%',
-                  bgcolor: '#f8fafb',
-                  border: '2px solid #e2e8f0',
-                  borderRadius: '20px',
-                  transition: 'all 0.3s ease',
-                  position: 'relative',
-                  overflow: 'hidden',
-                  '&:hover': {
-                    transform: 'translateY(-6px)',
-                    boxShadow: '0 16px 48px rgba(11, 60, 93, 0.12)',
-                    borderColor: benefit.color,
-                    '& .benefit-icon': {
-                      transform: 'scale(1.1) rotate(5deg)',
-                    },
-                    '&::before': {
-                      opacity: 1,
-                    },
-                  },
-                  '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: '4px',
-                    bgcolor: benefit.color,
-                    opacity: 0,
-                    transition: 'opacity 0.3s ease',
-                  },
-                }}
-              >
-                <Box sx={{ display: 'flex', gap: 3, alignItems: 'flex-start' }}>
-                  {/* Icon */}
-                  <Box
-                    className="benefit-icon"
-                    sx={{
-                      width: 64,
-                      height: 64,
-                      borderRadius: '16px',
-                      bgcolor: benefit.bgcolor,
-                      color: benefit.color,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                      transition: 'all 0.3s ease',
-                      '& svg': {
-                        fontSize: 32,
-                      },
-                    }}
-                  >
-                    {benefit.icon}
-                  </Box>
+              What changes once you switch
+            </Typography>
+            <Typography sx={{ fontSize: '1.05rem', color: COLORS.body, lineHeight: 1.6, fontFamily: FONT_BODY }}>
+              Real outcomes UAE operators report after moving their fleet onto FleetOZ.
+            </Typography>
+          </Box>
+        </Reveal>
 
-                  {/* Content */}
-                  <Box sx={{ flex: 1 }}>
-                    <Typography
-                      variant="h5"
-                      sx={{
-                        fontWeight: 700,
-                        color: '#0B3C5D',
-                        mb: 1.5,
-                        fontSize: { xs: '1.3rem', md: '1.5rem' },
-                      }}
-                    >
-                      {benefit.title}
-                    </Typography>
-                    <Typography
-                      sx={{
-                        fontSize: '1rem',
-                        color: '#64748b',
-                        lineHeight: 1.8,
-                      }}
-                    >
-                      {benefit.description}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Paper>
-            </Grid>
-          ))}
-        </Grid>
-
-        {/* ROI Section */}
         <Box
           sx={{
-            mt: 8,
-            p: 6,
-            background: 'linear-gradient(135deg, #1a1a2e 0%, #0f3460 50%, #00adb5 100%)',
-            borderRadius: '24px',
-            textAlign: 'center',
-            color: 'white',
-            boxShadow: '0 20px 60px rgba(0, 173, 181, 0.3)',
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },
+            gap: 3,
           }}
         >
-          <Typography
-            variant="h4"
+          {benefits.map((benefit, index) => (
+            <Reveal key={benefit.title} delay={index * 0.05} sx={{ gridColumn: benefit.full ? { md: '1 / -1' } : 'auto' }}>
+              <Box
+                sx={{
+                  height: '100%',
+                  p: 4,
+                  borderRadius: RADIUS.lg,
+                  border: `1px solid ${COLORS.border}`,
+                  bgcolor: COLORS.surfaceAlt,
+                  display: 'flex',
+                  gap: 3,
+                  alignItems: 'flex-start',
+                  transition: 'transform 0.25s ease, border-color 0.25s ease',
+                  '&:hover': { transform: 'translateY(-4px)', borderColor: COLORS.accent },
+                }}
+              >
+                <Box
+                  sx={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: RADIUS.sm,
+                    bgcolor: COLORS.accentSoft,
+                    color: COLORS.accentDark,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    '& svg': { fontSize: 28 },
+                  }}
+                >
+                  {benefit.icon}
+                </Box>
+                <Box>
+                  <Typography sx={{ fontWeight: 700, color: COLORS.ink, mb: 1, fontSize: '1.15rem', fontFamily: FONT_DISPLAY }}>
+                    {benefit.title}
+                  </Typography>
+                  <Typography sx={{ fontSize: '0.98rem', color: COLORS.body, lineHeight: 1.65, fontFamily: FONT_BODY }}>
+                    {benefit.description}
+                  </Typography>
+                </Box>
+              </Box>
+            </Reveal>
+          ))}
+        </Box>
+
+        {/* ROI strip - light, matching the page theme */}
+        <Reveal delay={0.2}>
+          <Box
             sx={{
-              fontWeight: 800,
-              fontFamily: 'Poppins, sans-serif',
-              mb: 2,
-              fontSize: { xs: '1.8rem', md: '2.4rem' },
+              mt: 5,
+              p: { xs: 4, md: 6 },
+              border: `1px solid ${COLORS.border}`,
+              borderRadius: RADIUS.lg,
+              bgcolor: COLORS.accentSoft,
             }}
           >
-            Average ROI in First 6 Months
-          </Typography>
-          <Grid container spacing={4} sx={{ mt: 2 }}>
-            {[
-              { value: '25%', label: 'Fuel Cost Reduction' },
-              { value: '40%', label: 'Less Idle Time' },
-              { value: '60%', label: 'Faster Fine Resolution' },
-            ].map((stat, index) => (
-              <Grid item xs={12} md={4} key={index}>
-                <Typography
-                  variant="h2"
-                  sx={{
-                    fontWeight: 800,
-                    fontSize: { xs: '2.5rem', md: '3.5rem' },
-                    mb: 1,
-                  }}
-                >
-                  {stat.value}
-                </Typography>
-                <Typography
-                  sx={{
-                    fontSize: '1.1rem',
-                    opacity: 0.95,
-                    fontWeight: 500,
-                  }}
-                >
-                  {stat.label}
-                </Typography>
-              </Grid>
-            ))}
-          </Grid>
-        </Box>
+            <Typography sx={{ fontWeight: 700, fontFamily: FONT_DISPLAY, color: COLORS.ink, mb: 4, fontSize: { xs: '1.3rem', md: '1.6rem' } }}>
+              Average return in the first 6 months
+            </Typography>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, gap: 4 }}>
+              {roiStats.map((stat) => (
+                <Box key={stat.label}>
+                  <Typography sx={{ fontWeight: 700, fontSize: { xs: '2.2rem', md: '2.6rem' }, color: COLORS.accentDark, fontFamily: FONT_DISPLAY, mb: 0.5 }}>
+                    {stat.value}
+                  </Typography>
+                  <Typography sx={{ fontSize: '0.98rem', color: COLORS.ink, fontFamily: FONT_BODY, fontWeight: 500 }}>
+                    {stat.label}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
+          </Box>
+        </Reveal>
       </Container>
     </Box>
   );

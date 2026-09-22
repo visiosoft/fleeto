@@ -1,118 +1,109 @@
 import React from 'react';
-import { Box, Container, Typography, Grid, Paper } from '@mui/material';
-import { Construction, Delete, LocalAirport, LocalFireDepartment, LocalShipping, Restaurant, School, DirectionsBus } from '@mui/icons-material';
+import { Box, Container, Typography } from '@mui/material';
+import ConstructionIcon from '@mui/icons-material/Construction';
+import DeleteIcon from '@mui/icons-material/Delete';
+import LocalAirportIcon from '@mui/icons-material/LocalAirport';
+import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
+import LocalShippingIcon from '@mui/icons-material/LocalShipping';
+import RestaurantIcon from '@mui/icons-material/Restaurant';
+import SchoolIcon from '@mui/icons-material/School';
+import DirectionsBusIcon from '@mui/icons-material/DirectionsBus';
+import Reveal from './Reveal';
+import { COLORS, FONT_DISPLAY, FONT_BODY, RADIUS } from './theme';
+
+const verticals = [
+  { icon: <ConstructionIcon />, title: 'Construction', description: 'Heavy equipment and site vehicles tracked for maximum uptime.' },
+  { icon: <DeleteIcon />, title: 'Waste management', description: 'Route optimization and pickup compliance for collection fleets.' },
+  { icon: <LocalAirportIcon />, title: 'Airports', description: 'Airside vehicles and ground support equipment, monitored live.' },
+  { icon: <LocalFireDepartmentIcon />, title: 'Emergency response', description: 'Ambulances and fire trucks with real-time dispatch visibility.' },
+  { icon: <LocalShippingIcon />, title: 'Delivery & logistics', description: 'Last-mile routing and proof of delivery for courier fleets.' },
+  { icon: <RestaurantIcon />, title: 'Food & beverage', description: 'Temperature and delivery tracking for F&B distribution.' },
+  { icon: <SchoolIcon />, title: 'School transport', description: 'Student safety tracking with parent notifications.' },
+  { icon: <DirectionsBusIcon />, title: 'Public transit', description: 'Schedule adherence and passenger safety for city fleets.' },
+];
 
 const IndustryVerticals: React.FC = () => {
-    const verticals = [
-        {
-            icon: <Construction sx={{ fontSize: 32, color: '#0071e3' }} />,
-            title: 'Construction Fleet Management',
-            description: 'Heavy equipment, cranes, and construction vehicles — all tracked and managed for maximum uptime.'
-        },
-        {
-            icon: <Delete sx={{ fontSize: 32, color: '#059669' }} />,
-            title: 'Waste Management',
-            description: 'Optimize routes, monitor pickups, and ensure compliance for waste collection fleets.'
-        },
-        {
-            icon: <LocalAirport sx={{ fontSize: 32, color: '#328B9B' }} />,
-            title: 'Airports',
-            description: 'Track airside vehicles, shuttle buses, and ground support equipment for airport operations.'
-        },
-        {
-            icon: <LocalFireDepartment sx={{ fontSize: 32, color: '#dc2626' }} />,
-            title: 'Emergency Response',
-            description: 'Ambulances, fire trucks, and emergency vehicles with real-time dispatch and monitoring.'
-        },
-        {
-            icon: <LocalShipping sx={{ fontSize: 32, color: '#7c3aed' }} />,
-            title: 'Delivery',
-            description: 'Last-mile delivery, courier, and logistics fleets with route optimization and proof of delivery.'
-        },
-        {
-            icon: <Restaurant sx={{ fontSize: 32, color: '#f59e42' }} />,
-            title: 'Food and Beverage',
-            description: 'Temperature monitoring, delivery tracking, and compliance for F&B distribution.'
-        },
-        {
-            icon: <School sx={{ fontSize: 32, color: '#eab308' }} />,
-            title: 'School Transportation',
-            description: 'School bus tracking, student safety, and parent notifications for educational institutions.'
-        },
-        {
-            icon: <DirectionsBus sx={{ fontSize: 32, color: '#0B3C5D' }} />,
-            title: 'Public Transportation',
-            description: 'Monitor city buses, shuttles, and public transit for schedule adherence and passenger safety.'
-        },
-    ];
+  return (
+    <Box id="industry-verticals" sx={{ py: { xs: 8, md: 12 }, bgcolor: COLORS.surface }}>
+      <Container maxWidth="lg">
+        <Reveal>
+          <Box sx={{ maxWidth: 560, mb: 6 }}>
+            <Typography
+              variant="h2"
+              sx={{
+                fontSize: { xs: '1.9rem', md: '2.4rem' },
+                fontWeight: 700,
+                fontFamily: FONT_DISPLAY,
+                color: COLORS.ink,
+                mb: 1.5,
+                letterSpacing: '-0.015em',
+              }}
+            >
+              Built for every kind of fleet
+            </Typography>
+            <Typography sx={{ fontSize: '1.05rem', color: COLORS.body, lineHeight: 1.6, fontFamily: FONT_BODY }}>
+              From construction sites to school runs, FleetOZ adapts to how your vehicles actually work.
+            </Typography>
+          </Box>
+        </Reveal>
+      </Container>
 
-    return (
-        <Box id="industry-verticals" sx={{ py: { xs: 8, md: 12 }, bgcolor: '#f5f7fa' }}>
-            <Container maxWidth="lg">
-                <Box sx={{ textAlign: 'center', mb: 8 }}>
-                    <Typography
-                        variant="h2"
-                        sx={{
-                            fontSize: { xs: '2rem', md: '2.7rem' },
-                            fontWeight: 600,
-                            fontFamily: 'SF Pro Display, -apple-system, BlinkMacSystemFont, sans-serif',
-                            color: '#1d1d1f',
-                            mb: 2,
-                            letterSpacing: '-0.015em',
-                        }}
-                    >
-                        Industry Verticals
-                    </Typography>
-                    <Typography
-                        variant="h6"
-                        sx={{
-                            fontSize: { xs: '1rem', md: '1.15rem' },
-                            color: '#64748b',
-                            maxWidth: 700,
-                            mx: 'auto',
-                            lineHeight: 1.7,
-                        }}
-                    >
-                        FleetOZ is trusted by organizations across diverse industries in the UAE
-                    </Typography>
-                </Box>
-                <Grid container spacing={3}>
-                    {verticals.map((vertical, index) => (
-                        <Grid item xs={12} sm={6} md={3} key={index}>
-                            <Paper
-                                elevation={0}
-                                sx={{
-                                    p: 4,
-                                    height: '100%',
-                                    bgcolor: 'white',
-                                    border: '1px solid #e5e5e7',
-                                    borderRadius: '18px',
-                                    boxShadow: 'none',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center',
-                                    textAlign: 'center',
-                                    transition: 'all 0.2s ease',
-                                    '&:hover': {
-                                        transform: 'translateY(-2px)',
-                                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
-                                    },
-                                }}
-                            >
-                                <Box sx={{ mb: 2 }}>{vertical.icon}</Box>
-                                <Typography variant="h6" sx={{ fontWeight: 600, color: '#1d1d1f', mb: 1, fontSize: '1.05rem' }}>
-                                    {vertical.title}
-                                </Typography>
-                                <Typography sx={{ fontSize: '0.93rem', color: '#6e6e73', lineHeight: 1.5 }}>
-                                    {vertical.description}
-                                </Typography>
-                            </Paper>
-                        </Grid>
-                    ))}
-                </Grid>
-            </Container>
+      <Container maxWidth="lg" disableGutters sx={{ px: { xs: 2, lg: 3 } }}>
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 2.5,
+            overflowX: 'auto',
+            scrollSnapType: 'x mandatory',
+            pb: 2,
+            px: { xs: 2, lg: 0 },
+            '&::-webkit-scrollbar': { height: 6 },
+            '&::-webkit-scrollbar-thumb': { bgcolor: COLORS.border, borderRadius: RADIUS.pill },
+          }}
+        >
+          {verticals.map((vertical) => (
+            <Box
+              key={vertical.title}
+              sx={{
+                flex: '0 0 auto',
+                scrollSnapAlign: 'start',
+                width: { xs: 240, md: 260 },
+                p: 3.5,
+                borderRadius: RADIUS.md,
+                border: `1px solid ${COLORS.border}`,
+                bgcolor: COLORS.surfaceAlt,
+                transition: 'transform 0.2s ease, border-color 0.2s ease',
+                '&:hover': { transform: 'translateY(-3px)', borderColor: COLORS.accent },
+              }}
+            >
+              <Box
+                sx={{
+                  width: 46,
+                  height: 46,
+                  borderRadius: RADIUS.sm,
+                  bgcolor: COLORS.accentSoft,
+                  color: COLORS.accentDark,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  mb: 2.5,
+                  '& svg': { fontSize: 24 },
+                }}
+              >
+                {vertical.icon}
+              </Box>
+              <Typography sx={{ fontWeight: 700, color: COLORS.ink, mb: 1, fontSize: '1.02rem', fontFamily: FONT_DISPLAY }}>
+                {vertical.title}
+              </Typography>
+              <Typography sx={{ fontSize: '0.9rem', color: COLORS.body, lineHeight: 1.55, fontFamily: FONT_BODY }}>
+                {vertical.description}
+              </Typography>
+            </Box>
+          ))}
         </Box>
-    );
+      </Container>
+    </Box>
+  );
 };
 
 export default IndustryVerticals;

@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { Invoice } from '../types/api';
+import { API_CONFIG } from '../config/api';
 
-const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const BASE_URL = API_CONFIG.BASE_URL;
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000; // 1 second
 

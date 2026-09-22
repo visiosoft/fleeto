@@ -101,12 +101,19 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, titl
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-[100dvh] w-full bg-gray-50">
+      <a
+        href="#page-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[60] focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-accent-700 focus:shadow-md-tinted"
+      >
+        Skip to content
+      </a>
+
       {/* Sidebar */}
       <Sidebar items={sidebarItems} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
-      {/* Main Content */}
-      <div className="md:ml-64">
+      {/* Main Content - min-w-0 so wide tables scroll inside instead of stretching the shell */}
+      <div className="md:ml-64 min-w-0">
         {/* Header */}
         <Header
           title={title}
@@ -118,12 +125,13 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, titl
               : 'User',
             email: user?.email || '',
           }}
-          notificationCount={0}
           onMenuClick={() => setIsSidebarOpen(true)}
         />
 
-        {/* Page Content */}
-        <main className="min-h-screen p-4 md:p-6">{children}</main>
+        {/* Page Content - header is 4rem, so this fills the rest without forcing an extra viewport of scroll */}
+        <main id="page-content" className="min-h-[calc(100dvh-4rem)] p-4 pb-8 md:p-6 md:pb-10">
+          {children}
+        </main>
       </div>
     </div>
   );

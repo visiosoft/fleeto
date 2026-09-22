@@ -17,6 +17,7 @@ import UserManagement from './pages/UserManagement/UserManagement';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import CompanySelection from './pages/CompanySelection/CompanySelection';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { PageSkeleton } from './components/Skeletons';
 import LoadingDemo from './pages/LoadingDemo/LoadingDemo';
 import LandingPage from './pages/LandingPage/LandingPage';
 import ReceiptManagement from './pages/ReceiptManagement/ReceiptManagement';
@@ -47,10 +48,26 @@ const BetaInvoiceForm = React.lazy(() => import('./pages/BetaInvoiceManagement/B
 const BetaInvoicePayment = React.lazy(() => import('./pages/BetaInvoiceManagement/BetaInvoicePayment'));
 const BetaInvoiceView = React.lazy(() => import('./pages/BetaInvoiceManagement/BetaInvoiceView'));
 
-// Loading component
-const LoadingFallback = () => (
-  <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
-    <CircularProgress />
+const NotFound = React.lazy(() => import('./pages/NotFound/NotFound'));
+
+// Layout-shaped placeholder while a lazily-loaded route module downloads
+const LoadingFallback = () => <PageSkeleton />;
+
+// Branded hold shown while the session is being restored
+const SessionRestoring = () => (
+  <Box
+    sx={{
+      minHeight: '100dvh',
+      width: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 5,
+    }}
+  >
+    <Box component="img" src="/images/van-logo.svg" alt="" sx={{ width: 40, height: 40 }} />
+    <CircularProgress size={22} thickness={4} />
   </Box>
 );
 
@@ -61,11 +78,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 
   // Show loading while auth state is being restored
   if (isLoading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
-        <CircularProgress />
-      </Box>
-    );
+    return <SessionRestoring />;
   }
 
   if (!token) {
@@ -86,11 +99,7 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   // Show loading while auth state is being restored
   if (isLoading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
-        <CircularProgress />
-      </Box>
-    );
+    return <SessionRestoring />;
   }
 
   // Check both state and localStorage to handle logout timing
@@ -115,8 +124,10 @@ const AppContent: React.FC = () => {
     setMobileOpen(!mobileOpen);
   };
 
+  // Block, not flex: the dashboard shell positions its sidebar with `fixed` + margin,
+  // and a flex parent made every route shrink-to-fit instead of filling the viewport.
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
+    <Box sx={{ minHeight: '100dvh', width: '100%' }}>
       <Suspense fallback={<LoadingFallback />}>
         <Routes>
           {/* Public routes */}
@@ -422,7 +433,7 @@ const AppContent: React.FC = () => {
           } />
 
           {/* Redirect to login if no route matches */}
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
     </Box>

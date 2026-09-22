@@ -1,7 +1,9 @@
 import axios from 'axios';
 import { Receipt } from '../types/api';
+import { API_CONFIG } from '../config/api';
 
-const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+// Shared base so the `/api` prefix can't drift per-service (it did: this used to 404).
+const BASE_URL = API_CONFIG.BASE_URL;
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000; // 1 second
 

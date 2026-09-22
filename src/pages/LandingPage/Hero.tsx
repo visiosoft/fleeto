@@ -1,236 +1,156 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Container, Typography, Button, Stack } from '@mui/material';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined';
+import Reveal from './Reveal';
+import { COLORS, FONT_DISPLAY, FONT_BODY, RADIUS } from './theme';
 
 const Hero: React.FC = () => {
   const navigate = useNavigate();
+
+  const scrollToContact = () => {
+    document.querySelector('#contact')?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   return (
     <Box
       id="hero"
       sx={{
         position: 'relative',
-        pt: { xs: 14, md: 20 },
-        pb: { xs: 12, md: 16 },
-        bgcolor: '#ffffff',
+        pt: { xs: 12, md: 12 },
+        pb: { xs: 10, md: 12 },
+        bgcolor: COLORS.surface,
         overflow: 'hidden',
         '&::before': {
           content: '""',
           position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'radial-gradient(circle at 30% 50%, rgba(50, 139, 155, 0.15) 0%, transparent 60%)',
-          animation: 'pulse 8s ease-in-out infinite',
-        },
-        '@keyframes pulse': {
-          '0%, 100%': { opacity: 0.3 },
-          '50%': { opacity: 0.6 },
+          top: '-10%',
+          right: '-10%',
+          width: '55%',
+          height: '70%',
+          background: `radial-gradient(circle, ${COLORS.accentSoft} 0%, transparent 70%)`,
+          pointerEvents: 'none',
         },
       }}
     >
       <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
         <Box
           sx={{
-            maxWidth: 900,
-            mx: 'auto',
-            textAlign: 'center',
-            color: 'white',
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: '1.05fr 0.95fr' },
+            gap: { xs: 6, md: 4 },
+            alignItems: 'center',
           }}
         >
-          {/* Badge */}
-          <Box
-            sx={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 1,
-              bgcolor: '#f5f5f7',
-              px: 3,
-              py: 1,
-              borderRadius: '50px',
-              border: '1px solid #e5e5e7',
-              mb: 4,
-              animation: 'fadeInUp 0.6s ease-out',
-            }}
-          >
-            <TrendingUpIcon sx={{ fontSize: 20 }} />
+          {/* Left: message */}
+          <Reveal>
+            <Box
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 1,
+                bgcolor: COLORS.accentSoft,
+                px: 2.25,
+                py: 0.9,
+                borderRadius: RADIUS.pill,
+                mb: 3,
+              }}
+            >
+              <ShieldOutlinedIcon sx={{ fontSize: 18, color: COLORS.accent }} />
+              <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: COLORS.accentDark, fontFamily: FONT_BODY }}>
+                Built for UAE fleet operators
+              </Typography>
+            </Box>
+
+            <Typography
+              variant="h1"
+              sx={{
+                fontSize: { xs: '2.5rem', sm: '3.2rem', md: '3.75rem' },
+                fontWeight: 700,
+                lineHeight: 1.1,
+                mb: 3,
+                fontFamily: FONT_DISPLAY,
+                color: COLORS.ink,
+                letterSpacing: '-0.02em',
+              }}
+            >
+              Run your fleet without the spreadsheets and guesswork.
+            </Typography>
+
             <Typography
               sx={{
-                fontSize: '0.85rem',
-                fontWeight: 500,
-                color: '#1d1d1f',
-                letterSpacing: '0.3px',
+                fontSize: { xs: '1.05rem', md: '1.15rem' },
+                lineHeight: 1.6,
+                mb: 5,
+                color: COLORS.body,
+                maxWidth: 520,
+                fontFamily: FONT_BODY,
               }}
             >
-              Trusted by 500+ UAE Transport Companies
+              Live GPS tracking, automated UAE fine alerts, and driver records in one dashboard built for local operators.
             </Typography>
-          </Box>
 
-          {/* Main Headline */}
-          <Typography
-            variant="h1"
-            sx={{
-              fontSize: { xs: '2.5rem', sm: '3.5rem', md: '5rem' },
-              fontWeight: 600,
-              lineHeight: 1.08,
-              mb: 3,
-              fontFamily: 'SF Pro Display, -apple-system, BlinkMacSystemFont, sans-serif',
-              color: '#1d1d1f',
-              letterSpacing: '-0.015em',
-              animation: 'fadeInUp 0.8s ease-out 0.2s both',
-            }}
-          >
-            Smart Fleet Management
-            <br />
-            for UAE Businesses
-          </Typography>
-
-          {/* Subheadline */}
-          <Typography
-            variant="h5"
-            sx={{
-              fontSize: { xs: '1.15rem', md: '1.4rem' },
-              lineHeight: 1.5,
-              mb: 6,
-              color: '#6e6e73',
-              maxWidth: 700,
-              mx: 'auto',
-              fontWeight: 400,
-              fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-              animation: 'fadeInUp 1s ease-out 0.4s both',
-            }}
-          >
-            Real-time GPS tracking, automated fine monitoring, driver management,
-            and complete fleet control — all in one powerful platform.
-          </Typography>
-
-          {/* CTA Buttons */}
-          <Stack
-            direction={{ xs: 'column', sm: 'row' }}
-            spacing={2}
-            justifyContent="center"
-            sx={{
-              animation: 'fadeInUp 1.2s ease-out 0.6s both',
-            }}
-          >
-            <Button
-              variant="contained"
-              size="large"
-              onClick={() => navigate('/register')}
-              sx={{
-                bgcolor: '#0071e3',
-                color: 'white',
-                fontWeight: 500,
-                fontSize: '1.1rem',
-                px: 5,
-                py: 1.8,
-                borderRadius: '980px',
-                textTransform: 'none',
-                fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                boxShadow: 'none',
-                '&:hover': {
-                  bgcolor: '#0077ed',
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+              <Button
+                variant="contained"
+                size="large"
+                endIcon={<ArrowForwardIcon />}
+                onClick={() => navigate('/register')}
+                sx={{
+                  bgcolor: COLORS.accent,
+                  color: '#fff',
+                  fontWeight: 600,
+                  fontSize: '1rem',
+                  px: 4,
+                  py: 1.6,
+                  borderRadius: RADIUS.pill,
+                  textTransform: 'none',
+                  fontFamily: FONT_BODY,
                   boxShadow: 'none',
-                },
-                transition: 'background-color 0.2s ease',
-              }}
-            >
-              Start free trial
-            </Button>
-            <Button
-              variant="text"
-              size="large"
-              sx={{
-                color: '#0071e3',
-                fontWeight: 500,
-                fontSize: '1.1rem',
-                px: 5,
-                py: 1.8,
-                textTransform: 'none',
-                fontFamily: 'SF Pro Text, -apple-system, BlinkMacSystemFont, sans-serif',
-                '&:hover': {
-                  bgcolor: 'rgba(0, 113, 227, 0.04)',
-                },
-                transition: 'background-color 0.2s ease',
-              }}
-            >
-              View demo
-            </Button>
-          </Stack>
+                  '&:hover': { bgcolor: COLORS.accentDark, boxShadow: 'none' },
+                }}
+              >
+                Start free trial
+              </Button>
+              <Button
+                variant="outlined"
+                size="large"
+                onClick={scrollToContact}
+                sx={{
+                  color: COLORS.ink,
+                  borderColor: COLORS.borderStrong,
+                  fontWeight: 600,
+                  fontSize: '1rem',
+                  px: 4,
+                  py: 1.6,
+                  borderRadius: RADIUS.pill,
+                  textTransform: 'none',
+                  fontFamily: FONT_BODY,
+                  '&:hover': { borderColor: COLORS.accent, bgcolor: COLORS.accentSoft },
+                }}
+              >
+                Book a demo
+              </Button>
+            </Stack>
+          </Reveal>
 
-          {/* Trust Indicators */}
-          <Box
-            sx={{
-              mt: 8,
-              display: 'flex',
-              flexWrap: 'wrap',
-              justifyContent: 'center',
-              gap: { xs: 3, md: 6 },
-              opacity: 0.85,
-              animation: 'fadeInUp 1.4s ease-out 0.8s both',
-            }}
-          >
-            {[
-              { number: '10,000+', label: 'Vehicles Tracked' },
-              { number: '500+', label: 'Active Companies' },
-              { number: '99.9%', label: 'Uptime' },
-            ].map((stat, index) => (
-              <Box key={index} sx={{ textAlign: 'center' }}>
-                <Typography
-                  sx={{
-                    fontSize: { xs: '1.8rem', md: '2.2rem' },
-                    fontWeight: 600,
-                    mb: 0.5,
-                    color: '#1d1d1f',
-                  }}
-                >
-                  {stat.number}
-                </Typography>
-                <Typography
-                  sx={{
-                    fontSize: '0.9rem',
-                    color: '#6e6e73',
-                    fontWeight: 400,
-                  }}
-                >
-                  {stat.label}
-                </Typography>
-              </Box>
-            ))}
-          </Box>
+          {/* Right: real product screenshot */}
+          <Reveal delay={0.12}>
+            <Box
+              sx={{
+                position: 'relative',
+                borderRadius: RADIUS.lg,
+                overflow: 'hidden',
+                border: `1px solid ${COLORS.border}`,
+                boxShadow: '0 24px 64px rgba(11, 36, 54, 0.14)',
+              }}
+            >
+              <Box component="img" src="/images/dash.png" alt="FleetOZ live dashboard" sx={{ width: '100%', display: 'block' }} />
+            </Box>
+          </Reveal>
         </Box>
       </Container>
-
-      {/* Decorative Elements */}
-      <Box
-        sx={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: '150px',
-          background: 'linear-gradient(to top, rgba(255,255,255,0.05) 0%, transparent 100%)',
-        }}
-      />
-
-      {/* Keyframes */}
-      <style>
-        {`
-          @keyframes fadeInUp {
-            from {
-              opacity: 0;
-              transform: translateY(30px);
-            }
-            to {
-              opacity: 1;
-              transform: translateY(0);
-            }
-          }
-        `}
-      </style>
     </Box>
   );
 };

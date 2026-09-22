@@ -1,280 +1,108 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Box, Container, Grid, Typography, Link, Stack, IconButton } from '@mui/material';
-import {
-  Email,
-  Phone,
-  LocationOn,
-  Facebook,
-  Twitter,
-  LinkedIn,
-  Instagram,
-} from '@mui/icons-material';
+import EmailIcon from '@mui/icons-material/Email';
+import PhoneIcon from '@mui/icons-material/Phone';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import FacebookIcon from '@mui/icons-material/Facebook';
+import TwitterIcon from '@mui/icons-material/Twitter';
+import LinkedInIcon from '@mui/icons-material/LinkedIn';
+import InstagramIcon from '@mui/icons-material/Instagram';
+import { COLORS, FONT_DISPLAY, FONT_BODY } from './theme';
+
+const footerLinks = {
+  product: [
+    { label: 'Features', href: '#features' },
+    { label: 'GPS trackers', href: '#trackers' },
+    { label: 'Integrations', href: '#integrations' },
+  ],
+  company: [
+    { label: 'About us', href: '#about' },
+    { label: 'Careers', href: '#careers' },
+    { label: 'Contact', href: '#contact' },
+  ],
+  support: [
+    { label: 'Help center', href: '#help' },
+    { label: 'Documentation', href: '#docs' },
+    { label: 'API reference', href: '#api' },
+  ],
+  legal: [
+    { label: 'Privacy policy', href: '#privacy' },
+    { label: 'Terms of service', href: '#terms' },
+    { label: 'Security', href: '#security' },
+  ],
+};
 
 const Footer: React.FC = () => {
-  const navigate = useNavigate();
-
-  const footerLinks = {
-    product: [
-      { label: 'Features', href: '#features' },
-      { label: 'GPS Trackers', href: '#trackers' },
-      { label: 'Integrations', href: '#integrations' },
-      { label: 'Pricing', href: '#pricing' },
-      { label: 'Mobile App', href: '#mobile' },
-    ],
-    company: [
-      { label: 'About Us', href: '#about' },
-      { label: 'Careers', href: '#careers' },
-      { label: 'Blog', href: '#blog' },
-      { label: 'News', href: '#news' },
-      { label: 'Contact', href: '#contact' },
-    ],
-    support: [
-      { label: 'Help Center', href: '#help' },
-      { label: 'Documentation', href: '#docs' },
-      { label: 'API Reference', href: '#api' },
-      { label: 'System Status', href: '#status' },
-      { label: 'FAQ', href: '#faq' },
-    ],
-    legal: [
-      { label: 'Privacy Policy', href: '#privacy' },
-      { label: 'Terms of Service', href: '#terms' },
-      { label: 'Cookie Policy', href: '#cookies' },
-      { label: 'GDPR', href: '#gdpr' },
-      { label: 'Security', href: '#security' },
-    ],
+  const scrollToSection = (href: string) => {
+    document.querySelector(href)?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const scrollToSection = (href: string) => {
-    const element = document.querySelector(href);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
+  const linkSx = {
+    color: COLORS.body,
+    textDecoration: 'none',
+    fontSize: '0.95rem',
+    textAlign: 'left' as const,
+    cursor: 'pointer',
+    fontFamily: FONT_BODY,
+    transition: 'color 0.2s ease',
+    '&:hover': { color: COLORS.accent },
   };
 
   return (
-    <Box
-      id="contact"
-      component="footer"
-      sx={{
-        bgcolor: '#f5f5f7',
-        color: '#1d1d1f',
-        pt: { xs: 8, md: 10 },
-        pb: 4,
-      }}
-    >
+    <Box id="contact" component="footer" sx={{ bgcolor: COLORS.surfaceAlt, color: COLORS.ink, pt: { xs: 8, md: 10 }, pb: 4, borderTop: `1px solid ${COLORS.border}` }}>
       <Container maxWidth="lg">
         <Grid container spacing={6}>
-          {/* Company Info */}
           <Grid item xs={12} md={4}>
             <Box sx={{ mb: 3, display: 'flex', alignItems: 'center' }}>
-              <Box
-                component="img"
-                src="/images/van-logo.svg"
-                alt="FleetOZ"
-                sx={{ width: 40, height: 40, mr: 1.5, filter: 'brightness(0) invert(1)' }}
-              />
-              <Typography
-                variant="h5"
-                sx={{
-                  fontWeight: 600,
-                  fontSize: '1.4rem',
-                  color: '#1d1d1f',
-                  fontFamily: 'SF Pro Display, -apple-system, BlinkMacSystemFont, sans-serif',
-                }}
-              >
+              <Box component="img" src="/images/van-logo.svg" alt="FleetOZ" sx={{ width: 36, height: 36, mr: 1.25 }} />
+              <Typography sx={{ fontWeight: 700, fontSize: '1.3rem', color: COLORS.ink, fontFamily: FONT_DISPLAY }}>
                 FleetOZ
               </Typography>
             </Box>
-            <Typography
-              sx={{
-                mb: 3,
-                color: '#6e6e73',
-                lineHeight: 1.5,
-                fontSize: '0.9rem',
-                fontWeight: 400,
-              }}
-            >
-              Smart fleet management solutions for UAE transport companies.
-              Track, manage, and optimize your fleet operations with ease.
+            <Typography sx={{ mb: 3, color: COLORS.body, lineHeight: 1.6, fontSize: '0.92rem', fontFamily: FONT_BODY }}>
+              Smart fleet management for UAE transport companies. Track, manage, and optimize fleet operations with ease.
             </Typography>
 
-            {/* Contact Info */}
-            <Stack spacing={2}>
+            <Stack spacing={1.5}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Email sx={{ fontSize: 20, opacity: 0.8 }} />
-                <Typography sx={{ fontSize: '0.95rem' }}>
-                  info@fleetoz.com
-                </Typography>
+                <EmailIcon sx={{ fontSize: 20, color: COLORS.body }} />
+                <Typography sx={{ fontSize: '0.92rem', color: COLORS.ink, fontFamily: FONT_BODY }}>info@fleetoz.com</Typography>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Phone sx={{ fontSize: 20, opacity: 0.8 }} />
-                <Typography sx={{ fontSize: '0.95rem' }}>
-                  +971 56 9420 950
-                </Typography>
+                <PhoneIcon sx={{ fontSize: 20, color: COLORS.body }} />
+                <Typography sx={{ fontSize: '0.92rem', color: COLORS.ink, fontFamily: FONT_BODY }}>+971 56 942 0950</Typography>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <LocationOn sx={{ fontSize: 20, opacity: 0.8 }} />
-                <Typography sx={{ fontSize: '0.95rem' }}>
-                  Dubai, United Arab Emirates
-                </Typography>
+                <LocationOnIcon sx={{ fontSize: 20, color: COLORS.body }} />
+                <Typography sx={{ fontSize: '0.92rem', color: COLORS.ink, fontFamily: FONT_BODY }}>Dubai, United Arab Emirates</Typography>
               </Box>
             </Stack>
           </Grid>
 
-          {/* Product Links */}
-          <Grid item xs={6} sm={6} md={2}>
-            <Typography
-              variant="h6"
-              sx={{
-                fontWeight: 700,
-                mb: 3,
-                fontSize: '1.1rem',
-              }}
-            >
-              Product
-            </Typography>
-            <Stack spacing={1.5}>
-              {footerLinks.product.map((link, index) => (
-                <Link
-                  key={index}
-                  component="button"
-                  onClick={() => scrollToSection(link.href)}
-                  sx={{
-                    color: 'rgba(15, 14, 14, 0.8)',
-                    textDecoration: 'none',
-                    fontSize: '0.95rem',
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    '&:hover': {
-                      color: 'white',
-                      pl: 0.5,
-                    },
-                  }}
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </Stack>
-          </Grid>
-
-          {/* Company Links */}
-          <Grid item xs={6} sm={6} md={2}>
-            <Typography
-              variant="h6"
-              sx={{
-                fontWeight: 700,
-                mb: 3,
-                fontSize: '1.1rem',
-              }}
-            >
-              Company
-            </Typography>
-            <Stack spacing={1.5}>
-              {footerLinks.company.map((link, index) => (
-                <Link
-                  key={index}
-                  component="button"
-                  onClick={() => scrollToSection(link.href)}
-                  sx={{
-                    color: 'rgba(15, 14, 14, 0.8)',
-                    textDecoration: 'none',
-                    fontSize: '0.95rem',
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    '&:hover': {
-                      color: 'white',
-                      pl: 0.5,
-                    },
-                  }}
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </Stack>
-          </Grid>
-
-          {/* Support Links */}
-          <Grid item xs={6} sm={6} md={2}>
-            <Typography
-              variant="h6"
-              sx={{
-                fontWeight: 700,
-                mb: 3,
-                fontSize: '1.1rem',
-              }}
-            >
-              Support
-            </Typography>
-            <Stack spacing={1.5}>
-              {footerLinks.support.map((link, index) => (
-                <Link
-                  key={index}
-                  component="button"
-                  onClick={() => scrollToSection(link.href)}
-                  sx={{
-                    color: 'rgba(15, 14, 14, 0.8)',
-                    textDecoration: 'none',
-                    fontSize: '0.95rem',
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    '&:hover': {
-                      color: 'white',
-                      pl: 0.5,
-                    },
-                  }}
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </Stack>
-          </Grid>
-
-          {/* Legal Links */}
-          <Grid item xs={6} sm={6} md={2}>
-            <Typography
-              variant="h6"
-              sx={{
-                fontWeight: 700,
-                mb: 3,
-                fontSize: '1.1rem',
-              }}
-            >
-              Legal
-            </Typography>
-            <Stack spacing={1.5}>
-              {footerLinks.legal.map((link, index) => (
-                <Link
-                  key={index}
-                  component="button"
-                  onClick={() => scrollToSection(link.href)}
-                  sx={{
-                    color: 'rgba(15, 14, 14, 0.8)',
-                    textDecoration: 'none',
-                    fontSize: '0.95rem',
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    '&:hover': {
-                      color: 'white',
-                      pl: 0.5,
-                    },
-                  }}
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </Stack>
-          </Grid>
+          {([
+            ['Product', footerLinks.product],
+            ['Company', footerLinks.company],
+            ['Support', footerLinks.support],
+            ['Legal', footerLinks.legal],
+          ] as const).map(([heading, links]) => (
+            <Grid item xs={6} sm={6} md={2} key={heading}>
+              <Typography sx={{ fontWeight: 700, mb: 2.5, fontSize: '1rem', color: COLORS.ink, fontFamily: FONT_DISPLAY }}>
+                {heading}
+              </Typography>
+              <Stack spacing={1.4}>
+                {links.map((link) => (
+                  <Link key={link.label} component="button" onClick={() => scrollToSection(link.href)} sx={linkSx}>
+                    {link.label}
+                  </Link>
+                ))}
+              </Stack>
+            </Grid>
+          ))}
         </Grid>
 
-        {/* Bottom Bar */}
         <Box
           sx={{
-            borderTop: '1px solid rgba(255, 255, 255, 0.15)',
+            borderTop: `1px solid ${COLORS.border}`,
             mt: 8,
             pt: 4,
             display: 'flex',
@@ -284,36 +112,26 @@ const Footer: React.FC = () => {
             gap: 3,
           }}
         >
-          <Typography
-            sx={{
-              fontSize: '0.9rem',
-              opacity: 0.8,
-              textAlign: { xs: 'center', md: 'left' },
-            }}
-          >
-            © {new Date().getFullYear()} FleetOZ. All rights reserved. Made with ❤️ in UAE
+          <Typography sx={{ fontSize: '0.9rem', color: COLORS.body, fontFamily: FONT_BODY, textAlign: { xs: 'center', md: 'left' } }}>
+            © {new Date().getFullYear()} FleetOZ. All rights reserved.
           </Typography>
 
-          {/* Social Media Icons */}
           <Stack direction="row" spacing={1}>
             {[
-              { icon: <Facebook />, label: 'Facebook' },
-              { icon: <Twitter />, label: 'Twitter' },
-              { icon: <LinkedIn />, label: 'LinkedIn' },
-              { icon: <Instagram />, label: 'Instagram' },
-            ].map((social, index) => (
+              { icon: <FacebookIcon fontSize="small" />, label: 'Facebook' },
+              { icon: <TwitterIcon fontSize="small" />, label: 'Twitter' },
+              { icon: <LinkedInIcon fontSize="small" />, label: 'LinkedIn' },
+              { icon: <InstagramIcon fontSize="small" />, label: 'Instagram' },
+            ].map((social) => (
               <IconButton
-                key={index}
+                key={social.label}
                 aria-label={social.label}
                 sx={{
-                  color: 'rgba(255, 255, 255, 0.7)',
-                  bgcolor: 'rgba(255, 255, 255, 0.1)',
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    color: 'white',
-                    bgcolor: '#328B9B',
-                    transform: 'translateY(-2px)',
-                  },
+                  color: COLORS.ink,
+                  bgcolor: COLORS.surface,
+                  border: `1px solid ${COLORS.border}`,
+                  transition: 'all 0.2s ease',
+                  '&:hover': { color: '#fff', bgcolor: COLORS.accent, borderColor: COLORS.accent },
                 }}
               >
                 {social.icon}

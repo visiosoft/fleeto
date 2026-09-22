@@ -1,6 +1,8 @@
 import axios from 'axios';
+import { API_CONFIG } from '../config/api';
 
-const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+// Already includes the `/api` prefix, so request paths below are mounted relative to it.
+const BASE_URL = API_CONFIG.BASE_URL;
 
 export interface WhatsAppExpense {
   _id: string;
@@ -82,7 +84,7 @@ class WhatsAppService {
       if (params.limit) queryParams.append('limit', params.limit.toString());
 
       const response = await axios.get(
-        `${BASE_URL}/api/twilio-whatsapp/expenses?${queryParams.toString()}`,
+        `${BASE_URL}/twilio-whatsapp/expenses?${queryParams.toString()}`,
         { headers: this.getHeaders() }
       );
 
@@ -97,7 +99,7 @@ class WhatsAppService {
   async getExpense(id: string): Promise<WhatsAppExpense> {
     try {
       const response = await axios.get(
-        `${BASE_URL}/api/twilio-whatsapp/expenses/${id}`,
+        `${BASE_URL}/twilio-whatsapp/expenses/${id}`,
         { headers: this.getHeaders() }
       );
 
@@ -112,7 +114,7 @@ class WhatsAppService {
   async updateExpenseStatus(id: string, status: 'approved' | 'rejected' | 'pending', notes?: string): Promise<void> {
     try {
       await axios.patch(
-        `${BASE_URL}/api/twilio-whatsapp/expenses/${id}/status`,
+        `${BASE_URL}/twilio-whatsapp/expenses/${id}/status`,
         { status, notes },
         { headers: this.getHeaders() }
       );
@@ -126,7 +128,7 @@ class WhatsAppService {
   async getExpenseStats(): Promise<WhatsAppExpenseStats> {
     try {
       const response = await axios.get(
-        `${BASE_URL}/api/twilio-whatsapp/expenses/stats`,
+        `${BASE_URL}/twilio-whatsapp/expenses/stats`,
         { headers: this.getHeaders() }
       );
 
@@ -141,7 +143,7 @@ class WhatsAppService {
   async deleteExpense(id: string): Promise<void> {
     try {
       await axios.delete(
-        `${BASE_URL}/api/twilio-whatsapp/expenses/${id}`,
+        `${BASE_URL}/twilio-whatsapp/expenses/${id}`,
         { headers: this.getHeaders() }
       );
     } catch (error) {
@@ -154,7 +156,7 @@ class WhatsAppService {
   async getBotStatus(): Promise<BotStatus> {
     try {
       const response = await axios.get(
-        `${BASE_URL}/api/twilio-whatsapp/bot/status`,
+        `${BASE_URL}/twilio-whatsapp/bot/status`,
         { headers: this.getHeaders() }
       );
 
@@ -168,7 +170,7 @@ class WhatsAppService {
   async startBot(): Promise<void> {
     try {
       await axios.post(
-        `${BASE_URL}/api/twilio-whatsapp/bot/start`,
+        `${BASE_URL}/twilio-whatsapp/bot/start`,
         {},
         { headers: this.getHeaders() }
       );
@@ -181,7 +183,7 @@ class WhatsAppService {
   async stopBot(): Promise<void> {
     try {
       await axios.post(
-        `${BASE_URL}/api/twilio-whatsapp/bot/stop`,
+        `${BASE_URL}/twilio-whatsapp/bot/stop`,
         {},
         { headers: this.getHeaders() }
       );
@@ -194,7 +196,7 @@ class WhatsAppService {
   async restartBot(): Promise<void> {
     try {
       await axios.post(
-        `${BASE_URL}/api/whatsapp/bot/restart`,
+        `${BASE_URL}/whatsapp/bot/restart`,
         {},
         { headers: this.getHeaders() }
       );
@@ -207,7 +209,7 @@ class WhatsAppService {
   async sendTestMessage(to: string, message: string): Promise<void> {
     try {
       await axios.post(
-        `${BASE_URL}/api/whatsapp/bot/send-test`,
+        `${BASE_URL}/whatsapp/bot/send-test`,
         { to, message },
         { headers: this.getHeaders() }
       );

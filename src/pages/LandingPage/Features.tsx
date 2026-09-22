@@ -1,186 +1,170 @@
 import React from 'react';
-import { Box, Container, Typography, Grid, Paper } from '@mui/material';
-import {
-  LocationOn,
-  Map,
-  Notifications,
-  People,
-  History,
-  Build,
-  LocalGasStation,
-  FmdGood,
-  BarChart,
-  PhoneAndroid,
-} from '@mui/icons-material';
+import { Box, Container, Typography, Chip } from '@mui/material';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import GavelIcon from '@mui/icons-material/Gavel';
+import PeopleIcon from '@mui/icons-material/People';
+import BuildIcon from '@mui/icons-material/Build';
+import LocalGasStationIcon from '@mui/icons-material/LocalGasStation';
+import BarChartIcon from '@mui/icons-material/BarChart';
+import Reveal from './Reveal';
+import { COLORS, FONT_DISPLAY, FONT_BODY, RADIUS } from './theme';
+
+const featured = [
+  {
+    icon: <LocationOnIcon sx={{ fontSize: 30 }} />,
+    title: 'Real-time vehicle tracking',
+    description: 'GPS precision with instant location updates across your entire fleet, on one live map.',
+    span: { xs: '1 / -1', md: 'span 2' },
+    rows: { md: 'span 2' },
+    tinted: true,
+  },
+  {
+    icon: <GavelIcon sx={{ fontSize: 26 }} />,
+    title: 'Automated UAE fine alerts',
+    description: 'Dubai, Abu Dhabi, and MOI violations flagged and assigned to the responsible driver automatically.',
+    span: { xs: '1 / -1', md: 'span 2' },
+  },
+  {
+    icon: <PeopleIcon sx={{ fontSize: 26 }} />,
+    title: 'Driver management',
+    description: 'License tracking, performance history, and payroll in one profile.',
+    span: { xs: '1 / -1', sm: 'span 1' },
+  },
+  {
+    icon: <BuildIcon sx={{ fontSize: 26 }} />,
+    title: 'Maintenance reminders',
+    description: 'Service schedules and inspection alerts before they become downtime.',
+    span: { xs: '1 / -1', sm: 'span 1' },
+  },
+  {
+    icon: <LocalGasStationIcon sx={{ fontSize: 26 }} />,
+    title: 'Fuel monitoring',
+    description: 'Track consumption and catch anomalies before they eat into margins.',
+    span: { xs: '1 / -1', md: 'span 2' },
+  },
+  {
+    icon: <BarChartIcon sx={{ fontSize: 26 }} />,
+    title: 'Reports & analytics',
+    description: 'Customizable dashboards that turn fleet activity into decisions.',
+    span: { xs: '1 / -1', md: 'span 2' },
+  },
+];
+
+const alsoIncluded = ['Live map view', 'Trip history & playback', 'Geofencing', 'Mobile PWA, works offline'];
 
 const Features: React.FC = () => {
-  const features = [
-    {
-      icon: <LocationOn />,
-      title: 'Real-time Vehicle Tracking',
-      description: 'Monitor your entire fleet in real-time with GPS precision and instant location updates.',
-    },
-    {
-      icon: <Map />,
-      title: 'Live Map View',
-      description: 'Interactive map displaying all vehicles with status indicators, routes, and geofences.',
-    },
-    {
-      icon: <Notifications />,
-      title: 'UAE Fine Integration',
-      description: 'Automatic fine detection and alerts for Dubai, Abu Dhabi, and all UAE traffic violations.',
-    },
-    {
-      icon: <People />,
-      title: 'Driver Management',
-      description: 'Complete driver profiles, performance tracking, license management, and payroll integration.',
-    },
-    {
-      icon: <History />,
-      title: 'Trip History & Playback',
-      description: 'Detailed trip logs with route playback, stops, speed analysis, and timeline visualization.',
-    },
-    {
-      icon: <Build />,
-      title: 'Maintenance Reminders',
-      description: 'Automated alerts for scheduled maintenance, inspections, and vehicle service requirements.',
-    },
-    {
-      icon: <LocalGasStation />,
-      title: 'Fuel Monitoring',
-      description: 'Track fuel consumption, detect anomalies, and optimize fuel efficiency across your fleet.',
-    },
-    {
-      icon: <FmdGood />,
-      title: 'Geofencing',
-      description: 'Create virtual boundaries and receive alerts when vehicles enter or exit designated zones.',
-    },
-    {
-      icon: <BarChart />,
-      title: 'Reports & Analytics',
-      description: 'Comprehensive dashboard with insights, trends, and customizable reports for data-driven decisions.',
-    },
-    {
-      icon: <PhoneAndroid />,
-      title: 'Mobile PWA Support',
-      description: 'Access your fleet from any device with our progressive web app — works offline too.',
-    },
-  ];
-
   return (
-    <Box
-      id="features"
-      sx={{
-        py: { xs: 8, md: 12 },
-        bgcolor: '#fafafa',
-      }}
-    >
+    <Box id="features" sx={{ py: { xs: 8, md: 12 }, bgcolor: COLORS.surfaceAlt }}>
       <Container maxWidth="lg">
-        {/* Section Header */}
-        <Box sx={{ textAlign: 'center', mb: 8 }}>
-          <Typography
-            variant="h2"
-            sx={{
-              fontSize: { xs: '2rem', md: '3rem' },
-              fontWeight: 600,
-              fontFamily: 'SF Pro Display, -apple-system, BlinkMacSystemFont, sans-serif',
-              color: '#1d1d1f',
-              mb: 2,
-              letterSpacing: '-0.015em',
-            }}
-          >
-            Everything you need to
-            <br />
-            manage your fleet
-          </Typography>
-          <Typography
-            variant="h6"
-            sx={{
-              fontSize: { xs: '1rem', md: '1.2rem' },
-              color: '#64748b',
-              maxWidth: 700,
-              mx: 'auto',
-              lineHeight: 1.7,
-            }}
-          >
-            A complete suite of powerful features designed specifically
-            for UAE transport and logistics companies
-          </Typography>
-        </Box>
+        <Reveal>
+          <Box sx={{ maxWidth: 620, mb: 7 }}>
+            <Typography
+              variant="h2"
+              sx={{
+                fontSize: { xs: '2rem', md: '2.6rem' },
+                fontWeight: 700,
+                fontFamily: FONT_DISPLAY,
+                color: COLORS.ink,
+                mb: 2,
+                letterSpacing: '-0.015em',
+              }}
+            >
+              Everything you need to run the fleet, nothing you don't
+            </Typography>
+            <Typography sx={{ fontSize: '1.05rem', color: COLORS.body, lineHeight: 1.6, fontFamily: FONT_BODY }}>
+              Built for UAE transport and logistics teams who need answers, not another dashboard to babysit.
+            </Typography>
+          </Box>
+        </Reveal>
 
-        {/* Features Grid */}
-        <Grid container spacing={3}>
-          {features.map((feature, index) => (
-            <Grid item xs={12} sm={6} md={4} key={index}>
-              <Paper
-                elevation={0}
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: 'repeat(1, 1fr)', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
+            gridAutoRows: { xs: 'auto', md: 'minmax(160px, auto)' },
+            gridAutoFlow: 'dense',
+            gap: 3,
+          }}
+        >
+          {featured.map((feature, index) => (
+            <Reveal key={feature.title} delay={index * 0.05} sx={{ gridColumn: feature.span, gridRow: feature.rows }}>
+              <Box
                 sx={{
-                  p: 4,
                   height: '100%',
-                  bgcolor: 'white',
-                  border: '1px solid #e5e5e7',
-                  borderRadius: '18px',
-                  boxShadow: 'none',
-                  transition: 'all 0.2s ease',
+                  p: 4,
+                  borderRadius: RADIUS.lg,
+                  border: `1px solid ${feature.tinted ? 'transparent' : COLORS.border}`,
+                  bgcolor: feature.tinted ? COLORS.ink : COLORS.surface,
+                  color: feature.tinted ? '#fff' : COLORS.ink,
+                  backgroundImage: feature.tinted
+                    ? `radial-gradient(circle at 20% 20%, ${COLORS.accent} 0%, ${COLORS.ink} 65%)`
+                    : 'none',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  transition: 'transform 0.25s ease, box-shadow 0.25s ease',
                   '&:hover': {
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
-                    '& .feature-icon': {
-                      bgcolor: '#0071e3',
-                      color: 'white',
-                    },
+                    transform: 'translateY(-4px)',
+                    boxShadow: feature.tinted ? '0 20px 48px rgba(11,36,54,0.35)' : '0 12px 32px rgba(11,36,54,0.08)',
                   },
                 }}
               >
-                {/* Icon */}
                 <Box
-                  className="feature-icon"
                   sx={{
-                    width: 56,
-                    height: 56,
-                    borderRadius: '14px',
-                    bgcolor: '#f5f5f7',
-                    color: '#1d1d1f',
+                    width: 52,
+                    height: 52,
+                    borderRadius: RADIUS.sm,
+                    bgcolor: feature.tinted ? 'rgba(255,255,255,0.14)' : COLORS.accentSoft,
+                    color: feature.tinted ? '#fff' : COLORS.accentDark,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     mb: 3,
-                    transition: 'all 0.2s ease',
-                    '& svg': {
-                      fontSize: 28,
-                    },
                   }}
                 >
                   {feature.icon}
                 </Box>
-
-                {/* Title */}
-                <Typography
-                  variant="h6"
-                  sx={{
-                    fontWeight: 600,
-                    color: '#1d1d1f',
-                    mb: 1.5,
-                    fontSize: '1.1rem',
-                  }}
-                >
-                  {feature.title}
-                </Typography>
-
-                {/* Description */}
-                <Typography
-                  sx={{
-                    fontSize: '0.95rem',
-                    color: '#6e6e73',
-                    lineHeight: 1.5,
-                  }}
-                >
-                  {feature.description}
-                </Typography>
-              </Paper>
-            </Grid>
+                <Box>
+                  <Typography sx={{ fontWeight: 700, fontSize: feature.tinted ? '1.35rem' : '1.1rem', mb: 1, fontFamily: FONT_DISPLAY }}>
+                    {feature.title}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: '0.95rem',
+                      lineHeight: 1.6,
+                      color: feature.tinted ? 'rgba(255,255,255,0.78)' : COLORS.body,
+                      fontFamily: FONT_BODY,
+                      maxWidth: feature.tinted ? 340 : 'none',
+                    }}
+                  >
+                    {feature.description}
+                  </Typography>
+                </Box>
+              </Box>
+            </Reveal>
           ))}
-        </Grid>
+        </Box>
+
+        <Reveal delay={0.2}>
+          <Box sx={{ mt: 4, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1.5 }}>
+            <Typography sx={{ fontSize: '0.9rem', color: COLORS.body, fontWeight: 600, fontFamily: FONT_BODY, mr: 0.5 }}>
+              Also included:
+            </Typography>
+            {alsoIncluded.map((item) => (
+              <Chip
+                key={item}
+                label={item}
+                sx={{
+                  bgcolor: COLORS.surface,
+                  border: `1px solid ${COLORS.border}`,
+                  color: COLORS.ink,
+                  fontFamily: FONT_BODY,
+                  fontWeight: 500,
+                }}
+              />
+            ))}
+          </Box>
+        </Reveal>
       </Container>
     </Box>
   );
