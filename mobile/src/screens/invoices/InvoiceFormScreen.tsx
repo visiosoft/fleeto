@@ -11,6 +11,7 @@ import DatePickerField from '../../components/common/DatePickerField';
 import Card from '../../components/common/Card';
 import LoadingScreen from '../../components/common/LoadingScreen';
 import { colors, spacing, borderRadius, fontSize, shadows, fonts } from '../../config/theme';
+const DEFAULT_BANK_DETAILS = 'EFFICIENT MOVE NEW & USED FURNITURE REMOVAL L.L.C\nAccount Holder: Sardar Basharat Safdar\nBank Name: Mashreq Bank\nAccount Number: 019120198982\nIBAN: AE710330000019120198982';
 
 const formatDate = (d: any) => {
   if (!d) return '';
@@ -42,6 +43,7 @@ const InvoiceFormScreen = ({ route, navigation }: any) => {
   const [issueDate, setIssueDate] = useState(existing?.issueDate ? formatDate(existing.issueDate) : formatDate(new Date()));
   const [dueDate, setDueDate] = useState(existing?.dueDate ? formatDate(existing.dueDate) : '');
   const [includeVat, setIncludeVat] = useState(existing?.includeVat === true);
+  const [bankDetails, setBankDetails] = useState<string>(existing?.bankDetails || DEFAULT_BANK_DETAILS);
   const [notes, setNotes] = useState(existing?.notes || '');
   const [items, setItems] = useState<any[]>(
     existing?.items?.length ? existing.items : [{ description: '', quantity: '1', unitPrice: '', amount: '' }]
@@ -150,6 +152,7 @@ const InvoiceFormScreen = ({ route, navigation }: any) => {
         issueDate,
         dueDate,
         includeVat,
+        bankDetails: bankDetails.trim() || DEFAULT_BANK_DETAILS,
         notes,
         items: validItems.map(i => ({
           description: i.description,
@@ -295,6 +298,8 @@ const InvoiceFormScreen = ({ route, navigation }: any) => {
           <Text style={styles.grandTotalValue}>AED {total.toLocaleString()}</Text>
         </View>
       </Card>
+
+      <FormInput label="Bank Details" value={bankDetails} onChangeText={setBankDetails} placeholder="Company, account holder, bank, account number, IBAN..." multiline />
 
       {/* Notes */}
       <FormInput label="Notes" value={notes} onChangeText={setNotes} placeholder="Additional notes..." multiline />

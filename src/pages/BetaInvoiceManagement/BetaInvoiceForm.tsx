@@ -28,6 +28,8 @@ import { Invoice, InvoiceItem, Contract } from '../../types/api';
 import BetaInvoiceService from '../../services/BetaInvoiceService';
 import { api } from '../../services/api';
 
+const DEFAULT_BANK_DETAILS = 'EFFICIENT MOVE NEW & USED FURNITURE REMOVAL L.L.C\nAccount Holder: Sardar Basharat Safdar\nBank Name: Mashreq Bank\nAccount Number: 019120198982\nIBAN: AE710330000019120198982';
+
 const BetaInvoiceForm: React.FC = () => {
     const { id } = useParams<{ id?: string }>();
     const navigate = useNavigate();
@@ -46,6 +48,7 @@ const BetaInvoiceForm: React.FC = () => {
         tax: 0,
         includeVat: true,
         total: 0,
+        bankDetails: DEFAULT_BANK_DETAILS,
         notes: '',
         termsAndConditions: '',
         customerNotes: '',
@@ -92,7 +95,7 @@ const BetaInvoiceForm: React.FC = () => {
                         amount: item.amount ?? (item.quantity * item.unitPrice),
                     }));
                 }
-                setInvoice(invoiceData);
+                setInvoice({ ...invoiceData, bankDetails: invoiceData.bankDetails || DEFAULT_BANK_DETAILS });
             }
         } catch (err) {
             setError('Failed to fetch invoice');
@@ -228,6 +231,7 @@ const BetaInvoiceForm: React.FC = () => {
                 dueDate: invoice.dueDate,
                 items: invoice.items,
                 includeVat: invoice.includeVat,
+                bankDetails: invoice.bankDetails,
                 notes: invoice.notes,
                 termsAndConditions: invoice.termsAndConditions,
                 customerNotes: invoice.customerNotes,
@@ -407,6 +411,18 @@ const BetaInvoiceForm: React.FC = () => {
                                 )}
                                 <Typography variant="h6">Total: AED {invoice.total?.toFixed(2) || '0.00'}</Typography>
                             </Paper>
+                        </Grid>
+
+                        <Grid item xs={12}>
+                            <TextField
+                                fullWidth
+                                multiline
+                                minRows={5}
+                                label="Bank Details (shown on this invoice)"
+                                value={invoice.bankDetails ?? ''}
+                                onChange={(e) => setInvoice(prev => ({ ...prev, bankDetails: e.target.value }))}
+                                helperText="Company name, account holder, bank name, account number, IBAN - one per line. Leave blank to use the default."
+                            />
                         </Grid>
 
                         <Grid item xs={12}>

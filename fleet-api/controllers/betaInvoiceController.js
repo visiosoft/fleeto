@@ -3,6 +3,14 @@ const InvoiceModel = require('../models/invoiceModel');
 const ContractModel = require('../models/Contract');
 const { BRAND, brandCss, brandHeaderHtml, brandFooterHtml } = require('../utils/brandTemplate');
 
+const DEFAULT_BANK_DETAILS = 'EFFICIENT MOVE NEW & USED FURNITURE REMOVAL L.L.C\nAccount Holder: Sardar Basharat Safdar\nBank Name: Mashreq Bank\nAccount Number: 019120198982\nIBAN: AE710330000019120198982';
+// Bank details are free text (one line per detail); blank falls back to the default
+const normalizeBankDetails = (input) => {
+    const text = typeof input === 'string' ? input.trim() : '';
+    return text || DEFAULT_BANK_DETAILS;
+};
+const escapeHtml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
 // Helper function to calculate totals from items
 const calculateTotals = (items, includeVat) => {
     const subtotal = (items || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
@@ -184,7 +192,7 @@ exports.createInvoice = async (req, res) => {
             });
         }
 
-        const { contractId, invoiceNumber, issueDate, dueDate, items, includeVat, notes, termsAndConditions, customerNotes } = req.body;
+        const { contractId, invoiceNumber, issueDate, dueDate, items, includeVat, bankDetails, notes, termsAndConditions, customerNotes } = req.body;
 
         // Validate required fields
         if (!contractId || !invoiceNumber || !items || items.length === 0) {
@@ -235,6 +243,7 @@ exports.createInvoice = async (req, res) => {
             tax,
             total,
             includeVat: includeVat !== false,
+            bankDetails: normalizeBankDetails(bankDetails),
             notes: notes || '',
             termsAndConditions: termsAndConditions || '',
             customerNotes: customerNotes || '',
@@ -291,13 +300,16 @@ exports.updateInvoice = async (req, res) => {
             });
         }
 
-        const allowedUpdates = ['items', 'includeVat', 'notes', 'termsAndConditions', 'customerNotes', 'status', 'issueDate', 'dueDate'];
+        const allowedUpdates = ['items', 'includeVat', 'bankDetails', 'notes', 'termsAndConditions', 'customerNotes', 'status', 'issueDate', 'dueDate'];
         const updates = Object.keys(req.body).filter(key => allowedUpdates.includes(key));
 
         const updateData = {};
         updates.forEach(update => {
             updateData[update] = req.body[update];
         });
+        if (updateData.bankDetails !== undefined) {
+            updateData.bankDetails = normalizeBankDetails(updateData.bankDetails);
+        }
 
         // Recalculate totals if items or includeVat changed
         if (updateData.items || updateData.includeVat !== undefined) {
@@ -743,6 +755,7 @@ exports.generatePdf = async (req, res) => {
         };
 
         const fmtNum = (n) => Number(n || 0).toFixed(2);
+        const bank = normalizeBankDetails(invoice.bankDetails);
 
         const html = `<!DOCTYPE html>
 <html><head><meta charset="utf-8">
@@ -876,8 +889,7 @@ exports.generatePdf = async (req, res) => {
 
     <!-- BANK DETAILS -->
     <div class="bank-details">
-      <div class="company-legal">${BRAND.name}</div>
-      <p>Account Holder: Sardar Basharat Safdar<br>Bank Name: Mashreq Bank<br>Account Number: 019120198982<br>IBAN: AE710330000019120198982</p>
+      <p>${escapeHtml(bank).replace(/\r?\n/g, '<br>')}</p>
     </div>
   </div>
 

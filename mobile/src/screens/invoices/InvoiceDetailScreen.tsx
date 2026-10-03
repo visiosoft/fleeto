@@ -25,6 +25,8 @@ const fmtDate = (d: any) => {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 };
 
+const DEFAULT_BANK_DETAILS = 'EFFICIENT MOVE NEW & USED FURNITURE REMOVAL L.L.C\nAccount Holder: Sardar Basharat Safdar\nBank Name: Mashreq Bank\nAccount Number: 019120198982\nIBAN: AE710330000019120198982';
+
 const generateInvoiceHtml = (invoice: any) => {
   const contract = invoice.contract || {};
   const fmtNum = (n: any) => Number(n || 0).toFixed(2);
@@ -113,7 +115,7 @@ const generateInvoiceHtml = (invoice: any) => {
       <div class="t-row balance"><span>Balance Due:</span><span>AED ${fmtNum((invoice.total || 0) - (invoice.totalPaid || 0))}</span></div>
     </div></div>
     ${invoice.notes ? `<div class="notes"><h4>Notes</h4><p>${invoice.notes}</p></div>` : ''}
-    <div class="bank"><div class="legal">${BRAND.name}</div><p>Account Holder: Sardar Basharat Safdar<br>Bank Name: Mashreq Bank<br>Account Number: 019120198982<br>IBAN: AE710330000019120198982</p></div>
+    <div class="bank"><p>${String(invoice.bankDetails || DEFAULT_BANK_DETAILS).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\r?\n/g, '<br>')}</p></div>
   </div>
   ${brandFooterHtml}
 </body></html>`;

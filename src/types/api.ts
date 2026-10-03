@@ -76,6 +76,7 @@ export interface Invoice {
   tax: number;
   includeVat: boolean;
   total: number;
+  bankDetails?: string;
   notes: string;
   termsAndConditions?: string;
   customerNotes?: string;

@@ -31,6 +31,8 @@ import axios from 'axios';
 import { API_ENDPOINTS } from '../../config/environment';
 
 
+const DEFAULT_BANK_DETAILS = 'EFFICIENT MOVE NEW & USED FURNITURE REMOVAL L.L.C\nAccount Holder: Sardar Basharat Safdar\nBank Name: Mashreq Bank\nAccount Number: 019120198982\nIBAN: AE710330000019120198982';
+
 const BetaInvoiceView: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
@@ -459,20 +461,8 @@ const BetaInvoiceView: React.FC = () => {
 
                     {/* Bank Details */}
                     <Box mb={2} sx={{ '@media print': { mb: 1 } }}>
-                        <Typography variant="body2" sx={{ fontSize: '0.75rem' }} align="center">
-                            EFFICIENT MOVE NEW & USED FURNITURE REMOVAL L.L.C
-                        </Typography>
-                        <Typography variant="body2" sx={{ fontSize: '0.75rem' }} align="center">
-                            Account Holder: Sardar Basharat Safdar
-                        </Typography>
-                        <Typography variant="body2" sx={{ fontSize: '0.75rem' }} align="center">
-                            Bank Name: Mashreq Bank
-                        </Typography>
-                        <Typography variant="body2" sx={{ fontSize: '0.75rem' }} align="center">
-                            Account Number: 019120198982
-                        </Typography>
-                        <Typography variant="body2" sx={{ fontSize: '0.75rem' }} align="center">
-                            IBAN: AE710330000019120198982
+                        <Typography variant="body2" sx={{ fontSize: '0.75rem', whiteSpace: 'pre-line' }} align="center">
+                            {invoice.bankDetails || DEFAULT_BANK_DETAILS}
                         </Typography>
                     </Box>
                 </Box>
