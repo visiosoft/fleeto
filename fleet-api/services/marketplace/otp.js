@@ -77,6 +77,30 @@ function verificationRequired() {
 }
 
 /**
+ * The same switch can also be stored in the database (mp_config, key "auth", phoneVerification: "on" | "off"),
+ * so it can be flipped without finding the server's .env or restarting (scripts/set-phone-verification.js).
+ * Off if EITHER the .env or the database says off. The database value is re-read every 30 seconds.
+ * @returns {Promise<{ on: boolean, source: 'env' | 'database' | 'default' }>}
+ */
+const MODE_TTL_MS = 30 * 1000;
+let modeCache = { at: 0, value: null };
+async function verificationMode() {
+  if (!verificationRequired()) return { on: false, source: 'env' };
+  if (Date.now() - modeCache.at > MODE_TTL_MS) {
+    try {
+      const { col } = require('./store');
+      const doc = await (await col('config')).findOne({ key: 'auth' });
+      modeCache = { at: Date.now(), value: doc?.phoneVerification || null };
+    } catch (e) {
+      modeCache = { at: Date.now(), value: modeCache.value }; // keep the last known value if the DB hiccups
+    }
+  }
+  if (modeCache.value === 'off') return { on: false, source: 'database' };
+  return { on: true, source: modeCache.value === 'on' ? 'database' : 'default' };
+}
+function resetVerificationModeCache() { modeCache = { at: 0, value: null }; }
+
+/**
  * Fixed test login (for your own testing and App Store / Play review).
  * Off unless BOTH MARKETPLACE_TEST_PHONE and MARKETPLACE_TEST_OTP (6 digits) are set.
  * Only that one number gets the fixed code; it is never sent by SMS, and the usual
@@ -93,6 +117,8 @@ function testCodeFor(phone) {
 module.exports = {
   testCodeFor,
   verificationRequired,
+  verificationMode,
+  resetVerificationModeCache,
   OTP_TTL_MS,
   RESEND_AFTER_MS,
   MAX_ATTEMPTS,

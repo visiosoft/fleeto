@@ -47,7 +47,7 @@ exports.requestOtp = handle(async (req, res) => {
     // The test number is never texted; the tester already knows the code.
     if (testCode) delivery = { channel: 'sms' };
     // Verification switched off in .env: no SMS, the app gets the code and signs straight in.
-    else if (!otp.verificationRequired()) delivery = { channel: 'off', devCode: code };
+    else if (!(await otp.verificationMode()).on) delivery = { channel: 'off', devCode: code };
     else delivery = await otp.sendCode(phone, code);
   } catch (err) {
     await otps.deleteOne({ _id: insertedId });
@@ -67,6 +67,12 @@ exports.requestOtp = handle(async (req, res) => {
       ...(delivery.devCode ? { devCode: delivery.devCode } : {}),
     },
   });
+});
+
+/** GET /auth/status - is phone verification on? (Lets the app and support see the live setting.) */
+exports.status = handle(async (req, res) => {
+  const mode = await otp.verificationMode();
+  res.json({ status: 'success', data: { phoneVerification: mode.on ? 'on' : 'off', source: mode.source } });
 });
 
 exports.verifyOtp = handle(async (req, res) => {

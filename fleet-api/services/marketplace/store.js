@@ -20,6 +20,7 @@ const COLLECTIONS = {
   notifications: 'mp_notifications',
   settings: 'mp_settings',
   coupons: 'mp_coupons',
+  config: 'mp_config',
 };
 
 let getCollectionImpl = (name) => db.getCollection(name);

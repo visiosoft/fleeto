@@ -30,6 +30,7 @@ router.use('/media', express.static(path.join(__dirname, '../assets/marketplace'
 router.use('/banners', express.static(banners.BANNER_DIR, { maxAge: '7d', fallthrough: false }));
 
 // --- Auth (public) ---
+router.get('/auth/status', auth.status);
 router.post('/auth/otp/request', auth.requestOtp);
 router.post('/auth/otp/verify', auth.verifyOtp);
 router.post('/auth/guest', auth.guest);
