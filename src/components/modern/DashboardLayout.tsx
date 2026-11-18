@@ -14,6 +14,8 @@ import {
   ReceiptOutlined as ReceiptIcon,
   RoomOutlined as TrackingIcon,
   DrawOutlined as LetterheadIcon,
+  EventAvailableOutlined as VanBookingIcon,
+  LocalOfferOutlined as VanSettingsIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -45,6 +47,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, titl
       id: 'operations',
       label: 'Operations',
       items: [
+        { id: 'van-bookings', label: 'Van bookings', icon: <VanBookingIcon />, path: '/van-bookings' },
+        { id: 'van-settings', label: 'Van prices & offers', icon: <VanSettingsIcon />, path: '/van-settings' },
         { id: 'contracts', label: 'Contracts', icon: <ContractIcon />, path: '/contracts' },
         { id: 'fines', label: 'Fines', icon: <FineIcon />, path: '/fines-search' },
       ],

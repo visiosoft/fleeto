@@ -49,6 +49,10 @@ const BetaInvoiceManagement = React.lazy(() => import('./pages/BetaInvoiceManage
 const BetaInvoiceForm = React.lazy(() => import('./pages/BetaInvoiceManagement/BetaInvoiceForm'));
 const BetaInvoicePayment = React.lazy(() => import('./pages/BetaInvoiceManagement/BetaInvoicePayment'));
 const BetaInvoiceView = React.lazy(() => import('./pages/BetaInvoiceManagement/BetaInvoiceView'));
+const VanBookings = React.lazy(() => import('./pages/VanBookings/VanBookings'));
+const NewVanBooking = React.lazy(() => import('./pages/VanBookings/NewVanBooking'));
+const VanBookingDetail = React.lazy(() => import('./pages/VanBookings/VanBookingDetail'));
+const VanSettings = React.lazy(() => import('./pages/VanBookings/VanSettings'));
 
 const NotFound = React.lazy(() => import('./pages/NotFound/NotFound'));
 
@@ -392,6 +396,36 @@ const AppContent: React.FC = () => {
             <ProtectedRoute>
               <ModernPageLayout title="WhatsApp Expenses">
                 <WhatsAppExpenses />
+              </ModernPageLayout>
+            </ProtectedRoute>
+          } />
+
+          {/* VANLY marketplace van bookings */}
+          <Route path="/van-bookings" element={
+            <ProtectedRoute>
+              <ModernPageLayout title="Van bookings">
+                <VanBookings />
+              </ModernPageLayout>
+            </ProtectedRoute>
+          } />
+          <Route path="/van-settings" element={
+            <ProtectedRoute>
+              <ModernPageLayout title="Van settings">
+                <VanSettings />
+              </ModernPageLayout>
+            </ProtectedRoute>
+          } />
+          <Route path="/van-bookings/new" element={
+            <ProtectedRoute>
+              <ModernPageLayout title="New van booking">
+                <NewVanBooking />
+              </ModernPageLayout>
+            </ProtectedRoute>
+          } />
+          <Route path="/van-bookings/:id" element={
+            <ProtectedRoute>
+              <ModernPageLayout title="Van booking">
+                <VanBookingDetail />
               </ModernPageLayout>
             </ProtectedRoute>
           } />

@@ -47,7 +47,13 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors());
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({
+  limit: '10mb',
+  // Keep the exact bytes for the marketplace Stripe webhook - its signature is over the raw body
+  verify: (req, res, buf) => {
+    if (req.originalUrl.startsWith('/api/marketplace/stripe/webhook')) req.rawBody = buf;
+  }
+}));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Serve static files from the public directory
@@ -477,6 +483,7 @@ app.use('/api/contract-templates', contractTemplateRoutes);
 app.use('/api/whatsapp', whatsappRoutes);
 app.use('/api/rta-fines', rtaFinesRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/marketplace', require('./routes/marketplaceRoutes'));
 
 // Public contract e-signature routes (token in the URL is the credential)
 app.use('/sign', signingPageRouter);
@@ -775,6 +782,9 @@ const startServer = async () => {
     // Connect to database FIRST
     await db.connectToDatabase();
     console.log('Database connection established');
+
+    // VANLY marketplace monthly payment reminders (off unless MARKETPLACE_REMINDERS_ENABLED=true)
+    require('./services/marketplace/reminders').startScheduler();
 
     // Then start the server
     const server = app.listen(PORT, () => {
