@@ -10,7 +10,7 @@ const couponsSvc = require('../../services/marketplace/coupons');
 const { toId, HttpError, handle, cleanString } = require('../../services/marketplace/util');
 const { findActiveListing, overlapping } = require('./listingController');
 const { verificationSummary } = require('./documentController');
-const { paymentSummary, buildSchedule, DEFAULT_TERMS } = require('../../services/marketplace/payments');
+const { paymentSummary, buildSchedule, APP_BOOKING_TERMS } = require('../../services/marketplace/payments');
 const { notifyLater } = require('../../services/marketplace/notify');
 
 const CUSTOMER_CANCELLABLE = ['pending_verification', 'approved', 'contract_pending', 'payment_pending'];
@@ -106,8 +106,8 @@ exports.create = handle(async (req, res) => {
     notes: cleanString(body.notes, 500) || '',
     status: 'payment_pending',
     statusHistory: [{ status: 'payment_pending', at: now, by: 'customer', note: 'Booked in app; payment due' }],
-    paymentTerms: { ...DEFAULT_TERMS },
-    installments: buildSchedule(quote, DEFAULT_TERMS),
+    paymentTerms: { ...APP_BOOKING_TERMS },
+    installments: buildSchedule(quote, APP_BOOKING_TERMS),
     requests: [],
     ...(idempotencyKey ? { idempotencyKey } : {}),
     createdAt: now,

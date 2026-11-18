@@ -29,7 +29,7 @@ const TEMPLATES = {
     `${x.supplier} has booked a ${b.listingSnapshot?.title} for you (${b.reference}), ${day(b.quote?.startDate)} to ${day(b.quote?.endDate)}.` +
     `${x.nextStep ? ` ${x.nextStep}` : ''}\nSign in to the VANLY app with this number to see it.${appLine()}`,
   booking_received: (b) =>
-    `We received your booking ${b.reference} for a ${b.listingSnapshot?.title}. Pay the first month and deposit in the VANLY app to confirm it, then upload your documents.`,
+    `We received your booking ${b.reference} for a ${b.listingSnapshot?.title}. Pay the ${aed(b.quote?.lines?.deposit)} security deposit in the VANLY app to confirm it, then upload your documents. Rent is charged to your card at the end of each month.`,
   approved: (b) =>
     `Good news - booking ${b.reference} is approved. We'll share the rental agreement and payment details next.`,
   payment_requested: (b, x) =>

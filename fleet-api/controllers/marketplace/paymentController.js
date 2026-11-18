@@ -176,6 +176,7 @@ async function paymentMethodOf(stripe, session) {
   }
   if (session.payment_intent) {
     const pi = typeof session.payment_intent === 'string' ? await stripe.paymentIntents.retrieve(session.payment_intent) : session.payment_intent;
+    if (!pi) return null; // nothing to save; the payment itself is already recorded
     return typeof pi.payment_method === 'string' ? pi.payment_method : pi.payment_method?.id;
   }
   return null;

@@ -1,7 +1,7 @@
 /**
  * Payment terms and instalment schedules for marketplace bookings.
  *
- * Terms (per booking, set by staff; app bookings start with DEFAULT_TERMS):
+ * Terms (per booking, set by staff; app bookings start with APP_BOOKING_TERMS, staff bookings with DEFAULT_TERMS):
  *   rentTiming   'advance'  - each month's rent is due at the START of that month (month 1 upfront)
  *                'arrears'  - each month's rent is due at the END of that month
  *   depositMode  'charge'        - the deposit is charged upfront and refunded after return
@@ -18,6 +18,11 @@ const round2 = (n) => Math.round(n * 100) / 100;
 const toFils = (aed) => Math.round(aed * 100);
 
 const DEFAULT_TERMS = Object.freeze({ rentTiming: 'advance', depositMode: 'charge', autoCharge: false });
+/**
+ * Bookings made in the app: only the security deposit is paid up front (and the card is saved);
+ * each month's rent is charged to that card automatically at the end of the month. Staff can change it per booking.
+ */
+const APP_BOOKING_TERMS = Object.freeze({ rentTiming: 'arrears', depositMode: 'charge', autoCharge: true });
 
 function normalizeTerms(input = {}, base = DEFAULT_TERMS) {
   const t = { ...base };
@@ -237,6 +242,7 @@ function depositView(booking, terms, charges) {
 }
 
 module.exports = {
-  DEFAULT_TERMS, normalizeTerms, termsOf, needsCard, readyToConfirm, instLabel,
+  DEFAULT_TERMS,
+  APP_BOOKING_TERMS, normalizeTerms, termsOf, needsCard, readyToConfirm, instLabel,
   configureStripe, getStripe, webhookSecret, buildSchedule, scheduleOf, lineItems, paymentSummary, toFils, round2,
 };
