@@ -56,7 +56,14 @@ async function sendCode(phone, code) {
   }
   const twilio = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
   const to = channel.type === 'whatsapp' ? `whatsapp:${phone}` : phone;
-  await twilio.messages.create({ from: channel.from, to, body });
+  try {
+    await twilio.messages.create({ from: channel.from, to, body });
+  } catch (e) {
+    // Never pass Twilio's own message to clients: it can contain the account SID and other internals.
+    console.error('[marketplace] OTP send failed via Twilio', { code: e.code, status: e.status, message: e.message });
+    const { HttpError } = require('./util');
+    throw new HttpError(503, "We couldn't send your code right now. Please try again in a few minutes.", 'OTP_SEND_FAILED');
+  }
   return { channel: channel.type };
 }
 
