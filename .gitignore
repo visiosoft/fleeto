@@ -21,3 +21,6 @@ public/expenses/
 
 # Expo local cache
 mobile/.expo/
+
+# Marketplace customer documents (IDs, licences) - private, never commit
+fleet-api/private_uploads/
