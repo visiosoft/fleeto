@@ -68,6 +68,15 @@ async function sendCode(phone, code) {
 }
 
 /**
+ * MARKETPLACE_PHONE_VERIFICATION=off switches phone verification off: no SMS is sent and the code is
+ * handed straight back to the app, so anyone can sign in as any number. For testing (or an SMS outage
+ * before there are real clients) only. Anything other than exactly "off" keeps verification on.
+ */
+function verificationRequired() {
+  return String(process.env.MARKETPLACE_PHONE_VERIFICATION || '').trim().toLowerCase() !== 'off';
+}
+
+/**
  * Fixed test login (for your own testing and App Store / Play review).
  * Off unless BOTH MARKETPLACE_TEST_PHONE and MARKETPLACE_TEST_OTP (6 digits) are set.
  * Only that one number gets the fixed code; it is never sent by SMS, and the usual
@@ -83,6 +92,7 @@ function testCodeFor(phone) {
 
 module.exports = {
   testCodeFor,
+  verificationRequired,
   OTP_TTL_MS,
   RESEND_AFTER_MS,
   MAX_ATTEMPTS,

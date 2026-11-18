@@ -309,6 +309,7 @@ checked before insert and re-checked after insert (earliest booking wins).
 | `MARKETPLACE_JWT_SECRET` | **Required in production.** Secret for customer tokens |
 | `MARKETPLACE_TOKEN_TTL` | Default `30d` |
 | `MARKETPLACE_OTP_PEPPER` | Extra secret mixed into OTP hashes |
+| `MARKETPLACE_PHONE_VERIFICATION` | Default on. Set to `off` to stop sending login codes: the code is returned to the app, which signs straight in. **Anyone can then sign in as any number** - testing / SMS outages only. The server logs a warning at startup while it is off |
 | `MARKETPLACE_TEST_PHONE` / `MARKETPLACE_TEST_OTP` | Optional fixed test login (testing, App Store / Play review). Only that number accepts that 6-digit code; it is never texted and the normal limits apply. Remove both to switch it off |
 | `TWILIO_SMS_FROM` | Approved SMS sender for OTPs (else WhatsApp number is used) |
 | `MARKETPLACE_OTP_DEV_MODE` | `true` to return codes in responses instead of sending (never in production) |

@@ -20,6 +20,10 @@ const banners = require('../controllers/marketplace/bannerController');
 
 const router = express.Router();
 
+if (!require('../services/marketplace/otp').verificationRequired()) {
+  console.warn('[marketplace] WARNING: MARKETPLACE_PHONE_VERIFICATION=off - anyone can sign in as any phone number. Turn it back on before real clients use the app.');
+}
+
 // Public listing photos (assets/marketplace), e.g. /api/marketplace/media/vans/seater-15.jpg
 router.use('/media', express.static(path.join(__dirname, '../assets/marketplace'), { maxAge: '7d', fallthrough: false }));
 // Uploaded home-screen banner artwork (public marketing images).

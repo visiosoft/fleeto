@@ -45,7 +45,10 @@ exports.requestOtp = handle(async (req, res) => {
   let delivery;
   try {
     // The test number is never texted; the tester already knows the code.
-    delivery = testCode ? { channel: 'sms' } : await otp.sendCode(phone, code);
+    if (testCode) delivery = { channel: 'sms' };
+    // Verification switched off in .env: no SMS, the app gets the code and signs straight in.
+    else if (!otp.verificationRequired()) delivery = { channel: 'off', devCode: code };
+    else delivery = await otp.sendCode(phone, code);
   } catch (err) {
     await otps.deleteOne({ _id: insertedId });
     if (err.status) throw err;
