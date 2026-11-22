@@ -10,6 +10,7 @@ import {
 } from '@mui/icons-material';
 import TermsPicker from './TermsPicker';
 import ChargesCard from './ChargesCard';
+import PaymentLinksCard from './PaymentLinksCard';
 import { Checkbox, FormControlLabel } from '@mui/material';
 import {
   BookingStatus, FleetVehicle, METHOD_LABEL, MarketplaceService, MpBooking, MpDocument, PaymentTerms, STATUS_META, aed, errorMessage, fmtDate, fmtDateTime, mediaUrl, termsSummary,
@@ -237,6 +238,13 @@ const VanBookingDetail: React.FC = () => {
           </Card>
 
           <Card title="Payments">
+            {b.payment.totals && (
+              <Stack direction="row" spacing={1} mb={1.5}>
+                <Money label="Booking total" value={b.payment.totals.total} />
+                <Money label="Paid" value={b.payment.totals.paid} tone="success" />
+                <Money label="Remaining" value={b.payment.totals.remaining} tone={b.payment.totals.remaining > 0 ? 'warning' : 'success'} />
+              </Stack>
+            )}
             <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1} spacing={1}>
               <Typography variant="body2" color="text.secondary">{termsSummary(terms)}</Typography>
               {!['closed', 'cancelled', 'rejected', 'expired'].includes(status) && <Button size="small" onClick={() => openDialog('terms')}>Change</Button>}
@@ -268,7 +276,7 @@ const VanBookingDetail: React.FC = () => {
               <Typography variant="caption" color="text.secondary">Payment records</Typography>
               {payments.map((p) => (
                 <Typography key={p.id} variant="body2" sx={{ mt: 0.5 }}>
-                  {fmtDateTime(p.createdAt)} · {p.installment ? `#${p.installment}` : 'deposit'} · {aed(p.amount)} · {METHOD_LABEL[p.method] || p.method}{p.reference ? ` · ${p.reference}` : ''}{p.status !== 'paid' ? ` · ${p.status}` : ''}
+                  {fmtDateTime(p.createdAt)} · {p.linkId ? `link: ${p.description || 'payment link'}` : p.installment ? `#${p.installment}` : 'deposit'} · {aed(p.amount)} · {METHOD_LABEL[p.method] || p.method}{p.reference ? ` · ${p.reference}` : ''}{p.status !== 'paid' ? ` · ${p.status}` : ''}
                 </Typography>
               ))}
             </>)}
@@ -283,6 +291,7 @@ const VanBookingDetail: React.FC = () => {
         </Stack>
 
         <Stack spacing={2} width={{ xs: '100%', lg: 380 }}>
+          <PaymentLinksCard booking={b} onChanged={load} />
           <ChargesCard booking={b} onChanged={load} />
           <Card title="Booking">
             {b.vehicle.image && <Box component="img" src={mediaUrl(b.vehicle.image) || ''} alt="" sx={{ width: '100%', borderRadius: 2, mb: 1.5 }} />}
@@ -745,5 +754,13 @@ const CardDepositDialog: React.FC<DialogProps<{ amount: number; note?: string; c
     </Dialog>
   );
 };
+
+/** Booking total / paid / remaining tile at the top of the Payments card. */
+const Money: React.FC<{ label: string; value: number; tone?: 'success' | 'warning' }> = ({ label, value, tone }) => (
+  <Box sx={{ flex: 1, p: 1.25, borderRadius: 2, bgcolor: tone === 'success' ? '#EEF8F0' : tone === 'warning' ? '#FFF6E5' : 'grey.100', border: 1, borderColor: tone === 'success' ? 'success.light' : tone === 'warning' ? 'warning.light' : 'divider' }}>
+    <Typography variant="caption" color="text.secondary" display="block">{label}</Typography>
+    <Typography variant="subtitle1" fontWeight={700} color={tone === 'success' ? 'success.dark' : tone === 'warning' ? 'warning.dark' : 'text.primary'}>{aed(value)}</Typography>
+  </Box>
+);
 
 export default VanBookingDetail;

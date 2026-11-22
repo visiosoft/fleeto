@@ -14,6 +14,8 @@
  *   POST  /admin/bookings/:id/deposit/refund  - refund a charged deposit (Stripe or offline)
  *   POST  /admin/bookings/:id/deposit/card    - card-on-file deposit: charge a deduction or release it
  *   PATCH /admin/bookings/:id/terms           - change payment terms before anything is paid
+ *   POST  /admin/bookings/:id/payment-links   - ask the client for any amount (Stripe page, 23 hours)
+ *   POST  /admin/bookings/:id/payment-links/:linkId/cancel
  */
 const { col, audit } = require('../../services/marketplace/store');
 const pay = require('../../services/marketplace/payments');
@@ -191,6 +193,8 @@ async function handleSessionCompleted(session, eventId) {
   const stripe = pay.getStripe();
   const outcomes = [];
 
+  if (session.metadata?.purpose === 'link') return linkPaid(booking, session, eventId);
+
   if (session.mode === 'payment') {
     if (session.payment_status !== 'paid') return 'ignored'; // e.g. bank transfer still pending
     const n = Number(session.metadata?.installment);
@@ -212,6 +216,39 @@ async function handleSessionCompleted(session, eventId) {
   }
   await bookings.updateOne({ _id: bookingId, 'openSession.id': session.id }, { $set: { openSession: null } });
   return outcomes.join(', ') || 'nothing to do';
+}
+
+/** Change one payment link (whole-array write, so it also works where positional updates are not supported). */
+async function updateLink(bookingId, linkId, change) {
+  const bookings = await col('bookings');
+  const fresh = await bookings.findOne({ _id: bookingId });
+  const links = (fresh?.paymentLinks || []).map((l) => (l.id === linkId ? change(l) : l));
+  await bookings.updateOne({ _id: bookingId }, { $set: { paymentLinks: links, updatedAt: new Date() } });
+}
+
+/** A staff payment link was paid: mark it and keep a payment record. Amount must match what staff asked for. */
+async function linkPaid(booking, session, eventId) {
+  if (session.payment_status !== 'paid') return 'ignored';
+  const linkId = session.metadata?.linkId;
+  const link = (booking.paymentLinks || []).find((l) => l.id === linkId);
+  if (!link) return 'ignored: unknown payment link';
+  if (link.status === 'paid') return 'link already paid';
+  const payments = await col('payments');
+  const piId = typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent?.id || null;
+  if (session.currency !== 'aed' || session.amount_total !== pay.toFils(link.amount)) {
+    await payments.insertOne({ bookingId: booking._id.toString(), linkId, amount: (session.amount_total || 0) / 100, expected: link.amount, stripeSessionId: session.id, stripeEventId: eventId, status: 'amount_mismatch', createdAt: new Date() });
+    await audit('payment.amount_mismatch', { system: 'stripe' }, { bookingId: booking._id, linkId, got: session.amount_total, expected: pay.toFils(link.amount) });
+    return 'amount mismatch';
+  }
+  const paidAt = new Date();
+  // Paid even if staff cancelled it or it expired meanwhile: the money arrived, so it counts.
+  await updateLink(booking._id, linkId, (l) => ({ ...l, status: 'paid', paidAt, paymentIntentId: piId }));
+  await payments.insertOne({
+    bookingId: booking._id.toString(), linkId, kind: 'payment_link', description: link.description, amount: link.amount, method: 'card_online',
+    paymentIntentId: piId, stripeSessionId: session.id, stripeEventId: eventId, status: 'paid', createdAt: paidAt,
+  });
+  await audit('payment.link_paid', { system: 'stripe' }, { bookingId: booking._id, linkId, amount: link.amount });
+  return 'link paid';
 }
 
 /** Off-session charges that finish asynchronously. */
@@ -253,8 +290,13 @@ exports.webhook = async (req, res) => {
     else if (event.type === 'checkout.session.async_payment_succeeded') outcome = await handleSessionCompleted({ ...obj, payment_status: 'paid' }, event.id);
     else if (['checkout.session.expired', 'checkout.session.async_payment_failed'].includes(event.type)) {
       const bookingId = toId(obj.metadata?.bookingId);
-      if (bookingId) await (await col('bookings')).updateOne({ _id: bookingId, 'openSession.id': obj.id }, { $set: { openSession: null } });
-      outcome = 'session cleared';
+      if (bookingId && obj.metadata?.purpose === 'link') {
+        await updateLink(bookingId, obj.metadata.linkId, (l) => (l.status === 'open' ? { ...l, status: 'expired' } : l));
+        outcome = 'link expired';
+      } else {
+        if (bookingId) await (await col('bookings')).updateOne({ _id: bookingId, 'openSession.id': obj.id }, { $set: { openSession: null } });
+        outcome = 'session cleared';
+      }
     } else if (['payment_intent.succeeded', 'payment_intent.payment_failed'].includes(event.type)) {
       outcome = await handleIntent(event, event.id);
     }
@@ -278,11 +320,14 @@ exports.returnPage = (req, res) => {
   const deepLink = `vanly://booking/${bookingId}`;
   res.set('Content-Type', 'text/html; charset=utf-8').send(`<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>VANLY payment</title>
-<style>body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#EDF5E5;color:#18241C;display:grid;place-items:center;min-height:100vh;padding:24px;box-sizing:border-box}
-.c{background:#fff;border-radius:24px;padding:32px 24px;max-width:380px;width:100%;text-align:center;box-shadow:0 12px 40px #1b3b1c14}
-.l{font-weight:850;font-size:28px;letter-spacing:-1.5px}.l b{color:#83B845}h1{font-size:22px;margin:22px 0 8px}p{color:#697269;font-size:14px;line-height:1.5}
-a{display:block;margin-top:22px;background:#B9EF70;color:#18241C;text-decoration:none;font-weight:700;padding:14px;border-radius:14px}</style></head>
-<body><div class="c"><div class="l">vanly<b>.</b></div>
+<style>body{margin:0;font-family:Poppins,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:linear-gradient(160deg,#2B2E36 0%,#17191E 55%,#3A0B10 100%);color:#17191E;display:grid;place-items:center;min-height:100vh;padding:24px;box-sizing:border-box}
+.c{background:#fff;border-radius:24px;padding:32px 24px;max-width:380px;width:100%;text-align:center;box-shadow:0 18px 50px rgba(0,0,0,.35)}
+.l{font-weight:800;font-size:30px;letter-spacing:-1.5px;color:#17191E}.l b{color:#E50914}.m{font-size:9px;letter-spacing:4px;color:#17191E;font-weight:700;margin-top:-4px}
+.i{width:56px;height:56px;border-radius:28px;margin:22px auto 0;display:grid;place-items:center;font-size:26px;font-weight:700;background:${ok ? '#E6F6EA' : '#FDECEC'};color:${ok ? '#1E9E3F' : '#E50914'}}
+h1{font-size:22px;margin:14px 0 8px}p{color:#6E737B;font-size:14px;line-height:1.5;margin:0}
+a{display:block;margin-top:22px;background:linear-gradient(110deg,#F2343C 0%,#E50914 60%,#E50914 100%);color:#fff;text-decoration:none;font-weight:700;padding:15px;border-radius:15px}</style></head>
+<body><div class="c"><div class="l">vanly<b>.</b></div><div class="m">MOBILITY</div>
+<div class="i">${ok ? '&#10003;' : '&#215;'}</div>
 <h1>${ok ? 'All done' : 'Cancelled'}</h1>
 <p>${ok ? 'Thanks! We are confirming with the bank. Your booking updates in the app within a minute.' : 'Nothing was charged or saved. You can try again from your booking in the app.'}</p>
 <a href="${deepLink}">Back to VANLY</a></div></body></html>`);
@@ -477,6 +522,72 @@ exports.declineRefundRequest = handle(async (req, res) => {
   await bookings.updateOne({ _id: booking._id }, { $set: { depositRefundRequest: { ...booking.depositRefundRequest, status: 'declined', note, decidedAt: new Date(), decidedBy: req.user.userId } } });
   await audit('deposit.refund_declined', { userId: req.user.userId }, { bookingId: booking._id, note });
   notifyLater(booking, 'refund_declined', { note });
+  await respond(res, booking._id);
+});
+
+const LINK_HOURS = 23; // Stripe Checkout pages live at most 24 hours
+const LINK_CLOSED_STATUSES = ['cancelled', 'rejected', 'expired'];
+
+/**
+ * POST /admin/bookings/:id/payment-links { amount, description, notify? }
+ * Staff ask the client for any amount (extra days, damage, a part payment...). Creates a Stripe Checkout page
+ * valid for 23 hours; the client sees it in the app and gets it by WhatsApp. Paying it counts towards "paid".
+ */
+exports.createPaymentLink = handle(async (req, res) => {
+  const booking = await staffBooking(req);
+  if (LINK_CLOSED_STATUSES.includes(booking.status)) throw new HttpError(409, `Cannot request payment on a ${booking.status} booking.`);
+  const amount = pay.round2(Number(req.body?.amount));
+  if (!(amount >= 1 && amount <= 500000)) throw new HttpError(400, 'Amount must be between AED 1 and AED 500,000.');
+  const description = typeof req.body?.description === 'string' ? req.body.description.trim().slice(0, 120) : '';
+  if (description.length < 3) throw new HttpError(400, 'Say what the payment is for (shown to the client).');
+
+  const stripe = pay.getStripe();
+  const customers = await col('customers');
+  const customer = await customers.findOne({ _id: toId(booking.customerId) });
+  const stripeCustomerId = await billing.ensureStripeCustomer(customer);
+  const bookingId = booking._id.toString();
+  const linkId = require('crypto').randomBytes(6).toString('hex');
+  const expiresAt = new Date(Date.now() + LINK_HOURS * 3600e3);
+  const base = baseUrl(req);
+  const metadata = { bookingId, purpose: 'link', linkId, customerId: booking.customerId, reference: booking.reference };
+  const session = await stripe.checkout.sessions.create(
+    {
+      mode: 'payment',
+      customer: stripeCustomerId,
+      client_reference_id: bookingId,
+      metadata,
+      line_items: [{ quantity: 1, price_data: { currency: 'aed', unit_amount: pay.toFils(amount), product_data: { name: `${booking.reference} - ${description}` } } }],
+      payment_intent_data: { metadata, description: `${booking.reference} - ${description}` },
+      success_url: `${base}/api/marketplace/checkout/return?result=success&booking=${bookingId}&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${base}/api/marketplace/checkout/return?result=cancelled&booking=${bookingId}`,
+      expires_at: Math.floor(expiresAt.getTime() / 1000),
+    },
+    { idempotencyKey: `vanly-${bookingId}-link-${linkId}` }
+  );
+  const link = {
+    id: linkId, amount, description, url: session.url, sessionId: session.id, status: 'open', expiresAt,
+    createdAt: new Date(), createdBy: req.user.userId,
+  };
+  const bookings = await col('bookings');
+  await bookings.updateOne({ _id: booking._id }, { $push: { paymentLinks: link }, $set: { updatedAt: new Date() } });
+  await audit('payment.link_created', { userId: req.user.userId, organizationId: booking.supplierOrgId }, { bookingId: booking._id, linkId, amount, description });
+  if (req.body?.notify !== false) {
+    notifyLater(booking, 'payment_link', { amount, description, url: session.url, supplier: booking.listingSnapshot?.supplierName });
+  }
+  await respond(res, booking._id);
+});
+
+/** POST /admin/bookings/:id/payment-links/:linkId/cancel - withdraw a link that has not been paid. */
+exports.cancelPaymentLink = handle(async (req, res) => {
+  const booking = await staffBooking(req);
+  const link = (booking.paymentLinks || []).find((l) => l.id === req.params.linkId);
+  if (!link) throw new HttpError(404, 'Payment link not found');
+  if (link.status === 'paid') throw new HttpError(409, 'This link is already paid. Refund it in Stripe if needed.');
+  if (link.status === 'open') {
+    try { await pay.getStripe().checkout.sessions.expire(link.sessionId); } catch { /* already expired or completed: the webhook decides */ }
+  }
+  await updateLink(booking._id, link.id, (l) => (l.status === 'paid' ? l : { ...l, status: 'cancelled', cancelledAt: new Date() }));
+  await audit('payment.link_cancelled', { userId: req.user.userId }, { bookingId: booking._id, linkId: link.id });
   await respond(res, booking._id);
 });
 

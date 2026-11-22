@@ -95,6 +95,8 @@ router.post('/admin/bookings/:id/deposit/refund', authenticate, payments.refundD
 router.post('/admin/bookings/:id/deposit/card', authenticate, payments.settleCardDeposit);
 router.post('/admin/bookings/:id/deposit/refund-request/decline', authenticate, payments.declineRefundRequest);
 router.post('/admin/bookings/:id/charge-card', authenticate, payments.chargeCard);
+router.post('/admin/bookings/:id/payment-links', authenticate, payments.createPaymentLink);
+router.post('/admin/bookings/:id/payment-links/:linkId/cancel', authenticate, payments.cancelPaymentLink);
 router.patch('/admin/bookings/:id/terms', authenticate, payments.setTerms);
 router.post('/admin/bookings/:id/charges', authenticate, charges.add);
 router.post('/admin/bookings/:id/charges/import-fines', authenticate, charges.importFines);

@@ -147,6 +147,25 @@ export interface MpInstallment {
   paidAt: string | null;
 }
 
+export interface MpPaymentLink {
+  id: string;
+  amount: number;
+  description: string;
+  status: 'open' | 'paid' | 'expired' | 'cancelled';
+  url: string | null;
+  createdAt: string | null;
+  expiresAt: string | null;
+  paidAt: string | null;
+}
+
+export interface MpMoneyTotals {
+  total: number;
+  paid: number;
+  remaining: number;
+  linksPaid: number;
+  linksOpen: number;
+}
+
 export interface MpBooking {
   id: string;
   reference: string;
@@ -168,6 +187,8 @@ export interface MpBooking {
     nextDue: { n: number; label: string; dueDate: string; total: number; upfront: boolean; pendingExtras: number } | null;
     upfront: { n: number; label: string; total: number; status: string } | null;
     paidTotal: number;
+    totals?: MpMoneyTotals;
+    links?: MpPaymentLink[];
     cardRequired: boolean;
     card: { brand: string; last4: string; expMonth: number | null; expYear: number | null } | null;
     deposit: {
@@ -247,7 +268,7 @@ export const MarketplaceService = {
     data<{
       booking: MpBooking;
       verification: { overall: string; items: MpDocument[] };
-      payments: { id: string; installment: number; amount: number; status: string; method: string; reference: string; createdAt: string }[];
+      payments: { id: string; installment: number; linkId?: string | null; description?: string; amount: number; status: string; method: string; reference: string; createdAt: string }[];
       messages?: { id: string; event: string; status: 'sent' | 'failed' | 'logged' | 'skipped'; channel: string | null; body: string; error: string; createdAt: string }[];
     }>(
       axios.get(`${API_URL}/admin/bookings/${id}`, auth())
@@ -258,6 +279,10 @@ export const MarketplaceService = {
   setTerms: (id: string, terms: Partial<PaymentTerms>) =>
     data<{ booking: MpBooking }>(axios.patch(`${API_URL}/admin/bookings/${id}/terms`, terms, auth())),
   chargeCard: (id: string) => data<{ booking: MpBooking }>(axios.post(`${API_URL}/admin/bookings/${id}/charge-card`, {}, auth())),
+  createPaymentLink: (id: string, body: { amount: number; description: string; notify?: boolean }) =>
+    data<{ booking: MpBooking }>(axios.post(`${API_URL}/admin/bookings/${id}/payment-links`, body, auth())),
+  cancelPaymentLink: (id: string, linkId: string) =>
+    data<{ booking: MpBooking }>(axios.post(`${API_URL}/admin/bookings/${id}/payment-links/${linkId}/cancel`, {}, auth())),
   addCharge: (id: string, body: { type: string; description: string; amount: number; adminFee?: number; occurredAt?: string; reference?: string }) =>
     data<{ booking: MpBooking }>(axios.post(`${API_URL}/admin/bookings/${id}/charges`, body, auth())),
   importFines: (id: string, adminFee: number) =>

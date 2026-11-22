@@ -198,7 +198,7 @@ exports.get = handle(async (req, res) => {
       booking: staffBooking(booking, customer),
       verification,
       payments: paymentRows.map((p) => ({
-        id: p._id.toString(), installment: p.installment, amount: p.amount, status: p.status,
+        id: p._id.toString(), installment: p.installment, linkId: p.linkId || null, description: p.description || '', amount: p.amount, status: p.status,
         method: p.method || 'stripe', reference: p.reference || p.paymentIntentId || '', createdAt: p.createdAt,
       })),
       messages: messages.map((m) => ({

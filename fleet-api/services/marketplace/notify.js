@@ -28,8 +28,15 @@ const TEMPLATES = {
   booked_for_you: (b, x) =>
     `${x.supplier} has booked a ${b.listingSnapshot?.title} for you (${b.reference}), ${day(b.quote?.startDate)} to ${day(b.quote?.endDate)}.` +
     `${x.nextStep ? ` ${x.nextStep}` : ''}\nSign in to the VANLY app with this number to see it.${appLine()}`,
-  booking_received: (b) =>
-    `We received your booking ${b.reference} for a ${b.listingSnapshot?.title}. Pay the ${aed(b.quote?.lines?.deposit)} security deposit in the VANLY app to confirm it, then upload your documents. Rent is charged to your card at the end of each month.`,
+  booking_received: (b) => {
+    const first = (b.installments || []).find((i) => i.upfront);
+    const what = first && first.rent
+      ? `${aed(first.total)} (the ${aed(b.quote?.lines?.deposit)} security deposit and the first month's rent)`
+      : `the ${aed(b.quote?.lines?.deposit)} security deposit`;
+    return `We received your booking ${b.reference} for a ${b.listingSnapshot?.title}. Pay ${what} in the VANLY app to confirm it, then upload your documents. Each later month's rent is charged to your card at the start of that month.`;
+  },
+  payment_link: (b, x) =>
+    `${x.supplier || 'Your rental provider'} sent you a payment request of ${aed(x.amount)} for booking ${b.reference}: ${x.description}. Pay it here: ${x.url}${appLine()}`,
   approved: (b) =>
     `Good news - booking ${b.reference} is approved. We'll share the rental agreement and payment details next.`,
   payment_requested: (b, x) =>

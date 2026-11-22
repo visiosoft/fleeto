@@ -19,10 +19,11 @@ const toFils = (aed) => Math.round(aed * 100);
 
 const DEFAULT_TERMS = Object.freeze({ rentTiming: 'advance', depositMode: 'charge', autoCharge: false });
 /**
- * Bookings made in the app: only the security deposit is paid up front (and the card is saved);
- * each month's rent is charged to that card automatically at the end of the month. Staff can change it per booking.
+ * Bookings made in the app: the security deposit and the first month's rent are paid together at checkout
+ * (and the card is saved); each later month's rent is charged to that card automatically at the start of the month.
+ * Staff can change it per booking.
  */
-const APP_BOOKING_TERMS = Object.freeze({ rentTiming: 'arrears', depositMode: 'charge', autoCharge: true });
+const APP_BOOKING_TERMS = Object.freeze({ rentTiming: 'advance', depositMode: 'charge', autoCharge: true });
 
 function normalizeTerms(input = {}, base = DEFAULT_TERMS) {
   const t = { ...base };
@@ -181,6 +182,29 @@ function lineItems(booking, i) {
   return items;
 }
 
+/** Staff payment links (any amount, sent by the provider). The URL is only shown while the link can still be paid. */
+function publicLink(l) {
+  const open = l.status === 'open' && (!l.expiresAt || new Date(l.expiresAt) > new Date());
+  return {
+    id: l.id, amount: l.amount, description: l.description, status: open ? 'open' : l.status === 'open' ? 'expired' : l.status,
+    url: open ? l.url : null, createdAt: l.createdAt || null, expiresAt: l.expiresAt || null, paidAt: l.paidAt || null,
+  };
+}
+
+/**
+ * Money in and still to come. booking = every scheduled payment (rent, VAT, deposit, billed extras) plus paid payment links;
+ * paid = paid schedule items plus paid links; remaining = booking - paid (never below zero).
+ */
+function moneyTotals(schedule, links) {
+  const schedTotal = round2(schedule.reduce((s, i) => s + (i.total || 0), 0));
+  const schedPaid = round2(schedule.filter((i) => i.status === 'paid').reduce((s, i) => s + (i.total || 0), 0));
+  const linksPaid = round2(links.filter((l) => l.status === 'paid').reduce((s, l) => s + (l.amount || 0), 0));
+  const linksOpen = round2(links.map(publicLink).filter((l) => l.status === 'open').reduce((s, l) => s + (l.amount || 0), 0));
+  const total = round2(schedTotal + linksPaid);
+  const paid = round2(schedPaid + linksPaid);
+  return { total, paid, remaining: Math.max(0, round2(total - paid)), linksPaid, linksOpen };
+}
+
 /** Public, customer-safe payment summary for a booking. */
 function paymentSummary(booking) {
   const schedule = scheduleOf(booking);
@@ -205,7 +229,9 @@ function paymentSummary(booking) {
       ? { n: next.n, label: instLabel(next), dueDate: next.dueDate, total: next.total, upfront: !!next.upfront, pendingExtras: next.upfront ? 0 : pendingTotal }
       : null,
     upfront: upfront ? { n: upfront.n, label: instLabel(upfront), total: upfront.total, status: upfront.status } : null,
-    paidTotal: round2(schedule.filter((i) => i.status === 'paid').reduce((s, i) => s + i.total, 0)),
+    paidTotal: moneyTotals(schedule, booking.paymentLinks || []).paid,
+    totals: moneyTotals(schedule, booking.paymentLinks || []),
+    links: (booking.paymentLinks || []).map(publicLink).reverse(),
     cardRequired: needsCard(terms),
     card: booking.card?.paymentMethodId
       ? { brand: booking.card.brand || 'card', last4: booking.card.last4 || '', expMonth: booking.card.expMonth || null, expYear: booking.card.expYear || null }
@@ -244,5 +270,5 @@ function depositView(booking, terms, charges) {
 module.exports = {
   DEFAULT_TERMS,
   APP_BOOKING_TERMS, normalizeTerms, termsOf, needsCard, readyToConfirm, instLabel,
-  configureStripe, getStripe, webhookSecret, buildSchedule, scheduleOf, lineItems, paymentSummary, toFils, round2,
+  configureStripe, getStripe, webhookSecret, buildSchedule, scheduleOf, lineItems, paymentSummary, publicLink, toFils, round2,
 };
