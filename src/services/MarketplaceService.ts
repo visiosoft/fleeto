@@ -34,6 +34,7 @@ export interface OfferSettings {
   includedCover: { name: string; description: string };
   protectionPlans: ProtectionPlan[];
   durations: DurationPackage[];
+  defaultPickup?: string;
   isDefault: boolean;
 }
 
@@ -69,6 +70,7 @@ export interface MpListing {
   images: string[];
   specs: { seats: number | null; make?: string; model?: string; year?: number | null; [k: string]: unknown };
   cutoutImage?: string | null;
+  pickupBranch?: string;
   rates: Partial<Record<Plan, number>>;
   driverOption: { available: boolean; rates: Partial<Record<Plan, number>> };
   deposit: number;

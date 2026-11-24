@@ -8,6 +8,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const { ObjectId } = require('mongodb');
+const settingsSvc = require('../../services/marketplace/settings');
 const { col, fleet, audit } = require('../../services/marketplace/store');
 const { quoteFor } = require('../../services/marketplace/quoteService');
 const couponsSvc = require('../../services/marketplace/coupons');
@@ -149,7 +150,7 @@ exports.create = handle(async (req, res) => {
       category: listing.category,
       seats: listing.specs?.seats || null,
       image: listing.images?.[0] || null,
-      pickupBranch: listing.pickupBranch || '',
+      pickupBranch: await settingsSvc.pickupFor(listing),
       city: listing.city,
       supplierName: listing.supplierName || '',
     },

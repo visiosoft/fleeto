@@ -45,6 +45,7 @@ const ListingsTab: React.FC = () => {
   return (
     <>
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      <DefaultPickupCard />
       <TableContainer component={Paper} variant="outlined">
         <Table size="small">
           <TableHead>
@@ -67,7 +68,7 @@ const ListingsTab: React.FC = () => {
                     {l.images?.[0] && <Box component="img" src={mediaUrl(l.images[0]) || ''} alt="" sx={{ width: 64, height: 36, objectFit: 'cover', borderRadius: 1 }} />}
                     <Box>
                       <Typography variant="body2" fontWeight={600}>{l.title}</Typography>
-                      <Typography variant="caption" color="text.secondary">{l.city}</Typography>
+                      <Typography variant="caption" color="text.secondary">{l.pickupBranch ? `${l.city} · pickup: ${l.pickupBranch}` : `${l.city} · default pickup`}</Typography>
                     </Box>
                   </Stack>
                 </TableCell>
@@ -104,6 +105,7 @@ const ListingDialog: React.FC<{ listing: MpListing; onClose: () => void; onSaved
   const [km, setKm] = useState(String(l.mileageAllowance?.monthly || ''));
   const [extraKm, setExtraKm] = useState(String(l.excessKmRate ?? ''));
   const [deliveryFee, setDeliveryFee] = useState(String(l.deliveryFee ?? 0));
+  const [pickup, setPickup] = useState(l.pickupBranch || '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const num = (v: string) => Number(v.replace(/[^\d.]/g, ''));
@@ -122,6 +124,7 @@ const ListingDialog: React.FC<{ listing: MpListing; onClose: () => void; onSaved
         mileageAllowance: { monthly: num(km) },
         excessKmRate: num(extraKm),
         deliveryFee: num(deliveryFee),
+        pickupBranch: pickup.trim(),
       });
       onSaved();
     } catch (e) {
@@ -159,6 +162,12 @@ const ListingDialog: React.FC<{ listing: MpListing; onClose: () => void; onSaved
             <TextField label="Extra km (AED/km)" value={extraKm} onChange={(e) => setExtraKm(e.target.value)} fullWidth />
           </Stack>
           <TextField label="Delivery fee (AED)" value={deliveryFee} onChange={(e) => setDeliveryFee(e.target.value)} />
+          <TextField
+            label="Pickup location" value={pickup} onChange={(e) => setPickup(e.target.value)}
+            placeholder="Leave empty to use the default pickup location"
+            helperText="Where the client collects this van. Empty = your default pickup location (set above the van list)."
+            inputProps={{ maxLength: 160 }}
+          />
           {error && <Alert severity="error">{error}</Alert>}
         </Stack>
       </DialogContent>
@@ -167,6 +176,34 @@ const ListingDialog: React.FC<{ listing: MpListing; onClose: () => void; onSaved
         <Button variant="contained" disabled={busy || !(num(monthly) > 0) || (driverOn && !(num(driverMonthly) > 0))} onClick={save}>Save</Button>
       </DialogActions>
     </Dialog>
+  );
+};
+
+/** Company-wide pickup address, used for every van without its own pickup location. */
+const DefaultPickupCard: React.FC = () => {
+  const [value, setValue] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => { MarketplaceService.settings().then((s) => setValue(s.defaultPickup || '')).catch((e) => setError(errorMessage(e))); }, []);
+  const save = async () => {
+    setBusy(true); setError(null); setSaved(false);
+    try { const s = await MarketplaceService.saveSettings({ defaultPickup: (value || '').trim() }); setValue(s.defaultPickup || ''); setSaved(true); } catch (e) { setError(errorMessage(e)); } finally { setBusy(false); }
+  };
+  if (value === null) return error ? <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert> : null;
+  return (
+    <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
+      <Typography variant="subtitle2">Default pickup location</Typography>
+      <Typography variant="caption" color="text.secondary" display="block" mb={1}>
+        Shown to clients for every van that has no pickup location of its own. Change a single van with Edit.
+      </Typography>
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ sm: 'center' }}>
+        <TextField size="small" fullWidth placeholder="e.g. Al Quoz Industrial Area 3, Dubai" value={value} onChange={(e) => { setValue(e.target.value); setSaved(false); }} inputProps={{ maxLength: 160 }} />
+        <Button variant="contained" disabled={busy} onClick={save} sx={{ flexShrink: 0 }}>Save</Button>
+      </Stack>
+      {saved && <Alert severity="success" sx={{ mt: 1, py: 0 }}>Saved. The app shows it on the next refresh.</Alert>}
+      {error && <Alert severity="error" sx={{ mt: 1 }}>{error}</Alert>}
+    </Paper>
   );
 };
 

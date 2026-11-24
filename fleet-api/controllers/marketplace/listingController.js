@@ -78,6 +78,7 @@ async function withOffers(rows) {
     const monthly = (l.rates?.monthly || 0) > 0;
     out.push({
       ...publicListing(l),
+      pickupBranch: l.pickupBranch || s.defaultPickup || '',
       includedCover: s.includedCover,
       protectionPlans: monthly ? settingsSvc.publicPlans(s) : [],
       durations: monthly

@@ -25,7 +25,7 @@ async function resolveCustomer(req) {
   if (!id) return null;
   const customers = await col('customers');
   const customer = await customers.findOne({ _id: id });
-  if (!customer || customer.status === 'blocked') return null;
+  if (!customer || customer.status === 'blocked' || customer.status === 'deleted') return null;
   return customer;
 }
 

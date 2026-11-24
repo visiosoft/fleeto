@@ -38,6 +38,7 @@ router.post('/auth/guest', auth.guest);
 // --- Account (guest or customer) ---
 router.get('/me', customerAuth, auth.me);
 router.patch('/me', customerAuth, requireRegistered, auth.updateProfile);
+router.delete('/me', customerAuth, auth.deleteAccount);
 
 // --- Browse (public) ---
 router.get('/listings', listings.list);

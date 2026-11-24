@@ -2,6 +2,7 @@
  * Per-company marketplace settings (mp_settings, one document per organization):
  *  - protectionPlans: optional cover on top of the included third-party insurance, priced per month
  *  - durations: booking packages (months) with a % discount on the monthly rent
+ *  - defaultPickup: where vans are collected unless a van has its own pickup address
  * Companies without a saved document get DEFAULTS (editable from the web admin).
  */
 const { col } = require('./store');
@@ -33,8 +34,16 @@ async function getSettings(organizationId) {
     includedCover: doc?.includedCover || clone(DEFAULTS.includedCover),
     protectionPlans: doc?.protectionPlans || clone(DEFAULTS.protectionPlans),
     durations: (doc?.durations || clone(DEFAULTS.durations)).slice().sort((a, b) => a.months - b.months),
+    defaultPickup: doc?.defaultPickup || '',
     isDefault: !doc,
   };
+}
+
+/** Pickup address for a van: its own, else the company default, else blank (the app then shows the city). */
+async function pickupFor(listing) {
+  if (listing?.pickupBranch) return listing.pickupBranch;
+  const s = await getSettings(listing?.organizationId);
+  return s.defaultPickup || '';
 }
 
 /** Discount % for a number of months: the best package at or below it. */
@@ -80,6 +89,9 @@ function validate(input) {
       });
     }
   }
+  if (input.defaultPickup !== undefined) {
+    out.defaultPickup = String(input.defaultPickup || '').trim().replace(/\s+/g, ' ').slice(0, 160);
+  }
   if (input.durations !== undefined) {
     if (!Array.isArray(input.durations) || !input.durations.length || input.durations.length > 6) errors.push('durations must be a list of 1-6 packages');
     else {
@@ -111,6 +123,7 @@ async function saveSettings(organizationId, input, by) {
     includedCover: value.includedCover || current.includedCover,
     protectionPlans: value.protectionPlans || current.protectionPlans,
     durations: value.durations || current.durations,
+    defaultPickup: value.defaultPickup !== undefined ? value.defaultPickup : current.defaultPickup,
   };
   const settings = await col('settings');
   const existing = await settings.findOne({ organizationId: String(organizationId) });
@@ -119,4 +132,4 @@ async function saveSettings(organizationId, input, by) {
   return getSettings(organizationId);
 }
 
-module.exports = { DEFAULTS, getSettings, saveSettings, discountFor, publicPlans };
+module.exports = { DEFAULTS, getSettings, saveSettings, discountFor, publicPlans, pickupFor };

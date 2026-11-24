@@ -148,6 +148,73 @@ exports.me = handle(async (req, res) => {
   res.json({ status: 'success', data: { customer: publicCustomer(req.customer) } });
 });
 
+// A rental in these states is still running (van out, rent or deposit to settle): deletion waits for it.
+const LIVE_RENTAL_STATUSES = ['confirmed', 'handover_pending', 'active', 'overdue', 'return_pending', 'inspection_pending'];
+// Not started yet and nothing taken: cancelled automatically when the account is deleted.
+const UNSTARTED_STATUSES = ['requested', 'pending_verification', 'approved', 'contract_pending', 'payment_pending'];
+
+/**
+ * DELETE /me - the customer deletes their own account (Google Play / App Store requirement).
+ * - With a live rental: nothing is deleted; the request is recorded for staff and the app is told it is scheduled.
+ * - Otherwise: unstarted bookings are cancelled; uploaded files (documents, receipts, issue photos) and their
+ *   records, messages and codes are deleted; the customer record is anonymised (no name, phone or email) and
+ *   marked deleted so the token stops working. Booking, contract and payment records stay (UAE record keeping),
+ *   linked only to the anonymous id.
+ */
+exports.deleteAccount = handle(async (req, res) => {
+  const customer = req.customer;
+  const customers = await col('customers');
+  const bookings = await col('bookings');
+  const now = new Date();
+  // customerId is stored as a string on most records; match the ObjectId form too to be safe.
+  const mine = { $in: [customer._id.toString(), customer._id] };
+
+  const live = await bookings.countDocuments({ customerId: mine, status: { $in: LIVE_RENTAL_STATUSES } });
+  if (live) {
+    await customers.updateOne({ _id: customer._id }, { $set: { deletionRequestedAt: now, updatedAt: now } });
+    await audit('customer.deletion_requested', { customerId: customer._id }, { liveRentals: live });
+    return res.json({
+      status: 'success',
+      data: {
+        deleted: false,
+        scheduled: true,
+        message: 'You have a rental in progress. We will delete your account as soon as it ends and your deposit is settled.',
+      },
+    });
+  }
+
+  const unstarted = await bookings.find({ customerId: mine, status: { $in: UNSTARTED_STATUSES } }).toArray();
+  for (const b of unstarted) {
+    await bookings.updateOne(
+      { _id: b._id },
+      { $set: { status: 'cancelled', updatedAt: now }, $push: { statusHistory: { status: 'cancelled', at: now, by: 'customer', reason: 'account_deleted' } } }
+    );
+  }
+
+  // Uploaded files live in <UPLOAD_ROOT>/<documents|receipts|issues>/<customerId>/.
+  const fs = require('fs');
+  const path = require('path');
+  const { UPLOAD_ROOT } = require('./documentController');
+  for (const sub of ['documents', 'receipts', 'issues']) {
+    const dir = path.join(UPLOAD_ROOT, sub, customer._id.toString());
+    try { fs.rmSync(dir, { recursive: true, force: true }); } catch (e) { console.error('[marketplace] could not remove', dir, e.message); }
+  }
+  for (const name of ['documents', 'fuelEntries', 'issues', 'notifications']) {
+    await (await col(name)).deleteMany({ customerId: mine });
+  }
+  if (customer.phone) await (await col('otps')).deleteMany({ phone: customer.phone });
+
+  await customers.updateOne(
+    { _id: customer._id },
+    {
+      $set: { status: 'deleted', isGuest: false, deletedAt: now, updatedAt: now, fullName: 'Deleted customer' },
+      $unset: { phone: '', email: '', businessName: '', emirate: '', phoneVerifiedAt: '', lastLoginAt: '', deletionRequestedAt: '' },
+    }
+  );
+  await audit('customer.deleted', { customerId: customer._id }, { cancelledBookings: unstarted.length });
+  res.json({ status: 'success', data: { deleted: true, scheduled: false, message: 'Your account has been deleted.' } });
+});
+
 exports.updateProfile = handle(async (req, res) => {
   const body = req.body || {};
   const update = {};
