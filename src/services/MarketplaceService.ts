@@ -67,7 +67,8 @@ export interface MpListing {
   status?: string;
   city: string;
   images: string[];
-  specs: { seats: number | null };
+  specs: { seats: number | null; make?: string; model?: string; year?: number | null; [k: string]: unknown };
+  cutoutImage?: string | null;
   rates: Partial<Record<Plan, number>>;
   driverOption: { available: boolean; rates: Partial<Record<Plan, number>> };
   deposit: number;
@@ -248,6 +249,12 @@ export const MarketplaceService = {
   createCoupon: (body: Partial<MpCoupon>) => data<{ coupon: MpCoupon }>(axios.post(`${API_URL}/admin/coupons`, body, auth())),
   updateCoupon: (id: string, body: Partial<MpCoupon>) => data<{ coupon: MpCoupon }>(axios.patch(`${API_URL}/admin/coupons/${id}`, body, auth())),
   updateListing: (id: string, body: Record<string, unknown>) => data<{ listing: MpListing }>(axios.patch(`${API_URL}/admin/listings/${id}`, body, auth())),
+  /** Replace the van's main photo (JPG, PNG or WebP, max 5 MB). PNG/WebP with a transparent background sits on the app's showroom backdrop. */
+  uploadPhoto: (id: string, file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    return data<{ listing: MpListing }>(axios.post(`${API_URL}/admin/listings/${id}/photo`, form, auth()));
+  },
   /** Upload finished home-screen banner artwork (JPG, PNG or WebP, max 5 MB). */
   uploadBanner: (id: string, file: File) => {
     const form = new FormData();

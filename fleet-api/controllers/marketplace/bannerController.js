@@ -1,7 +1,11 @@
 /**
- * Home-screen banner artwork for a listing (a finished image with the price on it).
- *   POST   /admin/listings/:id/banner   multipart field "file" (JPG, PNG or WebP, max 5 MB)
+ * Listing images uploaded by staff.
+ *   POST   /admin/listings/:id/photo    the van's main photo, used everywhere in the app (cards, banners, van page).
+ *                                       PNG / WebP with a transparent background is drawn on the app's showroom
+ *                                       backdrop (stored as cutoutImage too); a JPG is shown as a normal photo.
+ *   POST   /admin/listings/:id/banner   multipart field "file" (JPG, PNG or WebP, max 5 MB) - legacy banner artwork
  *   DELETE /admin/listings/:id/banner   back to the app's generated banner
+ * Every upload gets a new file name, so phones never keep showing a cached old image.
  * Files live in <MARKETPLACE_UPLOAD_DIR>/banners and are served publicly from /api/marketplace/banners/<file>.
  * Banner art is public by design (it is marketing), unlike the private customer documents in the same root.
  */
@@ -60,6 +64,28 @@ const uploadFor = (field) => [
 const removeFor = (field) => handle(async (req, res) => {
   res.json({ status: 'success', data: { listing: await setImage(req, field, null) } });
 });
+
+/** POST /admin/listings/:id/photo - replace the van's main photo (first image). */
+exports.uploadPhoto = [
+  runUpload(uploader.single('file')),
+  handle(async (req, res) => {
+    if (!req.file) throw new HttpError(400, 'Choose an image to upload', 'NO_FILE');
+    const _id = toId(req.params.id);
+    const listings = await col('listings');
+    const listing = _id ? await listings.findOne({ _id, organizationId: orgId(req) }) : null;
+    if (!listing) {
+      fs.unlink(req.file.path, () => {});
+      throw new HttpError(404, 'Listing not found');
+    }
+    const url = `/api/marketplace/banners/${req.file.filename}`;
+    const cutout = req.file.mimetype === 'image/png' || req.file.mimetype === 'image/webp';
+    const images = [url, ...(listing.images || []).filter((u) => u !== url)].slice(0, 10);
+    await listings.updateOne({ _id }, { $set: { images, cutoutImage: cutout ? url : null, updatedAt: new Date() } });
+    await audit('listing.photo_set', { userId: req.user.userId, organizationId: orgId(req) }, { listingId: _id, cutout });
+    const updated = await listings.findOne({ _id });
+    res.json({ status: 'success', data: { listing: { ...publicListing(updated), status: updated.status } } });
+  }),
+];
 
 exports.upload = uploadFor('bannerImage');
 exports.remove = removeFor('bannerImage');

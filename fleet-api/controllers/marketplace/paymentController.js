@@ -320,12 +320,12 @@ exports.returnPage = (req, res) => {
   const deepLink = `vanly://booking/${bookingId}`;
   res.set('Content-Type', 'text/html; charset=utf-8').send(`<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>VANLY payment</title>
-<style>body{margin:0;font-family:Poppins,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:linear-gradient(160deg,#2B2E36 0%,#17191E 55%,#3A0B10 100%);color:#17191E;display:grid;place-items:center;min-height:100vh;padding:24px;box-sizing:border-box}
-.c{background:#fff;border-radius:24px;padding:32px 24px;max-width:380px;width:100%;text-align:center;box-shadow:0 18px 50px rgba(0,0,0,.35)}
-.l{font-weight:800;font-size:30px;letter-spacing:-1.5px;color:#17191E}.l b{color:#E50914}.m{font-size:9px;letter-spacing:4px;color:#17191E;font-weight:700;margin-top:-4px}
-.i{width:56px;height:56px;border-radius:28px;margin:22px auto 0;display:grid;place-items:center;font-size:26px;font-weight:700;background:${ok ? '#E6F6EA' : '#FDECEC'};color:${ok ? '#1E9E3F' : '#E50914'}}
-h1{font-size:22px;margin:14px 0 8px}p{color:#6E737B;font-size:14px;line-height:1.5;margin:0}
-a{display:block;margin-top:22px;background:linear-gradient(110deg,#F2343C 0%,#E50914 60%,#E50914 100%);color:#fff;text-decoration:none;font-weight:700;padding:15px;border-radius:15px}</style></head>
+<style>body{margin:0;font-family:Poppins,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:linear-gradient(160deg,#FFFFFF 0%,#EAF3FF 55%,#D4E9FF 100%);color:#101D35;display:grid;place-items:center;min-height:100vh;padding:24px;box-sizing:border-box}
+.c{background:#fff;border-radius:24px;padding:32px 24px;max-width:380px;width:100%;text-align:center;box-shadow:0 12px 40px rgba(30,58,110,.12)}
+.l{font-weight:800;font-size:30px;letter-spacing:-1.5px;color:#101D35}.l b{color:#005CE6}.m{font-size:9px;letter-spacing:4px;color:#101D35;font-weight:700;margin-top:-4px}
+.i{width:56px;height:56px;border-radius:28px;margin:22px auto 0;display:grid;place-items:center;font-size:26px;font-weight:700;background:${ok ? '#E6F6EA' : '#E6F0FF'};color:${ok ? '#1E9E3F' : '#005CE6'}}
+h1{font-size:22px;margin:14px 0 8px}p{color:#64748B;font-size:14px;line-height:1.5;margin:0}
+a{display:block;margin-top:22px;background:linear-gradient(110deg,#2F7BF5 0%,#005CE6 60%,#005CE6 100%);color:#fff;text-decoration:none;font-weight:700;padding:15px;border-radius:15px}</style></head>
 <body><div class="c"><div class="l">vanly<b>.</b></div><div class="m">MOBILITY</div>
 <div class="i">${ok ? '&#10003;' : '&#215;'}</div>
 <h1>${ok ? 'All done' : 'Cancelled'}</h1>

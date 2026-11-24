@@ -22,6 +22,7 @@ const CUTOUT_DIR = path.join(__dirname, '../../assets/marketplace/vans/cutouts')
 const cutoutCache = new Map();
 function cutoutFor(l) {
   if (l.cutoutImage) return l.cutoutImage;
+  if (l.cutoutImage === null) return null; // staff uploaded a normal photo: show it as-is
   const m = /\/api\/marketplace\/media\/vans\/([\w-]+)\.jpg$/.exec((l.images || [])[0] || '');
   if (!m) return null;
   if (!cutoutCache.has(m[1])) cutoutCache.set(m[1], fs.existsSync(path.join(CUTOUT_DIR, `${m[1]}.png`)));

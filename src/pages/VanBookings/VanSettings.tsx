@@ -75,7 +75,7 @@ const ListingsTab: React.FC = () => {
                 <TableCell align="right">{l.driverOption.available ? aed(l.driverOption.rates.monthly) : '-'}</TableCell>
                 <TableCell align="right">{aed(l.deposit)}</TableCell>
                 <TableCell align="right">{l.mileageAllowance?.monthly?.toLocaleString() || '-'}</TableCell>
-                <TableCell><Switch size="small" checked={!!l.featured} onChange={(e) => toggle(l, { featured: e.target.checked })} />{l.bannerImage ? <Chip size="small" label="Banner" color="success" variant="outlined" sx={{ ml: 0.5 }} /> : null}</TableCell>
+                <TableCell><Switch size="small" checked={!!l.featured} onChange={(e) => toggle(l, { featured: e.target.checked })} /></TableCell>
                 <TableCell><Switch size="small" checked={l.status !== 'hidden'} onChange={(e) => toggle(l, { status: e.target.checked ? 'active' : 'hidden' })} /></TableCell>
                 <TableCell><Button size="small" onClick={() => setEdit(l)}>Edit</Button></TableCell>
               </TableRow>
@@ -84,7 +84,7 @@ const ListingsTab: React.FC = () => {
         </Table>
       </TableContainer>
       <Typography variant="caption" color="text.secondary" display="block" mt={1}>
-        Featured vans appear as banners with their price on the app's home screen. Price changes apply to new bookings only.
+        Featured vans appear as banners on the app's home screen, drawn from the van photo, make, model and price. Price changes apply to new bookings only.
       </Typography>
       {edit && <ListingDialog listing={edit} onClose={() => setEdit(null)} onSaved={async () => { setEdit(null); await load(); }} />}
     </>
@@ -93,8 +93,13 @@ const ListingsTab: React.FC = () => {
 
 const ListingDialog: React.FC<{ listing: MpListing; onClose: () => void; onSaved: () => void }> = ({ listing: l, onClose, onSaved }) => {
   const [monthly, setMonthly] = useState(String(l.rates.monthly || ''));
+  const [weekly, setWeekly] = useState(String(l.rates.weekly || ''));
   const [driverOn, setDriverOn] = useState(l.driverOption.available);
   const [driverMonthly, setDriverMonthly] = useState(String(l.driverOption.rates.monthly || ''));
+  const [driverWeekly, setDriverWeekly] = useState(String(l.driverOption.rates.weekly || ''));
+  const [make, setMake] = useState(String(l.specs?.make || ''));
+  const [model, setModel] = useState(String(l.specs?.model || ''));
+  const [year, setYear] = useState(l.specs?.year ? String(l.specs.year) : '');
   const [deposit, setDeposit] = useState(String(l.deposit));
   const [km, setKm] = useState(String(l.mileageAllowance?.monthly || ''));
   const [extraKm, setExtraKm] = useState(String(l.excessKmRate ?? ''));
@@ -106,9 +111,13 @@ const ListingDialog: React.FC<{ listing: MpListing; onClose: () => void; onSaved
     setBusy(true);
     setError(null);
     try {
+      // Send every rate the van has, so saving never drops the weekly price.
+      const rates = (m: string, w: string) => ({ ...(num(m) > 0 ? { monthly: num(m) } : {}), ...(num(w) > 0 ? { weekly: num(w) } : {}) });
       await MarketplaceService.updateListing(l.id, {
-        rates: { monthly: num(monthly) },
-        driverOption: { available: driverOn, rates: driverOn ? { monthly: num(driverMonthly) } : {} },
+        rates: rates(monthly, weekly),
+        driverOption: { available: driverOn, rates: driverOn ? rates(driverMonthly, driverWeekly) : {} },
+        // specs are replaced as a whole, so keep seats / payload etc. and change only make, model and year
+        specs: { ...l.specs, make: make.trim(), model: model.trim(), year: num(year) || null },
         deposit: num(deposit),
         mileageAllowance: { monthly: num(km) },
         excessKmRate: num(extraKm),
@@ -125,17 +134,31 @@ const ListingDialog: React.FC<{ listing: MpListing; onClose: () => void; onSaved
       <DialogTitle>{l.title}</DialogTitle>
       <DialogContent>
         <Stack spacing={2} mt={1}>
-          <TextField label="Self-drive price per month (AED)" value={monthly} onChange={(e) => setMonthly(e.target.value)} />
+          <PhotoField listing={l} />
+          <Stack direction="row" spacing={2}>
+            <TextField label="Make" placeholder="Toyota" value={make} onChange={(e) => setMake(e.target.value)} fullWidth />
+            <TextField label="Model" placeholder="Hiace" value={model} onChange={(e) => setModel(e.target.value)} fullWidth />
+            <TextField label="Year" value={year} onChange={(e) => setYear(e.target.value)} sx={{ width: 110 }} />
+          </Stack>
+          <Typography variant="caption" color="text.secondary" sx={{ mt: '-8px !important' }}>Shown on the app's banners and cards, with the brand logo.</Typography>
+          <Stack direction="row" spacing={2}>
+            <TextField label="Self-drive / month (AED)" value={monthly} onChange={(e) => setMonthly(e.target.value)} fullWidth />
+            <TextField label="Self-drive / week (AED)" placeholder="optional" value={weekly} onChange={(e) => setWeekly(e.target.value)} fullWidth />
+          </Stack>
           <FormControlLabel control={<Switch checked={driverOn} onChange={(e) => setDriverOn(e.target.checked)} />} label="Offer with driver" />
-          {driverOn && <TextField label="With-driver price per month (AED)" value={driverMonthly} onChange={(e) => setDriverMonthly(e.target.value)} />}
+          {driverOn && (
+            <Stack direction="row" spacing={2}>
+              <TextField label="With driver / month (AED)" value={driverMonthly} onChange={(e) => setDriverMonthly(e.target.value)} fullWidth />
+              <TextField label="With driver / week (AED)" placeholder="optional" value={driverWeekly} onChange={(e) => setDriverWeekly(e.target.value)} fullWidth />
+            </Stack>
+          )}
+          <Typography variant="caption" color="text.secondary" sx={{ mt: '-8px !important' }}>A weekly price puts the van under Weekly Rental in the app. Price changes apply to new bookings only.</Typography>
           <TextField label="Security deposit (AED)" value={deposit} onChange={(e) => setDeposit(e.target.value)} />
           <Stack direction="row" spacing={2}>
             <TextField label="km included / month" value={km} onChange={(e) => setKm(e.target.value)} fullWidth />
             <TextField label="Extra km (AED/km)" value={extraKm} onChange={(e) => setExtraKm(e.target.value)} fullWidth />
           </Stack>
           <TextField label="Delivery fee (AED)" value={deliveryFee} onChange={(e) => setDeliveryFee(e.target.value)} />
-          <BannerField listing={l} />
-          <BannerField listing={l} kind="card" />
           {error && <Alert severity="error">{error}</Alert>}
         </Stack>
       </DialogContent>
@@ -147,41 +170,45 @@ const ListingDialog: React.FC<{ listing: MpListing; onClose: () => void; onSaved
   );
 };
 
-/** Home-screen banner artwork: a finished image with the name and price on it (shown as-is in the app). */
-const BannerField: React.FC<{ listing: MpListing; kind?: 'banner' | 'card' }> = ({ listing, kind = 'banner' }) => {
-  const isCard = kind === 'card';
-  const [banner, setBanner] = useState<string | null>((isCard ? listing.cardImage : listing.bannerImage) || null);
+/** The van's main photo: used everywhere in the app (cards, carousels, banners, van page). */
+const PhotoField: React.FC<{ listing: MpListing }> = ({ listing }) => {
+  const [photo, setPhoto] = useState<string | null>(listing.cutoutImage || listing.images?.[0] || null);
+  const [cutout, setCutout] = useState<boolean>(!!listing.cutoutImage);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
   const pick = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
     setBusy(true);
     setError(null);
-    try { const r = isCard ? await MarketplaceService.uploadCard(listing.id, file) : await MarketplaceService.uploadBanner(listing.id, file); setBanner((isCard ? r.listing.cardImage : r.listing.bannerImage) || null); } catch (err) { setError(errorMessage(err)); } finally { setBusy(false); }
-  };
-  const remove = async () => {
-    setBusy(true);
-    setError(null);
-    try { await (isCard ? MarketplaceService.removeCard(listing.id) : MarketplaceService.removeBanner(listing.id)); setBanner(null); } catch (err) { setError(errorMessage(err)); } finally { setBusy(false); }
+    setDone(false);
+    try {
+      const r = await MarketplaceService.uploadPhoto(listing.id, file);
+      setPhoto(r.listing.cutoutImage || r.listing.images?.[0] || null);
+      setCutout(!!r.listing.cutoutImage);
+      setDone(true);
+    } catch (err) { setError(errorMessage(err)); } finally { setBusy(false); }
   };
   return (
     <Box>
-      <Typography variant="subtitle2">{isCard ? 'Van list card image' : 'Home banner image'}</Typography>
+      <Typography variant="subtitle2">Van photo</Typography>
       <Typography variant="caption" color="text.secondary" display="block" mb={1}>
-        {isCard
-          ? "Optional. A finished card design (JPG/PNG/WebP, max 5 MB) shown as-is in the app's van list instead of the standard card. Keep its prices in line with this van's prices."
-          : 'Optional. A finished banner (about 1344 x 752, JPG/PNG/WebP, max 5 MB) with the name and price on it. Turn on Featured to show it. Without one, the app draws a banner from the photo and price.'}
+        Shown everywhere in the app. Best: PNG with a transparent background (drawn on the app's showroom background). A JPG photo is shown as it is. Max 5 MB.
       </Typography>
-      {banner ? <Box component="img" src={mediaUrl(banner) || ''} alt="" sx={{ width: '100%', borderRadius: 2, mb: 1, border: '1px solid', borderColor: 'divider' }} /> : null}
-      <Stack direction="row" spacing={1}>
+      {photo ? (
+        <Box sx={{ borderRadius: 2, mb: 1, border: '1px solid', borderColor: 'divider', background: cutout ? 'linear-gradient(90deg,#A9ABB6 0 42%,#fff 42% 100%)' : '#f6f7f9', p: cutout ? 1 : 0 }}>
+          <Box component="img" src={mediaUrl(photo) || ''} alt="" sx={{ width: '100%', display: 'block', borderRadius: 2, objectFit: 'contain', maxHeight: 180 }} />
+        </Box>
+      ) : null}
+      <Stack direction="row" spacing={1} alignItems="center">
         <Button component="label" variant="outlined" size="small" disabled={busy}>
-          {banner ? 'Replace image' : 'Upload image'}
+          {photo ? 'Replace photo' : 'Upload photo'}
           <input hidden type="file" accept="image/jpeg,image/png,image/webp" onChange={pick} />
         </Button>
-        {banner ? <Button size="small" color="inherit" disabled={busy} onClick={remove}>Remove</Button> : null}
         {busy ? <CircularProgress size={20} /> : null}
+        {done ? <Typography variant="caption" color="success.main">Saved. The app shows it on next refresh.</Typography> : null}
       </Stack>
       {error ? <Alert severity="error" sx={{ mt: 1 }}>{error}</Alert> : null}
     </Box>

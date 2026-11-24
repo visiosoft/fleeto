@@ -80,6 +80,7 @@ router.patch('/admin/coupons/:id', authenticate, offers.updateCoupon);
 router.get('/admin/listings', authenticate, admin.listListings);
 router.post('/admin/listings', authenticate, admin.createListing);
 router.patch('/admin/listings/:id', authenticate, admin.updateListing);
+router.post('/admin/listings/:id/photo', authenticate, banners.uploadPhoto);
 router.post('/admin/listings/:id/banner', authenticate, banners.upload);
 router.delete('/admin/listings/:id/banner', authenticate, banners.remove);
 router.post('/admin/listings/:id/card', authenticate, banners.uploadCard);
